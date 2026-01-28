@@ -1,0 +1,99 @@
+:host {
+  display: block;
+}
+
+/* Base Refinements */
+.min-h-screen {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Button overrides for ghost style */
+.p-button-text.p-button-secondary {
+  color: #6B7280;
+  border: 1px solid transparent;
+}
+
+.p-button-text.p-button-secondary:hover {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+/* Card Depth */
+.shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.hover\:shadow-md:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+  letter-spacing: -0.015em;
+}
+
+/* Financial Grade Typeface */
+.tracking-tight {
+  letter-spacing: -0.025em;
+}
+
+/* Labels */
+span.uppercase.tracking-wider,
+span.uppercase.tracking-widest {
+  color: #6B7280;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* Tab Underline Treatment */
+button[class*="border-b-2"] {
+  border-bottom-width: 3px;
+}
+
+/* Status Badge Scaling */
+::ng-deep app-status-badge .p-tag {
+  border-radius: 4px;
+}
+
+/* Card Styling */
+.rounded-xl {
+  border-radius: 12px;
+}
+
+.rounded-2xl {
+  border-radius: 16px;
+}
+
+/* Accent Extension */
+.bg-mlm-primary {
+  background-color: var(--mlm-primary) !important;
+}
+
+.text-mlm-primary {
+  color: var(--mlm-primary) !important;
+}
+
+.border-mlm-primary {
+  border-color: var(--mlm-primary) !important;
+}
+
+/* Micro-interactions */
+.transition-all {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Tab Overrides */
+header .flex.gap-8 button {
+  position: relative;
+  top: 1px;
+}
+
+/* Iconography Refinement */
+.pi {
+  vertical-align: middle;
+}
+
+/* Merchant Card KPI Focus */
+.bg-\[\#1e293b\] {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}

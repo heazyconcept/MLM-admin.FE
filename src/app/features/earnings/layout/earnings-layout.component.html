@@ -1,0 +1,41 @@
+    <div class="h-full flex flex-col">
+      <!-- Header -->
+      <div class="px-8 py-6 border-b border-gray-100 bg-white">
+        <h1 class="text-2xl font-bold text-gray-900">Earnings & Compensation</h1>
+        <p class="text-gray-500 mt-1">Manage system-wide earning rules, bonuses, and compensation plans</p>
+        
+        <!-- Tab Navigation -->
+        <nav class="flex gap-6 mt-8">
+          <a routerLink="overview" 
+             routerLinkActive="text-mlm-primary border-b-2 border-mlm-primary"
+             class="pb-3 text-gray-500 hover:text-gray-900 font-medium transition-colors border-b-2 border-transparent">
+             Overview
+          </a>
+          <a routerLink="bonuses" 
+             routerLinkActive="text-mlm-primary border-b-2 border-mlm-primary"
+             class="pb-3 text-gray-500 hover:text-gray-900 font-medium transition-colors border-b-2 border-transparent">
+             Bonuses
+          </a>
+          <a routerLink="ranking" 
+             routerLinkActive="text-mlm-primary border-b-2 border-mlm-primary"
+             class="pb-3 text-gray-500 hover:text-gray-900 font-medium transition-colors border-b-2 border-transparent">
+             Ranking & Stages
+          </a>
+          <a routerLink="cpv" 
+             routerLinkActive="text-mlm-primary border-b-2 border-mlm-primary"
+             class="pb-3 text-gray-500 hover:text-gray-900 font-medium transition-colors border-b-2 border-transparent">
+             CPV Config
+          </a>
+          <a routerLink="monitoring" 
+             routerLinkActive="text-mlm-primary border-b-2 border-mlm-primary"
+             class="pb-3 text-gray-500 hover:text-gray-900 font-medium transition-colors border-b-2 border-transparent">
+             Monitoring
+          </a>
+        </nav>
+      </div>
+
+      <!-- Content Area -->
+      <div class="flex-1 overflow-auto bg-[#FAFBFC] p-8">
+        <router-outlet></router-outlet>
+      </div>
+    </div>

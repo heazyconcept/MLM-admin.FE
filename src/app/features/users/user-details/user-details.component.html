@@ -1,0 +1,286 @@
+<p-toast></p-toast>
+
+<div class="min-h-screen bg-[#FAFBFC]">
+  <!-- Page Header -->
+  <header class="bg-white border-b border-gray-100 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <!-- Identity Flow -->
+        <div class="flex items-center gap-6">
+          <button 
+            pButton 
+            icon="pi pi-arrow-left" 
+            class="p-button-text p-button-secondary -ml-2"
+            [routerLink]="['/admin/users']">
+          </button>
+          
+          <div class="relative">
+            <div class="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center ">
+              <img 
+                src="/assests/sarah-avatar.png"
+                [alt]="user()?.fullName"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <!-- <div class="absolute -bottom-1 -right-1">
+              <app-status-badge [status]="user()?.status || 'Active'" [hideLabel]="true" class="scale-110"></app-status-badge>
+            </div> -->
+          </div>
+
+          <div>
+            <div class="flex items-center gap-3 mb-1">
+              <h1 class="text-2xl font-bold text-mlm-text">{{ user()?.fullName }}</h1>
+              <span class="px-2 py-0.5 rounded bg-gray-100 text-mlm-secondary text-[10px] font-bold uppercase tracking-wider">
+                {{ user()?.package }}
+              </span>
+            </div>
+            <div class="flex items-center gap-4 text-sm text-mlm-secondary">
+              <span class="flex items-center gap-1.5 font-medium">
+                <i class="pi pi-at text-xs"></i>
+                {{ user()?.username }}
+              </span>
+              <span class="w-1 h-1 rounded-full bg-gray-300"></span>
+              <span class="font-mono text-xs">{{ user()?.id }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Grid -->
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 bg-gray-50 p-1.5 rounded-lg border border-gray-100">
+            @if (user()?.status === 'Active') {
+              <button pButton label="Suspend" icon="pi pi-ban" class="p-button-danger p-button-sm text-xs font-semibold px-4" (click)="onAction('suspend')"></button>
+              <button pButton label="Flag" icon="pi pi-flag" class="p-button-warning p-button-sm text-xs font-semibold px-4" (click)="onAction('flag')"></button>
+            }
+            @if (user()?.status === 'Suspended') {
+              <button pButton label="Reactivate" icon="pi pi-check" class="p-button-success p-button-sm text-xs font-semibold px-4" (click)="onAction('reactivate')"></button>
+            }
+            @if (user()?.status === 'Flagged') {
+              <button pButton label="Remove Flag" icon="pi pi-flag-fill" class="p-button-sm text-xs font-semibold px-4" (click)="onAction('unflag')"></button>
+              <button pButton label="Suspend" icon="pi pi-ban" class="p-button-danger p-button-sm text-xs font-semibold px-4" (click)="onAction('suspend')"></button>
+            }
+          </div>
+          <button pButton label="Reset Password" icon="pi pi-key" class="p-button-text p-button-secondary text-xs font-semibold" (click)="onAction('resetPassword')"></button>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="flex gap-8 mt-8 -mb-[21px]">
+        <button 
+          (click)="activeTab.set('basic')"
+          [class]="activeTab() === 'basic' ? 'pb-4 border-b-2 border-mlm-primary text-mlm-primary font-bold transition-all' : 'pb-4 text-[#6B7280] font-medium hover:text-mlm-text transition-all'">
+          Account Info
+        </button>
+        <button 
+          (click)="activeTab.set('network')"
+          [class]="activeTab() === 'network' ? 'pb-4 border-b-2 border-mlm-primary text-mlm-primary font-bold transition-all' : 'pb-4 text-[#6B7280] font-medium hover:text-mlm-text transition-all'">
+          Network Details
+        </button>
+        <button 
+          (click)="activeTab.set('activity')"
+          [class]="activeTab() === 'activity' ? 'pb-4 border-b-2 border-mlm-primary text-mlm-primary font-bold transition-all' : 'pb-4 text-[#6B7280] font-medium hover:text-mlm-text transition-all'">
+          Activity Logs
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- Left Space: Main Details -->
+      <div class="lg:col-span-8 space-y-8">
+        <!-- Content Card -->
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-8 min-h-[400px]">
+          @if (user(); as u) {
+            @if (activeTab() === 'basic') {
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+                <div class="space-y-1.5">
+                  <span class="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider flex items-center gap-2">
+                    <i class="pi pi-envelope text-[10px]"></i>
+                    Primary email
+                  </span>
+                  <p class="text-[15px] font-medium text-mlm-text">{{ u.email }}</p>
+                </div>
+                <div class="space-y-1.5">
+                  <span class="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider flex items-center gap-2">
+                    <i class="pi pi-phone text-[10px]"></i>
+                    Phone number
+                  </span>
+                  <p class="text-[15px] font-medium text-mlm-text">{{ u.phone || 'Not provided' }}</p>
+                </div>
+                <div class="space-y-1.5">
+                  <span class="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider flex items-center gap-2">
+                    <i class="pi pi-id-card text-[10px]"></i>
+                    Full identity
+                  </span>
+                  <p class="text-[15px] font-medium text-mlm-text">{{ u.fullName }}</p>
+                </div>
+                <div class="space-y-1.5">
+                  <span class="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider flex items-center gap-2">
+                    <i class="pi pi-calendar text-[10px]"></i>
+                    Member since
+                  </span>
+                  <p class="text-[15px] font-medium text-mlm-text">{{ formatDate(u.registrationDate) }}</p>
+                </div>
+                <div class="space-y-1.5">
+                  <span class="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider flex items-center gap-2">
+                    <i class="pi pi-user text-[10px]"></i>
+                    Role
+                  </span>
+                  <p class="text-[15px] font-medium text-mlm-text">{{ u.role }}</p>
+                </div>
+                <div class="space-y-1.5">
+                  <span class="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider flex items-center gap-2">
+                    <i class="pi pi-tag text-[10px]"></i>
+                    Current package
+                  </span>
+                  <p class="text-[15px] font-medium text-mlm-text">{{ u.package }}</p>
+                </div>
+              </div>
+            }
+
+            @if (activeTab() === 'network') {
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="p-6 rounded-2xl border border-gray-100 bg-mlm-secondary/50">
+                  <span class="text-[11px] font-bold text-mlm-secondary uppercase tracking-widest mb-4 block">Direct Upline</span>
+                  <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-mlm-primary/10 flex items-center justify-center font-bold text-mlm-primary">
+                      {{ u.upline?.charAt(0) || '?' }}
+                    </div>
+                    <div>
+                      <p class="font-bold text-mlm-text text-[15px]">{{ u.upline || 'No Upline' }}</p>
+                      <p class="text-xs text-[#6B7280]">Direct Sponsor</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-6 rounded-2xl border border-gray-100 bg-mlm-secondary/50">
+                  <span class="text-[11px] font-bold text-[#6B7280] uppercase tracking-widest mb-4 block">Network stats</span>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                      <p class="text-2xl font-bold text-mlm-text">{{ u.downlinesCount }}</p>
+                      <p class="text-[10px] font-bold text-[#6B7280] uppercase">Total downlines</p>
+                    </div>
+                    <div class="space-y-1">
+                      <p class="text-2xl font-bold text-mlm-success">{{ u.downlinesCount > 0 ? (u.downlinesCount * 0.4 | number:'1.0-0') : 0 }}</p>
+                      <p class="text-[10px] font-bold text-[#6B7280] uppercase">Active legs</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="md:col-span-2 p-6 rounded-2xl border border-gray-100 bg-white">
+                  <span class="text-[11px] font-bold text-[#6B7280] uppercase tracking-widest mb-4 block">Rank path</span>
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-brand-gold/10 flex items-center justify-center">
+                      <i class="pi pi-star-fill text-brand-gold"></i>
+                    </div>
+                    <p class="text-mlm-text font-bold text-xl">{{ u.rank }}</p>
+                  </div>
+                </div>
+              </div>
+            }
+
+            @if (activeTab() === 'activity') {
+              <div class="space-y-4">
+                @for (activity of u.activityLog; track activity.id) {
+                  <div class="flex gap-4 items-center p-4 hover:bg-gray-50 rounded-xl transition-all border border-transparent hover:border-gray-100 group">
+                    <div class="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 group-hover:bg-white transition-colors border border-gray-100">
+                      <i class="pi pi-history text-gray-400 text-sm"></i>
+                    </div>
+                    <div class="flex-1 flex items-center justify-between">
+                      <div>
+                        <p class="text-sm font-semibold text-mlm-text mb-0.5">{{ activity.action }}</p>
+                        <p class="text-[11px] text-[#6B7280]">Performed by: <span class="text-mlm-primary font-medium">{{ activity.performedBy }}</span></p>
+                      </div>
+                      <span class="text-[11px] text-[#94a3b8] font-mono">{{ formatDateTime(activity.timestamp) }}</span>
+                    </div>
+                  </div>
+                }
+                @if (u.activityLog.length === 0) {
+                  <div class="flex flex-col items-center justify-center py-24 opacity-40">
+                    <i class="pi pi-inbox text-5xl mb-4 text-gray-300"></i>
+                    <p class="font-semibold text-gray-400">No activity recorded for this period</p>
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Right Space: Financial KPIs -->
+      <div class="lg:col-span-4 space-y-6">
+        @if (user(); as u) {
+          <!-- Wallet KPI Cards -->
+          <div class="space-y-4">
+            <!-- Cash Wallet -->
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+              <div class="absolute top-0 right-0 p-8 -mt-4 -mr-4 bg-mlm-success/5 rounded-full blur-2xl group-hover:bg-mlm-success/10 transition-colors"></div>
+              <div class="relative">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="w-10 h-10 rounded-xl bg-mlm-success/10 flex items-center justify-center text-mlm-success">
+                    <i class="pi pi-wallet text-lg"></i>
+                  </div>
+                  <span class="text-[10px] font-bold text-mlm-success uppercase tracking-widest bg-mlm-success/10 px-2 py-0.5 rounded">Withdrawable</span>
+                </div>
+                <h4 class="text-[11px] font-bold text-[#6B7280] uppercase tracking-widest mb-1">Cash Wallet</h4>
+                <p class="text-3xl font-extrabold text-mlm-text tracking-tight">{{ formatCurrency(u.wallets.cash) }}</p>
+              </div>
+            </div>
+
+            <!-- Product Voucher -->
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+              <div class="absolute top-0 right-0 p-8 -mt-4 -mr-4 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors"></div>
+              <div class="relative">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                    <i class="pi pi-ticket text-lg"></i>
+                  </div>
+                  <span class="text-[10px] font-bold text-blue-500 uppercase tracking-widest bg-blue-500/10 px-2 py-0.5 rounded">Locked</span>
+                </div>
+                <h4 class="text-[11px] font-bold text-[#6B7280] uppercase tracking-widest mb-1">Product Voucher</h4>
+                <p class="text-3xl font-extrabold text-mlm-text tracking-tight">{{ formatCurrency(u.wallets.productVoucher) }}</p>
+              </div>
+            </div>
+
+            <!-- Merchant KPIs (Conditional) -->
+            <!-- @if (u.role === 'Merchant') {
+              <div class="bg-[#1e293b] p-6 rounded-2xl shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-8 -mt-4 -mr-4 bg-mlm-primary/20 rounded-full blur-3xl"></div>
+                <div class="relative">
+                  <div class="flex items-center gap-2 mb-6 text-mlm-primary">
+                    <i class="pi pi-bolt text-sm"></i>
+                    <span class="text-[10px] font-bold uppercase tracking-[0.2em]">Merchant performance</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-6">
+                    <div>
+                      <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Success rate</p>
+                      <p class="text-xl font-bold text-white">98.4%</p>
+                    </div>
+                    <div>
+                      <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Monthly vol</p>
+                      <p class="text-xl font-bold text-white">$12,450</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            } -->
+          </div>
+        }
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Action Confirmation Modal -->
+<app-confirmation-modal
+  [(visible)]="actionConfig.visible"
+  [title]="actionConfig.title"
+  [message]="actionConfig.message"
+  [icon]="actionConfig.icon"
+  [iconClass]="actionConfig.iconClass"
+  [confirmLabel]="actionConfig.confirmLabel"
+  [confirmClass]="actionConfig.confirmClass"
+  [showReasonField]="actionConfig.showReasonField"
+  [reasonRequired]="actionConfig.reasonRequired"
+  (confirm)="onActionConfirm($event)"
+  (cancel)="onActionCancel()">
+</app-confirmation-modal>

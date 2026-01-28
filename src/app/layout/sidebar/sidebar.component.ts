@@ -30,25 +30,25 @@ export class SidebarComponent {
     {
       title: 'MAIN MENU',
       items: [
-        { label: 'Dashboard', icon: 'pi pi-th-large', route: '/dashboard' },
-        { label: 'User Management', icon: 'pi pi-users', route: '/users' },
-        { label: 'Transactions', icon: 'pi pi-arrow-right-arrow-left', route: '/transactions' },
-        { label: 'Invoices', icon: 'pi pi-file', route: '/invoices' }
+        { label: 'Dashboard', icon: 'pi pi-th-large', route: '/admin/dashboard' },
+        { label: 'User Management', icon: 'pi pi-users', route: '/admin/users' },
+        { label: 'Transactions', icon: 'pi pi-arrow-right-arrow-left', route: '/admin/transactions' },
+        { label: 'Earnings', icon: 'pi pi-dollar', route: '/admin/earnings' }
       ]
     },
     {
       title: 'FEATURES',
       items: [
-        { label: 'Recurring', icon: 'pi pi-refresh', route: '/recurring', badge: 16 },
-        { label: 'Subscriptions', icon: 'pi pi-credit-card', route: '/subscriptions' },
-        { label: 'Feedback', icon: 'pi pi-comments', route: '/feedback' }
+        { label: 'Recurring', icon: 'pi pi-refresh', route: '/admin/recurring', badge: 16 },
+        { label: 'Subscriptions', icon: 'pi pi-credit-card', route: '/admin/subscriptions' },
+        { label: 'Feedback', icon: 'pi pi-comments', route: '/admin/feedback' }
       ]
     },
     {
       title: 'GENERAL',
       items: [
-        { label: 'Settings', icon: 'pi pi-cog', route: '/settings' },
-        { label: 'Help Desk', icon: 'pi pi-question-circle', route: '/help' },
+        { label: 'Settings', icon: 'pi pi-cog', route: '/admin/settings' },
+        { label: 'Help Desk', icon: 'pi pi-question-circle', route: '/admin/help' },
         { label: 'Log out', icon: 'pi pi-sign-out', action: () => this.logout() }
       ]
     }

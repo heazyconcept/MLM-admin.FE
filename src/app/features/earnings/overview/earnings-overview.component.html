@@ -1,0 +1,99 @@
+    <div class="space-y-12">
+      
+      <!-- KPI Cards Row -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Paid Out -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 flex items-center justify-center overflow-hidden">
+              <img src="assests/paid.png" alt="Paid Out" class="w-full h-full object-cover">
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-500">Total Paid Out</p>
+              <h3 class="text-2xl font-bold text-gray-900">{{ overview().totalPaidOut | currency }}</h3>
+            </div>
+          </div>
+          <div class="text-xs text-green-600 font-medium flex items-center gap-1">
+            <i class="pi pi-arrow-up"></i>
+            <span>+12.5% from last month</span>
+          </div>
+        </div>
+
+        <!-- Pending Payouts -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
+              <img src="assests/pending.png" alt="Pending" class="w-full h-full object-cover">
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-500">Pending Payouts</p>
+              <h3 class="text-2xl font-bold text-gray-900">{{ overview().pendingPayouts | currency }}</h3>
+            </div>
+          </div>
+          <div class="text-xs text-gray-500 font-medium">
+            Scheduled for next cycle
+          </div>
+        </div>
+
+        <!-- Active Bonus Rules -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-blue-600">
+             <img src="assests/filter.png" alt="Rules" class="w-full h-full object-cover">
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-500">Active Rules</p>
+              <h3 class="text-2xl font-bold text-gray-900">{{ overview().activeRules }}</h3>
+            </div>
+          </div>
+           <div class="text-xs text-blue-600 font-medium cursor-pointer hover:underline">
+            View Configuration →
+          </div>
+        </div>
+
+        <!-- System Health -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+           <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
+              <i class="pi pi-shield text-xl"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-500">System Status</p>
+              <h3 class="text-2xl font-bold text-gray-900">Optimal</h3>
+            </div>
+          </div>
+          <div class="text-xs text-gray-500 font-medium">
+            Last update: {{ overview().lastUpdate | date:'shortTime' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Payout History Chart -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-bold text-gray-900">Payout History</h3>
+            <select class="text-sm border-gray-200 rounded-lg text-gray-500 bg-gray-50">
+              <option>Last 6 Months</option>
+              <option>Last Year</option>
+            </select>
+          </div>
+          <div class="h-[300px]">
+            <p-chart type="bar" [data]="barData" [options]="barOptions"></p-chart>
+          </div>
+        </div>
+
+        <!-- Earnings Distribution Chart -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <div class="flex items-center justify-between mb-6">
+             <h3 class="text-lg font-bold text-gray-900">Earnings Distribution</h3>
+             <span class="text-xs text-gray-400 font-mono uppercase">By Bonus Type</span>
+          </div>
+          <div class="h-[300px] flex items-center justify-center">
+            <p-chart type="doughnut" [data]="doughnutData" [options]="doughnutOptions" class="w-full h-full flex justify-center"></p-chart>
+          </div>
+        </div>
+      </div>
+    </div>
