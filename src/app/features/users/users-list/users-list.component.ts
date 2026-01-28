@@ -1,16 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { ToastModule } from 'primeng/toast';
+import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
 import { MessageService, MenuItem } from 'primeng/api';
 
-import { UserFiltersComponent } from '../user-filters/user-filters.component';
+import { TooltipModule } from 'primeng/tooltip';
+import { DatePickerModule } from 'primeng/datepicker';
+
 import { UserProfileModalComponent } from '../user-profile-modal/user-profile-modal.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
-import { UsersService, User, UserFilters, UserStatus } from '../services/users.service';
+import { UsersService, User, UserFilters } from '../services/users.service';
 
 interface ActionConfig {
   visible: boolean;
@@ -27,27 +33,83 @@ interface ActionConfig {
 
 @Component({
   selector: 'app-users-list',
-  standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     TableModule,
     ButtonModule,
     MenuModule,
     ToastModule,
-    UserFiltersComponent,
+    InputTextModule,
+    SelectModule,
+    TooltipModule,
+    DatePickerModule,
     UserProfileModalComponent,
     StatusBadgeComponent,
     ConfirmationModalComponent
   ],
   providers: [MessageService],
   templateUrl: './users-list.component.html',
-  styleUrls: ['./users-list.component.css']
+  styleUrls: ['./users-list.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsersListComponent implements OnInit {
-  users: User[] = [];
-  selectedUser: User | null = null;
-  profileModalVisible = false;
-  actionMenuItems: MenuItem[] = [];
+  private usersService = inject(UsersService);
+  private messageService = inject(MessageService);
+  protected router = inject(Router);
+
+  // State signals
+  users = signal<User[]>([]);
+  selectedUser = signal<User | null>(null);
+  profileModalVisible = signal(false);
+  globalFilter = signal('');
+
+  // Filter signals
+  statusFilter = signal('');
+  packageFilter = signal('');
+  roleFilter = signal('');
+  dateRange = signal<Date[] | null>(null);
+
+  // Computed filtered users
+  filteredUsers = computed(() => {
+    let result = this.users();
+    const status = this.statusFilter();
+    const pkg = this.packageFilter();
+    const role = this.roleFilter();
+    const range = this.dateRange();
+    const search = this.globalFilter().toLowerCase();
+
+    if (status) {
+      result = result.filter(u => u.status === status);
+    }
+    if (pkg) {
+      result = result.filter(u => u.package === pkg);
+    }
+    if (role) {
+      result = result.filter(u => u.role === role);
+    }
+    if (range && range.length === 2 && range[0] && range[1]) {
+      const start = new Date(range[0]);
+      const end = new Date(range[1]);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      
+      result = result.filter(u => {
+        const regDate = new Date(u.registrationDate);
+        return regDate >= start && regDate <= end;
+      });
+    }
+    if (search) {
+      result = result.filter(u =>
+        u.fullName.toLowerCase().includes(search) ||
+        u.email.toLowerCase().includes(search) ||
+        u.username.toLowerCase().includes(search) ||
+        u.id.toLowerCase().includes(search)
+      );
+    }
+
+    return result;
+  });
 
   actionConfig: ActionConfig = {
     visible: false,
@@ -62,21 +124,35 @@ export class UsersListComponent implements OnInit {
     action: ''
   };
 
-  constructor(
-    private usersService: UsersService,
-    private messageService: MessageService
-  ) {}
+  // Filter options
+  statusOptions = [
+    { label: 'All Statuses', value: '' },
+    { label: 'Active', value: 'Active' },
+    { label: 'Suspended', value: 'Suspended' },
+    { label: 'Flagged', value: 'Flagged' }
+  ];
+
+  packageOptions = [
+    { label: 'All Packages', value: '' },
+    { label: 'Silver', value: 'Silver' },
+    { label: 'Gold', value: 'Gold' },
+    { label: 'Platinum', value: 'Platinum' },
+    { label: 'Ruby', value: 'Ruby' },
+    { label: 'Diamond', value: 'Diamond' }
+  ];
+
+  roleOptions = [
+    { label: 'All Roles', value: '' },
+    { label: 'User', value: 'User' },
+    { label: 'Merchant', value: 'Merchant' }
+  ];
 
   ngOnInit(): void {
     this.loadUsers();
   }
 
   loadUsers(): void {
-    this.users = this.usersService.getUsers();
-  }
-
-  onFiltersChange(filters: UserFilters): void {
-    this.users = this.usersService.filterUsers(filters);
+    this.users.set(this.usersService.getUsers());
   }
 
   onExport(): void {
@@ -87,31 +163,39 @@ export class UsersListComponent implements OnInit {
     });
   }
 
-  viewProfile(user: User): void {
-    this.selectedUser = user;
-    this.profileModalVisible = true;
+  clearFilters(): void {
+    this.globalFilter.set('');
+    this.statusFilter.set('');
+    this.packageFilter.set('');
+    this.roleFilter.set('');
+    this.dateRange.set(null);
   }
 
-  getActionMenuItems(user: User): MenuItem[] {
-    const items: MenuItem[] = [
-      {
-        label: 'View Profile',
-        icon: 'pi pi-eye',
-        command: () => this.viewProfile(user)
-      }
-    ];
+  viewProfile(user: User): void {
+    this.selectedUser.set(user);
+    this.profileModalVisible.set(true);
+  }
+
+  getActionMenuItems(user: User, menu: any): MenuItem[] {
+    const items: MenuItem[] = [];
 
     if (user.status === 'Active') {
       items.push(
         {
           label: 'Suspend User',
           icon: 'pi pi-ban',
-          command: () => this.showActionModal('suspend', user)
+          command: () => {
+            menu.hide();
+            this.showActionModal('suspend', user);
+          }
         },
         {
           label: 'Flag Account',
           icon: 'pi pi-flag',
-          command: () => this.showActionModal('flag', user)
+          command: () => {
+            menu.hide();
+            this.showActionModal('flag', user);
+          }
         }
       );
     }
@@ -120,7 +204,10 @@ export class UsersListComponent implements OnInit {
       items.push({
         label: 'Reactivate User',
         icon: 'pi pi-check',
-        command: () => this.showActionModal('reactivate', user)
+        command: () => {
+          menu.hide();
+          this.showActionModal('reactivate', user);
+        }
       });
     }
 
@@ -129,12 +216,18 @@ export class UsersListComponent implements OnInit {
         {
           label: 'Remove Flag',
           icon: 'pi pi-flag-fill',
-          command: () => this.showActionModal('unflag', user)
+          command: () => {
+            menu.hide();
+            this.showActionModal('unflag', user);
+          }
         },
         {
           label: 'Suspend User',
           icon: 'pi pi-ban',
-          command: () => this.showActionModal('suspend', user)
+          command: () => {
+            menu.hide();
+            this.showActionModal('suspend', user);
+          }
         }
       );
     }
@@ -142,15 +235,18 @@ export class UsersListComponent implements OnInit {
     items.push({
       label: 'Reset Password',
       icon: 'pi pi-key',
-      command: () => this.showActionModal('resetPassword', user)
+      command: () => {
+        menu.hide();
+        this.showActionModal('resetPassword', user);
+      }
     });
 
     return items;
   }
 
   showActionModal(action: string, user: User): void {
-    this.selectedUser = user;
-    
+    this.selectedUser.set(user);
+
     const configs: Record<string, Partial<ActionConfig>> = {
       suspend: {
         title: 'Suspend User',
@@ -215,14 +311,14 @@ export class UsersListComponent implements OnInit {
   }
 
   onProfileAction(event: { action: string; user: User }): void {
-    this.profileModalVisible = false;
+    this.profileModalVisible.set(false);
     this.showActionModal(event.action, event.user);
   }
 
   onActionConfirm(result: ConfirmationResult): void {
-    if (!this.selectedUser || !result.confirmed) return;
+    const user = this.selectedUser();
+    if (!user || !result.confirmed) return;
 
-    const user = this.selectedUser;
     const action = this.actionConfig.action;
 
     switch (action) {
@@ -270,12 +366,12 @@ export class UsersListComponent implements OnInit {
 
     this.loadUsers();
     this.actionConfig.visible = false;
-    this.selectedUser = null;
+    this.selectedUser.set(null);
   }
 
   onActionCancel(): void {
     this.actionConfig.visible = false;
-    this.selectedUser = null;
+    this.selectedUser.set(null);
   }
 
   formatDate(date: Date): string {
@@ -297,4 +393,3 @@ export class UsersListComponent implements OnInit {
     return colors[pkg] || '#94a3b8';
   }
 }
-

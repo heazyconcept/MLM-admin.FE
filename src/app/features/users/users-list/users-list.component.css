@@ -2,41 +2,98 @@
   display: block;
 }
 
+/* Table Header Refinement */
 :host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
   background-color: #f8fafc;
-  color: #64748b;
-  font-weight: 600;
-  font-size: 0.75rem;
+  color: #475569;
+  font-weight: 700;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 1rem;
-  border-bottom: 1px solid #f1f5f9;
+  letter-spacing: 0.075em;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
 }
 
+/* Table Body Spacing */
 :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
-  padding: 0.875rem 1rem;
-  border-bottom: 1px solid #f8fafc;
+  padding: 0.875rem 1.25rem;
+  background-color: #ffffff;
 }
 
-:host ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
+/* Hover Effect */
+:host ::ng-deep .p-datatable-hoverable .p-datatable-tbody > tr:hover > td {
   background-color: #f8fafc;
 }
 
+/* Paginator Alignment */
 :host ::ng-deep .p-paginator {
-  padding: 1rem;
-  background-color: #ffffff;
-  border-top: 1px solid #f1f5f9;
+  padding: 1rem 1.5rem;
+  background-color: transparent;
+  border: none;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 :host ::ng-deep .p-paginator .p-paginator-current {
+  margin-right: auto;
+  font-weight: 500;
   color: #64748b;
+  font-size: 0.875rem;
+}
+
+/* PrimeNG Component Seamless Refinement */
+:host ::ng-deep .p-inputtext {
+  font-size: 0.875rem;
+  border-radius: 0.75rem;
+  border-color: #e2e8f0;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s;
+}
+
+:host ::ng-deep .p-select {
+  border-radius: 0.75rem;
+  border-color: #e2e8f0;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s;
+}
+
+:host ::ng-deep .p-select:not(.p-disabled).p-focus,
+:host ::ng-deep .p-inputtext:focus {
+  border-color: var(--mlm-primary);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.08);
+  background-color: #ffffff;
 }
 
 :host ::ng-deep .p-menu {
-  min-width: 180px;
+  border-radius: 0.75rem;
+  padding: 0.4rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 :host ::ng-deep .p-menu .p-menuitem-link {
-  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.875rem;
 }
 
+/* DatePicker Refinements */
+:host ::ng-deep .p-datepicker {
+  border-radius: 0.75rem;
+  border-color: #e2e8f0;
+  transition: all 0.2s;
+}
+
+:host ::ng-deep .p-datepicker .p-inputtext {
+  padding-left: 2.75rem !important;
+}
+
+:host ::ng-deep .p-datepicker-icon-container {
+  left: 1rem;
+  right: auto;
+  color: #94a3b8;
+}
+
+:host ::ng-deep .p-datepicker-input-icon {
+  font-size: 1rem;
+}

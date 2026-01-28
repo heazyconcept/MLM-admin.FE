@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { StatCardComponent } from './components/stat-card/stat-card.component';
 import { SystemStatusComponent } from './components/system-status/system-status.component';
@@ -14,6 +15,7 @@ import { ActivityFeedComponent } from './components/activity-feed/activity-feed.
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     ButtonModule,
     StatCardComponent,
     SystemStatusComponent,

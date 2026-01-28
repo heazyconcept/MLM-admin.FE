@@ -7,86 +7,179 @@
     <p class="text-mlm-secondary">View and manage all registered users</p>
   </div>
 
-  <!-- Filters -->
-  <app-user-filters 
-    (filtersChange)="onFiltersChange($event)"
-    (exportClick)="onExport()">
-  </app-user-filters>
+  <!-- Filters Area -->
+  <div class="mb-10 pb-8 border-b border-gray-100">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <!-- Search Group -->
+      <div class="flex-1 max-w-md">
+        <div class="relative">
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <input 
+            type="text" 
+            pInputText 
+            [ngModel]="globalFilter()"
+            (ngModelChange)="globalFilter.set($event)"
+            placeholder="Search users..."
+            class="w-full pl-10 h-11 border-gray-200 focus:ring-mlm-primary/20 bg-white/50">
+        </div>
+      </div>
 
-  <!-- Users Table -->
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <!-- Property Filters & Actions -->
+      <div class="flex flex-wrap items-center gap-3">
+        <p-select 
+          [options]="statusOptions"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="statusFilter.set($event)"
+          placeholder="Status"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="w-40 h-11 flex items-center bg-white/50">
+        </p-select>
+
+        <p-select 
+          [options]="packageOptions"
+          [ngModel]="packageFilter()"
+          (ngModelChange)="packageFilter.set($event)"
+          placeholder="Package"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="w-40 h-11 flex items-center bg-white/50">
+        </p-select>
+
+        <p-select 
+          [options]="roleOptions"
+          [ngModel]="roleFilter()"
+          (ngModelChange)="roleFilter.set($event)"
+          placeholder="Role"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="w-36 h-11 flex items-center bg-white/50">
+        </p-select>
+
+          <p-datepicker 
+            [ngModel]="dateRange()"
+            (ngModelChange)="dateRange.set($event)"
+            selectionMode="range" 
+            placeholder="Joined Date Range"
+            [showIcon]="true"
+            iconDisplay="input"
+            appendTo="body"
+            styleClass="w-64"
+            inputStyleClass="w-full h-11 border-gray-200 bg-white/50"
+            panelStyleClass="p-datepicker-premium">
+          </p-datepicker>
+
+          <div class="h-8 w-px bg-gray-200 mx-1 hidden sm:block"></div>
+
+        <button 
+          pButton 
+          icon="pi pi-filter-slash"
+          class="p-button-text p-button-secondary h-11 w-11 flex items-center justify-center p-0"
+          pTooltip="Clear Filters"
+          tooltipPosition="top"
+          (click)="clearFilters()">
+        </button>
+        
+        <button 
+          pButton 
+          label="Export" 
+          icon="pi pi-download"
+          class="p-button-outlined h-11 px-4 text-sm font-semibold"
+          (click)="onExport()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users Table Area -->
+  <div class="overflow-x-auto">
+    <!-- Data Table -->
     <p-table 
-      [value]="users" 
+      [value]="filteredUsers()" 
       [paginator]="true" 
       [rows]="10"
-      [rowsPerPageOptions]="[5, 10, 25]"
+      [rowsPerPageOptions]="[10, 25, 50]"
       [showCurrentPageReport]="true"
-      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} users"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
       [tableStyle]="{'min-width': '70rem'}"
-      styleClass="p-datatable-striped">
+      showGridlines
+      styleClass="p-datatable-sm p-datatable-hoverable">
       
       <ng-template pTemplate="header">
         <tr>
-          <th pSortableColumn="id" class="whitespace-nowrap">
-            User ID <p-sortIcon field="id"></p-sortIcon>
+          <th class="w-28 text-center">
+            ID
           </th>
-          <th pSortableColumn="fullName">
-            Full Name <p-sortIcon field="fullName"></p-sortIcon>
+          <th>
+            User
           </th>
-          <th pSortableColumn="username">
-            Username <p-sortIcon field="username"></p-sortIcon>
+          <th>
+            Email
           </th>
-          <th pSortableColumn="email">
-            Email <p-sortIcon field="email"></p-sortIcon>
+          <th class="w-32 text-center">
+            Package
           </th>
-          <th pSortableColumn="package">
-            Package <p-sortIcon field="package"></p-sortIcon>
+          <th class="w-32 text-center">
+            Status
           </th>
-          <th pSortableColumn="status">
-            Status <p-sortIcon field="status"></p-sortIcon>
+          <th class="w-40 text-center">
+            Joined
           </th>
-          <th pSortableColumn="registrationDate" class="whitespace-nowrap">
-            Registration Date <p-sortIcon field="registrationDate"></p-sortIcon>
-          </th>
-          <th class="text-center">Actions</th>
+          <th class="w-20 text-center pr-4"></th>
         </tr>
       </ng-template>
       
       <ng-template pTemplate="body" let-user>
-        <tr>
-          <td class="font-mono text-sm">{{ user.id }}</td>
+        <tr class="group">
+          <td class="text-center">
+            <span class="text-xs font-medium text-gray-500 font-mono">{{ user.id }}</span>
+          </td>
           <td>
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-full bg-mlm-green-100 flex items-center justify-center flex-shrink-0">
-                <span class="text-sm font-medium text-mlm-primary">{{ user.fullName.charAt(0) }}</span>
-              </div>
-              <span class="font-medium">{{ user.fullName }}</span>
+            <div class="flex flex-col">
+              <span class="font-semibold text-gray-900 leading-tight">{{ user.fullName }}</span>
+              <span class="text-xs text-gray-500">&#64;{{ user.username }}</span>
             </div>
           </td>
-          <td class="text-mlm-secondary">&#64;{{ user.username }}</td>
-          <td class="text-mlm-secondary">{{ user.email }}</td>
           <td>
+            <span class="text-sm text-gray-600">{{ user.email }}</span>
+          </td>
+          <td class="text-center">
             <span 
-              class="px-2 py-1 rounded-full text-xs font-medium text-white"
-              [style.background-color]="getPackageColor(user.package)">
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wide uppercase"
+              [style.background-color]="getPackageColor(user.package) + '15'"
+              [style.color]="getPackageColor(user.package)">
               {{ user.package }}
             </span>
           </td>
-          <td>
+          <td class="text-center">
             <app-status-badge [status]="user.status"></app-status-badge>
           </td>
-          <td class="text-mlm-secondary">{{ formatDate(user.registrationDate) }}</td>
           <td class="text-center">
-            <button 
-              pButton 
-              icon="pi pi-ellipsis-v" 
-              class="p-button-text p-button-rounded p-button-plain"
-              (click)="menu.toggle($event)">
-            </button>
+            <span class="text-sm text-gray-600">{{ formatDate(user.registrationDate) }}</span>
+          </td>
+          <td class="text-center">
+            <div class="flex items-center justify-center gap-2">
+              <button 
+                pButton 
+                icon="pi pi-eye" 
+                class="p-button-text p-button-secondary p-button-rounded hover:bg-gray-100"
+                pTooltip="View Profile"
+                tooltipPosition="top"
+                (click)="router.navigate(['/admin/users', user.id])">
+              </button>
+              <button 
+                pButton 
+                icon="pi pi-ellipsis-v" 
+                class="p-button-text p-button-secondary p-button-rounded hover:bg-gray-100"
+                (click)="$event.stopPropagation(); actionMenu.model = getActionMenuItems(user, actionMenu); actionMenu.toggle($event)">
+              </button>
+            </div>
             <p-menu 
-              #menu 
+              #actionMenu 
               [popup]="true" 
-              [model]="getActionMenuItems(user)"
               appendTo="body">
             </p-menu>
           </td>
@@ -95,13 +188,19 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="8" class="text-center py-12">
-            <div class="flex flex-col items-center justify-center">
-              <div class="w-16 h-16 rounded-full bg-mlm-background flex items-center justify-center mb-4">
-                <i class="pi pi-users text-3xl text-mlm-secondary/50"></i>
+          <td colspan="7" class="text-center py-20">
+            <div class="flex flex-col items-center">
+              <div class="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center mb-4 border border-gray-100">
+                <i class="pi pi-search text-4xl text-gray-300"></i>
               </div>
-              <p class="text-mlm-text font-medium mb-1">No users found</p>
-              <p class="text-mlm-secondary text-sm">Try adjusting your filters or search criteria</p>
+              <h3 class="text-lg font-bold text-gray-900">No users matched your criteria</h3>
+              <p class="text-gray-500 mt-1 max-w-xs mx-auto">Try adjusting your filters or search terms to find what you're looking for.</p>
+              <button 
+                pButton 
+                label="Clear all filters" 
+                class="p-button-text p-button-primary mt-4"
+                (click)="clearFilters()">
+              </button>
             </div>
           </td>
         </tr>
@@ -112,8 +211,9 @@
 
 <!-- User Profile Modal -->
 <app-user-profile-modal 
-  [(visible)]="profileModalVisible"
-  [user]="selectedUser"
+  [visible]="profileModalVisible()"
+  (visibleChange)="profileModalVisible.set($event)"
+  [user]="selectedUser()"
   (actionClick)="onProfileAction($event)">
 </app-user-profile-modal>
 
@@ -131,4 +231,3 @@
   (confirm)="onActionConfirm($event)"
   (cancel)="onActionCancel()">
 </app-confirmation-modal>
-

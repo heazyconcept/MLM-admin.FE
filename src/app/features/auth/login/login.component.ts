@@ -42,7 +42,7 @@ export class LoginComponent {
         if (email === 'pelumi123@gmail.com' && password === 'password123') {
           this.modalService.open('success', 'Login Successful', 'You have successfully signed in to your account.');
           setTimeout(() => {
-            this.router.navigate(['/dashboard']);
+            this.router.navigate(['/admin/dashboard']);
           }, 1500);
         } else {
           this.modalService.open('error', 'Login Failed', 'Invalid email or password. Please check your credentials and try again.');
