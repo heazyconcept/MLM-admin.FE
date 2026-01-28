@@ -1,0 +1,50 @@
+<div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-lg font-semibold text-mlm-text">My Savings Plan</h3>
+    <button class="p-1 rounded hover:bg-gray-100 text-mlm-secondary transition-colors">
+      <i class="pi pi-ellipsis-h"></i>
+    </button>
+  </div>
+
+  <!-- Plans List -->
+  <div class="space-y-4">
+    @for (plan of plans; track plan.id) {
+      <div class="flex items-center gap-4">
+        <!-- Icon -->
+        <div 
+          class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+          [style.background-color]="plan.iconBg">
+          {{ plan.icon }}
+        </div>
+
+        <!-- Details -->
+        <div class="flex-1">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-medium text-mlm-text">{{ plan.name }}</span>
+            <span class="text-sm font-semibold text-mlm-text">{{ plan.progress }}%</span>
+          </div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-sm text-mlm-secondary">
+              {{ formatCurrency(plan.current) }}/{{ formatCurrency(plan.target) }}
+            </span>
+          </div>
+          <p-progressbar 
+            [value]="plan.progress" 
+            [showValue]="false"
+            styleClass="h-2"
+            [style]="{'height': '8px'}">
+          </p-progressbar>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Navigation Dots -->
+  <div class="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-gray-100">
+    <span class="w-2 h-2 rounded-full bg-mlm-primary"></span>
+    <span class="w-2 h-2 rounded-full bg-gray-200"></span>
+    <span class="w-2 h-2 rounded-full bg-gray-200"></span>
+  </div>
+</div>
+

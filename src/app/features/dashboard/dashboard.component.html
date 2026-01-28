@@ -1,0 +1,132 @@
+<div class="p-6 bg-mlm-background min-h-full">
+  <!-- Welcome Banner -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold text-mlm-text mb-1">
+        Welcome back, {{ userName }}
+      </h1>
+      <p class="text-mlm-secondary text-sm">
+        Here's what's happening with your network today.
+      </p>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 text-sm text-mlm-secondary">
+        <i class="pi pi-calendar"></i>
+        <span>{{ formatDate(currentDate) }}</span>
+      </div>
+      <button 
+        pButton 
+        label="Export Report" 
+        icon="pi pi-download"
+        class="p-button-outlined border-mlm-primary text-mlm-primary hover:bg-mlm-green-50">
+      </button>
+    </div>
+  </div>
+
+  <!-- Section 1: System Overview -->
+  <div class="mb-6">
+    <h2 class="text-lg font-semibold text-mlm-text mb-4">System Overview</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      @for (stat of systemStats; track stat.title) {
+        <app-stat-card 
+          [title]="stat.title"
+          [value]="stat.value"
+          [subtitle]="stat.subtitle || ''"
+          [icon]="stat.icon"
+          [iconBg]="stat.iconBg"
+          [iconColor]="stat.iconColor"
+          [change]="stat.change"
+          [changeLabel]="stat.changeLabel">
+        </app-stat-card>
+      }
+      <app-system-status status="online" uptime="99.8%"></app-system-status>
+    </div>
+  </div>
+
+  <!-- Section 2: Financial Snapshot -->
+  <div class="mb-6">
+    <h2 class="text-lg font-semibold text-mlm-text mb-4">Financial Snapshot</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <!-- Financial Stats -->
+      <div class="lg:col-span-1 grid grid-cols-1 gap-4">
+        @for (stat of financialStats; track stat.title) {
+          <app-stat-card 
+            [title]="stat.title"
+            [value]="stat.value"
+            [icon]="stat.icon"
+            [iconBg]="stat.iconBg"
+            [iconColor]="stat.iconColor"
+            [change]="stat.change"
+            [changeLabel]="stat.changeLabel">
+          </app-stat-card>
+        }
+      </div>
+      <!-- Revenue Chart -->
+      <div class="lg:col-span-2">
+        <app-overview-chart 
+          title="Revenue Trend" 
+          totalValue="$1,245,890.00">
+        </app-overview-chart>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: User & Network Metrics + Wallets -->
+  <div class="mb-6">
+    <h2 class="text-lg font-semibold text-mlm-text mb-4">User & Network Metrics</h2>
+    <!-- Top Row: Stat Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      @for (stat of userMetrics; track stat.title) {
+        <app-stat-card 
+          [title]="stat.title"
+          [value]="stat.value"
+          [subtitle]="stat.subtitle || ''"
+          [icon]="stat.icon"
+          [iconBg]="stat.iconBg"
+          [iconColor]="stat.iconColor"
+          [change]="stat.change"
+          [changeLabel]="stat.changeLabel">
+        </app-stat-card>
+      }
+      <!-- Additional metrics to fill the row -->
+      <app-stat-card 
+        title="Top Legs Growth"
+        value="12"
+        subtitle="Active leaders"
+        icon="pi pi-chart-line"
+        iconBg="bg-brand-gold/10"
+        iconColor="text-brand-gold"
+        [change]="5.4"
+        changeLabel="this week">
+      </app-stat-card>
+      <app-stat-card 
+        title="Rank Advances"
+        value="34"
+        subtitle="This month"
+        icon="pi pi-star"
+        iconBg="bg-mlm-blue-100"
+        iconColor="text-mlm-blue-600"
+        [change]="18.2"
+        changeLabel="from last month">
+      </app-stat-card>
+    </div>
+    <!-- Bottom Row: Charts and Wallets -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Package Distribution -->
+      <app-package-chart></app-package-chart>
+      <!-- Wallet Summary -->
+      <app-wallet-summary 
+        [wallets]="walletSummary"
+        totalBalance="$3,695,120.00">
+      </app-wallet-summary>
+    </div>
+  </div>
+
+  <!-- Section 4: Pending Actions & Recent Activity -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Pending Actions -->
+    <app-pending-actions></app-pending-actions>
+    <!-- Recent Activity -->
+    <app-activity-feed></app-activity-feed>
+  </div>
+</div>

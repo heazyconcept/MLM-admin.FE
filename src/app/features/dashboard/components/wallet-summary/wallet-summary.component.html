@@ -1,0 +1,35 @@
+<div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm h-full">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-lg font-semibold text-mlm-text">Wallet Balances</h3>
+    <button class="p-1 rounded hover:bg-gray-100 text-mlm-secondary transition-colors">
+      <i class="pi pi-ellipsis-h"></i>
+    </button>
+  </div>
+
+  <!-- Total Balance -->
+  <div class="mb-4 pb-4 border-b border-gray-100">
+    <p class="text-sm text-mlm-secondary mb-1">Total System Balance</p>
+    <p class="text-3xl font-bold text-mlm-text">{{ totalBalance }}</p>
+  </div>
+
+  <!-- Wallet Types -->
+  <div class="space-y-3">
+    @for (wallet of wallets; track wallet.type) {
+      <div class="flex items-center justify-between p-3 rounded-lg bg-mlm-background hover:bg-mlm-green-50/50 transition-colors">
+        <div class="flex items-center gap-3">
+          <div 
+            class="w-10 h-10 rounded-lg flex items-center justify-center"
+            [style.background-color]="wallet.color + '20'">
+            <i [class]="wallet.icon" [style.color]="wallet.color"></i>
+          </div>
+          <div>
+            <p class="font-medium text-mlm-text">{{ wallet.label }}</p>
+            <p class="text-xs text-mlm-secondary">{{ wallet.type }}</p>
+          </div>
+        </div>
+        <span class="font-semibold text-mlm-text">{{ wallet.balance }}</span>
+      </div>
+    }
+  </div>
+</div>
+
