@@ -1,0 +1,61 @@
+<header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+  <!-- Search Bar -->
+  <div class="flex items-center gap-4">
+    <div class="relative">
+      <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-mlm-secondary"></i>
+      <input 
+        type="text"
+        pInputText
+        [(ngModel)]="searchQuery"
+        placeholder="Search"
+        class="pl-10 pr-4 py-2 w-64 bg-mlm-background border-0 rounded-lg text-sm focus:ring-2 focus:ring-mlm-primary/20">
+    </div>
+    <div class="flex items-center gap-1 text-mlm-secondary text-sm">
+      <span class="px-2 py-1 bg-mlm-background rounded">⌘</span>
+      <span class="px-2 py-1 bg-mlm-background rounded">K</span>
+    </div>
+  </div>
+
+  <!-- Right Section -->
+  <div class="flex items-center gap-4">
+    <!-- Help Icon -->
+    <button class="p-2 rounded-lg hover:bg-mlm-green-50 text-mlm-secondary transition-colors">
+      <i class="pi pi-question-circle text-lg"></i>
+    </button>
+    
+    <!-- Messages -->
+    <button class="p-2 rounded-lg hover:bg-mlm-green-50 text-mlm-secondary transition-colors relative">
+      <i class="pi pi-envelope text-lg"></i>
+      @if (messages > 0) {
+        <span class="absolute -top-1 -right-1 w-5 h-5 bg-mlm-error text-white text-xs rounded-full flex items-center justify-center">
+          {{ messages }}
+        </span>
+      }
+    </button>
+    
+    <!-- Notifications -->
+    <button class="p-2 rounded-lg hover:bg-mlm-green-50 text-mlm-secondary transition-colors relative">
+      <i class="pi pi-bell text-lg"></i>
+      @if (notifications > 0) {
+        <span class="absolute -top-1 -right-1 w-5 h-5 bg-mlm-primary text-white text-xs rounded-full flex items-center justify-center">
+          {{ notifications }}
+        </span>
+      }
+    </button>
+
+    <!-- User Avatar -->
+    <div class="flex items-center gap-3 pl-4 border-l border-gray-200">
+      <p-avatar 
+        [image]="userAvatar || ''"
+        [label]="!userAvatar ? userName.charAt(0) : ''"
+        shape="circle"
+        size="normal"
+        styleClass="bg-mlm-green-100 text-mlm-primary">
+      </p-avatar>
+      <button class="text-mlm-secondary hover:text-mlm-text transition-colors">
+        <i class="pi pi-angle-down"></i>
+      </button>
+    </div>
+  </div>
+</header>
+

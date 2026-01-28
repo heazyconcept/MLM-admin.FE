@@ -1,0 +1,24 @@
+<div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm h-full">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h3 class="text-lg font-semibold text-mlm-text">{{ title }}</h3>
+      <p class="text-2xl font-bold text-mlm-primary mt-1">{{ totalValue }}</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <select class="text-sm text-mlm-text bg-mlm-background border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-mlm-primary/20 cursor-pointer">
+        <option>This Year</option>
+        <option>Last Year</option>
+        <option>All Time</option>
+      </select>
+      <button class="p-2 rounded-lg hover:bg-gray-100 text-mlm-secondary transition-colors">
+        <i class="pi pi-ellipsis-h"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="h-64">
+    <p-chart type="bar" [data]="data" [options]="options" styleClass="h-full w-full"></p-chart>
+  </div>
+</div>

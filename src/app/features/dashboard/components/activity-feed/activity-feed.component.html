@@ -1,0 +1,54 @@
+<div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-lg font-semibold text-mlm-text">Recent Activity</h3>
+    <a href="#" class="text-sm text-mlm-primary hover:text-brand-green-dark transition-colors">View All</a>
+  </div>
+
+  <div class="space-y-4">
+    @for (activity of displayActivities; track activity.id) {
+      <div class="flex items-start gap-3 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+        <!-- Icon -->
+        <div 
+          class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+          [class]="getTypeConfig(activity.type).bg">
+          <i [class]="getTypeConfig(activity.type).icon + ' ' + getTypeConfig(activity.type).color"></i>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <p class="font-medium text-mlm-text">{{ activity.title }}</p>
+              <p class="text-sm text-mlm-secondary truncate">{{ activity.description }}</p>
+            </div>
+            @if (activity.amount) {
+              <span 
+                class="text-sm font-semibold whitespace-nowrap"
+                [class.text-mlm-success]="activity.amount.startsWith('+')"
+                [class.text-mlm-error]="activity.amount.startsWith('-')"
+                [class.text-mlm-text]="!activity.amount.startsWith('+') && !activity.amount.startsWith('-')">
+                {{ activity.amount }}
+              </span>
+            }
+          </div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-xs text-mlm-secondary">{{ formatTime(activity.timestamp) }}</span>
+            @if (activity.user) {
+              <span class="text-xs text-mlm-secondary">•</span>
+              <span class="text-xs text-mlm-primary">{{ activity.user }}</span>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Empty State -->
+  @if (displayActivities.length === 0) {
+    <div class="text-center py-8">
+      <i class="pi pi-inbox text-4xl text-mlm-secondary/50 mb-3"></i>
+      <p class="text-mlm-secondary">No recent activity</p>
+    </div>
+  }
+</div>
+

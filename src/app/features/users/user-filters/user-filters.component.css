@@ -1,0 +1,12 @@
+:host {
+  display: block;
+}
+
+:host ::ng-deep .p-inputtext {
+  padding-left: 2.5rem;
+}
+
+:host ::ng-deep .p-dropdown {
+  min-width: 140px;
+}
+

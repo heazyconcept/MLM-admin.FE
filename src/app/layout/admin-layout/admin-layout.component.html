@@ -1,0 +1,19 @@
+<div class="flex h-screen bg-mlm-background overflow-hidden">
+  <!-- Sidebar -->
+  <app-sidebar 
+    [collapsed]="sidebarCollapsed"
+    (collapsedChange)="onSidebarToggle($event)">
+  </app-sidebar>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Header -->
+    <app-header></app-header>
+
+    <!-- Page Content -->
+    <main class="flex-1 overflow-y-auto">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
+

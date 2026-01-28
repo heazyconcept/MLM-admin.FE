@@ -1,0 +1,134 @@
+<p-toast></p-toast>
+
+<div class="p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-mlm-text mb-1">User Management</h1>
+    <p class="text-mlm-secondary">View and manage all registered users</p>
+  </div>
+
+  <!-- Filters -->
+  <app-user-filters 
+    (filtersChange)="onFiltersChange($event)"
+    (exportClick)="onExport()">
+  </app-user-filters>
+
+  <!-- Users Table -->
+  <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+    <p-table 
+      [value]="users" 
+      [paginator]="true" 
+      [rows]="10"
+      [rowsPerPageOptions]="[5, 10, 25]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} users"
+      [tableStyle]="{'min-width': '70rem'}"
+      styleClass="p-datatable-striped">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="id" class="whitespace-nowrap">
+            User ID <p-sortIcon field="id"></p-sortIcon>
+          </th>
+          <th pSortableColumn="fullName">
+            Full Name <p-sortIcon field="fullName"></p-sortIcon>
+          </th>
+          <th pSortableColumn="username">
+            Username <p-sortIcon field="username"></p-sortIcon>
+          </th>
+          <th pSortableColumn="email">
+            Email <p-sortIcon field="email"></p-sortIcon>
+          </th>
+          <th pSortableColumn="package">
+            Package <p-sortIcon field="package"></p-sortIcon>
+          </th>
+          <th pSortableColumn="status">
+            Status <p-sortIcon field="status"></p-sortIcon>
+          </th>
+          <th pSortableColumn="registrationDate" class="whitespace-nowrap">
+            Registration Date <p-sortIcon field="registrationDate"></p-sortIcon>
+          </th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="body" let-user>
+        <tr>
+          <td class="font-mono text-sm">{{ user.id }}</td>
+          <td>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-mlm-green-100 flex items-center justify-center flex-shrink-0">
+                <span class="text-sm font-medium text-mlm-primary">{{ user.fullName.charAt(0) }}</span>
+              </div>
+              <span class="font-medium">{{ user.fullName }}</span>
+            </div>
+          </td>
+          <td class="text-mlm-secondary">&#64;{{ user.username }}</td>
+          <td class="text-mlm-secondary">{{ user.email }}</td>
+          <td>
+            <span 
+              class="px-2 py-1 rounded-full text-xs font-medium text-white"
+              [style.background-color]="getPackageColor(user.package)">
+              {{ user.package }}
+            </span>
+          </td>
+          <td>
+            <app-status-badge [status]="user.status"></app-status-badge>
+          </td>
+          <td class="text-mlm-secondary">{{ formatDate(user.registrationDate) }}</td>
+          <td class="text-center">
+            <button 
+              pButton 
+              icon="pi pi-ellipsis-v" 
+              class="p-button-text p-button-rounded p-button-plain"
+              (click)="menu.toggle($event)">
+            </button>
+            <p-menu 
+              #menu 
+              [popup]="true" 
+              [model]="getActionMenuItems(user)"
+              appendTo="body">
+            </p-menu>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8" class="text-center py-12">
+            <div class="flex flex-col items-center justify-center">
+              <div class="w-16 h-16 rounded-full bg-mlm-background flex items-center justify-center mb-4">
+                <i class="pi pi-users text-3xl text-mlm-secondary/50"></i>
+              </div>
+              <p class="text-mlm-text font-medium mb-1">No users found</p>
+              <p class="text-mlm-secondary text-sm">Try adjusting your filters or search criteria</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- User Profile Modal -->
+<app-user-profile-modal 
+  [(visible)]="profileModalVisible"
+  [user]="selectedUser"
+  (actionClick)="onProfileAction($event)">
+</app-user-profile-modal>
+
+<!-- Confirmation Modal -->
+<app-confirmation-modal
+  [(visible)]="actionConfig.visible"
+  [title]="actionConfig.title"
+  [message]="actionConfig.message"
+  [icon]="actionConfig.icon"
+  [iconClass]="actionConfig.iconClass"
+  [confirmLabel]="actionConfig.confirmLabel"
+  [confirmClass]="actionConfig.confirmClass"
+  [showReasonField]="actionConfig.showReasonField"
+  [reasonRequired]="actionConfig.reasonRequired"
+  (confirm)="onActionConfirm($event)"
+  (cancel)="onActionCancel()">
+</app-confirmation-modal>
+

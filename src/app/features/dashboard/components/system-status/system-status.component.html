@@ -1,0 +1,41 @@
+<div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm h-full">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-sm font-medium text-mlm-text">System Status</h3>
+    <button class="p-1 rounded hover:bg-gray-100 text-mlm-secondary transition-colors">
+      <i class="pi pi-refresh text-sm"></i>
+    </button>
+  </div>
+
+  <!-- Status Indicator -->
+  <div class="flex items-center gap-3 mb-4">
+    <div class="relative">
+      <div class="w-12 h-12 rounded-full flex items-center justify-center" [class]="statusConfig.bgLight">
+        <i class="pi text-xl" [class]="statusConfig.icon + ' ' + statusConfig.textColor"></i>
+      </div>
+      <span 
+        class="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white"
+        [class]="statusConfig.color">
+      </span>
+    </div>
+    <div>
+      <p class="font-semibold text-mlm-text">{{ statusConfig.label }}</p>
+      <p class="text-xs text-mlm-secondary">Last checked: {{ formatTime(lastChecked) }}</p>
+    </div>
+  </div>
+
+  <!-- Uptime -->
+  <div class="pt-4 border-t border-gray-100">
+    <div class="flex items-center justify-between">
+      <span class="text-sm text-mlm-secondary">Uptime (30 days)</span>
+      <span class="text-lg font-bold" [class]="statusConfig.textColor">{{ uptime }}</span>
+    </div>
+    <div class="mt-2 h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div 
+        class="h-full rounded-full transition-all duration-500"
+        [class]="statusConfig.color"
+        [style.width]="uptime">
+      </div>
+    </div>
+  </div>
+</div>
+

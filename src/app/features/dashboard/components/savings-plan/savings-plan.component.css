@@ -1,0 +1,15 @@
+:host {
+  display: block;
+}
+
+:host ::ng-deep .p-progressbar {
+  height: 8px;
+  border-radius: 4px;
+  background-color: #e5e7eb;
+}
+
+:host ::ng-deep .p-progressbar-value {
+  background-color: #49A321;
+  border-radius: 4px;
+}
+

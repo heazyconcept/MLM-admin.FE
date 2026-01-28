@@ -1,0 +1,86 @@
+<div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm mb-4">
+  <div class="flex flex-wrap items-center gap-3">
+    <!-- Search -->
+    <div class="flex-1 min-w-[200px]">
+      <span class="p-input-icon-left w-full">
+        <i class="pi pi-search"></i>
+        <input 
+          type="text" 
+          pInputText 
+          [(ngModel)]="filters.search"
+          (input)="onSearch()"
+          placeholder="Search by name, email, username, or ID..."
+          class="w-full">
+      </span>
+    </div>
+
+    <!-- Status Filter -->
+    <p-select 
+      [options]="statusOptions"
+      [(ngModel)]="filters.status"
+      (onChange)="onFilterChange()"
+      placeholder="Status"
+      optionLabel="label"
+      optionValue="value"
+      styleClass="min-w-[140px]">
+    </p-select>
+
+    <!-- Package Filter -->
+    <p-select 
+      [options]="packageOptions"
+      [(ngModel)]="filters.package"
+      (onChange)="onFilterChange()"
+      placeholder="Package"
+      optionLabel="label"
+      optionValue="value"
+      styleClass="min-w-[140px]">
+    </p-select>
+
+    <!-- Role Filter -->
+    <p-select 
+      [options]="roleOptions"
+      [(ngModel)]="filters.role"
+      (onChange)="onFilterChange()"
+      placeholder="Role"
+      optionLabel="label"
+      optionValue="value"
+      styleClass="min-w-[130px]">
+    </p-select>
+
+    <!-- Date Range -->
+    <div class="relative min-w-[150px]">
+      <input 
+        type="date"
+        [(ngModel)]="filters.dateFrom"
+        (change)="onFilterChange()"
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mlm-primary/50 focus:border-mlm-primary">
+    </div>
+
+    <div class="relative min-w-[150px]">
+      <input 
+        type="date"
+        [(ngModel)]="filters.dateTo"
+        (change)="onFilterChange()"
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mlm-primary/50 focus:border-mlm-primary">
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2 ml-auto">
+      <button 
+        pButton 
+        label="Clear" 
+        icon="pi pi-filter-slash"
+        class="p-button-text p-button-secondary"
+        (click)="clearFilters()">
+      </button>
+      <button 
+        pButton 
+        label="Export" 
+        icon="pi pi-download"
+        class="p-button-outlined"
+        (click)="onExport()">
+      </button>
+    </div>
+  </div>
+</div>
+
