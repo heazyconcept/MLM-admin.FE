@@ -1,0 +1,67 @@
+<p-dialog [(visible)]="visible" [header]="'Adjust Funds - ' + (wallet()?.id || '')" [modal]="true" [style]="{width: '450px'}" (onHide)="close()">
+  @if (wallet(); as w) {
+    <div class="space-y-6 pt-2">
+       <!-- Type Selection -->
+       <div class="flex gap-4 p-1 bg-gray-100 rounded-lg">
+          <button class="flex-1 py-2 rounded-md font-medium text-sm transition-colors"
+                  [class.bg-white]="type() === 'Credit'"
+                  [class.shadow-sm]="type() === 'Credit'"
+                  [class.text-green-600]="type() === 'Credit'"
+                  (click)="type.set('Credit')">
+             Credit (+)
+          </button>
+          <button class="flex-1 py-2 rounded-md font-medium text-sm transition-colors"
+                  [class.bg-white]="type() === 'Debit'"
+                  [class.shadow-sm]="type() === 'Debit'"
+                  [class.text-red-600]="type() === 'Debit'"
+                  (click)="type.set('Debit')">
+             Debit (-)
+          </button>
+       </div>
+
+       <!-- Form -->
+       <form [formGroup]="form" (ngSubmit)="submit()">
+          <div class="space-y-4">
+             <!-- Amount -->
+             <div class="space-y-1">
+                <label class="text-sm font-bold text-gray-700">Amount ({{ w.currency }})</label>
+                <p-inputNumber formControlName="amount" 
+                               [mode]="'currency'" 
+                               [currency]="w.currency" 
+                               [min]="0"
+                               styleClass="w-full"
+                               class="w-full block"></p-inputNumber>
+             </div>
+
+             <!-- Reason -->
+             <div class="space-y-1">
+                <label class="text-sm font-bold text-gray-700">Reason / Reference</label>
+                <textarea pInputTextarea formControlName="reason" rows="3" class="w-full" placeholder="e.g. Correction for transaction #123"></textarea>
+                <small class="text-gray-500">A clear reason is required for audit logs.</small>
+             </div>
+             
+             <!-- Warning -->
+             @if (type() === 'Credit') {
+               <div class="p-3 bg-blue-50 text-blue-700 text-xs rounded-lg flex gap-2">
+                 <i class="pi pi-info-circle mt-0.5"></i>
+                 <span>This will increase the user's balance. Ensure this is a valid compensating entry.</span>
+               </div>
+             } @else {
+               <div class="p-3 bg-red-50 text-red-700 text-xs rounded-lg flex gap-2">
+                 <i class="pi pi-exclamation-triangle mt-0.5"></i>
+                 <span>This will deduct funds from the user's balance. Action cannot be undone.</span>
+               </div>
+             }
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-end gap-3 mt-8">
+             <button type="button" pButton label="Cancel" class="p-button-text p-button-secondary" (click)="close()"></button>
+             <button type="submit" pButton [label]="'Confirm ' + type()" 
+                     [class]="type() === 'Credit' ? 'p-button-success' : 'p-button-danger'"
+                     [disabled]="form.invalid"></button>
+          </div>
+       </form>
+    </div>
+  }
+</p-dialog>

@@ -34,6 +34,14 @@ export const routes: Routes = [
         ]
       },
       {
+        path: 'wallets',
+        children: [
+          { path: 'overview', loadComponent: () => import('./features/wallets/dashboard/wallet-dashboard.component').then(m => m.WalletDashboardComponent) },
+          { path: '', loadComponent: () => import('./features/wallets/list/wallet-list.component').then(m => m.WalletListComponent) },
+          { path: ':id', loadComponent: () => import('./features/wallets/details/wallet-details.component').then(m => m.WalletDetailsComponent) }
+        ]
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'

@@ -1,0 +1,171 @@
+@if (wallet(); as w) {
+<div class="min-h-screen bg-[#FAFBFC]">
+  <p-toast></p-toast>
+  
+  <!-- Page Header -->
+  <header class="bg-white border-b border-gray-100 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <!-- Identity Flow -->
+        <div class="flex items-center gap-6">
+          <button 
+            pButton 
+            icon="pi pi-arrow-left" 
+            class="p-button-text p-button-secondary -ml-2"
+            routerLink="/admin/wallets">
+          </button>
+          
+          <div>
+            <div class="flex items-center gap-3 mb-1">
+              <h1 class="text-2xl font-bold text-mlm-text">Wallet Details</h1>
+              <span class="px-2 py-0.5 rounded bg-gray-100 text-mlm-secondary text-[10px] font-bold uppercase tracking-wider">
+                {{ w.id }}
+              </span>
+            </div>
+            <div class="flex items-center gap-4 text-sm text-mlm-secondary">
+              <span class="flex items-center gap-1.5 font-medium">
+                <i class="pi pi-user text-xs"></i>
+                {{ w.userName }}
+              </span>
+              <span class="w-1 h-1 rounded-full bg-gray-300"></span>
+              <span class="font-mono text-xs text-gray-400">{{ w.userId }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Grid -->
+        <div class="flex items-center gap-3">
+          <button 
+           pButton 
+           [label]="w.status === 'Locked' ? 'Unlock Wallet' : 'Lock Wallet'" 
+           [icon]="w.status === 'Locked' ? 'pi pi-lock-open' : 'pi pi-lock'" 
+           [class]="w.status === 'Locked' ? 'p-button-success' : 'p-button-danger'"
+           class="p-button-sm text-xs font-semibold px-4"
+           (click)="toggleLock(w)">
+          </button>
+          
+          <button 
+           pButton 
+           label="Adjust Funds" 
+           icon="pi pi-wallet" 
+           class="p-button-outlined p-button-secondary p-button-sm text-xs font-semibold px-4"
+           (click)="openAdjustment()">
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    
+    <!-- Wallet Info Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+       <!-- Balance -->
+       <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div class="absolute top-0 right-0 p-8 -mt-4 -mr-4 bg-mlm-primary/5 rounded-full blur-2xl group-hover:bg-mlm-primary/10 transition-colors"></div>
+          <div class="relative">
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-10 h-10 rounded-xl bg-mlm-primary/10 flex items-center justify-center text-mlm-primary">
+                 <i class="pi pi-wallet text-lg"></i>
+              </div>
+              <span class="text-[10px] font-bold text-mlm-primary uppercase tracking-widest bg-mlm-primary/10 px-2 py-0.5 rounded">Available</span>
+            </div>
+             <p class="text-[11px] font-bold text-[#6B7280] uppercase tracking-widest mb-1">Current Balance</p>
+             <h2 class="text-3xl font-extrabold text-mlm-text tracking-tight">{{ w.balance | currency:w.currency }}</h2>
+          </div>
+       </div>
+
+       <!-- Status -->
+       <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
+               <i class="pi pi-info-circle text-lg"></i>
+            </div>
+             <p-tag [value]="w.status" [severity]="getStatusSeverity(w.status)" styleClass="text-[10px] h-5"></p-tag>
+          </div>
+          <p class="text-[11px] font-bold text-[#6B7280] uppercase tracking-widest mb-1">Status</p>
+          <p class="text-xl font-bold text-mlm-text">{{ w.status }}</p>
+       </div>
+
+       <!-- Type -->
+       <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
+               <i class="pi pi-tag text-lg"></i>
+            </div>
+          </div>
+          <p class="text-[11px] font-bold text-[#6B7280] uppercase tracking-widest mb-1">Wallet Type</p>
+          <p class="text-xl font-bold text-mlm-text">{{ w.type }}</p>
+       </div>
+    </div>
+
+    <!-- Ledger / Transactions -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+       <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+          <div>
+            <h3 class="font-bold text-lg text-mlm-text">Ledger History</h3>
+            <p class="text-sm text-mlm-secondary">All transactions for this wallet</p>
+          </div>
+       </div>
+       
+       <app-data-table
+         [data]="ledger()"
+         [columns]="columns()"
+         [loading]="loading()"
+         [config]="tableConfig()"
+         [emptyMessage]="'No transactions found'"
+         [emptyIcon]="'pi pi-inbox'">
+
+         <!-- Custom details cell template -->
+         <ng-template #detailsCell let-entry>
+           <div class="flex flex-col gap-1 py-1">
+             <span class="font-mono text-[10px] text-gray-400">{{ entry.id }}</span>
+             <span class="inline-flex w-fit items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
+                  [class.bg-green-50]="entry.type === 'Credit'"
+                  [class.border-green-100]="entry.type === 'Credit'"
+                  [class.text-green-700]="entry.type === 'Credit'"
+                  [class.bg-red-50]="entry.type === 'Debit'"
+                  [class.border-red-100]="entry.type === 'Debit'"
+                  [class.text-red-700]="entry.type === 'Debit'">
+               {{ entry.type }}
+            </span>
+           </div>
+         </ng-template>
+
+         <!-- Custom amount cell template -->
+         <ng-template #amountCell let-entry>
+           <span class="font-bold font-mono text-sm" 
+             [class.text-green-600]="entry.type === 'Credit'"
+             [class.text-red-600]="entry.type === 'Debit'">
+             {{ entry.type === 'Credit' ? '+' : '-' }}{{ entry.amount | currency:w.currency }}
+          </span>
+         </ng-template>
+       </app-data-table>
+    </div>
+
+  </main>
+
+  <!-- Funds Adjustment Modal -->
+  <app-funds-adjustment-modal
+    [visible]="showAdjustmentModal()"
+    (visibleChange)="showAdjustmentModal.set($event)"
+    [wallet]="wallet"
+    (adjusted)="onAdjustmentComplete()">
+  </app-funds-adjustment-modal>
+
+  <!-- Wallet Action Confirmation Modal -->
+  <app-wallet-action-modal
+    [visible]="showActionModal()"
+    (visibleChange)="showActionModal.set($event)"
+    [wallet]="wallet"
+    [action]="pendingAction"
+    (confirmed)="confirmAction()">
+  </app-wallet-action-modal>
+
+</div>
+} @else {
+  <div class="p-12 text-center text-gray-500">
+    <i class="pi pi-exclamation-circle text-4xl mb-4 text-gray-300"></i>
+    <p>Wallet not found</p>
+  </div>
+}
