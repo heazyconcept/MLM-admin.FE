@@ -1,0 +1,147 @@
+<div class="min-h-screen bg-linear-to-br from-gray-50 via-white to-purple-50/30 p-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-black text-mlm-text mb-2">Withdrawal Requests</h1>
+    <p class="text-mlm-secondary">Review and manage user withdrawal requests</p>
+  </div>
+
+  <!-- Stats Cards (Modern & Professional) -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+
+  <!-- Pending -->
+  <div class="bg-white rounded-xl border border-gray-200 px-6 py-5 hover:border-gray-300 transition">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+          Pending Requests
+        </p>
+
+        <h3 class="mt-2 text-4xl font-semibold text-gray-900">
+          {{ stats().totalPending }}
+        </h3>
+
+        <p class="mt-1 text-xs text-gray-500">
+          Requires admin action
+        </p>
+      </div>
+
+      <i class="pi pi-clock text-gray-300 text-lg"></i>
+    </div>
+  </div>
+
+  <!-- Approved Today -->
+  <div class="bg-white rounded-xl border border-gray-200 px-6 py-5 hover:border-gray-300 transition">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+          Approved Today
+        </p>
+
+        <h3 class="mt-2 text-4xl font-semibold text-gray-900">
+          {{ stats().approvedToday }}
+        </h3>
+
+        <p class="mt-1 text-xs text-gray-500">
+          Processed in last 24h
+        </p>
+      </div>
+
+      <i class="pi pi-check-circle text-gray-300 text-lg"></i>
+    </div>
+  </div>
+
+  <!-- Total -->
+  <div class="bg-white rounded-xl border border-gray-200 px-6 py-5 hover:border-gray-300 transition">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+          Total Requests
+        </p>
+
+        <h3 class="mt-2 text-4xl font-semibold text-gray-900">
+          {{ withdrawals().length }}
+        </h3>
+
+        <p class="mt-1 text-xs text-gray-500">
+          All-time volume
+        </p>
+      </div>
+
+      <i class="pi pi-chart-bar text-gray-300 text-lg"></i>
+    </div>
+  </div>
+
+</div>
+
+
+  <!-- Filters and Actions -->
+  <div class="bg-white border border-gray-200 rounded-xl px-5 py-4 mb-6">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+    <!-- Left controls -->
+    <div class="flex flex-col md:flex-row gap-3 md:items-center">
+      <select
+        [ngModel]="selectedStatus()"
+        (ngModelChange)="selectedStatus.set($event)"
+        class="h-10 px-4 rounded-lg border border-gray-300 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+        @for (option of statusOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+
+      <div class="relative">
+        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input
+          type="text"
+          [value]="searchQuery()"
+          (input)="onSearch($any($event.target).value)"
+          placeholder="Search by user or request ID"
+          class="h-10 w-full md:w-72 pl-9 pr-4 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+        />
+      </div>
+    </div>
+
+    <!-- Right action -->
+    <button
+      (click)="onExport()"
+      class="h-10 px-4 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition flex items-center gap-2">
+      <i class="pi pi-download text-sm"></i>
+      Export
+    </button>
+
+  </div>
+</div>
+
+
+  <!-- Data Table -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <app-data-table
+      [data]="filteredWithdrawals()"
+      [columns]="columns()"
+      [config]="tableConfig()"
+      [actions]="actions()">
+      
+      <!-- Custom Status Template -->
+      <ng-template #status let-row="row">
+        <app-status-badge [status]="row.status"></app-status-badge>
+      </ng-template>
+    </app-data-table>
+  </div>
+
+  <!-- Empty State -->
+  @if (filteredWithdrawals().length === 0) {
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+      <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+        <i class="pi pi-inbox text-gray-400 text-2xl"></i>
+      </div>
+      <h3 class="text-gray-900 font-bold mb-2">No Withdrawal Requests</h3>
+      <p class="text-gray-500 text-sm">
+        @if (searchQuery() || selectedStatus() !== 'all') {
+          No requests match your current filters.
+        } @else {
+          There are no withdrawal requests at the moment.
+        }
+      </p>
+    </div>
+  }
+</div>

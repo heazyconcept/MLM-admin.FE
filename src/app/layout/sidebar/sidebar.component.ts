@@ -8,6 +8,8 @@ interface MenuItem {
   route?: string;
   badge?: number;
   action?: () => void;
+  submenu?: MenuItem[];
+  expanded?: boolean;
 }
 
 interface MenuSection {
@@ -33,6 +35,22 @@ export class SidebarComponent {
         { label: 'Dashboard', icon: 'pi pi-th-large', route: '/admin/dashboard' },
         { label: 'User Management', icon: 'pi pi-users', route: '/admin/users' },
         { label: 'Transactions', icon: 'pi pi-arrow-right-arrow-left', route: '/admin/transactions' },
+        { 
+          label: 'Wallets', 
+          icon: 'pi pi-wallet', 
+          submenu: [
+            { label: 'Overview', icon: 'pi pi-chart-bar', route: '/admin/wallets/overview' },
+            { label: 'All Wallets', icon: 'pi pi-list', route: '/admin/wallets' }
+          ]
+        },
+        { 
+          label: 'Withdrawals', 
+          icon: 'pi pi-money-bill', 
+          submenu: [
+            { label: 'All Requests', icon: 'pi pi-list', route: '/admin/withdrawals' },
+            { label: 'Pending', icon: 'pi pi-clock', route: '/admin/withdrawals/pending' }
+          ]
+        },
         { label: 'Earnings', icon: 'pi pi-dollar', route: '/admin/earnings' }
       ]
     },

@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type BadgeStatus = 'Active' | 'Suspended' | 'Flagged' | 'Pending' | 'Success' | 'Failed';
+export type BadgeStatus = 'Active' | 'Suspended' | 'Flagged' | 'Pending' | 'Success' | 'Failed' | 'Approved' | 'Rejected' | 'Processing' | 'Paid';
 
 @Component({
   selector: 'app-status-badge',
@@ -31,9 +31,13 @@ export class StatusBadgeComponent {
       'Active': 'bg-mlm-success/10 text-mlm-success',
       'Suspended': 'bg-mlm-error/10 text-mlm-error',
       'Flagged': 'bg-mlm-warning/10 text-mlm-warning',
-      'Pending': 'bg-mlm-blue-100 text-mlm-blue-600',
+      'Pending': 'bg-orange-100 text-orange-600',
       'Success': 'bg-mlm-success/10 text-mlm-success',
-      'Failed': 'bg-mlm-error/10 text-mlm-error'
+      'Failed': 'bg-mlm-error/10 text-mlm-error',
+      'Approved': 'bg-blue-100 text-blue-600',
+      'Rejected': 'bg-red-100 text-red-600',
+      'Processing': 'bg-purple-100 text-purple-600',
+      'Paid': 'bg-green-100 text-green-600'
     };
     return classes[this.status] || classes['Active'];
   }
@@ -43,9 +47,13 @@ export class StatusBadgeComponent {
       'Active': 'bg-mlm-success',
       'Suspended': 'bg-mlm-error',
       'Flagged': 'bg-mlm-warning',
-      'Pending': 'bg-mlm-blue-600',
+      'Pending': 'bg-orange-600',
       'Success': 'bg-mlm-success',
-      'Failed': 'bg-mlm-error'
+      'Failed': 'bg-mlm-error',
+      'Approved': 'bg-blue-600',
+      'Rejected': 'bg-red-600',
+      'Processing': 'bg-purple-600',
+      'Paid': 'bg-green-600'
     };
     return classes[this.status] || classes['Active'];
   }

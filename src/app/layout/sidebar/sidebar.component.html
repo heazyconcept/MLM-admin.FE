@@ -30,7 +30,40 @@
         <ul class="space-y-1">
           @for (item of section.items; track item.label) {
             <li>
-              @if (item.route) {
+              @if (item.submenu) {
+                <!-- Menu item with submenu -->
+                <div>
+                  <button 
+                    (click)="item.expanded = !item.expanded"
+                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-mlm-text hover:bg-mlm-green-50 transition-colors"
+                    [class.justify-center]="collapsed">
+                    <i [class]="item.icon" class="text-lg"></i>
+                    @if (!collapsed) {
+                      <span class="flex-1 text-left text-sm font-medium">{{ item.label }}</span>
+                      <i class="pi text-xs transition-transform" 
+                         [class.pi-chevron-down]="!item.expanded"
+                         [class.pi-chevron-up]="item.expanded"></i>
+                    }
+                  </button>
+                  
+                  <!-- Submenu -->
+                  @if (item.expanded && !collapsed) {
+                    <ul class="mt-1 ml-6 space-y-1">
+                      @for (subitem of item.submenu; track subitem.label) {
+                        <li>
+                          <a 
+                            [routerLink]="subitem.route"
+                            routerLinkActive="bg-mlm-green-100 text-mlm-primary"
+                            class="flex items-center gap-3 px-3 py-2 rounded-lg text-mlm-text hover:bg-mlm-green-50 transition-colors text-sm">
+                            <i [class]="subitem.icon" class="text-base"></i>
+                            <span>{{ subitem.label }}</span>
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
+              } @else if (item.route) {
                 <a 
                   [routerLink]="item.route"
                   routerLinkActive="bg-mlm-green-100 text-mlm-primary"

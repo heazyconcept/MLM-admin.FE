@@ -1,0 +1,66 @@
+<p-dialog 
+  [(visible)]="visible" 
+  [modal]="true" 
+  [header]="title"
+  [draggable]="false" 
+  [resizable]="false"
+  [style]="{ width: '450px' }"
+  styleClass="modern-dialog"
+  (onHide)="onCancel()">
+  
+  <div class="flex flex-col gap-6 pt-2">
+    <!-- Action Header -->
+    <div class="flex items-start gap-4 p-4 rounded-2xl" [class]="colorClass">
+      <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm">
+        <i [class]="icon + ' text-xl'"></i>
+      </div>
+      <div>
+        <p class="text-sm font-medium leading-relaxed">
+          {{ message }}
+        </p>
+        @if (isIrreversible) {
+          <p class="text-[11px] font-bold text-red-600 uppercase tracking-wider mt-2 flex items-center gap-1.5">
+            <i class="pi pi-exclamation-triangle"></i>
+            Warning: This action is irreversible
+          </p>
+        }
+      </div>
+    </div>
+
+    <!-- Rejection Reason Section -->
+    @if (action === 'Reject') {
+      <div class="space-y-2">
+        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Reason for Rejection <span class="text-red-500">*</span></label>
+        <textarea 
+          pTextarea 
+          [autoResize]="true" 
+          rows="3" 
+          class="w-full rounded-xl border-gray-100 focus:border-red-200 focus:ring-red-200/20"
+          placeholder="Enter the reason why this request is being rejected..."
+          [(ngModel)]="reason">
+        </textarea>
+        @if (!reason().trim()) {
+          <p class="text-[10px] text-red-500 font-medium">Please provide a reason to continue</p>
+        }
+      </div>
+    }
+
+    <!-- Buttons -->
+    <div class="flex gap-3 pt-2">
+      <button 
+        pButton 
+        label="Cancel" 
+        class="p-button-outlined p-button-secondary flex-1"
+        (click)="onCancel()">
+      </button>
+      <button 
+        pButton 
+        [label]="confirmLabel" 
+        [severity]="confirmSeverity"
+        class="flex-1"
+        [disabled]="action === 'Reject' && !reason().trim()"
+        (click)="onConfirm()">
+      </button>
+    </div>
+  </div>
+</p-dialog>

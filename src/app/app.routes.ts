@@ -34,6 +34,22 @@ export const routes: Routes = [
         ]
       },
       {
+        path: 'wallets',
+        children: [
+          { path: 'overview', loadComponent: () => import('./features/wallets/dashboard/wallet-dashboard.component').then(m => m.WalletDashboardComponent) },
+          { path: '', loadComponent: () => import('./features/wallets/list/wallet-list.component').then(m => m.WalletListComponent) },
+          { path: ':id', loadComponent: () => import('./features/wallets/details/wallet-details.component').then(m => m.WalletDetailsComponent) }
+        ]
+      },
+      {
+        path: 'withdrawals',
+        children: [
+          { path: '', loadComponent: () => import('./features/withdrawals/list/withdrawals-list.component').then(m => m.WithdrawalsListComponent) },
+          { path: 'pending', loadComponent: () => import('./features/withdrawals/list/withdrawals-list.component').then(m => m.WithdrawalsListComponent), data: { defaultFilter: 'Pending' } },
+          { path: ':id', loadComponent: () => import('./features/withdrawals/details/withdrawal-details.component').then(m => m.WithdrawalDetailsComponent) }
+        ]
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'

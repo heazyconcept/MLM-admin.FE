@@ -1,0 +1,209 @@
+<div class="min-h-screen bg-linear-to-br from-gray-50 via-white to-blue-50/30 p-8 space-y-10">
+
+  <!-- Header -->
+  <div class="flex items-end justify-between">
+    <div>
+      <h1 class="text-3xl font-black text-mlm-text mb-1">Financial Overview</h1>
+      <p class="text-mlm-secondary">
+        Real-time visibility into system liquidity and wallet health
+      </p>
+    </div>
+
+    <!-- System Status Pill -->
+    <div
+      class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold"
+      [ngClass]="stats().lockedWallets + stats().frozenWallets > 0 
+        ? 'bg-red-50 text-red-600' 
+        : 'bg-green-50 text-green-600'">
+      <span
+        class="w-2 h-2 rounded-full"
+        [ngClass]="stats().lockedWallets + stats().frozenWallets > 0 
+          ? 'bg-red-500' 
+          : 'bg-green-500'">
+      </span>
+      {{ stats().lockedWallets + stats().frozenWallets > 0 ? 'Attention Required' : 'System Healthy' }}
+    </div>
+  </div>
+
+  <!-- Total Balances -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+   <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition relative">
+
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+        Total Balance
+      </p>
+      <p class="text-sm font-semibold text-gray-700">
+        USD Wallets
+      </p>
+    </div>
+
+    <!-- Neutral Icon -->
+    <i class="pi pi-dollar text-xl text-gray-300"></i>
+  </div>
+
+  <h3 class="text-4xl font-black text-mlm-text tracking-tight mb-4">
+    {{ overview().totalBalanceUSD | currency:'USD':'symbol':'1.0-0' }}
+  </h3>
+
+  <!-- Structural Accent -->
+  <div class="h-px bg-linear-to-r from-gray-200 via-gray-100 to-transparent"></div>
+</div>
+
+
+    <!-- NGN -->
+   <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition relative">
+
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+        Total Balance
+      </p>
+      <p class="text-sm font-semibold text-gray-700">
+        NGN Wallets
+      </p>
+    </div>
+
+    <!-- Neutral Icon -->
+    <span class="text-xl font-bold text-gray-300">₦</span>
+  </div>
+
+  <h3 class="text-4xl font-black text-mlm-text tracking-tight mb-4">
+    {{ overview().totalBalanceNGN | currency:'NGN':'symbol-narrow':'1.0-0' }}
+  </h3>
+
+  <div class="h-px bg-linear-to-r from-gray-200 via-gray-100 to-transparent"></div>
+</div>
+
+  </div>
+
+  <!-- Wallet Health Metrics -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+    <!-- Total -->
+    <div class="bg-white p-6 rounded-2xl border border-gray-100">
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Total Wallets</p>
+      <h3 class="text-3xl font-black text-mlm-text">{{ stats().totalWallets }}</h3>
+    </div>
+
+    <!-- Active -->
+   <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+    Active Wallets
+  </p>
+
+  <div class="flex items-end justify-between">
+    <h3 class="text-3xl font-black text-mlm-text">
+      {{ stats().activeWallets }}
+    </h3>
+
+    <i class="pi pi-check-circle text-lg text-gray-300"></i>
+  </div>
+
+  <div class="mt-4 h-px bg-gray-100"></div>
+</div>
+
+
+    <!-- Frozen -->
+   <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+    Frozen Wallets
+  </p>
+
+  <div class="flex items-end justify-between">
+    <h3 class="text-3xl font-black text-mlm-text">
+      {{ stats().frozenWallets }}
+    </h3>
+
+    <i class="pi pi-check-circle text-lg text-gray-300"></i>
+  </div>
+
+  <div class="mt-4 h-px bg-gray-100"></div>
+</div>
+
+
+    <!-- Locked -->
+   <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+    Locked Wallets
+  </p>
+
+  <div class="flex items-end justify-between">
+    <h3 class="text-3xl font-black text-mlm-text">
+      {{ stats().lockedWallets }}
+    </h3>
+
+    <i class="pi pi-lock text-lg text-gray-300"></i>
+  </div>
+
+  <div class="mt-4 h-px bg-gray-100"></div>
+</div>
+
+  </div>
+
+  <!-- Distribution + Actions -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Chart -->
+    <div class="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-100">
+      <h3 class="text-lg font-bold text-mlm-text mb-6">
+        Wallet Type Distribution
+      </h3>
+
+      <div class="h-[320px]">
+        <p-chart
+          type="doughnut"
+          [data]="chartData()"
+          [options]="chartOptions"
+          class="w-full h-full">
+        </p-chart>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
+        <div class="text-center">
+          <p class="text-xs uppercase tracking-widest text-gray-400">Main</p>
+          <p class="text-xl font-black text-green-600">{{ stats().mainWallets }}</p>
+        </div>
+        <div class="text-center">
+          <p class="text-xs uppercase tracking-widest text-gray-400">Trading</p>
+          <p class="text-xl font-black text-blue-600">{{ stats().tradingWallets }}</p>
+        </div>
+        <div class="text-center">
+          <p class="text-xs uppercase tracking-widest text-gray-400">Bonus</p>
+          <p class="text-xl font-black text-orange-600">{{ stats().bonusWallets }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="bg-white p-8 rounded-2xl border border-gray-100 space-y-4">
+      <h3 class="text-lg font-bold text-mlm-text">Quick Actions</h3>
+
+      <button
+        pButton
+        label="View All Wallets"
+        icon="pi pi-list"
+        class="w-full p-button-outlined p-button-lg justify-start"
+        routerLink="/admin/wallets">
+      </button>
+
+      <button
+        pButton
+        label="Locked Wallets"
+        icon="pi pi-ban"
+        class="w-full p-button-outlined p-button-danger p-button-lg justify-start"
+        [disabled]="stats().lockedWallets === 0">
+      </button>
+
+      <button
+        pButton
+        label="Frozen Wallets"
+        icon="pi pi-lock"
+        class="w-full p-button-outlined p-button-warning p-button-lg justify-start"
+        [disabled]="stats().frozenWallets === 0">
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,28 @@
+<p-dialog [(visible)]="visible" [header]="action() + ' Wallet'" [modal]="true" [style]="{width: '450px'}" (onHide)="close()">
+  @if (wallet(); as w) {
+    <div class="space-y-4 pt-2 text-center">
+       <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto text-red-600 mb-4">
+          <i class="pi pi-exclamation-triangle text-3xl"></i>
+       </div>
+
+       <h3 class="text-xl font-bold text-gray-900">Are you sure?</h3>
+       
+       <p class="text-gray-500 leading-relaxed">
+         You are about to <strong class="text-gray-900">{{ action() }}</strong> the wallet for <strong class="text-gray-900">{{ w.userName }}</strong>.
+         <br>
+         @if (action() === 'Lock') {
+           <span class="text-sm">They will not be able to perform any transactions until unlocked.</span>
+         } @else {
+           <span class="text-sm">Their wallet access will be restored immediately.</span>
+         }
+       </p>
+
+       <div class="flex justify-center gap-3 mt-8">
+         <button pButton label="Cancel" class="p-button-text p-button-secondary" (click)="close()"></button>
+         <button pButton [label]="'Confirm ' + action()" 
+                 [class]="action() === 'Lock' ? 'p-button-danger' : 'p-button-success'"
+                 (click)="confirm()"></button>
+       </div>
+    </div>
+  }
+</p-dialog>
