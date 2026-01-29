@@ -1,117 +1,206 @@
-<p-table
-  #tableRef
-  [value]="data()"
-  [paginator]="config().paginator"
-  [rows]="config().rows"
-  [rowsPerPageOptions]="config().rowsPerPageOptions"
-  [showCurrentPageReport]="config().showCurrentPageReport"
-  [currentPageReportTemplate]="config().currentPageReportTemplate || 'Showing {first} to {last} of {totalRecords}'"
-  [globalFilterFields]="getGlobalFilterFields()"
-  [loading]="loading()"
-  [showGridlines]="config().showGridlines"
-  [styleClass]="tableStyleClass()"
-  [tableStyle]="{'min-width': '50rem'}">
+<div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
 
-  <!-- Caption with global filter -->
-  @if (config().globalFilter) {
-    <ng-template #caption>
-      <div class="flex items-center justify-between gap-4">
-        <div class="relative flex-1 max-w-md">
-          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-          <input
-            type="text"
-            pInputText
-            [ngModel]="globalFilterValue()"
-            (ngModelChange)="onGlobalFilterChange($event)"
-            [placeholder]="config().globalFilterPlaceholder || 'Search...'"
-            class="w-full pl-10 h-11 border-gray-200 focus:ring-mlm-primary/20 bg-white/50" />
+  <p-table
+    #tableRef
+    [value]="data()"
+    [paginator]="config().paginator"
+    [rows]="config().rows"
+    [rowsPerPageOptions]="config().rowsPerPageOptions"
+    [showCurrentPageReport]="config().showCurrentPageReport"
+    [currentPageReportTemplate]="
+      config().currentPageReportTemplate || 'Showing {first} to {last} of {totalRecords}'
+    "
+    [globalFilterFields]="getGlobalFilterFields()"
+    [loading]="loading()"
+    [showGridlines]="false"
+    [styleClass]="'w-full'"
+    [tableStyle]="{'min-width': '50rem'}">
+
+    <!-- ========================= -->
+    <!-- Caption / Toolbar -->
+    <!-- ========================= -->
+    @if (config().globalFilter) {
+      <ng-template #caption>
+        <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-200">
+          <div class="relative w-full max-w-sm">
+            <i
+              class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+            </i>
+            <input
+              type="text"
+              pInputText
+              [ngModel]="globalFilterValue()"
+              (ngModelChange)="onGlobalFilterChange($event)"
+              [placeholder]="config().globalFilterPlaceholder || 'Search by user, reference, or ID'"
+              class="
+                w-full h-10 pl-9 pr-4
+                rounded-lg
+                border border-gray-300
+                text-sm
+                focus:outline-none
+                focus:ring-2 focus:ring-gray-900/10
+              "
+            />
+          </div>
+
+          <ng-content select="[tableActions]"></ng-content>
         </div>
-        <ng-content select="[tableActions]"></ng-content>
-      </div>
+      </ng-template>
+    }
+
+    <!-- ========================= -->
+    <!-- Header -->
+    <!-- ========================= -->
+    <ng-template #header>
+      <tr class="border-b border-gray-200">
+        @for (column of visibleColumns(); track column.field) {
+          <th
+            class="
+              px-6 py-3
+              text-left
+              text-[11px]
+              font-semibold
+              uppercase
+              tracking-wider
+              text-gray-500
+            "
+            [ngStyle]="column.width ? {'width': column.width} : {}">
+            {{ column.header }}
+          </th>
+        }
+
+        @if (hasActions()) {
+          <th
+            class="
+              px-6 py-3
+              text-right
+              text-[11px]
+              font-semibold
+              uppercase
+              tracking-wider
+              text-gray-500
+            ">
+            Actions
+          </th>
+        }
+      </tr>
     </ng-template>
-  }
 
-  <!-- Table Header -->
-  <ng-template #header>
-    <tr>
-      @for (column of visibleColumns(); track column.field) {
-        <th
-          [ngClass]="getHeaderClass(column)"
-          [ngStyle]="column.width ? {'width': column.width} : {}">
-          {{ column.header }}
-        </th>
-      }
-      @if (hasActions()) {
-        <th class="w-20 text-center">Actions</th>
-      }
-    </tr>
-  </ng-template>
-
-  <!-- Table Body -->
-  <ng-template #body let-row let-rowIndex="rowIndex">
-    <tr class="group">
-      @for (column of visibleColumns(); track column.field) {
-        <td [ngClass]="getColumnClass(column)">
-          @if (column.template) {
-            <ng-container
-              [ngTemplateOutlet]="column.template"
-              [ngTemplateOutletContext]="{$implicit: row, rowIndex: rowIndex}">
-            </ng-container>
-          } @else {
-            {{ getCellValue(row, column) }}
-          }
-        </td>
-      }
-      @if (hasActions()) {
-        <td class="text-center">
-          <div class="flex items-center justify-center gap-1">
-            @for (action of actions(); track action.icon) {
-              @if (isActionVisible(action, row)) {
-                <button
-                  pButton
-                  [icon]="action.icon"
-                  [label]="action.label || ''"
-                  [class]="getActionButtonClass(action)"
-                  [disabled]="isActionDisabled(action, row)"
-                  [pTooltip]="action.tooltip"
-                  tooltipPosition="top"
-                  (click)="onRowActionClick(action, row)">
-                </button>
-              }
+    <!-- ========================= -->
+    <!-- Body -->
+    <!-- ========================= -->
+    <ng-template #body let-row let-rowIndex="rowIndex">
+      <tr
+        class="
+          border-b border-gray-100
+          hover:bg-gray-50/60
+          transition
+          group
+        "
+      >
+        @for (column of visibleColumns(); track column.field) {
+          <td
+            class="
+              px-6 py-4
+              text-sm
+              text-gray-700
+              whitespace-nowrap
+            "
+          >
+            @if (column.template) {
+              <ng-container
+                [ngTemplateOutlet]="column.template"
+                [ngTemplateOutletContext]="{$implicit: row, rowIndex: rowIndex}">
+              </ng-container>
+            } @else {
+              {{ getCellValue(row, column) }}
             }
+          </td>
+        }
+
+        @if (hasActions()) {
+          <td class="px-6 py-4 text-right">
+            <div
+              class="
+                flex justify-end gap-1
+                opacity-0 group-hover:opacity-100
+                transition
+              "
+            >
+              @for (action of actions(); track action.icon) {
+                @if (isActionVisible(action, row)) {
+                  <button
+                    pButton
+                    [icon]="action.icon"
+                    [disabled]="isActionDisabled(action, row)"
+                    [pTooltip]="action.tooltip"
+                    tooltipPosition="top"
+                    class="
+                      p-button-text
+                      p-button-sm
+                      text-gray-500
+                      hover:text-gray-900
+                    "
+                    (click)="onRowActionClick(action, row)">
+                  </button>
+                }
+              }
+            </div>
+          </td>
+        }
+      </tr>
+    </ng-template>
+
+    <!-- ========================= -->
+    <!-- Empty State -->
+    <!-- ========================= -->
+    <ng-template #emptymessage>
+      <tr>
+        <td
+          [attr.colspan]="visibleColumns().length + (hasActions() ? 1 : 0)"
+          class="py-20 text-center"
+        >
+          <div class="flex flex-col items-center">
+            <div
+              class="
+                w-20 h-20
+                rounded-full
+                bg-gray-50
+                border border-gray-100
+                flex items-center justify-center
+                mb-4
+              "
+            >
+              <i [class]="emptyIcon() + ' text-4xl text-gray-300'"></i>
+            </div>
+
+            <h3 class="text-base font-semibold text-gray-900">
+              No withdrawal requests found
+            </h3>
+
+            <p class="mt-1 text-sm text-gray-500 max-w-xs">
+              Try adjusting your filters or search terms.
+            </p>
+
+            <ng-content select="[emptyActions]"></ng-content>
           </div>
         </td>
-      }
-    </tr>
-  </ng-template>
+      </tr>
+    </ng-template>
 
-  <!-- Empty Message -->
-  <ng-template #emptymessage>
-    <tr>
-      <td [attr.colspan]="visibleColumns().length + (hasActions() ? 1 : 0)" class="text-center py-20">
-        <div class="flex flex-col items-center">
-          <div class="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center mb-4 border border-gray-100">
-            <i [class]="emptyIcon() + ' text-4xl text-gray-300'"></i>
-          </div>
-          <h3 class="text-lg font-bold text-gray-900">{{ emptyMessage() }}</h3>
-          <p class="text-gray-500 mt-1 max-w-xs mx-auto">
-            Try adjusting your filters or search terms.
-          </p>
-          <ng-content select="[emptyActions]"></ng-content>
-        </div>
-      </td>
-    </tr>
-  </ng-template>
+    <!-- ========================= -->
+    <!-- Loading -->
+    <!-- ========================= -->
+    <ng-template #loadingbody>
+      <tr>
+        <td
+          [attr.colspan]="visibleColumns().length + (hasActions() ? 1 : 0)"
+          class="py-10 text-center"
+        >
+          <i class="pi pi-spinner pi-spin text-xl text-gray-400"></i>
+        </td>
+      </tr>
+    </ng-template>
 
-  <!-- Loading -->
-  <ng-template #loadingbody>
-    <tr>
-      <td [attr.colspan]="visibleColumns().length + (hasActions() ? 1 : 0)">
-        <div class="flex items-center justify-center py-8">
-          <i class="pi pi-spinner pi-spin text-2xl text-mlm-primary"></i>
-        </div>
-      </td>
-    </tr>
-  </ng-template>
-</p-table>
-
+  </p-table>
+</div>

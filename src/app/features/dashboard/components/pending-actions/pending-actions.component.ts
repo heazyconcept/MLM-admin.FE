@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
 import { DialogModule } from 'primeng/dialog';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -27,16 +28,29 @@ export interface PendingItem {
 @Component({
   selector: 'app-pending-actions',
   standalone: true,
-  imports: [CommonModule, DialogModule, TableModule, TagModule, ButtonModule],
+  imports: [CommonModule, RouterModule, DialogModule, TableModule, TagModule, ButtonModule],
   templateUrl: './pending-actions.component.html',
   styleUrls: ['./pending-actions.component.css']
 })
 export class PendingActionsComponent {
   @Input() actions: PendingAction[] = [];
-  
+  private router = inject(Router);
+
   modalVisible = false;
   selectedAction: PendingAction | null = null;
   modalItems: PendingItem[] = [];
+
+  viewAll(type?: string) {
+    this.modalVisible = false;
+    const actionType = type || this.selectedAction?.type;
+
+    if (actionType === 'withdrawals') {
+      this.router.navigate(['/admin/withdrawals/pending']);
+    } else {
+      // Fallback for other types
+      this.router.navigate(['/admin', actionType]);
+    }
+  }
 
   get defaultActions(): PendingAction[] {
     return [

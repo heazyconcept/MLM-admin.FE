@@ -1,162 +1,209 @@
-<div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 p-8">
+<div class="min-h-screen bg-linear-to-br from-gray-50 via-white to-blue-50/30 p-8 space-y-10">
+
   <!-- Header -->
-  <div class="mb-8">
-    <h1 class="text-3xl font-black text-mlm-text mb-2">Financial Overview</h1>
-    <p class="text-mlm-secondary">Monitor system-wide wallet balances and financial health</p>
-  </div>
-
-  <!-- Balance Cards Row -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-    <!-- Total Balance USD -->
-    <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-      <div class="absolute top-0 right-0 p-12 -mt-6 -mr-6 bg-green-500/5 rounded-full blur-2xl group-hover:bg-green-500/10 transition-colors"></div>
-      <div class="relative">
-        <div class="flex items-center justify-between mb-6">
-          <div class="w-14 h-14 rounded-xl bg-green-500/10 flex items-center justify-center text-green-600">
-            <i class="pi pi-dollar text-2xl"></i>
-          </div>
-          <span class="text-xs font-bold text-green-600 uppercase tracking-widest bg-green-50 px-3 py-1 rounded-full">USD</span>
-        </div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Total Balance</p>
-        <h3 class="text-4xl font-black text-mlm-text tracking-tight">{{ overview().totalBalanceUSD | currency:'USD':'symbol':'1.0-0' }}</h3>
-      </div>
+  <div class="flex items-end justify-between">
+    <div>
+      <h1 class="text-3xl font-black text-mlm-text mb-1">Financial Overview</h1>
+      <p class="text-mlm-secondary">
+        Real-time visibility into system liquidity and wallet health
+      </p>
     </div>
 
-    <!-- Total Balance NGN -->
-    <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-      <div class="absolute top-0 right-0 p-12 -mt-6 -mr-6 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors"></div>
-      <div class="relative">
-        <div class="flex items-center justify-between mb-6">
-          <div class="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
-            <span class="text-2xl font-bold">₦</span>
-          </div>
-          <span class="text-xs font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full">NGN</span>
-        </div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Total Balance</p>
-        <h3 class="text-4xl font-black text-mlm-text tracking-tight">{{ overview().totalBalanceNGN | currency:'NGN':'symbol-narrow':'1.0-0' }}</h3>
-      </div>
+    <!-- System Status Pill -->
+    <div
+      class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold"
+      [ngClass]="stats().lockedWallets + stats().frozenWallets > 0 
+        ? 'bg-red-50 text-red-600' 
+        : 'bg-green-50 text-green-600'">
+      <span
+        class="w-2 h-2 rounded-full"
+        [ngClass]="stats().lockedWallets + stats().frozenWallets > 0 
+          ? 'bg-red-500' 
+          : 'bg-green-500'">
+      </span>
+      {{ stats().lockedWallets + stats().frozenWallets > 0 ? 'Attention Required' : 'System Healthy' }}
     </div>
   </div>
 
-  <!-- Stats Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <!-- Total Wallets -->
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between mb-4">
-        <div class="w-12 h-12 rounded-xl bg-mlm-primary/10 flex items-center justify-center text-mlm-primary">
-          <i class="pi pi-wallet text-xl"></i>
-        </div>
-      </div>
-      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Wallets</p>
+  <!-- Total Balances -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+   <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition relative">
+
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+        Total Balance
+      </p>
+      <p class="text-sm font-semibold text-gray-700">
+        USD Wallets
+      </p>
+    </div>
+
+    <!-- Neutral Icon -->
+    <i class="pi pi-dollar text-xl text-gray-300"></i>
+  </div>
+
+  <h3 class="text-4xl font-black text-mlm-text tracking-tight mb-4">
+    {{ overview().totalBalanceUSD | currency:'USD':'symbol':'1.0-0' }}
+  </h3>
+
+  <!-- Structural Accent -->
+  <div class="h-px bg-linear-to-r from-gray-200 via-gray-100 to-transparent"></div>
+</div>
+
+
+    <!-- NGN -->
+   <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition relative">
+
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+        Total Balance
+      </p>
+      <p class="text-sm font-semibold text-gray-700">
+        NGN Wallets
+      </p>
+    </div>
+
+    <!-- Neutral Icon -->
+    <span class="text-xl font-bold text-gray-300">₦</span>
+  </div>
+
+  <h3 class="text-4xl font-black text-mlm-text tracking-tight mb-4">
+    {{ overview().totalBalanceNGN | currency:'NGN':'symbol-narrow':'1.0-0' }}
+  </h3>
+
+  <div class="h-px bg-linear-to-r from-gray-200 via-gray-100 to-transparent"></div>
+</div>
+
+  </div>
+
+  <!-- Wallet Health Metrics -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+    <!-- Total -->
+    <div class="bg-white p-6 rounded-2xl border border-gray-100">
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Total Wallets</p>
       <h3 class="text-3xl font-black text-mlm-text">{{ stats().totalWallets }}</h3>
     </div>
 
-    <!-- Active Wallets -->
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between mb-4">
-        <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
-          <i class="pi pi-check-circle text-xl"></i>
-        </div>
-      </div>
-      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Active Wallets</p>
-      <h3 class="text-3xl font-black text-green-600">{{ stats().activeWallets }}</h3>
-    </div>
+    <!-- Active -->
+   <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+    Active Wallets
+  </p>
 
-    <!-- Frozen Wallets -->
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between mb-4">
-        <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
-          <i class="pi pi-lock text-xl"></i>
-        </div>
-      </div>
-      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Frozen Wallets</p>
-      <h3 class="text-3xl font-black text-orange-600">{{ stats().frozenWallets }}</h3>
-      @if (stats().frozenWallets > 0) {
-        <p class="text-xs text-orange-600 font-medium mt-2">Require attention</p>
-      }
-    </div>
+  <div class="flex items-end justify-between">
+    <h3 class="text-3xl font-black text-mlm-text">
+      {{ stats().activeWallets }}
+    </h3>
 
-    <!-- Locked Wallets -->
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between mb-4">
-        <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-          <i class="pi pi-ban text-xl"></i>
-        </div>
-      </div>
-      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Locked Wallets</p>
-      <h3 class="text-3xl font-black text-red-600">{{ stats().lockedWallets }}</h3>
-    </div>
+    <i class="pi pi-check-circle text-lg text-gray-300"></i>
   </div>
 
-  <!-- Charts and Distribution Row -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- Wallet Type Distribution Chart -->
-    <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
-      <h3 class="text-lg font-bold text-mlm-text mb-6">Wallet Type Distribution</h3>
-      <div class="h-[300px] flex items-center justify-center">
-        <p-chart type="doughnut" [data]="chartData()" [options]="chartOptions" class="w-full h-full flex justify-center"></p-chart>
+  <div class="mt-4 h-px bg-gray-100"></div>
+</div>
+
+
+    <!-- Frozen -->
+   <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+    Frozen Wallets
+  </p>
+
+  <div class="flex items-end justify-between">
+    <h3 class="text-3xl font-black text-mlm-text">
+      {{ stats().frozenWallets }}
+    </h3>
+
+    <i class="pi pi-check-circle text-lg text-gray-300"></i>
+  </div>
+
+  <div class="mt-4 h-px bg-gray-100"></div>
+</div>
+
+
+    <!-- Locked -->
+   <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+    Locked Wallets
+  </p>
+
+  <div class="flex items-end justify-between">
+    <h3 class="text-3xl font-black text-mlm-text">
+      {{ stats().lockedWallets }}
+    </h3>
+
+    <i class="pi pi-lock text-lg text-gray-300"></i>
+  </div>
+
+  <div class="mt-4 h-px bg-gray-100"></div>
+</div>
+
+  </div>
+
+  <!-- Distribution + Actions -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Chart -->
+    <div class="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-100">
+      <h3 class="text-lg font-bold text-mlm-text mb-6">
+        Wallet Type Distribution
+      </h3>
+
+      <div class="h-[320px]">
+        <p-chart
+          type="doughnut"
+          [data]="chartData()"
+          [options]="chartOptions"
+          class="w-full h-full">
+        </p-chart>
       </div>
-      <div class="mt-6 grid grid-cols-3 gap-4 pt-6 border-t border-gray-100">
+
+      <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
         <div class="text-center">
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Main</p>
-          <p class="text-2xl font-black text-green-600">{{ stats().mainWallets }}</p>
+          <p class="text-xs uppercase tracking-widest text-gray-400">Main</p>
+          <p class="text-xl font-black text-green-600">{{ stats().mainWallets }}</p>
         </div>
         <div class="text-center">
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Trading</p>
-          <p class="text-2xl font-black text-blue-600">{{ stats().tradingWallets }}</p>
+          <p class="text-xs uppercase tracking-widest text-gray-400">Trading</p>
+          <p class="text-xl font-black text-blue-600">{{ stats().tradingWallets }}</p>
         </div>
         <div class="text-center">
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Bonus</p>
-          <p class="text-2xl font-black text-orange-600">{{ stats().bonusWallets }}</p>
+          <p class="text-xs uppercase tracking-widest text-gray-400">Bonus</p>
+          <p class="text-xl font-black text-orange-600">{{ stats().bonusWallets }}</p>
         </div>
       </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
-      <h3 class="text-lg font-bold text-mlm-text mb-6">Quick Actions</h3>
-      <div class="space-y-4">
-        <button 
-          pButton 
-          label="View All Wallets" 
-          icon="pi pi-list"
-          class="w-full p-button-outlined p-button-lg justify-start"
-          routerLink="/admin/wallets">
-        </button>
-        <button 
-          pButton 
-          label="View Locked Wallets" 
-          icon="pi pi-ban"
-          class="w-full p-button-outlined p-button-danger p-button-lg justify-start"
-          [disabled]="stats().lockedWallets === 0">
-        </button>
-        <button 
-          pButton 
-          label="View Frozen Wallets" 
-          icon="pi pi-lock"
-          class="w-full p-button-outlined p-button-warning p-button-lg justify-start"
-          [disabled]="stats().frozenWallets === 0">
-        </button>
-      </div>
+    <!-- Actions -->
+    <div class="bg-white p-8 rounded-2xl border border-gray-100 space-y-4">
+      <h3 class="text-lg font-bold text-mlm-text">Quick Actions</h3>
 
-      <!-- Status Summary -->
-      <div class="mt-8 p-4 bg-gray-50 rounded-xl">
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">System Health</p>
-        <div class="space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Active Rate</span>
-            <span class="text-sm font-bold text-green-600">
-              {{ stats().totalWallets > 0 ? ((stats().activeWallets / stats().totalWallets) * 100).toFixed(1) : 0 }}%
-            </span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Issues</span>
-            <span class="text-sm font-bold text-red-600">
-              {{ stats().lockedWallets + stats().frozenWallets }}
-            </span>
-          </div>
-        </div>
-      </div>
+      <button
+        pButton
+        label="View All Wallets"
+        icon="pi pi-list"
+        class="w-full p-button-outlined p-button-lg justify-start"
+        routerLink="/admin/wallets">
+      </button>
+
+      <button
+        pButton
+        label="Locked Wallets"
+        icon="pi pi-ban"
+        class="w-full p-button-outlined p-button-danger p-button-lg justify-start"
+        [disabled]="stats().lockedWallets === 0">
+      </button>
+
+      <button
+        pButton
+        label="Frozen Wallets"
+        icon="pi pi-lock"
+        class="w-full p-button-outlined p-button-warning p-button-lg justify-start"
+        [disabled]="stats().frozenWallets === 0">
+      </button>
     </div>
   </div>
 </div>

@@ -43,6 +43,14 @@ export class SidebarComponent {
             { label: 'All Wallets', icon: 'pi pi-list', route: '/admin/wallets' }
           ]
         },
+        { 
+          label: 'Withdrawals', 
+          icon: 'pi pi-money-bill', 
+          submenu: [
+            { label: 'All Requests', icon: 'pi pi-list', route: '/admin/withdrawals' },
+            { label: 'Pending', icon: 'pi pi-clock', route: '/admin/withdrawals/pending' }
+          ]
+        },
         { label: 'Earnings', icon: 'pi pi-dollar', route: '/admin/earnings' }
       ]
     },
