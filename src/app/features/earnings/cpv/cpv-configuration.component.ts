@@ -13,14 +13,14 @@ export class CpvConfigurationComponent {
   earningsService = inject(EarningsService);
   rules = this.earningsService.cpvRules;
 
-  getPackageColor(pkg: string): string {
-    const colors: Record<string, string> = {
-      'Silver': '#94a3b8',
-      'Gold': '#F9A825',
-      'Platinum': '#64748b',
-      'Ruby': '#ef4444',
-      'Diamond': '#3b82f6'
+  getPackageClass(pkg: string): string {
+    const classes: Record<string, string> = {
+      'Silver': 'bg-slate-100 text-slate-600 border border-slate-200',
+      'Gold': 'bg-amber-100 text-amber-700 border border-amber-200',
+      'Platinum': 'bg-zinc-100 text-zinc-700 border border-zinc-200',
+      'Ruby': 'bg-rose-100 text-rose-700 border border-rose-200',
+      'Diamond': 'bg-sky-100 text-sky-700 border border-sky-200'
     };
-    return colors[pkg] || '#94a3b8';
+    return classes[pkg] || 'bg-gray-100 text-gray-800';
   }
 }

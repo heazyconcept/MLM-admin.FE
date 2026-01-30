@@ -1,0 +1,95 @@
+<div class="p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Order Management</h1>
+      <p class="text-slate-500 text-sm">Monitor orders, tracking, and fulfilment.</p>
+    </div>
+    <!-- (Optional) Manual Order Creation or Export Button can go here -->
+  </div>
+
+  <!-- Filters -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-xl border border-slate-200">
+    <!-- Search -->
+    <div class="col-span-1 md:col-span-2">
+      <p-iconfield iconPosition="left">
+        <p-inputicon class="pi pi-search"></p-inputicon>
+        <input 
+          type="text" 
+          pInputText 
+          placeholder="Search by Order ID, User, or Item..." 
+          class="w-full"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)" />
+      </p-iconfield>
+    </div>
+
+    <!-- Status Filter -->
+    <div>
+      <p-select 
+        [options]="statusOptions" 
+        [ngModel]="selectedStatus()"
+        (ngModelChange)="selectedStatus.set($event)"
+        placeholder="All Statuses"
+        class="w-full"
+        styleClass="w-full"
+        appendTo="body">
+      </p-select>
+    </div>
+
+    <!-- Fulfilment Filter -->
+    <div>
+       <p-select 
+        [options]="fulfilmentOptions" 
+        [ngModel]="selectedFulfilment()"
+        (ngModelChange)="selectedFulfilment.set($event)"
+        placeholder="All Types"
+        class="w-full"
+        styleClass="w-full"
+        appendTo="body">
+      </p-select>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+    <app-data-table
+      [data]="filteredOrders()"
+      [columns]="columns()"
+      [config]="tableConfig()"
+      [actions]="actions()">
+
+      <!-- User Column Template -->
+      <ng-template appDataTableTemplate="user" let-row>
+        <div class="flex flex-col">
+          <span class="font-medium text-slate-800">{{ row.user.name }}</span>
+          <span class="text-xs text-slate-500">{{ row.user.email }}</span>
+        </div>
+      </ng-template>
+
+      <!-- Total Amount Template -->
+      <ng-template appDataTableTemplate="totalAmount" let-row>
+        <span class="font-semibold text-slate-900">{{ row.totalAmount | currency:'NGN':'symbol-narrow' }}</span>
+      </ng-template>
+
+      <!-- Status Template -->
+      <ng-template appDataTableTemplate="status" let-row>
+         <p-tag [value]="row.status" [severity]="getStatusSeverity(row.status)"></p-tag>
+      </ng-template>
+
+      <!-- Fulfilment Template -->
+      <ng-template appDataTableTemplate="fulfilmentType" let-row>
+        <div class="flex items-center gap-2">
+          <i class="pi" [class.pi-car]="row.fulfilmentType === 'Delivery'" [class.pi-building]="row.fulfilmentType === 'Pickup'"></i>
+          <span class="text-sm text-slate-700">{{ row.fulfilmentType }}</span>
+        </div>
+      </ng-template>
+        
+      <!-- Date Template -->
+      <ng-template appDataTableTemplate="createdAt" let-row>
+         <span class="text-sm text-slate-600">{{ row.createdAt | date:'mediumDate' }}</span>
+      </ng-template>
+
+    </app-data-table>
+  </div>
+</div>

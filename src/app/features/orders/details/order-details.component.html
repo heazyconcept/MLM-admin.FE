@@ -1,0 +1,231 @@
+<div class="max-w-7xl mx-auto p-6 space-y-8" *ngIf="order(); else loading">
+  
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="flex items-center gap-4">
+      <button (click)="goBack()" class="p-2 rounded-full hover:bg-slate-100 transition-colors">
+        <i class="pi pi-arrow-left text-slate-500"></i>
+      </button>
+      <div>
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl font-bold text-slate-900">Order {{ order()!.id }}</h1>
+          <p-tag [value]="order()!.status" [severity]="getStatusSeverity(order()!.status)"></p-tag>
+          <span *ngIf="order()!.isFlagged" class="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded uppercase tracking-wide">Flagged</span>
+        </div>
+        <p class="text-slate-500 text-sm mt-1">
+          Placed on {{ order()!.createdAt | date:'medium' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-3">
+       <button 
+        pButton 
+        [label]="order()!.isFlagged ? 'Unflag Order' : 'Flag Order'" 
+        icon="pi pi-flag" 
+        [class.p-button-danger]="!order()!.isFlagged"
+        [class.p-button-outlined]="order()!.isFlagged"
+        [class.p-button-text]="order()!.isFlagged"
+        class="p-button-sm"
+        (click)="flagOrder()">
+      </button>
+      
+      <p-splitButton 
+        label="Update Status" 
+        icon="pi pi-refresh" 
+        [model]="statusMenuItems" 
+        styleClass="p-button-sm p-button-primary">
+      </p-splitButton>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Left Column: Details -->
+    <div class="lg:col-span-2 space-y-8">
+      
+      <!-- Order Items -->
+      <section class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+          <h2 class="font-semibold text-slate-800">items ({{ order()!.items.length }})</h2>
+        </div>
+        <div class="divide-y divide-slate-100">
+          <div *ngFor="let item of order()!.items" class="p-4 flex items-center justify-between hover:bg-slate-50/30 transition-colors">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">
+                <i class="pi pi-image text-slate-400"></i>
+              </div>
+              <div>
+                <p class="font-medium text-slate-900">{{ item.name }}</p>
+                <p class="text-xs text-slate-500 font-mono">SKU: {{ item.sku }}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="font-medium text-slate-900">{{ item.price | currency:'NGN':'symbol-narrow' }}</p>
+              <p class="text-xs text-slate-500">Qty: {{ item.quantity }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-50 p-4 border-t border-slate-100 flex justify-between items-center">
+          <span class="text-sm font-medium text-slate-600">Subtotal</span>
+          <span class="font-semibold text-slate-900">{{ getSubtotal() | currency:'NGN':'symbol-narrow' }}</span>
+        </div>
+      </section>
+
+      <!-- Fulfilment Details -->
+      <section class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          <h2 class="font-semibold text-slate-800">Fulfilment Details</h2>
+          <span class="text-xs font-bold uppercase tracking-wide bg-blue-50 text-blue-700 px-2 py-1 rounded">
+            {{ order()!.fulfilmentType }}
+          </span>
+        </div>
+        <div class="p-6">
+          <ng-container *ngIf="order()!.fulfilmentType === 'Delivery'; else pickupTemplate">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Delivery Address</h3>
+                <p class="text-slate-800 leading-relaxed">
+                  {{ order()!.deliveryDetails?.address }}<br>
+                  {{ order()!.deliveryDetails?.city }}, {{ order()!.deliveryDetails?.state }}
+                </p>
+              </div>
+              <div class="space-y-4">
+                <div>
+                   <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Logistics Partner</h3>
+                   <p class="text-slate-800 font-medium">{{ order()!.deliveryDetails?.logisticsPartner || 'Not Assigned' }}</p>
+                </div>
+                <div>
+                   <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Tracking Number</h3>
+                   <p class="font-mono text-slate-700 bg-slate-100 px-2 py-1 rounded inline-block">
+                     {{ order()!.deliveryDetails?.trackingNumber || 'Pending' }}
+                   </p>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #pickupTemplate>
+            <div>
+              <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Pickup Location</h3>
+              <p class="font-medium text-slate-900 text-lg mb-1">{{ order()!.merchant?.name }}</p>
+              <p class="text-slate-600">{{ order()!.merchant?.address }}</p>
+            </div>
+          </ng-template>
+        </div>
+      </section>
+
+      <!-- Timeline -->
+       <section class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+          <h2 class="font-semibold text-slate-800">Timeline</h2>
+        </div>
+        <div class="p-6">
+          <p-timeline [value]="order()!.timeline" align="left" styleClass="w-full customize-timeline">
+             <ng-template pTemplate="content" let-event>
+               <div class="pb-6">
+                 <p class="font-semibold text-slate-800">{{ event.status }}</p>
+                 <p class="text-sm text-slate-600 mb-1">{{ event.note }}</p>
+                 <div class="flex items-center gap-2 text-xs text-slate-400">
+                   <span>{{ event.date | date:'medium' }}</span>
+                   <span>•</span>
+                   <span>by {{ event.by }}</span>
+                 </div>
+               </div>
+             </ng-template>
+             <ng-template pTemplate="marker" let-event>
+                <span 
+                  class="w-3 h-3 rounded-full border-2 border-white ring-2 ring-slate-100"
+                  [ngClass]="{
+                    'bg-green-500': event.status === 'Completed',
+                    'bg-blue-500': event.status === 'Processing' || event.status === 'Ready',
+                    'bg-yellow-500': event.status === 'Delayed',
+                    'bg-red-500': event.status === 'Cancelled' || event.status === 'Failed',
+                    'bg-slate-400': event.status === 'Pending'
+                  }">
+                </span>
+             </ng-template>
+          </p-timeline>
+        </div>
+       </section>
+    </div>
+
+    <!-- Right Column: Summary & Tools -->
+    <div class="space-y-8">
+      
+      <!-- Customer Info -->
+      <section class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+          <h2 class="font-semibold text-slate-800">Customer</h2>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg">
+              {{ order()!.user.name.charAt(0) }}
+            </div>
+            <div>
+              <p class="font-medium text-slate-900">{{ order()!.user.name }}</p>
+              <p class="text-xs text-slate-500">Registered Customer</p>
+            </div>
+          </div>
+          <div class="space-y-2 pt-2 text-sm text-slate-600">
+             <div class="flex items-center gap-2">
+               <i class="pi pi-envelope opacity-50"></i>
+               <span>{{ order()!.user.email }}</span>
+             </div>
+             <div class="flex items-center gap-2">
+               <i class="pi pi-phone opacity-50"></i>
+               <span>{{ order()!.user.phone }}</span>
+             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Payment Summary -->
+      <section class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+          <h2 class="font-semibold text-slate-800">Payment Summary</h2>
+        </div>
+        <div class="p-6 space-y-3">
+          <div class="flex justify-between text-sm text-slate-600">
+            <span>Subtotal</span>
+            <span>{{ getSubtotal() | currency:'NGN':'symbol-narrow' }}</span>
+          </div>
+          <div class="flex justify-between text-sm text-slate-600">
+            <span>Shipping</span>
+            <span>{{ order()!.logisticsCost | currency:'NGN':'symbol-narrow' }}</span>
+          </div>
+          <div class="pt-3 border-t border-slate-100 flex justify-between font-bold text-slate-900 text-lg">
+            <span>Total</span>
+            <span>{{ order()!.totalAmount | currency:'NGN':'symbol-narrow' }}</span>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Internal Notes -->
+      <section class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+          <h2 class="font-semibold text-slate-800">Internal Notes</h2>
+        </div>
+        <div class="p-6">
+          <textarea 
+            rows="4" 
+            class="w-full text-sm !bg-yellow-50 !border-yellow-200 text-slate-700 placeholder:text-yellow-700/50 focus:!border-yellow-400 focus:!ring-yellow-400" 
+            placeholder="Add internal notes about this order..."
+            [ngModel]="order()!.internalNotes"></textarea>
+           <div class="flex justify-end mt-2">
+             <button pButton label="Save Note" class="p-button-text p-button-sm text-xs"></button>
+           </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+</div>
+
+<ng-template #loading>
+  <div class="flex items-center justify-center min-h-[400px]">
+    <i class="pi pi-spin pi-spinner text-4xl text-slate-300"></i>
+  </div>
+</ng-template>
