@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -28,6 +29,7 @@ import { MessageService } from 'primeng/api';
 })
 export class ProductDrawerComponent {
   private fb = inject(FormBuilder);
+  private router = inject(Router);
   private productService = inject(ProductService);
   private messageService = inject(MessageService);
 
@@ -98,7 +100,11 @@ export class ProductDrawerComponent {
         cpv: 0
       });
       this.selectedImage.set(null);
+      this.selectedImage.set(null);
       this.onHide();
+      
+      // Redirect/Refresh
+      this.router.navigate(['/admin/products']);
     } else {
       this.productForm.markAllAsTouched();
     }

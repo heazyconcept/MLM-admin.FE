@@ -23,6 +23,7 @@
       <button 
         pButton 
         label="Save Changes" 
+        [loading]="isSaving()"
         class="p-button-primary text-sm font-medium px-6 h-9 shadow-sm" 
         (click)="onSave()">
       </button>
@@ -138,9 +139,10 @@
       <!-- Media -->
       <section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
         <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Product Image</h3>
-        <div class="aspect-square bg-gray-50 rounded-lg border border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 gap-2 cursor-pointer hover:bg-gray-100 hover:border-gray-300 transition-all overflow-hidden relative group">
-          @if (product()?.thumbnail) {
-            <img [src]="product()?.thumbnail" class="w-full h-full object-cover">
+        <input type="file" #fileInput hidden accept="image/*" (change)="onFileSelect($event)">
+        <div (click)="fileInput.click()" class="aspect-square bg-gray-50 rounded-lg border border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 gap-2 cursor-pointer hover:bg-gray-100 hover:border-gray-300 transition-all overflow-hidden relative group">
+          @if (selectedImage() || product()?.thumbnail) {
+            <img [src]="selectedImage() || product()?.thumbnail" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                <span class="text-white text-xs font-medium">Change Image</span>
             </div>

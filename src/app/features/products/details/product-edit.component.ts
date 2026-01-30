@@ -49,10 +49,13 @@ export class ProductEditComponent implements OnInit {
   private messageService = inject(MessageService);
 
   productId = signal<string | null>(null);
+  isSaving = signal(false);
   product = computed(() => {
     const id = this.productId();
     return id ? this.productService.getProduct(id)() : null;
   });
+  
+  selectedImage = signal<string | null>(null);
 
   categories = this.productService.categories;
   merchants = this.productService.merchants;
@@ -108,15 +111,31 @@ export class ProductEditComponent implements OnInit {
 
   onSave() {
     if (this.productForm.valid) {
+      this.isSaving.set(true);
       const id = this.productId();
-      if (id) {
-        this.productService.updateProduct(id, this.productForm.value as any);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Product updated successfully'
-        });
-      }
+      
+      // Simulate network request
+      setTimeout(() => {
+        if (id) {
+          const updateData = {
+            ...this.productForm.value,
+            thumbnail: this.selectedImage() || this.product()?.thumbnail
+          };
+          this.productService.updateProduct(id, updateData as any);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Product updated successfully'
+          });
+          
+          setTimeout(() => {
+            this.router.navigate(['/admin/products']);
+            this.isSaving.set(false);
+          }, 1000);
+        } else {
+           this.isSaving.set(false);
+        }
+      }, 500);
     } else {
       this.productForm.markAllAsTouched();
     }
@@ -151,6 +170,18 @@ export class ProductEditComponent implements OnInit {
       case 'Inactive': return 'warn';
       case 'Archived': return 'danger';
       default: return undefined;
+    }
+  }
+
+  onFileSelect(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.selectedImage.set(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   }
 }

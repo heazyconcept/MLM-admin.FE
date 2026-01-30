@@ -1,0 +1,107 @@
+<div class="p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Logistics Configuration</h1>
+      <p class="text-slate-500 text-sm">Manage delivery rules, pricing, and regions.</p>
+    </div>
+    <p-button 
+      label="Add New Rule" 
+      icon="pi pi-plus" 
+      (onClick)="openAddRule()"
+      styleClass="p-button-primary">
+    </p-button>
+  </div>
+
+  <!-- Rules Table -->
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+    <p-table [value]="rules()" [tableStyle]="{ 'min-width': '50rem' }">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Rule Name</th>
+          <th>Type</th>
+          <th>Condition</th>
+          <th>Cost (NGN)</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-rule>
+        <tr>
+          <td class="font-medium text-slate-800">{{ rule.name }}</td>
+          <td>
+            <p-tag [value]="rule.type" severity="info"></p-tag>
+          </td>
+          <td class="text-slate-600">{{ rule.condition || '-' }}</td>
+          <td class="font-semibold text-slate-900">{{ rule.cost | currency:'NGN':'symbol-narrow' }}</td>
+          <td>
+            <p-toggleSwitch 
+              [ngModel]="rule.isActive" 
+              (ngModelChange)="toggleRule(rule)">
+            </p-toggleSwitch>
+          </td>
+          <td>
+            <button 
+              pButton 
+              icon="pi pi-pencil" 
+              class="p-button-text p-button-rounded p-button-secondary p-button-sm">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Add Rule Dialog -->
+<p-dialog 
+  header="Add Logistics Rule" 
+  [(visible)]="showDialog" 
+  [modal]="true" 
+  [style]="{ width: '450px' }"
+  [draggable]="false" 
+  [resizable]="false">
+  
+  <form [formGroup]="ruleForm" class="flex flex-col gap-4 mt-2">
+    <div class="flex flex-col gap-2">
+      <label class="font-medium text-sm text-slate-700">Rule Name</label>
+      <input pInputText formControlName="name" placeholder="e.g. Lagos Island Express" />
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="font-medium text-sm text-slate-700">Type</label>
+      <p-select 
+        [options]="typeOptions" 
+        formControlName="type" 
+        optionLabel="label" 
+        optionValue="value"
+        placeholder="Select Type"
+        appendTo="body"
+        styleClass="w-full">
+      </p-select>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="font-medium text-sm text-slate-700">Cost (NGN)</label>
+      <p-inputNumber 
+        formControlName="cost" 
+        mode="currency" 
+        currency="NGN" 
+        locale="en-NG" 
+        styleClass="w-full"
+        inputStyleClass="w-full">
+      </p-inputNumber>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="font-medium text-sm text-slate-700">Condition (Optional)</label>
+      <input pInputText formControlName="condition" placeholder="e.g. Lagos Island" />
+      <small class="text-slate-500">e.g. Region name, weight limit, etc.</small>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" icon="pi pi-times" (onClick)="showDialog.set(false)" styleClass="p-button-text"></p-button>
+    <p-button label="Save Rule" icon="pi pi-check" (onClick)="saveRule()" styleClass="p-button-primary"></p-button>
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,4 @@
+/* Timeline Customization */
+:host ::ng-deep .customize-timeline .p-timeline-event-opposite {
+  display: none; /* Hide left/top side to make it aligned left */
+}

@@ -64,6 +64,17 @@ export const routes: Routes = [
         ]
       },
       {
+        path: 'orders',
+        children: [
+          { path: '', loadComponent: () => import('./features/orders/list/order-list.component').then(m => m.OrderListComponent) },
+          { path: ':id', loadComponent: () => import('./features/orders/details/order-details.component').then(m => m.OrderDetailsComponent) }
+        ]
+      },
+      {
+        path: 'logistics',
+        loadComponent: () => import('./features/orders/logistics/logistics-config.component').then(m => m.LogisticsConfigComponent)
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'

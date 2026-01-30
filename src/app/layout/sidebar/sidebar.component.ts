@@ -41,6 +41,7 @@ export class SidebarComponent {
         { label: 'Dashboard', icon: 'pi pi-th-large', route: '/admin/dashboard' },
         { label: 'User Management', icon: 'pi pi-users', route: '/admin/users' },
         { label: 'Payments', icon: 'pi pi-credit-card', route: '/admin/payments' },
+        { label: 'Orders', icon: 'pi pi-box', route: '/admin/orders' },
         { 
           label: 'Wallets', 
           icon: 'pi pi-wallet', 
@@ -64,6 +65,7 @@ export class SidebarComponent {
       title: 'FEATURES',
       items: [
         { label: 'Products', icon: 'pi pi-shopping-bag', route: '/admin/products' },
+        { label: 'Logistics', icon: 'pi pi-truck', route: '/admin/logistics' },
         { label: 'Subscriptions', icon: 'pi pi-credit-card', route: '/admin/subscriptions' },
         { label: 'Feedback', icon: 'pi pi-comments', route: '/admin/feedback' }
       ]
