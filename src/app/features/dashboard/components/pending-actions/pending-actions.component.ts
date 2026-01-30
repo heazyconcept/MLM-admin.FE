@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, input, computed, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { DialogModule } from 'primeng/dialog';
@@ -27,25 +27,27 @@ export interface PendingItem {
 
 @Component({
   selector: 'app-pending-actions',
-  standalone: true,
   imports: [CommonModule, RouterModule, DialogModule, TableModule, TagModule, ButtonModule],
   templateUrl: './pending-actions.component.html',
-  styleUrls: ['./pending-actions.component.css']
+  styleUrls: ['./pending-actions.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PendingActionsComponent {
-  @Input() actions: PendingAction[] = [];
+  actions = input<PendingAction[]>([]);
   private router = inject(Router);
 
-  modalVisible = false;
-  selectedAction: PendingAction | null = null;
-  modalItems: PendingItem[] = [];
+  modalVisible = signal(false);
+  selectedAction = signal<PendingAction | null>(null);
+  modalItems = signal<PendingItem[]>([]);
 
   viewAll(type?: string) {
-    this.modalVisible = false;
-    const actionType = type || this.selectedAction?.type;
+    this.modalVisible.set(false);
+    const actionType = type || this.selectedAction()?.type;
 
     if (actionType === 'withdrawals') {
       this.router.navigate(['/admin/withdrawals/pending']);
+    } else if (actionType === 'payments') {
+      this.router.navigate(['/admin/payments'], { queryParams: { status: 'Failed' } });
     } else {
       // Fallback for other types
       this.router.navigate(['/admin', actionType]);
@@ -93,14 +95,15 @@ export class PendingActionsComponent {
     ];
   }
 
-  get displayActions(): PendingAction[] {
-    return this.actions.length > 0 ? this.actions : this.defaultActions;
-  }
+  displayActions = computed(() => {
+    const a = this.actions();
+    return a.length > 0 ? a : this.defaultActions;
+  });
 
   openModal(action: PendingAction) {
-    this.selectedAction = action;
-    this.modalItems = this.getMockItems(action.type);
-    this.modalVisible = true;
+    this.selectedAction.set(action);
+    this.modalItems.set(this.getMockItems(action.type));
+    this.modalVisible.set(true);
   }
 
   getMockItems(type: string): PendingItem[] {

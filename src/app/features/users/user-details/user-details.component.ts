@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy, computed } from '@angular/core';
 // Trigger re-build
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -24,7 +24,6 @@ interface ActionConfig {
 
 @Component({
   selector: 'app-user-details',
-  standalone: true,
   imports: [
     CommonModule, 
     RouterModule, 
@@ -35,7 +34,8 @@ interface ActionConfig {
   ],
   providers: [MessageService],
   templateUrl: './user-details.component.html',
-  styleUrls: ['./user-details.component.css']
+  styleUrls: ['./user-details.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -46,7 +46,7 @@ export class UserDetailsComponent implements OnInit {
   user = signal<User | null>(null);
   activeTab = signal('basic');
   
-  actionConfig: ActionConfig = {
+  actionConfig = signal<ActionConfig>({
     visible: false,
     title: '',
     message: '',
@@ -57,7 +57,7 @@ export class UserDetailsComponent implements OnInit {
     showReasonField: false,
     reasonRequired: false,
     action: ''
-  };
+  });
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -141,11 +141,18 @@ export class UserDetailsComponent implements OnInit {
 
     const config = configs[action];
     if (config) {
-      this.actionConfig = {
+      this.actionConfig.set({
         visible: true,
         action,
-        ...config
-      } as ActionConfig;
+        title: config.title || '',
+        message: config.message || '',
+        icon: config.icon || '',
+        iconClass: config.iconClass || '',
+        confirmLabel: config.confirmLabel || '',
+        confirmClass: config.confirmClass || '',
+        showReasonField: !!config.showReasonField,
+        reasonRequired: !!config.reasonRequired
+      });
     }
   }
 
@@ -153,7 +160,7 @@ export class UserDetailsComponent implements OnInit {
     const user = this.user();
     if (!user || !result.confirmed) return;
 
-    const action = this.actionConfig.action;
+    const action = this.actionConfig().action;
 
     switch (action) {
       case 'suspend':
@@ -179,11 +186,11 @@ export class UserDetailsComponent implements OnInit {
     }
 
     this.loadUser(user.id);
-    this.actionConfig.visible = false;
+    this.actionConfig.update(prev => ({ ...prev, visible: false }));
   }
 
   onActionCancel(): void {
-    this.actionConfig.visible = false;
+    this.actionConfig.update(prev => ({ ...prev, visible: false }));
   }
 
   formatDate(date: Date): string {

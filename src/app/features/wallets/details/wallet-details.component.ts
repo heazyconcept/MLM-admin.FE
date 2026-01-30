@@ -13,7 +13,6 @@ import { ToastModule } from 'primeng/toast';
 
 @Component({
   selector: 'app-wallet-details',
-  standalone: true,
   imports: [CommonModule, RouterModule, DataTableComponent, FundsAdjustmentModalComponent, WalletActionModalComponent, ButtonModule, TagModule, ToastModule],
   providers: [MessageService],
   templateUrl: './wallet-details.component.html',
@@ -24,8 +23,8 @@ export class WalletDetailsComponent implements AfterViewInit {
   private walletService = inject(WalletService);
   private messageService = inject(MessageService);
 
-  @ViewChild('detailsCell') detailsCellTemplate!: TemplateRef<any>;
-  @ViewChild('amountCell') amountCellTemplate!: TemplateRef<any>;
+  @ViewChild('detailsCell') detailsCellTemplate!: TemplateRef<unknown>;
+  @ViewChild('amountCell') amountCellTemplate!: TemplateRef<unknown>;
 
   walletId = signal<string>(this.route.snapshot.paramMap.get('id') || '');
   

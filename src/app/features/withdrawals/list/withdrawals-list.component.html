@@ -94,7 +94,7 @@
         <input
           type="text"
           [value]="searchQuery()"
-          (input)="onSearch($any($event.target).value)"
+          (input)="onSearch($event)"
           placeholder="Search by user or request ID"
           class="h-10 w-full md:w-72 pl-9 pr-4 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
         />
@@ -122,7 +122,7 @@
       [actions]="actions()">
       
       <!-- Custom Status Template -->
-      <ng-template #status let-row="row">
+      <ng-template #status let-row>
         <app-status-badge [status]="row.status"></app-status-badge>
       </ng-template>
     </app-data-table>

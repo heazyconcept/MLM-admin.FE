@@ -18,10 +18,10 @@ export class WalletListComponent implements AfterViewInit {
   private walletService = inject(WalletService);
   private router = inject(Router);
 
-  @ViewChild('userCell') userCellTemplate!: TemplateRef<any>;
-  @ViewChild('typeCell') typeCellTemplate!: TemplateRef<any>;
-  @ViewChild('balanceCell') balanceCellTemplate!: TemplateRef<any>;
-  @ViewChild('statusCell') statusCellTemplate!: TemplateRef<any>;
+  @ViewChild('userCell') userCellTemplate!: TemplateRef<unknown>;
+  @ViewChild('typeCell') typeCellTemplate!: TemplateRef<unknown>;
+  @ViewChild('balanceCell') balanceCellTemplate!: TemplateRef<unknown>;
+  @ViewChild('statusCell') statusCellTemplate!: TemplateRef<unknown>;
   @ViewChild('dt') dataTable!: DataTableComponent<Wallet>;
   
   wallets = this.walletService.wallets;
@@ -107,7 +107,8 @@ export class WalletListComponent implements AfterViewInit {
     console.log('Export wallets');
   }
 
-  onSearch(value: string): void {
+  onSearch(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
     if (this.dataTable) {
       this.dataTable.filterGlobal(value, 'contains');
     }

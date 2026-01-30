@@ -1,60 +1,66 @@
 import { Component, inject, computed, signal, ChangeDetectionStrategy, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { WithdrawalService, WithdrawalRequest, WithdrawalStatus } from '../services/withdrawal.service';
+import { FormsModule } from '@angular/forms';
+import { PaymentService, Payment, PaymentStatus, PaymentPurpose } from '../services/payment.service';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
-import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { FormsModule } from '@angular/forms';
-
-interface StatusOption {
-  label: string;
-  value: string;
-}
 
 @Component({
-  selector: 'app-withdrawals-list',
+  selector: 'app-payments-list',
   imports: [
     CommonModule,
     RouterModule,
+    FormsModule,
     DataTableComponent,
     StatusBadgeComponent,
-    SelectModule,
-    ButtonModule,
-    InputTextModule,
-    FormsModule
+    ButtonModule
   ],
-  templateUrl: './withdrawals-list.component.html',
+  templateUrl: './payments-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WithdrawalsListComponent implements OnInit {
-  private withdrawalService = inject(WithdrawalService);
+export class PaymentsListComponent implements OnInit {
+  private paymentService = inject(PaymentService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
+  @ViewChild('purpose', { static: true }) purposeTemplate!: TemplateRef<unknown>;
   @ViewChild('status', { static: true }) statusTemplate!: TemplateRef<unknown>;
 
-  withdrawals = this.withdrawalService.withdrawals;
+  payments = this.paymentService.payments;
   
   selectedStatus = signal<string>('all');
+  selectedMethod = signal<string>('all');
   searchQuery = signal<string>('');
 
-  statusOptions: StatusOption[] = [
+  statusOptions = [
     { label: 'All Statuses', value: 'all' },
     { label: 'Pending', value: 'Pending' },
-    { label: 'Approved', value: 'Approved' },
-    { label: 'Rejected', value: 'Rejected' },
-    { label: 'Processing', value: 'Processing' },
-    { label: 'Paid', value: 'Paid' }
+    { label: 'Successful', value: 'Successful' },
+    { label: 'Failed', value: 'Failed' },
+    { label: 'Reversed', value: 'Reversed' }
   ];
 
-  filteredWithdrawals = computed(() => {
-    let requests = this.withdrawalService.withdrawals();
+  methodOptions = [
+    { label: 'All Methods', value: 'all' },
+    { label: 'Stripe', value: 'Stripe' },
+    { label: 'Bank Transfer', value: 'Bank Transfer' },
+    { label: 'USDT (TRC20)', value: 'USDT (TRC20)' },
+    { label: 'PayPal', value: 'PayPal' },
+    { label: 'Flutterwave', value: 'Flutterwave' }
+  ];
+
+  filteredPayments = computed(() => {
+    let requests = this.payments();
     
     if (this.selectedStatus() !== 'all') {
       requests = requests.filter(r => r.status === this.selectedStatus());
+    }
+
+    if (this.selectedMethod() !== 'all') {
+      requests = requests.filter(r => r.method === this.selectedMethod());
     }
     
     const query = this.searchQuery().toLowerCase();
@@ -70,23 +76,19 @@ export class WithdrawalsListComponent implements OnInit {
   });
 
   stats = computed(() => {
-    const all = this.withdrawalService.withdrawals();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
+    const all = this.payments();
+    const successful = all.filter(p => p.status === 'Successful').length;
+    const pending = all.filter(p => p.status === 'Pending').length;
+    const totalVolume = all.reduce((sum, p) => sum + p.amount, 0);
+
     return {
-      totalPending: all.filter(w => w.status === 'Pending').length,
-      approvedToday: all.filter(w => {
-        if (w.status !== 'Approved' || !w.processedDate) return false;
-        const processedDate = new Date(w.processedDate);
-        processedDate.setHours(0, 0, 0, 0);
-        return processedDate.getTime() === today.getTime();
-      }).length,
-      totalAmount: all.reduce((sum, w) => sum + w.amount, 0)
+      successRate: all.length > 0 ? Math.round((successful / all.length) * 100) : 0,
+      totalPending: pending,
+      totalVolume: totalVolume
     };
   });
 
-  columns = signal<TableColumn<WithdrawalRequest>[]>([]);
+  columns = signal<TableColumn<Payment>[]>([]);
   
   tableConfig = signal<TableConfig>({
     paginator: true,
@@ -97,26 +99,26 @@ export class WithdrawalsListComponent implements OnInit {
     size: 'normal'
   });
 
-  actions = signal<TableAction<WithdrawalRequest>[]>([
+  actions = signal<TableAction<Payment>[]>([
     {
       icon: 'pi pi-eye',
       tooltip: 'View Details',
-      severity: 'secondary',
-      command: (withdrawal) => this.viewDetails(withdrawal)
+      command: (payment) => this.viewDetails(payment)
     }
   ]);
 
   ngOnInit() {
-    // Check if we should filter by default (from route data)
-    const defaultFilter = this.route.snapshot.data['defaultFilter'];
-    if (defaultFilter) {
-      this.selectedStatus.set(defaultFilter);
-    }
+    // Check for query params
+    this.route.queryParams.subscribe(params => {
+      if (params['status']) {
+        this.selectedStatus.set(params['status']);
+      }
+    });
 
     this.columns.set([
       {
         field: 'id',
-        header: 'Request ID',
+        header: 'Payment ID',
         width: '120px',
         sortable: true
       },
@@ -126,18 +128,24 @@ export class WithdrawalsListComponent implements OnInit {
         sortable: true
       },
       {
+        field: 'purpose',
+        header: 'Purpose',
+        width: '130px',
+        sortable: true,
+        template: this.purposeTemplate
+      },
+      {
         field: 'amount',
         header: 'Amount',
-        width: '150px',
+        width: '140px',
         sortable: true,
         align: 'right',
         formatter: (value, row) => `${row.currency} ${value.toLocaleString()}`
       },
       {
-        field: 'destination',
-        header: 'Destination',
-        width: '200px',
-        formatter: (value) => value.length > 30 ? value.substring(0, 30) + '...' : value
+        field: 'method',
+        header: 'Method',
+        width: '150px'
       },
       {
         field: 'status',
@@ -147,8 +155,8 @@ export class WithdrawalsListComponent implements OnInit {
         template: this.statusTemplate
       },
       {
-        field: 'requestDate',
-        header: 'Request Date',
+        field: 'date',
+        header: 'Date',
         width: '140px',
         sortable: true,
         formatter: (value) => new Date(value).toLocaleDateString('en-US', {
@@ -160,10 +168,8 @@ export class WithdrawalsListComponent implements OnInit {
     ]);
   }
 
-  private router = inject(Router);
-
-  viewDetails(withdrawal: WithdrawalRequest) {
-    this.router.navigate(['/admin/withdrawals', withdrawal.id]);
+  viewDetails(payment: Payment) {
+    this.router.navigate(['/admin/payments', payment.id]);
   }
 
   onSearch(event: Event) {
@@ -172,17 +178,15 @@ export class WithdrawalsListComponent implements OnInit {
   }
 
   onExport() {
-    console.log('Export withdrawals');
+    console.log('Export payments');
   }
 
-  getStatusSeverity(status: WithdrawalStatus): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
-    switch (status) {
-      case 'Paid': return 'success';
-      case 'Approved': return 'info';
-      case 'Pending': return 'warn';
-      case 'Rejected': return 'danger';
-      case 'Processing': return 'secondary';
-      default: return 'info';
+  getPurposeClass(purpose: PaymentPurpose): string {
+    switch (purpose) {
+      case 'Registration': return 'bg-blue-50 text-blue-700 border-blue-100';
+      case 'Funding': return 'bg-green-50 text-green-700 border-green-100';
+      case 'Upgrade': return 'bg-purple-50 text-purple-700 border-purple-100';
+      default: return 'bg-gray-50 text-gray-700 border-gray-100';
     }
   }
 }

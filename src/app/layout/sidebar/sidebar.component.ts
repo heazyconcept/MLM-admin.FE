@@ -34,7 +34,7 @@ export class SidebarComponent {
       items: [
         { label: 'Dashboard', icon: 'pi pi-th-large', route: '/admin/dashboard' },
         { label: 'User Management', icon: 'pi pi-users', route: '/admin/users' },
-        { label: 'Transactions', icon: 'pi pi-arrow-right-arrow-left', route: '/admin/transactions' },
+        { label: 'Payments', icon: 'pi pi-credit-card', route: '/admin/payments' },
         { 
           label: 'Wallets', 
           icon: 'pi pi-wallet', 

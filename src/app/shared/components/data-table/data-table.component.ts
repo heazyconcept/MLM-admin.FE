@@ -37,7 +37,7 @@ import {
   styleUrls: ['./data-table.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DataTableComponent<T = any> {
+export class DataTableComponent<T = unknown> {
   // Inputs
   data = input.required<T[]>();
   columns = input.required<TableColumn<T>[]>();
@@ -64,7 +64,7 @@ export class DataTableComponent<T = any> {
   filterChange = output<FilterChangeEvent>();
 
   // Content children for custom templates
-  templates = contentChildren<TemplateRef<any>>(TemplateRef);
+  templates = contentChildren<TemplateRef<unknown>>(TemplateRef);
 
   // ViewChild for PrimeNG table
   @ViewChild('tableRef') table!: Table;
@@ -95,7 +95,7 @@ export class DataTableComponent<T = any> {
   });
 
   // Methods
-  getCellValue(row: T, column: TableColumn<T>): any {
+  getCellValue(row: T, column: TableColumn<T>): unknown {
     const value = this.getNestedValue(row, column.field as string);
     
     if (column.formatter) {
@@ -105,8 +105,8 @@ export class DataTableComponent<T = any> {
     return value;
   }
 
-  getNestedValue(obj: any, path: string): any {
-    return path.split('.').reduce((current, prop) => current?.[prop], obj);
+  getNestedValue(obj: unknown, path: string): unknown {
+    return path.split('.').reduce((current: unknown, prop: string) => (current as Record<string, unknown>)?.[prop], obj);
   }
 
   onGlobalFilterChange(value: string): void {
@@ -186,7 +186,7 @@ export class DataTableComponent<T = any> {
       .map(col => col.field as string);
   }
 
-  getFieldAsString(field: any): string {
+  getFieldAsString(field: unknown): string {
     return String(field);
   }
 

@@ -149,7 +149,7 @@
   <app-funds-adjustment-modal
     [visible]="showAdjustmentModal()"
     (visibleChange)="showAdjustmentModal.set($event)"
-    [wallet]="wallet"
+    [wallet]="wallet()"
     (adjusted)="onAdjustmentComplete()">
   </app-funds-adjustment-modal>
 
@@ -157,8 +157,8 @@
   <app-wallet-action-modal
     [visible]="showActionModal()"
     (visibleChange)="showActionModal.set($event)"
-    [wallet]="wallet"
-    [action]="pendingAction"
+    [wallet]="wallet()"
+    [action]="pendingAction()"
     (confirmed)="confirmAction()">
   </app-wallet-action-modal>
 

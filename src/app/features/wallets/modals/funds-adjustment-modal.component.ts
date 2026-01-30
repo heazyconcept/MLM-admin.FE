@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, signal, Signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -9,7 +9,6 @@ import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-funds-adjustment-modal',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, ButtonModule, DialogModule, InputNumberModule],
   templateUrl: './funds-adjustment-modal.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -19,10 +18,10 @@ export class FundsAdjustmentModalComponent {
   private walletService = inject(WalletService);
   private messageService = inject(MessageService);
 
-  @Input() visible = false;
-  @Input({ required: true }) wallet!: Signal<Wallet | undefined>;
-  @Output() visibleChange = new EventEmitter<boolean>();
-  @Output() adjusted = new EventEmitter<void>();
+  visible = input<boolean>(false);
+  wallet = input.required<Wallet | undefined>();
+  visibleChange = output<boolean>();
+  adjusted = output<void>();
 
   type = signal<'Credit' | 'Debit'>('Credit');
 
@@ -32,7 +31,6 @@ export class FundsAdjustmentModalComponent {
   });
 
   close() {
-    this.visible = false;
     this.visibleChange.emit(false);
     this.form.reset();
   }

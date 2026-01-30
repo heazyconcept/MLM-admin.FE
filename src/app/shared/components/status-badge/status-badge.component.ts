@@ -1,61 +1,71 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type BadgeStatus = 'Active' | 'Suspended' | 'Flagged' | 'Pending' | 'Success' | 'Failed' | 'Approved' | 'Rejected' | 'Processing' | 'Paid';
+export type BadgeStatus = 'Active' | 'Suspended' | 'Flagged' | 'Pending' | 'Success' | 'Successful' | 'Failed' | 'Approved' | 'Rejected' | 'Processing' | 'Paid' | 'Reversed' | 'Locked' | 'Frozen';
 
 @Component({
   selector: 'app-status-badge',
-  standalone: true,
   imports: [CommonModule],
   template: `
     <span 
-      class="inline-flex items-center gap-1.5 rounded-full text-xs font-medium"
-      [class]="badgeClasses"
-      [class.px-2.5]="!hideLabel"
-      [class.py-1]="!hideLabel"
-      [class.p-1.5]="hideLabel">
-      <span class="w-1.5 h-1.5 rounded-full" [class]="dotClass"></span>
-      @if (!hideLabel) {
-        <span>{{ status }}</span>
+      class="inline-flex items-center gap-1.5 rounded-full text-xs font-bold uppercase tracking-wider"
+      [class]="badgeClasses()"
+      [class.px-3]="!hideLabel()"
+      [class.py-1.5]="!hideLabel()"
+      [class.p-1.5]="hideLabel()">
+      <span class="w-1.5 h-1.5 rounded-full" [class]="dotClass()"></span>
+      @if (!hideLabel()) {
+        <span>{{ status() === 'Successful' ? 'Success' : status() }}</span>
       }
     </span>
   `,
-  styles: [`:host { display: inline-block; }`]
+  styles: [`:host { display: inline-block; }`],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StatusBadgeComponent {
-  @Input() status: BadgeStatus = 'Active';
-  @Input() hideLabel = false;
+  status = input<BadgeStatus>('Active');
+  hideLabel = input<boolean>(false);
 
-  get badgeClasses(): string {
+  badgeClasses = computed(() => {
+    const s = this.status();
     const classes: Record<BadgeStatus, string> = {
-      'Active': 'bg-mlm-success/10 text-mlm-success',
-      'Suspended': 'bg-mlm-error/10 text-mlm-error',
-      'Flagged': 'bg-mlm-warning/10 text-mlm-warning',
-      'Pending': 'bg-orange-100 text-orange-600',
-      'Success': 'bg-mlm-success/10 text-mlm-success',
-      'Failed': 'bg-mlm-error/10 text-mlm-error',
-      'Approved': 'bg-blue-100 text-blue-600',
-      'Rejected': 'bg-red-100 text-red-600',
-      'Processing': 'bg-purple-100 text-purple-600',
-      'Paid': 'bg-green-100 text-green-600'
+      'Active': 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+      'Suspended': 'bg-red-50 text-red-700 border border-red-200',
+      'Flagged': 'bg-amber-50 text-amber-700 border border-amber-200',
+      'Pending': 'bg-orange-50 text-orange-700 border border-orange-200',
+      'Success': 'bg-green-50 text-green-700 border border-green-200',
+      'Successful': 'bg-green-50 text-green-700 border border-green-200',
+      'Failed': 'bg-red-50 text-red-700 border border-red-200',
+      'Approved': 'bg-blue-50 text-blue-700 border border-blue-200',
+      'Rejected': 'bg-rose-50 text-rose-700 border border-rose-200',
+      'Processing': 'bg-purple-50 text-purple-700 border border-purple-200',
+      'Paid': 'bg-teal-50 text-teal-700 border border-teal-200',
+      'Reversed': 'bg-gray-50 text-gray-700 border border-gray-300',
+      'Locked': 'bg-red-50 text-red-700 border border-red-200',
+      'Frozen': 'bg-cyan-50 text-cyan-700 border border-cyan-200'
     };
-    return classes[this.status] || classes['Active'];
-  }
+    return classes[s] || classes['Active'];
+  });
 
-  get dotClass(): string {
+  dotClass = computed(() => {
+    const s = this.status();
     const classes: Record<BadgeStatus, string> = {
-      'Active': 'bg-mlm-success',
-      'Suspended': 'bg-mlm-error',
-      'Flagged': 'bg-mlm-warning',
+      'Active': 'bg-emerald-600',
+      'Suspended': 'bg-red-600',
+      'Flagged': 'bg-amber-600',
       'Pending': 'bg-orange-600',
-      'Success': 'bg-mlm-success',
-      'Failed': 'bg-mlm-error',
+      'Success': 'bg-green-600',
+      'Successful': 'bg-green-600',
+      'Failed': 'bg-red-600',
       'Approved': 'bg-blue-600',
-      'Rejected': 'bg-red-600',
+      'Rejected': 'bg-rose-600',
       'Processing': 'bg-purple-600',
-      'Paid': 'bg-green-600'
+      'Paid': 'bg-teal-600',
+      'Reversed': 'bg-gray-600',
+      'Locked': 'bg-red-600',
+      'Frozen': 'bg-cyan-600'
     };
-    return classes[this.status] || classes['Active'];
-  }
+    return classes[s] || classes['Active'];
+  });
 }
 

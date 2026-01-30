@@ -1,0 +1,215 @@
+@if (payment(); as p) {
+  <div class="min-h-screen bg-gray-50 px-8 py-6">
+    <p-toast></p-toast>
+
+    <app-payment-action-modal
+      [visible]="showActionModal()"
+      [payment]="p"
+      [action]="pendingAction()"
+      (confirmed)="handleActionConfirmed($event)"
+      (cancelled)="handleActionCancelled()">
+    </app-payment-action-modal>
+
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-2">
+        <button
+          [routerLink]="['/admin/payments']"
+          class="p-2 rounded-md hover:bg-gray-100">
+          <i class="pi pi-arrow-left"></i>
+        </button>
+        Back to payments
+      </div>
+
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-semibold text-gray-900">
+            Payment Transaction <span class="text-gray-400">#{{ p.id }}</span>
+          </h1>
+          <p class="text-sm text-gray-500">
+            Received {{ p.date | date:'medium' }}
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <app-status-badge [status]="p.status"></app-status-badge>
+
+          <div class="flex gap-2">
+            @if (canFlag) {
+              <button
+                pButton
+                label="Flag"
+                icon="pi pi-flag"
+                class="p-button-outlined p-button-warning"
+                (click)="onFlag()">
+              </button>
+            }
+
+            @if (canFail) {
+              <button
+                pButton
+                label="Fail"
+                icon="pi pi-times"
+                class="p-button-outlined p-button-danger"
+                (click)="onMarkFailed()">
+              </button>
+            }
+
+            @if (canConfirmSuccessful) {
+              <button
+                pButton
+                label="Confirm Successful"
+                icon="pi pi-check"
+                class="p-button-success"
+                (click)="onMarkSuccessful()">
+              </button>
+            }
+
+            @if (canReverse) {
+              <button
+                pButton
+                label="Reverse"
+                icon="pi pi-refresh"
+                class="p-button-danger p-button-outlined"
+                (click)="onReverse()">
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+      <!-- MAIN COLUMN -->
+      <div class="lg:col-span-8 space-y-8">
+
+        <!-- Amount & Purpose Hero -->
+        <div class="bg-white border border-gray-200 rounded-xl p-8 relative overflow-hidden">
+          <div class="relative z-10">
+            <p class="text-xs uppercase tracking-widest text-gray-400 mb-2">
+              Payment Amount
+            </p>
+            <div class="flex items-baseline gap-4">
+              <p class="text-4xl font-bold text-gray-900">
+                {{ p.amount | currency:p.currency }}
+              </p>
+              <span 
+                class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border"
+                [class]="getPurposeClass(p.purpose)">
+                {{ p.purpose }}
+              </span>
+            </div>
+            
+            <div class="mt-8 grid grid-cols-3 gap-8">
+              <div>
+                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Method</p>
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-credit-card text-gray-400 text-xs"></i>
+                  <p class="font-semibold text-gray-700">{{ p.method }}</p>
+                </div>
+              </div>
+              <div>
+                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Currency</p>
+                <p class="font-semibold text-gray-700">{{ p.currency }}</p>
+              </div>
+              <div>
+                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Expected Fee</p>
+                <p class="font-semibold text-gray-700">0.00 {{ p.currency }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Information -->
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+          <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="pi pi-user text-gray-400"></i>
+            User Information
+          </h3>
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-600">
+              {{ p.userName.charAt(0) }}
+            </div>
+            <div>
+              <p class="font-medium text-gray-900">{{ p.userName }}</p>
+              <p class="text-sm text-gray-500">{{ p.userEmail }}</p>
+              <p class="text-xs text-gray-400 mt-1">User ID: {{ p.userId }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Proof of Payment (if applicable) -->
+        @if (p.method === 'Bank Transfer' || p.proofUrl) {
+          <div class="bg-white border border-gray-200 rounded-xl p-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <i class="pi pi-image text-gray-400"></i>
+              Payment Proof / Documentation
+            </h3>
+            <div class="aspect-video bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center group cursor-pointer hover:bg-gray-100 transition-colors">
+              <i class="pi pi-file-pdf text-4xl text-gray-300 group-hover:scale-110 transition-transform"></i>
+              <p class="text-sm text-gray-500 mt-3 font-medium">Click to view proof document</p>
+              <p class="text-xs text-gray-400 mt-1">Format: JPG, PDF · Size: 1.2MB</p>
+            </div>
+            @if (p.notes) {
+              <div class="mt-6 p-4 bg-blue-50/50 rounded-xl border border-blue-100/50">
+                <p class="text-xs font-bold text-blue-800 uppercase tracking-widest mb-2">Internal Notes</p>
+                <p class="text-sm text-blue-900 italic font-medium">"{{ p.notes }}"</p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- SIDE RAIL -->
+      <div class="lg:col-span-4">
+        <div class="bg-white border border-gray-200 rounded-xl p-6 sticky top-6">
+          <h3 class="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-2">
+            <i class="pi pi-clock text-gray-400"></i>
+            Status History
+          </h3>
+
+          <div class="space-y-8 relative before:absolute before:inset-y-0 before:left-3 before:w-px before:bg-gray-100">
+            @for (history of statusHistory(); track $index) {
+              <div class="relative pl-8">
+                <!-- Dot -->
+                <div 
+                  class="absolute left-0 top-1 w-6 h-6 -ml-px rounded-full border-4 border-white shadow-sm flex items-center justify-center z-10"
+                  [class.bg-green-500]="history.status === 'Successful'"
+                  [class.bg-red-500]="history.status === 'Failed' || history.status === 'Reversed'"
+                  [class.bg-orange-500]="history.status === 'Pending'">
+                </div>
+                
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <p class="text-sm font-semibold text-gray-900">{{ history.status }}</p>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">{{ history.timestamp | date:'shortTime' }}</span>
+                  </div>
+                  <p class="text-xs text-gray-500">
+                    {{ history.admin }} · {{ history.timestamp | date:'mediumDate' }}
+                  </p>
+                  @if (history.reason) {
+                    <div class="mt-2 bg-gray-50 p-2 rounded text-[11px] text-gray-600 italic border border-gray-100">
+                      {{ history.reason }}
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+} @else {
+  <div class="h-[80vh] flex flex-col items-center justify-center text-center p-8">
+    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+      <i class="pi pi-search text-3xl text-gray-300"></i>
+    </div>
+    <h2 class="text-xl font-semibold text-gray-900">Transaction Not Found</h2>
+    <p class="text-gray-500 mt-2 max-w-xs">The payment ID was not found in our records or may have been removed.</p>
+    <button pButton label="Back to Payments" icon="pi pi-arrow-left" [routerLink]="['/admin/payments']" class="p-button-text mt-6"></button>
+  </div>
+}

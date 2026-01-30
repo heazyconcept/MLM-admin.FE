@@ -35,12 +35,16 @@ export interface StatusHistory {
 })
 export class WithdrawalService {
   private withdrawalsSignal = signal<WithdrawalRequest[]>(this.generateMockData());
+  readonly withdrawals = this.withdrawalsSignal.asReadonly();
+  
   private statusHistoryMap = new Map<string, StatusHistory[]>();
 
-  withdrawals = this.withdrawalsSignal.asReadonly();
-
   constructor() {
-    // Initialize status history for each withdrawal
+    this.init();
+  }
+
+  // Use a private method for initialization
+  private init() {
     this.withdrawalsSignal().forEach(w => {
       this.statusHistoryMap.set(w.id, [{
         status: w.status,
@@ -61,21 +65,21 @@ export class WithdrawalService {
   }
 
   rejectWithdrawal(id: string, reason: string): void {
-    const withdrawals = this.withdrawalsSignal();
-    const index = withdrawals.findIndex(w => w.id === id);
+    this.withdrawalsSignal.update(withdrawals => {
+      return withdrawals.map(w => {
+        if (w.id === id) {
+          return {
+            ...w,
+            status: 'Rejected',
+            rejectionReason: reason,
+            processedDate: new Date()
+          };
+        }
+        return w;
+      });
+    });
     
-    if (index !== -1) {
-      const updated = [...withdrawals];
-      updated[index] = {
-        ...updated[index],
-        status: 'Rejected',
-        rejectionReason: reason,
-        processedDate: new Date()
-      };
-      this.withdrawalsSignal.set(updated);
-      
-      this.addStatusHistory(id, 'Rejected', 'Admin User', reason);
-    }
+    this.addStatusHistory(id, 'Rejected', 'Admin User', reason);
   }
 
   updateStatus(id: string, status: WithdrawalStatus): void {
@@ -87,20 +91,20 @@ export class WithdrawalService {
   }
 
   private updateWithdrawalStatus(id: string, status: WithdrawalStatus, admin: string): void {
-    const withdrawals = this.withdrawalsSignal();
-    const index = withdrawals.findIndex(w => w.id === id);
+    this.withdrawalsSignal.update(withdrawals => {
+      return withdrawals.map(w => {
+        if (w.id === id) {
+          return {
+            ...w,
+            status,
+            processedDate: new Date()
+          };
+        }
+        return w;
+      });
+    });
     
-    if (index !== -1) {
-      const updated = [...withdrawals];
-      updated[index] = {
-        ...updated[index],
-        status,
-        processedDate: new Date()
-      };
-      this.withdrawalsSignal.set(updated);
-      
-      this.addStatusHistory(id, status, admin);
-    }
+    this.addStatusHistory(id, status, admin);
   }
 
   private addStatusHistory(id: string, status: WithdrawalStatus, admin: string, reason?: string): void {

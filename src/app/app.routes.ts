@@ -42,6 +42,13 @@ export const routes: Routes = [
         ]
       },
       {
+        path: 'payments',
+        children: [
+          { path: '', loadComponent: () => import('./features/payments/list/payments-list.component').then(m => m.PaymentsListComponent) },
+          { path: ':id', loadComponent: () => import('./features/payments/details/payment-details.component').then(m => m.PaymentDetailsComponent) }
+        ]
+      },
+      {
         path: 'withdrawals',
         children: [
           { path: '', loadComponent: () => import('./features/withdrawals/list/withdrawals-list.component').then(m => m.WithdrawalsListComponent) },
@@ -61,4 +68,6 @@ export const routes: Routes = [
     redirectTo: 'login',
     pathMatch: 'full'
   }
+
 ];
+
