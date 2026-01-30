@@ -1,13 +1,13 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 import { EarningsService } from '../services/earnings.service';
 
 @Component({
   selector: 'app-earnings-overview',
-  standalone: true,
   imports: [CommonModule, ChartModule],
-  templateUrl: './earnings-overview.component.html'
+  templateUrl: './earnings-overview.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EarningsOverviewComponent {
   earningsService = inject(EarningsService);
@@ -15,10 +15,10 @@ export class EarningsOverviewComponent {
   overview = signal(this.earningsService.getSystemOverview());
 
   // Chart Data
-  barData: any;
-  barOptions: any;
-  doughnutData: any;
-  doughnutOptions: any;
+  barData: unknown;
+  barOptions: unknown;
+  doughnutData: unknown;
+  doughnutOptions: unknown;
 
   constructor() {
     this.initCharts();

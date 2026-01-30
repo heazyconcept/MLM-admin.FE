@@ -97,115 +97,37 @@
   <!-- Users Table Area -->
   <div class="overflow-x-auto">
     <!-- Data Table -->
-    <p-table 
-      [value]="filteredUsers()" 
-      [paginator]="true" 
-      [rows]="10"
-      [rowsPerPageOptions]="[10, 25, 50]"
-      [showCurrentPageReport]="true"
-      currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
-      [tableStyle]="{'min-width': '70rem'}"
-      showGridlines
-      styleClass="p-datatable-sm p-datatable-hoverable">
-      
-      <ng-template pTemplate="header">
-        <tr>
-          <th class="w-28 text-center">
-            ID
-          </th>
-          <th>
-            User
-          </th>
-          <th>
-            Email
-          </th>
-          <th class="w-32 text-center">
-            Package
-          </th>
-          <th class="w-32 text-center">
-            Status
-          </th>
-          <th class="w-40 text-center">
-            Joined
-          </th>
-          <th class="w-20 text-center pr-4"></th>
-        </tr>
-      </ng-template>
-      
-      <ng-template pTemplate="body" let-user>
-        <tr class="group">
-          <td class="text-center">
-            <span class="text-xs font-medium text-gray-500 font-mono">{{ user.id }}</span>
-          </td>
-          <td>
-            <div class="flex flex-col">
-              <span class="font-semibold text-gray-900 leading-tight">{{ user.fullName }}</span>
-              <span class="text-xs text-gray-500">&#64;{{ user.username }}</span>
-            </div>
-          </td>
-          <td>
-            <span class="text-sm text-gray-600">{{ user.email }}</span>
-          </td>
-          <td class="text-center">
-            <span 
-              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wide uppercase"
-              [style.background-color]="getPackageColor(user.package) + '15'"
-              [style.color]="getPackageColor(user.package)">
-              {{ user.package }}
-            </span>
-          </td>
-          <td class="text-center">
-            <app-status-badge [status]="user.status"></app-status-badge>
-          </td>
-          <td class="text-center">
-            <span class="text-sm text-gray-600">{{ formatDate(user.registrationDate) }}</span>
-          </td>
-          <td class="text-center">
-            <div class="flex items-center justify-center gap-2">
-              <button 
-                pButton 
-                icon="pi pi-eye" 
-                class="p-button-text p-button-secondary p-button-rounded hover:bg-gray-100"
-                pTooltip="View Profile"
-                tooltipPosition="top"
-                (click)="router.navigate(['/admin/users', user.id])">
-              </button>
-              <button 
-                pButton 
-                icon="pi pi-ellipsis-v" 
-                class="p-button-text p-button-secondary p-button-rounded hover:bg-gray-100"
-                (click)="$event.stopPropagation(); actionMenu.model = getActionMenuItems(user, actionMenu); actionMenu.toggle($event)">
-              </button>
-            </div>
-            <p-menu 
-              #actionMenu 
-              [popup]="true" 
-              appendTo="body">
-            </p-menu>
-          </td>
-        </tr>
+    <app-data-table
+      [data]="filteredUsers()"
+      [columns]="columns()"
+      [config]="tableConfig()"
+      [actions]="actions()">
+
+      <!-- Custom User Template -->
+      <ng-template appDataTableTemplate="fullName" let-row>
+        <div class="flex flex-col">
+          <span class="font-semibold text-gray-900 leading-tight">{{ row.fullName }}</span>
+          <span class="text-xs text-gray-500">&#64;{{ row.username }}</span>
+        </div>
       </ng-template>
 
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="7" class="text-center py-20">
-            <div class="flex flex-col items-center">
-              <div class="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center mb-4 border border-gray-100">
-                <i class="pi pi-search text-4xl text-gray-300"></i>
-              </div>
-              <h3 class="text-lg font-bold text-gray-900">No users matched your criteria</h3>
-              <p class="text-gray-500 mt-1 max-w-xs mx-auto">Try adjusting your filters or search terms to find what you're looking for.</p>
-              <button 
-                pButton 
-                label="Clear all filters" 
-                class="p-button-text p-button-primary mt-4"
-                (click)="clearFilters()">
-              </button>
-            </div>
-          </td>
-        </tr>
+      <!-- Custom Package Template -->
+      <ng-template appDataTableTemplate="package" let-row>
+        <span 
+          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wide uppercase"
+          [style.background-color]="getPackageColor(row.package) + '15'"
+          [style.color]="getPackageColor(row.package)">
+          {{ row.package }}
+        </span>
       </ng-template>
-    </p-table>
+
+      <!-- Custom Status Template -->
+      <ng-template appDataTableTemplate="status" let-row>
+        <app-status-badge [status]="row.status"></app-status-badge>
+      </ng-template>
+
+    </app-data-table>
+
   </div>
 </div>
 

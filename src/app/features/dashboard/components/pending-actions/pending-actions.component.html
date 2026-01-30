@@ -5,7 +5,7 @@
   </div>
 
   <div class="grid grid-cols-2 gap-3">
-    @for (action of displayActions; track action.type) {
+    @for (action of displayActions(); track action.type) {
       <button 
         (click)="openModal(action)"
         class="p-4 rounded-xl border border-gray-100 hover:border-mlm-green-200 hover:bg-mlm-green-50/30 transition-all text-left group">
@@ -34,49 +34,36 @@
 
 <!-- Modal -->
 <p-dialog 
-  [(visible)]="modalVisible" 
-  [header]="selectedAction?.label || 'Details'"
+  [visible]="modalVisible()" 
+  (visibleChange)="modalVisible.set($event)"
+  [header]="selectedAction()?.label || 'Details'"
   [modal]="true"
   [style]="{width: '600px'}"
   [draggable]="false"
   [resizable]="false">
   
-  @if (selectedAction) {
+  @if (selectedAction(); as action) {
     <div class="mb-4">
       <p class="text-mlm-secondary">
-        Showing {{ modalItems.length }} pending items requiring attention.
+        Showing {{ modalItems().length }} pending items requiring attention.
       </p>
     </div>
 
-    <p-table [value]="modalItems" [tableStyle]="{'min-width': '100%'}" styleClass="p-datatable-sm">
-      <ng-template #header>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          @if (selectedAction.type === 'withdrawals' || selectedAction.type === 'payments') {
-            <th>Amount</th>
-          }
-          <th>Date</th>
-          <th>Status</th>
-        </tr>
+    <app-data-table
+      [data]="modalItems()"
+      [columns]="columns()"
+      [config]="tableConfig()">
+      
+      <!-- Custom Status Template -->
+      <ng-template appDataTableTemplate="status" let-row>
+        <p-tag [value]="row.status" [severity]="getStatusSeverity(row.status)" [rounded]="true"></p-tag>
       </ng-template>
-      <ng-template #body let-item>
-        <tr>
-          <td class="font-mono text-sm">{{ item.id }}</td>
-          <td>{{ item.name }}</td>
-          @if (selectedAction.type === 'withdrawals' || selectedAction.type === 'payments') {
-            <td class="font-medium">{{ item.amount }}</td>
-          }
-          <td class="text-mlm-secondary">{{ item.date }}</td>
-          <td>
-            <p-tag [value]="item.status" [severity]="getStatusSeverity(item.status)" [rounded]="true"></p-tag>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+
+    </app-data-table>
+
 
     <div class="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
-      <button pButton label="Close" class="p-button-text" (click)="modalVisible = false"></button>
+      <button pButton label="Close" class="p-button-text" (click)="modalVisible.set(false)"></button>
       <button pButton label="View All" icon="pi pi-external-link" class="p-button-primary" (click)="viewAll()"></button>
     </div>
   }

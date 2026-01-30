@@ -1,8 +1,9 @@
-import { Component, inject, computed, signal, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, inject, computed, signal, ChangeDetectionStrategy, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { WithdrawalService, WithdrawalRequest, WithdrawalStatus } from '../services/withdrawal.service';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import { DataTableTemplateDirective } from '../../../shared/components/data-table/data-table-template.directive';
 import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { SelectModule } from 'primeng/select';
@@ -17,11 +18,11 @@ interface StatusOption {
 
 @Component({
   selector: 'app-withdrawals-list',
-  standalone: true,
   imports: [
     CommonModule,
     RouterModule,
     DataTableComponent,
+    DataTableTemplateDirective,
     StatusBadgeComponent,
     SelectModule,
     ButtonModule,
@@ -34,6 +35,8 @@ interface StatusOption {
 export class WithdrawalsListComponent implements OnInit {
   private withdrawalService = inject(WithdrawalService);
   private route = inject(ActivatedRoute);
+
+  @ViewChild('status', { static: true }) statusTemplate!: TemplateRef<unknown>;
 
   withdrawals = this.withdrawalService.withdrawals;
   
@@ -142,7 +145,8 @@ export class WithdrawalsListComponent implements OnInit {
         field: 'status',
         header: 'Status',
         width: '120px',
-        align: 'center'
+        align: 'center',
+        template: this.statusTemplate
       },
       {
         field: 'requestDate',
@@ -164,7 +168,8 @@ export class WithdrawalsListComponent implements OnInit {
     this.router.navigate(['/admin/withdrawals', withdrawal.id]);
   }
 
-  onSearch(value: string) {
+  onSearch(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
     this.searchQuery.set(value);
   }
 

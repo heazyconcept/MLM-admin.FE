@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -10,7 +10,6 @@ export type ActionType = 'Approve' | 'Reject' | 'MarkProcessing' | 'MarkPaid';
 
 @Component({
   selector: 'app-withdrawal-action-modal',
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -18,20 +17,21 @@ export type ActionType = 'Approve' | 'Reject' | 'MarkProcessing' | 'MarkPaid';
     ButtonModule,
     TextareaModule
   ],
-  templateUrl: './withdrawal-action-modal.component.html'
+  templateUrl: './withdrawal-action-modal.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WithdrawalActionModalComponent {
-  @Input() visible = false;
-  @Input() withdrawal: WithdrawalRequest | null | undefined = null;
-  @Input() action: ActionType | null = null;
+  visible = input<boolean>(false);
+  withdrawal = input<WithdrawalRequest | null | undefined>(null);
+  action = input<ActionType | null>(null);
   
-  @Output() confirmed = new EventEmitter<{ action: ActionType, reason?: string }>();
-  @Output() cancelled = new EventEmitter<void>();
+  confirmed = output<{ action: ActionType, reason?: string }>();
+  cancelled = output<void>();
 
   reason = signal<string>('');
 
   get title(): string {
-    switch (this.action) {
+    switch (this.action()) {
       case 'Approve': return 'Approve Withdrawal';
       case 'Reject': return 'Reject Withdrawal';
       case 'MarkProcessing': return 'Mark as Processing';
@@ -41,7 +41,7 @@ export class WithdrawalActionModalComponent {
   }
 
   get icon(): string {
-    switch (this.action) {
+    switch (this.action()) {
       case 'Approve': return 'pi pi-check-circle';
       case 'Reject': return 'pi pi-times-circle';
       case 'MarkProcessing': return 'pi pi-sync';
@@ -51,7 +51,7 @@ export class WithdrawalActionModalComponent {
   }
 
   get colorClass(): string {
-    switch (this.action) {
+    switch (this.action()) {
       case 'Approve': return 'text-green-600 bg-green-50';
       case 'Reject': return 'text-red-600 bg-red-50';
       case 'MarkProcessing': return 'text-blue-600 bg-blue-50';
@@ -61,28 +61,29 @@ export class WithdrawalActionModalComponent {
   }
 
   get isIrreversible(): boolean {
-    return this.action === 'Reject' || this.action === 'MarkPaid';
+    return this.action() === 'Reject' || this.action() === 'MarkPaid';
   }
 
   get message(): string {
-    if (!this.withdrawal) return '';
+    const w = this.withdrawal();
+    if (!w) return '';
     
-    switch (this.action) {
+    switch (this.action()) {
       case 'Approve': 
-        return `Are you sure you want to approve the withdrawal of ${this.withdrawal.currency} ${this.withdrawal.amount.toLocaleString()} for ${this.withdrawal.userName}?`;
+        return `Are you sure you want to approve the withdrawal of ${w.currency} ${w.amount.toLocaleString()} for ${w.userName}?`;
       case 'Reject': 
-        return `You are about to reject the withdrawal request for ${this.withdrawal.userName}. This action requires a reason.`;
+        return `You are about to reject the withdrawal request for ${w.userName}. This action requires a reason.`;
       case 'MarkProcessing': 
-        return `Change status to Processing for request ${this.withdrawal.id}? This indicates the payout is being handled.`;
+        return `Change status to Processing for request ${w.id}? This indicates the payout is being handled.`;
       case 'MarkPaid': 
-        return `Confirm that the payment of ${this.withdrawal.currency} ${this.withdrawal.netPayout.toLocaleString()} has been successfully sent.`;
+        return `Confirm that the payment of ${w.currency} ${w.netPayout.toLocaleString()} has been successfully sent.`;
       default: 
         return 'Are you sure you want to proceed?';
     }
   }
 
   get confirmLabel(): string {
-    switch (this.action) {
+    switch (this.action()) {
       case 'Approve': return 'Yes, Approve';
       case 'Reject': return 'Reject Request';
       case 'MarkProcessing': return 'Start Processing';
@@ -92,7 +93,7 @@ export class WithdrawalActionModalComponent {
   }
 
   get confirmSeverity(): 'success' | 'danger' | 'info' | 'warn' | 'secondary' {
-    switch (this.action) {
+    switch (this.action()) {
       case 'Reject': return 'danger';
       case 'MarkProcessing': return 'info';
       default: return 'success';
@@ -100,14 +101,15 @@ export class WithdrawalActionModalComponent {
   }
 
   onConfirm() {
-    if (this.action === 'Reject' && !this.reason().trim()) {
+    const action = this.action();
+    if (action === 'Reject' && !this.reason().trim()) {
       return;
     }
     
-    if (this.action) {
+    if (action) {
       this.confirmed.emit({ 
-        action: this.action, 
-        reason: this.action === 'Reject' ? this.reason() : undefined 
+        action: action, 
+        reason: action === 'Reject' ? this.reason() : undefined 
       });
       this.reason.set('');
     }

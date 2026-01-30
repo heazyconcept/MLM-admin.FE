@@ -1,4 +1,4 @@
-<p-dialog [(visible)]="visible" [header]="'Adjust Funds - ' + (wallet()?.id || '')" [modal]="true" [style]="{width: '450px'}" (onHide)="close()">
+<p-dialog [visible]="visible()" [header]="'Adjust Funds - ' + (wallet()?.id || '')" [modal]="true" [style]="{width: '450px'}" (onHide)="close()">
   @if (wallet(); as w) {
     <div class="space-y-6 pt-2">
        <!-- Type Selection -->

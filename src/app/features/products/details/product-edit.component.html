@@ -1,0 +1,198 @@
+<div class="w-full mx-auto p-6 md:p-10 space-y-8">
+  
+  <!-- Header: Clean & Non-sticky -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="flex flex-col gap-1">
+      <div class="flex items-center gap-3">
+        <button (click)="onCancel()" class="group flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+          <i class="pi pi-arrow-left text-lg"></i>
+        </button>
+        <h1 class="text-xl font-semibold text-gray-900 tracking-tight">{{ product()?.name || 'Edit Product' }}</h1>
+        <p-tag [value]="productForm.get('status')?.value || 'Draft'" [severity]="getStatusSeverity(productForm.get('status')?.value || '')" class="ml-1"></p-tag>
+      </div>
+      <p class="text-sm text-gray-500 pl-11">Manage product details, pricing, and availability.</p>
+    </div>
+    
+    <div class="flex items-center gap-3 pl-11 md:pl-0">
+      <button 
+        pButton 
+        label="Discard" 
+        class="p-button-text p-button-secondary text-sm font-medium px-4 h-9 text-gray-600" 
+        (click)="onCancel()">
+      </button>
+      <button 
+        pButton 
+        label="Save Changes" 
+        class="p-button-primary text-sm font-medium px-6 h-9 shadow-sm" 
+        (click)="onSave()">
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+    <!-- Left Column: Main Form -->
+    <div class="lg:col-span-2 space-y-8">
+      <form [formGroup]="productForm" class="space-y-8">
+        
+        <!-- Basic Information -->
+        <section class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+          <h2 class="text-base font-semibold text-gray-900 mb-5">Basic Information</h2>
+          <div class="space-y-5">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Product Name <span class="text-red-500">*</span></label>
+              <input pInputText formControlName="name" class="w-full text-sm" placeholder="e.g. Ultra Vitamin C Complex" />
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Category <span class="text-red-500">*</span></label>
+                <p-select [options]="categoryOptions()" formControlName="category" optionLabel="label" optionValue="value" styleClass="w-full text-sm" placeholder="Select category"></p-select>
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">SKU <span class="text-red-500">*</span></label>
+                <input pInputText formControlName="sku" class="w-full text-sm" placeholder="e.g. VIT-C-1000" />
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Short Description</label>
+              <input pInputText formControlName="shortDescription" class="w-full text-sm" placeholder="Brief summary for listings" />
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Full Description</label>
+              <textarea pTextarea formControlName="fullDescription" rows="5" class="w-full text-sm resize-none" placeholder="Detailed product description..."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <hr class="border-gray-100">
+
+        <!-- Pricing & Points -->
+        <section class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+          <h2 class="text-base font-semibold text-gray-900 mb-5">Pricing & Points</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-gray-600">Base Price</label>
+              <p-inputNumber formControlName="price" mode="currency" [currency]="productForm.get('currency')?.value || 'USD'" locale="en-US" styleClass="w-full text-sm" inputStyleClass="w-full text-sm"></p-inputNumber>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-gray-600">Currency</label>
+              <p-select [options]="[{label: 'USD', value: 'USD'}, {label: 'NGN', value: 'NGN'}]" formControlName="currency" optionLabel="label" optionValue="value" styleClass="w-full text-sm"></p-select>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-gray-600">PV Value</label>
+              <p-inputNumber formControlName="pv" styleClass="w-full text-sm" inputStyleClass="w-full text-sm"></p-inputNumber>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-gray-600">CPV Value</label>
+              <p-inputNumber formControlName="cpv" styleClass="w-full text-sm" inputStyleClass="w-full text-sm"></p-inputNumber>
+            </div>
+          </div>
+        </section>
+
+        <hr class="border-gray-100">
+
+        <!-- Availability -->
+        <section class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+          <h2 class="text-base font-semibold text-gray-900 mb-5">Availability</h2>
+          <div class="space-y-6">
+             <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Catalog Visibility</p>
+                <p class="text-xs text-gray-500">Show this product in the public catalog.</p>
+              </div>
+              <p-toggleSwitch formControlName="visibility"></p-toggleSwitch>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Purchase Eligibility</label>
+              <p-multiSelect [options]="eligibilityOptions" formControlName="purchaseEligibility" optionLabel="label" optionValue="value" display="chip" placeholder="Select eligibility" styleClass="w-full text-sm"></p-multiSelect>
+            </div>
+          </div>
+        </section>
+      </form>
+    </div>
+
+    <!-- Right Column: Sidebar -->
+    <div class="space-y-8">
+      
+      <!-- Status -->
+      <section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Status</h3>
+        <p-select 
+          [options]="[
+            {label: 'Draft', value: 'Draft'}, 
+            {label: 'Active', value: 'Active'}, 
+            {label: 'Inactive', value: 'Inactive'}, 
+            {label: 'Archived', value: 'Archived'}
+          ]" 
+          [ngModel]="productForm.get('status')?.value"
+          (ngModelChange)="productForm.get('status')?.setValue($event)"
+          optionLabel="label" 
+          optionValue="value" 
+          styleClass="w-full text-sm">
+        </p-select>
+      </section>
+
+      <!-- Media -->
+      <section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Product Image</h3>
+        <div class="aspect-square bg-gray-50 rounded-lg border border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 gap-2 cursor-pointer hover:bg-gray-100 hover:border-gray-300 transition-all overflow-hidden relative group">
+          @if (product()?.thumbnail) {
+            <img [src]="product()?.thumbnail" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+               <span class="text-white text-xs font-medium">Change Image</span>
+            </div>
+          } @else {
+            <div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center">
+              <i class="pi pi-image text-gray-400"></i>
+            </div>
+            <span class="text-xs font-medium text-gray-500">Upload Image</span>
+          }
+        </div>
+      </section>
+
+      <!-- Merchants -->
+      <section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Merchants</h3>
+        <div class="space-y-1 max-h-60 overflow-y-auto">
+          @for (merchant of merchants(); track merchant.id) {
+            <div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors">
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-700">{{ merchant.name }}</span>
+                @if (merchant.isDefaultPickup) {
+                  <span class="text-[9px] text-green-600 font-bold uppercase tracking-wide">Default</span>
+                }
+              </div>
+              <p-checkbox 
+                [ngModel]="isMerchantAssigned(merchant.id)" 
+                (ngModelChange)="toggleMerchant(merchant.id)"
+                [binary]="true">
+              </p-checkbox>
+            </div>
+          }
+        </div>
+      </section>
+
+       <!-- Meta -->
+      <div class="px-5 py-4 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
+        <div class="flex justify-between text-[10px]">
+          <span class="text-gray-400 font-medium uppercase">Created</span>
+          <span class="font-mono text-gray-600">{{ product()?.createdAt | date:'mediumDate' }}</span>
+        </div>
+        <div class="flex justify-between text-[10px]">
+          <span class="text-gray-400 font-medium uppercase">Updated</span>
+          <span class="font-mono text-gray-600">{{ product()?.updatedAt | date:'mediumDate' }}</span>
+        </div>
+        <div class="flex justify-between text-[10px]">
+          <span class="text-gray-400 font-medium uppercase">By</span>
+          <span class="font-mono text-gray-600">{{ product()?.createdBy }}</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<p-toast position="bottom-right"></p-toast>

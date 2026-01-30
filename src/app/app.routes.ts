@@ -42,11 +42,25 @@ export const routes: Routes = [
         ]
       },
       {
+        path: 'payments',
+        children: [
+          { path: '', loadComponent: () => import('./features/payments/list/payments-list.component').then(m => m.PaymentsListComponent) },
+          { path: ':id', loadComponent: () => import('./features/payments/details/payment-details.component').then(m => m.PaymentDetailsComponent) }
+        ]
+      },
+      {
         path: 'withdrawals',
         children: [
           { path: '', loadComponent: () => import('./features/withdrawals/list/withdrawals-list.component').then(m => m.WithdrawalsListComponent) },
           { path: 'pending', loadComponent: () => import('./features/withdrawals/list/withdrawals-list.component').then(m => m.WithdrawalsListComponent), data: { defaultFilter: 'Pending' } },
           { path: ':id', loadComponent: () => import('./features/withdrawals/details/withdrawal-details.component').then(m => m.WithdrawalDetailsComponent) }
+        ]
+      },
+      {
+        path: 'products',
+        children: [
+          { path: '', loadComponent: () => import('./features/products/list/product-list.component').then(m => m.ProductListComponent) },
+          { path: ':id/edit', loadComponent: () => import('./features/products/details/product-edit.component').then(m => m.ProductEditComponent) }
         ]
       },
       {
@@ -61,4 +75,6 @@ export const routes: Routes = [
     redirectTo: 'login',
     pathMatch: 'full'
   }
+
 ];
+

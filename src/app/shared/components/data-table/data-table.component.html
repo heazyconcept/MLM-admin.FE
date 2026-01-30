@@ -73,7 +73,7 @@
           <th
             class="
               px-6 py-3
-              text-right
+              text-center
               text-[11px]
               font-semibold
               uppercase
@@ -107,9 +107,9 @@
               whitespace-nowrap
             "
           >
-            @if (column.template) {
+            @if (getTemplate(column); as template) {
               <ng-container
-                [ngTemplateOutlet]="column.template"
+                [ngTemplateOutlet]="template"
                 [ngTemplateOutletContext]="{$implicit: row, rowIndex: rowIndex}">
               </ng-container>
             } @else {
@@ -119,11 +119,11 @@
         }
 
         @if (hasActions()) {
-          <td class="px-6 py-4 text-right">
+          <td class="px-6 py-4 text-center">
             <div
               class="
-                flex justify-end gap-1
-                opacity-0 group-hover:opacity-100
+                flex justify-center gap-1
+                opacity-100
                 transition
               "
             >

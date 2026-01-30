@@ -272,15 +272,15 @@
 
 <!-- Action Confirmation Modal -->
 <app-confirmation-modal
-  [(visible)]="actionConfig.visible"
-  [title]="actionConfig.title"
-  [message]="actionConfig.message"
-  [icon]="actionConfig.icon"
-  [iconClass]="actionConfig.iconClass"
-  [confirmLabel]="actionConfig.confirmLabel"
-  [confirmClass]="actionConfig.confirmClass"
-  [showReasonField]="actionConfig.showReasonField"
-  [reasonRequired]="actionConfig.reasonRequired"
+  [visible]="actionConfig().visible"
+  [title]="actionConfig().title"
+  [message]="actionConfig().message"
+  [icon]="actionConfig().icon"
+  [iconClass]="actionConfig().iconClass"
+  [confirmLabel]="actionConfig().confirmLabel"
+  [confirmClass]="actionConfig().confirmClass"
+  [showReasonField]="actionConfig().showReasonField"
+  [reasonRequired]="actionConfig().reasonRequired"
   (confirm)="onActionConfirm($event)"
   (cancel)="onActionCancel()">
 </app-confirmation-modal>

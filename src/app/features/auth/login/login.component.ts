@@ -39,13 +39,13 @@ export class LoginComponent {
       setTimeout(() => {
         this.isLoading = false;
         
-        if (email === 'pelumi123@gmail.com' && password === 'password123') {
+        if (this.loginForm.valid) {
           this.modalService.open('success', 'Login Successful', 'You have successfully signed in to your account.');
           setTimeout(() => {
             this.router.navigate(['/admin/dashboard']);
           }, 1500);
         } else {
-          this.modalService.open('error', 'Login Failed', 'Invalid email or password. Please check your credentials and try again.');
+          this.modalService.open('error', 'Login Failed', 'Please check your inputs and try again.');
         }
       }, 1000);
     } else {

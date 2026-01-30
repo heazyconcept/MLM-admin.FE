@@ -1,6 +1,6 @@
 <p-dialog 
-  [(visible)]="visible"
-  [header]="title"
+  [visible]="visible()"
+  [header]="title()"
   [modal]="true"
   [style]="{width: '450px'}"
   [draggable]="false"
@@ -9,40 +9,40 @@
   
   <div class="flex flex-col items-center text-center py-4">
     <!-- Message -->
-    <p class="text-mlm-text mb-4">{{ message }}</p>
+    <p class="text-mlm-text mb-4">{{ message() }}</p>
 
     <!-- Reason Field -->
-    @if (showReasonField) {
+    @if (showReasonField()) {
       <div class="w-full text-left">
         <label class="block text-sm font-medium text-mlm-text mb-2">
-          Reason {{ reasonRequired ? '*' : '(Optional)' }}
+          Reason {{ reasonRequired() ? '*' : '(Optional)' }}
         </label>
         <textarea 
           [(ngModel)]="reason"
-          [placeholder]="reasonPlaceholder"
+          [placeholder]="reasonPlaceholder()"
           rows="3"
           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mlm-primary/50 focus:border-mlm-primary resize-none">
         </textarea>
-        @if (reasonRequired && !reason.trim()) {
+        @if (reasonRequired() && !reason().trim()) {
           <small class="text-mlm-error">Reason is required</small>
         }
       </div>
     }
   </div>
 
-  <ng-template pTemplate="footer">
+  <ng-template #footer>
     <div class="flex justify-end gap-2">
       <button 
         pButton 
-        [label]="cancelLabel" 
+        [label]="cancelLabel()" 
         class="p-button-text p-button-secondary"
         (click)="onCancel()">
       </button>
       <button 
         pButton 
-        [label]="confirmLabel"
-        [class]="confirmClass"
-        [disabled]="showReasonField && reasonRequired && !reason.trim()"
+        [label]="confirmLabel()"
+        [class]="confirmClass()"
+        [disabled]="showReasonField() && reasonRequired() && !reason().trim()"
         (click)="onConfirm()">
       </button>
     </div>

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, Signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -6,21 +6,19 @@ import { Wallet } from '../services/wallet.service';
 
 @Component({
   selector: 'app-wallet-action-modal',
-  standalone: true,
   imports: [CommonModule, ButtonModule, DialogModule],
   templateUrl: './wallet-action-modal.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WalletActionModalComponent {
-  @Input() visible = false;
-  @Input({ required: true }) wallet!: Signal<Wallet | undefined>;
-  @Input() action!: Signal<'Lock' | 'Unlock'>;
+  visible = input<boolean>(false);
+  wallet = input.required<Wallet | undefined>();
+  action = input.required<'Lock' | 'Unlock'>();
   
-  @Output() visibleChange = new EventEmitter<boolean>();
-  @Output() confirmed = new EventEmitter<void>();
+  visibleChange = output<boolean>();
+  confirmed = output<void>();
 
   close() {
-    this.visible = false;
     this.visibleChange.emit(false);
   }
 

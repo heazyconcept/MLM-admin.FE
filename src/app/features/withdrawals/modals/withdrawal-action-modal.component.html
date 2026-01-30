@@ -1,5 +1,6 @@
 <p-dialog 
-  [(visible)]="visible" 
+  [visible]="visible()" 
+  (visibleChange)="onCancel()"
   [modal]="true" 
   [header]="title"
   [draggable]="false" 
@@ -28,7 +29,7 @@
     </div>
 
     <!-- Rejection Reason Section -->
-    @if (action === 'Reject') {
+    @if (action() === 'Reject') {
       <div class="space-y-2">
         <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Reason for Rejection <span class="text-red-500">*</span></label>
         <textarea 
@@ -58,7 +59,7 @@
         [label]="confirmLabel" 
         [severity]="confirmSeverity"
         class="flex-1"
-        [disabled]="action === 'Reject' && !reason().trim()"
+        [disabled]="action() === 'Reject' && !reason().trim()"
         (click)="onConfirm()">
       </button>
     </div>

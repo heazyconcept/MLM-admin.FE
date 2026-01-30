@@ -9,6 +9,9 @@ import { ToastModule } from 'primeng/toast';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { MessageService, MenuItem } from 'primeng/api';
+import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import { DataTableTemplateDirective } from '../../../shared/components/data-table/data-table-template.directive';
+import { TableAction, TableColumn, TableConfig } from '../../../shared/components/data-table/data-table.types';
 
 import { TooltipModule } from 'primeng/tooltip';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -46,7 +49,10 @@ interface ActionConfig {
     DatePickerModule,
     UserProfileModalComponent,
     StatusBadgeComponent,
-    ConfirmationModalComponent
+    ConfirmationModalComponent,
+    ConfirmationModalComponent,
+    DataTableComponent,
+    DataTableTemplateDirective
   ],
   providers: [MessageService],
   templateUrl: './users-list.component.html',
@@ -110,6 +116,69 @@ export class UsersListComponent implements OnInit {
 
     return result;
   });
+
+  // Table configurations
+  columns = signal<TableColumn<User>[]>([
+    { field: 'id', header: 'ID', width: '100px', align: 'center', class: 'font-mono text-xs text-gray-500' },
+    { field: 'fullName', header: 'User' },
+    { field: 'email', header: 'Email', class: 'text-sm text-gray-600' },
+    { field: 'package', header: 'Package', width: '130px', align: 'center' },
+    { field: 'status', header: 'Status', width: '130px', align: 'center' },
+    { 
+      field: 'registrationDate', 
+      header: 'Joined', 
+      width: '160px', 
+      align: 'center',
+      formatter: (val) => this.formatDate(val as Date)
+    }
+  ]);
+
+  tableConfig = signal<TableConfig>({
+    paginator: true,
+    rows: 10,
+    rowsPerPageOptions: [10, 25, 50],
+    showCurrentPageReport: true,
+    currentPageReportTemplate: 'Showing {first} to {last} of {totalRecords}',
+    showGridlines: true,
+    hoverable: true,
+    size: 'small'
+  });
+
+  actions = signal<TableAction<User>[]>([
+    { 
+      icon: 'pi pi-eye', 
+      tooltip: 'View Profile', 
+      command: (user) => this.router.navigate(['/admin/users', user.id]),
+      severity: 'secondary'
+    },
+    { 
+      icon: 'pi pi-ban', 
+      tooltip: 'Suspend User', 
+      visible: (user) => user.status === 'Active' || user.status === 'Flagged',
+      command: (user) => this.showActionModal('suspend', user),
+      severity: 'danger' 
+    },
+    { 
+      icon: 'pi pi-check', 
+      tooltip: 'Reactivate', 
+      visible: (user) => user.status === 'Suspended',
+      command: (user) => this.showActionModal('reactivate', user),
+      severity: 'success'
+    },
+    { 
+      icon: 'pi pi-flag', 
+      tooltip: 'Flag User', 
+      visible: (user) => user.status === 'Active',
+      command: (user) => this.showActionModal('flag', user),
+      severity: 'warning'
+    },
+    { 
+      icon: 'pi pi-key', 
+      tooltip: 'Reset Password', 
+      command: (user) => this.showActionModal('resetPassword', user),
+      severity: 'info'
+    }
+  ]);
 
   actionConfig: ActionConfig = {
     visible: false,

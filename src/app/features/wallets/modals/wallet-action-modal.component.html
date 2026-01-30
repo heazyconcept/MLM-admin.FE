@@ -1,4 +1,4 @@
-<p-dialog [(visible)]="visible" [header]="action() + ' Wallet'" [modal]="true" [style]="{width: '450px'}" (onHide)="close()">
+<p-dialog [visible]="visible()" [header]="action() + ' Wallet'" [modal]="true" [style]="{width: '450px'}" (onHide)="close()">
   @if (wallet(); as w) {
     <div class="space-y-4 pt-2 text-center">
        <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto text-red-600 mb-4">

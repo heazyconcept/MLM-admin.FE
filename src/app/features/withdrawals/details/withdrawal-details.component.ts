@@ -10,7 +10,6 @@ import { ToastModule } from 'primeng/toast';
 
 @Component({
   selector: 'app-withdrawal-details',
-  standalone: true,
   imports: [
     CommonModule,
     RouterModule,
