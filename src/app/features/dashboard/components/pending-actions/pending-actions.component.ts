@@ -5,6 +5,9 @@ import { DialogModule } from 'primeng/dialog';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
+import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
+import { DataTableTemplateDirective } from '../../../../shared/components/data-table/data-table-template.directive';
+import { TableColumn, TableConfig } from '../../../../shared/components/data-table/data-table.types';
 
 export interface PendingAction {
   type: 'withdrawals' | 'merchants' | 'payments' | 'compliance';
@@ -27,7 +30,7 @@ export interface PendingItem {
 
 @Component({
   selector: 'app-pending-actions',
-  imports: [CommonModule, RouterModule, DialogModule, TableModule, TagModule, ButtonModule],
+  imports: [CommonModule, RouterModule, DialogModule, TableModule, TagModule, ButtonModule, DataTableComponent, DataTableTemplateDirective],
   templateUrl: './pending-actions.component.html',
   styleUrls: ['./pending-actions.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -39,6 +42,21 @@ export class PendingActionsComponent {
   modalVisible = signal(false);
   selectedAction = signal<PendingAction | null>(null);
   modalItems = signal<PendingItem[]>([]);
+
+  columns = signal<TableColumn<PendingItem>[]>([
+    { field: 'id', header: 'ID', class: 'font-mono text-sm' },
+    { field: 'name', header: 'Name' },
+    { field: 'amount', header: 'Amount', class: 'font-medium' },
+    { field: 'date', header: 'Date', class: 'text-mlm-secondary' },
+    { field: 'status', header: 'Status' }
+  ]);
+
+  tableConfig = signal<TableConfig>({
+    paginator: false,
+    showGridlines: false,
+    hoverable: true,
+    size: 'small'
+  });
 
   viewAll(type?: string) {
     this.modalVisible.set(false);

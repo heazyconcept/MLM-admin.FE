@@ -1,0 +1,46 @@
+@reference "../../../../styles.css";
+
+:host ::ng-deep {
+  .p-drawer {
+    @apply border-none shadow-xl;
+    width: 480px !important;
+    
+    .p-drawer-header {
+      @apply hidden; /* We are using a custom header template inside the body for better control */
+    }
+
+    .p-drawer-content {
+      @apply p-0 overflow-hidden;
+    }
+  }
+
+  /* Refined Input Styles */
+  .p-inputtext, .p-inputnumber-input {
+    @apply border-gray-300 rounded-lg transition-shadow text-gray-900;
+    
+    &:enabled:focus {
+      @apply border-gray-900 ring-1 ring-gray-900 shadow-none;
+    }
+    
+    &:enabled:hover {
+      @apply border-gray-400;
+    }
+
+    &::placeholder {
+      @apply text-gray-400;
+    }
+  }
+
+  /* Select Styles */
+  .p-select {
+    @apply border-gray-300 rounded-lg transition-shadow;
+
+    &.p-focus {
+       @apply border-gray-900 ring-1 ring-gray-900 shadow-none;
+    }
+  }
+
+  .p-inputnumber {
+    @apply w-full;
+  }
+}

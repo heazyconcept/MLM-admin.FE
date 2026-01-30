@@ -1,0 +1,125 @@
+<div class="p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Product Catalog</h1>
+      <p class="text-slate-500 text-sm">Manage products, pricing, and visibility</p>
+    </div>
+    <p-button 
+      label="Add Product" 
+      icon="pi pi-plus" 
+      (onClick)="onAddProduct()"
+      class="p-button-primary">
+    </p-button>
+  </div>
+
+  <!-- Filters -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-xl border border-slate-200">
+    <!-- Search -->
+    <div class="col-span-1 md:col-span-2">
+      <p-iconfield iconPosition="left">
+        <p-inputicon class="pi pi-search"></p-inputicon>
+        <input 
+          type="text" 
+          pInputText 
+          placeholder="Search by name or SKU..." 
+          class="w-full"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)" />
+      </p-iconfield>
+    </div>
+
+    <!-- Category Filter -->
+    <div>
+      <p-select 
+        [options]="categoryOptions()" 
+        [ngModel]="selectedCategory()"
+        (ngModelChange)="selectedCategory.set($event)"
+        optionLabel="label" 
+        optionValue="value"
+        placeholder="Select Category"
+        class="w-full">
+      </p-select>
+    </div>
+
+    <!-- Status Filter -->
+    <div>
+      <p-select 
+        [options]="statusOptions" 
+        [ngModel]="selectedStatus()"
+        (ngModelChange)="selectedStatus.set($event)"
+        optionLabel="label" 
+        optionValue="value"
+        placeholder="Select Status"
+        class="w-full">
+      </p-select>
+    </div>
+  </div>
+
+  <!-- Product Table -->
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+    <app-data-table
+      [data]="filteredProducts()"
+      [columns]="columns()"
+      [config]="tableConfig()"
+      [actions]="actions()">
+
+      <!-- Custom Image Template -->
+      <ng-template appDataTableTemplate="thumbnail" let-row>
+        <div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200 overflow-hidden">
+          @if (row.thumbnail) {
+            <img [src]="row.thumbnail" [alt]="row.name" class="w-full h-full object-cover">
+          } @else {
+            <i class="pi pi-image text-slate-400"></i>
+          }
+        </div>
+      </ng-template>
+
+      <!-- Custom Product Info Template -->
+      <ng-template appDataTableTemplate="name" let-row>
+        <div class="flex flex-col">
+          <span class="font-medium text-slate-800">{{ row.name }}</span>
+          <span class="text-xs text-slate-500 font-mono">{{ row.sku }}</span>
+        </div>
+      </ng-template>
+
+      <!-- Custom Price Template -->
+      <ng-template appDataTableTemplate="price" let-row>
+        <div class="flex flex-col">
+          <span class="font-semibold text-slate-900">{{ row.price | currency: row.currency }}</span>
+          <div class="flex gap-2 text-[10px] mt-1">
+            <span class="bg-blue-50 text-blue-700 px-1 rounded">PV: {{ row.pv }}</span>
+            <span class="bg-purple-50 text-purple-700 px-1 rounded">CPV: {{ row.cpv }}</span>
+          </div>
+        </div>
+      </ng-template>
+
+      <!-- Custom Status Template -->
+      <ng-template appDataTableTemplate="status" let-row>
+        <p-tag 
+          [value]="row.status" 
+          [severity]="getStatusSeverity(row.status)">
+        </p-tag>
+      </ng-template>
+
+      <!-- Custom Merchants Template -->
+      <ng-template appDataTableTemplate="assignedMerchants" let-row>
+        <span class="text-xs font-bold text-slate-600 bg-slate-100 w-8 h-8 inline-flex items-center justify-center rounded-full border border-slate-200">
+          {{ row.assignedMerchants?.length || 0 }}
+        </span>
+      </ng-template>
+
+    </app-data-table>
+  </div>
+
+</div>
+
+<!-- Product Creation Drawer -->
+<app-product-drawer
+  [visible]="showDrawer()"
+  (visibleChange)="showDrawer.set($event)">
+</app-product-drawer>
+
+<!-- Notifications -->
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

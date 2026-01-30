@@ -49,32 +49,18 @@
       </p>
     </div>
 
-    <p-table [value]="modalItems()" [tableStyle]="{'min-width': '100%'}" styleClass="p-datatable-sm">
-      <ng-template #header>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          @if (action.type === 'withdrawals' || action.type === 'payments') {
-            <th>Amount</th>
-          }
-          <th>Date</th>
-          <th>Status</th>
-        </tr>
+    <app-data-table
+      [data]="modalItems()"
+      [columns]="columns()"
+      [config]="tableConfig()">
+      
+      <!-- Custom Status Template -->
+      <ng-template appDataTableTemplate="status" let-row>
+        <p-tag [value]="row.status" [severity]="getStatusSeverity(row.status)" [rounded]="true"></p-tag>
       </ng-template>
-      <ng-template #body let-item>
-        <tr>
-          <td class="font-mono text-sm">{{ item.id }}</td>
-          <td>{{ item.name }}</td>
-          @if (action.type === 'withdrawals' || action.type === 'payments') {
-            <td class="font-medium">{{ item.amount }}</td>
-          }
-          <td class="text-mlm-secondary">{{ item.date }}</td>
-          <td>
-            <p-tag [value]="item.status" [severity]="getStatusSeverity(item.status)" [rounded]="true"></p-tag>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+
+    </app-data-table>
+
 
     <div class="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
       <button pButton label="Close" class="p-button-text" (click)="modalVisible.set(false)"></button>

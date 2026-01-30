@@ -22,6 +22,7 @@ import {
   RowActionEvent,
   FilterChangeEvent
 } from './data-table.types';
+import { DataTableTemplateDirective } from './data-table-template.directive';
 
 @Component({
   selector: 'app-data-table',
@@ -31,7 +32,8 @@ import {
     TableModule,
     ButtonModule,
     InputTextModule,
-    TooltipModule
+    TooltipModule,
+    DataTableTemplateDirective
   ],
   templateUrl: './data-table.component.html',
   styleUrls: ['./data-table.component.css'],
@@ -64,7 +66,7 @@ export class DataTableComponent<T = unknown> {
   filterChange = output<FilterChangeEvent>();
 
   // Content children for custom templates
-  templates = contentChildren<TemplateRef<unknown>>(TemplateRef);
+  templates = contentChildren(DataTableTemplateDirective);
 
   // ViewChild for PrimeNG table
   @ViewChild('tableRef') table!: Table;
@@ -146,6 +148,16 @@ export class DataTableComponent<T = unknown> {
     const customClass = action.styleClass || '';
     
     return `${baseClass} ${severityClass} ${customClass}`.trim();
+  }
+
+
+  getTemplate(column: TableColumn<T>): TemplateRef<any> | undefined {
+    if (column.template) {
+      return column.template;
+    }
+    
+    const matchedTemplate = this.templates().find(t => t.name() === column.field);
+    return matchedTemplate ? matchedTemplate.templateRef : undefined;
   }
 
   getColumnClass(column: TableColumn<T>): string {

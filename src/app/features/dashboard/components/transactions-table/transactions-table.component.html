@@ -9,47 +9,34 @@
   </div>
 
   <!-- Table -->
-  <p-table 
-    [value]="transactions" 
-    [tableStyle]="{ 'min-width': '100%' }"
-    styleClass="p-datatable-sm">
-    <ng-template #header>
-      <tr>
-        <th class="text-left text-xs font-medium text-mlm-secondary uppercase">Activity</th>
-        <th class="text-left text-xs font-medium text-mlm-secondary uppercase">Date</th>
-        <th class="text-left text-xs font-medium text-mlm-secondary uppercase">Price</th>
-        <th class="text-left text-xs font-medium text-mlm-secondary uppercase">Status</th>
-        <th class="text-center text-xs font-medium text-mlm-secondary uppercase"></th>
-      </tr>
+  <app-data-table
+    [data]="transactions"
+    [columns]="columns()"
+    [config]="tableConfig()"
+    [actions]="actions()">
+    
+    <!-- Custom Activity Template -->
+    <ng-template appDataTableTemplate="activity" let-row>
+      <div class="flex items-center gap-3">
+        <div 
+          class="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
+          [style.background-color]="row.iconBg">
+          {{ row.icon }}
+        </div>
+        <span class="font-medium text-mlm-text">{{ row.activity }}</span>
+      </div>
     </ng-template>
-    <ng-template #body let-transaction>
-      <tr class="hover:bg-mlm-green-50/30 transition-colors">
-        <td>
-          <div class="flex items-center gap-3">
-            <div 
-              class="w-10 h-10 rounded-lg flex items-center justify-center"
-              [style.background-color]="transaction.iconBg">
-              <span class="text-lg">{{ transaction.icon }}</span>
-            </div>
-            <span class="font-medium text-mlm-text">{{ transaction.activity }}</span>
-          </div>
-        </td>
-        <td class="text-sm text-mlm-secondary">{{ transaction.date }}</td>
-        <td class="font-medium text-mlm-text">{{ transaction.price }}</td>
-        <td>
-          <p-tag 
-            [value]="transaction.status" 
-            [severity]="getStatusSeverity(transaction.status)"
-            [rounded]="true">
-          </p-tag>
-        </td>
-        <td class="text-center">
-          <button class="p-2 rounded hover:bg-gray-100 text-mlm-secondary transition-colors">
-            <i class="pi pi-ellipsis-v"></i>
-          </button>
-        </td>
-      </tr>
+
+    <!-- Custom Status Template -->
+    <ng-template appDataTableTemplate="status" let-row>
+      <p-tag 
+        [value]="row.status" 
+        [severity]="getStatusSeverity(row.status)"
+        [rounded]="true">
+      </p-tag>
     </ng-template>
-  </p-table>
+    
+  </app-data-table>
 </div>
+
 

@@ -57,6 +57,13 @@ export const routes: Routes = [
         ]
       },
       {
+        path: 'products',
+        children: [
+          { path: '', loadComponent: () => import('./features/products/list/product-list.component').then(m => m.ProductListComponent) },
+          { path: ':id/edit', loadComponent: () => import('./features/products/details/product-edit.component').then(m => m.ProductEditComponent) }
+        ]
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'

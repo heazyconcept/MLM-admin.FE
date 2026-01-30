@@ -1,6 +1,8 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 interface MenuItem {
   label: string;
@@ -20,11 +22,15 @@ interface MenuSection {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ConfirmDialogModule],
   templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.css']
+  styleUrls: ['./sidebar.component.css'],
+  providers: [ConfirmationService]
 })
 export class SidebarComponent {
+  private router = inject(Router);
+  private confirmationService = inject(ConfirmationService);
+
   @Input() collapsed = false;
   @Output() collapsedChange = new EventEmitter<boolean>();
 
@@ -57,7 +63,7 @@ export class SidebarComponent {
     {
       title: 'FEATURES',
       items: [
-        { label: 'Recurring', icon: 'pi pi-refresh', route: '/admin/recurring', badge: 16 },
+        { label: 'Products', icon: 'pi pi-shopping-bag', route: '/admin/products' },
         { label: 'Subscriptions', icon: 'pi pi-credit-card', route: '/admin/subscriptions' },
         { label: 'Feedback', icon: 'pi pi-comments', route: '/admin/feedback' }
       ]
@@ -78,8 +84,19 @@ export class SidebarComponent {
   }
 
   logout() {
-    // Implement logout logic
-    console.log('Logging out...');
+    this.confirmationService.confirm({
+      message: 'Are you sure you want to log out?',
+      header: 'Logout Confirmation',
+      icon: 'pi pi-info-circle',
+      acceptButtonStyleClass: 'p-button-danger p-button-text',
+      rejectButtonStyleClass: 'p-button-text p-button-text',
+      acceptIcon: 'none',
+      rejectIcon: 'none',
+      accept: () => {
+        localStorage.removeItem('token');
+        this.router.navigate(['/login']);
+      }
+    });
   }
 }
 

@@ -1,0 +1,29 @@
+@reference "../../../../styles.css";
+
+:host ::ng-deep {
+  /* Input Styles - Consistent with Drawer */
+  .p-inputtext, .p-inputnumber-input, .p-textarea, .p-select, .p-multiselect {
+    @apply border-gray-300 rounded-lg transition-all text-gray-900 shadow-sm;
+
+    &:enabled:focus {
+      @apply border-gray-900 ring-1 ring-gray-900 shadow-none;
+    }
+    &:enabled:hover {
+       @apply border-gray-400;
+    }
+  }
+
+  .p-inputnumber {
+    @apply w-full;
+  }
+
+  /* Tags */
+  .p-tag {
+    @apply px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-none;
+  }
+
+  /* Buttons */
+  .p-button.p-button-text.p-button-secondary {
+    @apply text-gray-500 hover:text-gray-900 hover:bg-gray-100;
+  }
+}

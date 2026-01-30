@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { WithdrawalService, WithdrawalRequest, WithdrawalStatus } from '../services/withdrawal.service';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import { DataTableTemplateDirective } from '../../../shared/components/data-table/data-table-template.directive';
 import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { SelectModule } from 'primeng/select';
@@ -21,6 +22,7 @@ interface StatusOption {
     CommonModule,
     RouterModule,
     DataTableComponent,
+    DataTableTemplateDirective,
     StatusBadgeComponent,
     SelectModule,
     ButtonModule,

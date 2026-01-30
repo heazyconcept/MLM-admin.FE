@@ -1,0 +1,181 @@
+<p-drawer 
+  [visible]="visible()" 
+  (onHide)="onHide()" 
+  position="right" 
+  [style]="{ width: '480px' }"
+  [modal]="true"
+  [closeOnEscape]="true"
+  [dismissible]="false"
+  header="Create Product">
+
+  <!-- Custom Header -->
+  <!-- <ng-template pTemplate="header">
+    <div class="flex items-center justify-between w-full">
+      <h2 class="text-lg font-semibold text-gray-900">Create Product</h2>
+    </div>
+  </ng-template> -->
+
+  <div class="flex flex-col h-full bg-white">
+    <!-- Status Banner (Subtle) -->
+    <div class="px-6 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+      <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">New Product Entry</span>
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Status</span>
+        <span class="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wide">Active</span>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-8">
+      <form [formGroup]="productForm">
+        
+        <!-- Basic Info Section -->
+        <div class="space-y-5">
+           <!-- Name -->
+           <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Product Name <span class="text-red-500">*</span></label>
+            <input 
+              pInputText 
+              formControlName="name" 
+              placeholder="e.g. Ultra Vitamin C Complex" 
+              class="w-full text-sm placeholder:text-gray-400" />
+            @if (productForm.get('name')?.touched && productForm.get('name')?.invalid) {
+              <small class="text-red-500 text-xs">Name is required</small>
+            }
+          </div>
+
+          <!-- Category -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Category <span class="text-red-500">*</span></label>
+            <p-select 
+              [options]="categoryOptions()" 
+              formControlName="category" 
+              optionLabel="label" 
+              optionValue="value"
+              placeholder="Select Category"
+              styleClass="w-full text-sm"
+              appendTo="body">
+            </p-select>
+            @if (productForm.get('category')?.touched && productForm.get('category')?.invalid) {
+              <small class="text-red-500 text-xs">Category is required</small>
+            }
+          </div>
+
+          <!-- SKU -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">SKU <span class="text-gray-400 font-normal normal-case">(Optional)</span></label>
+            <input 
+              pInputText 
+              formControlName="sku" 
+              placeholder="Auto-generated if empty" 
+              class="w-full text-sm placeholder:text-gray-400" />
+          </div>
+        </div>
+
+        <!-- Separator -->
+        <hr class="border-gray-100 my-6">
+
+        <!-- Pricing Section -->
+        <div class="space-y-4">
+          <h3 class="text-sm font-semibold text-gray-900">Pricing & Points</h3>
+          
+          <div class="grid grid-cols-2 gap-5">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-gray-600">Base Price</label>
+              <p-inputNumber 
+                formControlName="price" 
+                mode="currency" 
+                currency="USD" 
+                locale="en-US" 
+                styleClass="w-full text-sm"
+                inputStyleClass="w-full text-sm">
+              </p-inputNumber>
+            </div>
+            
+            <div class="flex flex-col gap-1.5">
+               <label class="text-xs font-medium text-gray-600">Currency</label>
+               <p-select 
+                [options]="[{label: 'USD', value: 'USD'}, {label: 'NGN', value: 'NGN'}]" 
+                formControlName="currency" 
+                optionLabel="label" 
+                optionValue="value"
+                styleClass="w-full text-sm"
+                appendTo="body">
+              </p-select>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-gray-600">PV Value</label>
+              <p-inputNumber 
+                formControlName="pv" 
+                styleClass="w-full text-sm"
+                inputStyleClass="w-full text-sm">
+              </p-inputNumber>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-gray-600">CPV Value</label>
+              <p-inputNumber 
+                formControlName="cpv" 
+                styleClass="w-full text-sm"
+                inputStyleClass="w-full text-sm">
+              </p-inputNumber>
+            </div>
+          </div>
+        </div>
+
+        <!-- Separator -->
+        <hr class="border-gray-100 my-6">
+
+        <!-- Media Section -->
+        <div class="space-y-4">
+           <div class="flex items-center justify-between">
+             <h3 class="text-sm font-semibold text-gray-900">Product Image</h3>
+             @if (selectedImage()) {
+               <button type="button" (click)="selectedImage.set(null); fileInput.value = ''" class="text-xs text-red-500 hover:text-red-700 font-medium">Remove</button>
+             }
+           </div>
+           
+           <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFileSelect($event)">
+
+           <div 
+             (click)="fileInput.click()"
+             class="border border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all group relative overflow-hidden h-40">
+             
+             @if (selectedImage()) {
+               <img [src]="selectedImage()" class="absolute inset-0 w-full h-full object-cover">
+               <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                 <span class="text-white text-xs font-medium">Change Image</span>
+               </div>
+             } @else {
+               <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:shadow-sm transition-all">
+                 <i class="pi pi-image text-lg"></i>
+               </div>
+               <div class="text-center">
+                 <p class="text-xs font-medium text-gray-700">Click to upload image</p>
+                 <p class="text-[10px] text-gray-400 mt-0.5">SVG, PNG, JPG or GIF (max. 2MB)</p>
+               </div>
+             }
+           </div>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- Footer -->
+    <div class="p-5 border-t border-gray-100 bg-white flex items-center justify-end gap-3 z-10">
+      <button 
+        pButton 
+        label="Cancel" 
+        class="p-button-text p-button-secondary text-sm font-medium px-4 h-9"
+        (click)="onHide()">
+      </button>
+      <button 
+        pButton 
+        label="Create Product" 
+        class="p-button-primary text-sm font-medium px-6 h-9 shadow-sm"
+        (click)="onSave()">
+      </button>
+    </div>
+  </div>
+</p-drawer>

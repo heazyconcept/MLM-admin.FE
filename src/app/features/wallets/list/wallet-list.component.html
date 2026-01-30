@@ -41,7 +41,7 @@
         [emptyIcon]="'pi pi-wallet'">
 
         <!-- Custom user cell template -->
-        <ng-template #userCell let-wallet>
+        <ng-template appDataTableTemplate="userName" let-wallet>
           <div class="flex flex-col py-1">
             <span class="font-semibold text-gray-900 leading-tight">{{ wallet.userName }}</span>
             <span class="text-xs text-gray-500 mt-0.5">{{ wallet.userId }}</span>
@@ -49,21 +49,21 @@
         </ng-template>
 
         <!-- Custom type cell template -->
-        <ng-template #typeCell let-wallet>
+        <ng-template appDataTableTemplate="type" let-wallet>
           <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-gray-100 text-gray-700 border border-gray-200">
             {{ wallet.type }}
           </span>
         </ng-template>
 
         <!-- Custom balance cell template -->
-        <ng-template #balanceCell let-wallet>
+        <ng-template appDataTableTemplate="balance" let-wallet>
           <span class="font-bold text-gray-900 text-base">
             {{ wallet.balance | currency:wallet.currency:'symbol-narrow' }}
           </span>
         </ng-template>
 
         <!-- Custom status cell template -->
-        <ng-template #statusCell let-wallet>
+        <ng-template appDataTableTemplate="status" let-wallet>
           <p-tag [value]="wallet.status" [severity]="getStatusSeverity(wallet.status)"></p-tag>
         </ng-template>
       </app-data-table>

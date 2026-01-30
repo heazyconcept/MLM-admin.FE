@@ -103,7 +103,7 @@
     [actions]="actions()">
     
     <!-- Custom Purpose Template -->
-    <ng-template #purpose let-row>
+    <ng-template appDataTableTemplate="purpose" let-row>
       <span 
         class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
         [class]="getPurposeClass(row.purpose)">
@@ -112,7 +112,7 @@
     </ng-template>
 
     <!-- Custom Status Template -->
-    <ng-template #status let-row>
+    <ng-template appDataTableTemplate="status" let-row>
       <app-status-badge [status]="row.status"></app-status-badge>
     </ng-template>
   </app-data-table>
