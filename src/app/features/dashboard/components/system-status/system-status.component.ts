@@ -1,19 +1,19 @@
-import { Component, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-system-status',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './system-status.component.html',
-  styleUrls: ['./system-status.component.css']
+  styleUrls: ['./system-status.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SystemStatusComponent {
-  @Input() status: 'online' | 'offline' | 'maintenance' = 'online';
-  @Input() uptime = '99.9%';
-  @Input() lastChecked = new Date();
+  status = input<'online' | 'offline' | 'maintenance'>('online');
+  uptime = input('99.9%');
+  lastChecked = input(new Date());
 
-  get statusConfig() {
+  statusConfig = computed(() => {
     const configs = {
       online: {
         label: 'All Systems Operational',
@@ -37,8 +37,8 @@ export class SystemStatusComponent {
         icon: 'pi-exclamation-triangle'
       }
     };
-    return configs[this.status];
-  }
+    return configs[this.status()];
+  });
 
   formatTime(date: Date): string {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });

@@ -12,7 +12,6 @@ import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-product-drawer',
-  standalone: true,
   imports: [
     CommonModule,
     DrawerModule,

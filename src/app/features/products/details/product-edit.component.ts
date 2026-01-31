@@ -19,7 +19,6 @@ import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-product-edit',
-  standalone: true,
   imports: [
     CommonModule,
     RouterModule,

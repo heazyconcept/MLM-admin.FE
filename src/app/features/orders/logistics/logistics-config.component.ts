@@ -1,6 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
 
 // PrimeNG
 import { TableModule } from 'primeng/table';
@@ -17,11 +17,10 @@ import { LogisticsRule } from '../../../core/models/order.model';
 
 @Component({
   selector: 'app-logistics-config',
-  standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     ReactiveFormsModule,
+    FormsModule,
     TableModule,
     ButtonModule,
     InputTextModule,
@@ -32,7 +31,8 @@ import { LogisticsRule } from '../../../core/models/order.model';
     TagModule
   ],
   templateUrl: './logistics-config.component.html',
-  styleUrls: ['./logistics-config.component.css']
+  styleUrls: ['./logistics-config.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LogisticsConfigComponent {
   private orderService = inject(OrderService);

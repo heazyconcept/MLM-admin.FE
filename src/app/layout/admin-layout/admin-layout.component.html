@@ -1,9 +1,6 @@
 <div class="flex h-screen bg-mlm-background overflow-hidden">
   <!-- Sidebar -->
-  <app-sidebar 
-    [collapsed]="sidebarCollapsed"
-    (collapsedChange)="onSidebarToggle($event)">
-  </app-sidebar>
+  <app-sidebar [(collapsed)]="sidebarCollapsed"></app-sidebar>
 
   <!-- Main Content -->
   <div class="flex-1 flex flex-col overflow-hidden">

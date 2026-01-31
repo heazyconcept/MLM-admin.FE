@@ -5,7 +5,6 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { UsersService, User } from '../services/users.service';
 
@@ -29,7 +28,6 @@ interface ActionConfig {
     RouterModule, 
     ButtonModule, 
     ToastModule,
-    StatusBadgeComponent,
     ConfirmationModalComponent
   ],
   providers: [MessageService],

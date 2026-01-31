@@ -10,7 +10,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { Table, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -28,7 +28,7 @@ import { DataTableTemplateDirective } from './data-table-template.directive';
   selector: 'app-data-table',
   imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     TableModule,
     ButtonModule,
     InputTextModule,
@@ -72,6 +72,7 @@ export class DataTableComponent<T = unknown> {
   @ViewChild('tableRef') table!: Table;
 
   // Internal state
+  globalFilterControl = new FormControl('');
   globalFilterValue = signal<string>('');
 
   // Computed values
@@ -151,7 +152,7 @@ export class DataTableComponent<T = unknown> {
   }
 
 
-  getTemplate(column: TableColumn<T>): TemplateRef<any> | undefined {
+  getTemplate(column: TableColumn<T>): TemplateRef<unknown> | undefined {
     if (column.template) {
       return column.template;
     }

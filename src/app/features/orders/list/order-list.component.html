@@ -19,8 +19,7 @@
           pInputText 
           placeholder="Search by Order ID, User, or Item..." 
           class="w-full"
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)" />
+          [formControl]="searchQueryControl" />
       </p-iconfield>
     </div>
 
@@ -28,8 +27,7 @@
     <div>
       <p-select 
         [options]="statusOptions" 
-        [ngModel]="selectedStatus()"
-        (ngModelChange)="selectedStatus.set($event)"
+        [formControl]="selectedStatusControl"
         placeholder="All Statuses"
         class="w-full"
         styleClass="w-full"
@@ -41,8 +39,7 @@
     <div>
        <p-select 
         [options]="fulfilmentOptions" 
-        [ngModel]="selectedFulfilment()"
-        (ngModelChange)="selectedFulfilment.set($event)"
+        [formControl]="selectedFulfilmentControl"
         placeholder="All Types"
         class="w-full"
         styleClass="w-full"

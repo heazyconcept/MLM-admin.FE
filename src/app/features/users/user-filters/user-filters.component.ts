@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, ChangeDetectionStrategy, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -8,14 +8,14 @@ import { UserFilters, UserStatus, UserPackage, UserRole } from '../services/user
 
 @Component({
   selector: 'app-user-filters',
-  standalone: true,
   imports: [CommonModule, FormsModule, InputTextModule, SelectModule, ButtonModule],
   templateUrl: './user-filters.component.html',
-  styleUrls: ['./user-filters.component.css']
+  styleUrls: ['./user-filters.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserFiltersComponent {
-  @Output() filtersChange = new EventEmitter<UserFilters>();
-  @Output() exportClick = new EventEmitter<void>();
+  filtersChange = output<UserFilters>();
+  exportClick = output<void>();
 
   filters: UserFilters = {
     search: '',

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TagModule } from 'primeng/tag';
 
@@ -14,15 +14,15 @@ export interface Activity {
 
 @Component({
   selector: 'app-activity-feed',
-  standalone: true,
   imports: [CommonModule, TagModule],
   templateUrl: './activity-feed.component.html',
-  styleUrls: ['./activity-feed.component.css']
+  styleUrls: ['./activity-feed.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActivityFeedComponent {
-  @Input() activities: Activity[] = [];
+  activities = input<Activity[]>([]);
 
-  get defaultActivities(): Activity[] {
+  defaultActivities = computed<Activity[]>(() => {
     return [
       {
         id: '1',
@@ -68,11 +68,11 @@ export class ActivityFeedComponent {
         user: 'ABC Store'
       }
     ];
-  }
+  });
 
-  get displayActivities(): Activity[] {
-    return this.activities.length > 0 ? this.activities : this.defaultActivities;
-  }
+  displayActivities = computed(() => {
+    return this.activities().length > 0 ? this.activities() : this.defaultActivities();
+  });
 
   getTypeConfig(type: string) {
     const configs: Record<string, { icon: string; bg: string; color: string }> = {

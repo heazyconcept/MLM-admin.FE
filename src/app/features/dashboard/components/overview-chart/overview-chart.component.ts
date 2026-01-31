@@ -1,25 +1,25 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 
 @Component({
   selector: 'app-overview-chart',
-  standalone: true,
   imports: [CommonModule, ChartModule],
   templateUrl: './overview-chart.component.html',
-  styleUrls: ['./overview-chart.component.css']
+  styleUrls: ['./overview-chart.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OverviewChartComponent implements OnInit {
-  @Input() title = 'Revenue Trend';
-  @Input() totalValue = '$1,245,890.00';
-  @Input() chartData: number[] = [];
+  title = input('Revenue Trend');
+  totalValue = input('$1,245,890.00');
+  chartData = input<number[]>([]);
   
-  data: any;
-  options: any;
+  data: unknown;
+  options: unknown;
   
   selectedPeriod = 'This Year';
 
-  ngOnInit() {
+  ngOnInit() {  
     this.initChart();
   }
 
@@ -34,8 +34,8 @@ export class OverviewChartComponent implements OnInit {
       datasets: [
         {
           label: 'Revenue',
-          data: this.chartData.length > 0 ? this.chartData : defaultData,
-          backgroundColor: (context: any) => {
+          data: this.chartData().length > 0 ? this.chartData() : defaultData,
+          backgroundColor: (context: { dataIndex: number }) => {
             const index = context.dataIndex;
             const currentMonth = new Date().getMonth();
             return index === currentMonth ? primaryColor : primaryLightColor;
@@ -60,7 +60,7 @@ export class OverviewChartComponent implements OnInit {
           padding: 12,
           displayColors: false,
           callbacks: {
-            label: (context: any) => {
+            label: (context: { raw: number }) => {
               return `$${context.raw.toLocaleString()}`;
             }
           }

@@ -92,7 +92,7 @@ export class PaymentDetailsComponent implements OnInit {
       this.paymentService.flagPayment(payment.id, event.reason || 'Flagged by admin', 'Admin Sarah');
       this.messageService.add({ severity: 'warn', summary: 'Transaction Flagged', detail: 'The transaction has been flagged for review.' });
     } else {
-      let nextStatus: any = 'Successful';
+      let nextStatus: 'Successful' | 'Failed' | 'Reversed' = 'Successful';
       if (event.action === 'Fail') nextStatus = 'Failed';
       if (event.action === 'Reverse') nextStatus = 'Reversed';
 

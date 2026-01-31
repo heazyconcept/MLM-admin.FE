@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -10,15 +10,15 @@ import { TableColumn, TableConfig, TableAction } from '../../../shared/component
 
 @Component({
   selector: 'app-ranking-stages',
-  standalone: true,
   imports: [CommonModule, TableModule, ButtonModule, TagModule, DataTableComponent, DataTableTemplateDirective],
-  templateUrl: './ranking-stages.component.html'
+  templateUrl: './ranking-stages.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RankingStagesComponent {
   earningsService = inject(EarningsService);
   ranks = this.earningsService.ranks;
 
-  columns = signal<TableColumn<any>[]>([
+  columns = signal<TableColumn<unknown>[]>([
     {
       field: 'level',
       header: 'Level',
@@ -49,7 +49,7 @@ export class RankingStagesComponent {
     size: 'large'
   });
 
-  actions = signal<TableAction<any>[]>([
+  actions = signal<TableAction<unknown>[]>([
     {
       icon: 'pi pi-pencil',
       command: (row) => console.log('Edit rank', row),

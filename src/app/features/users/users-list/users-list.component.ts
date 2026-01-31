@@ -245,7 +245,7 @@ export class UsersListComponent implements OnInit {
     this.profileModalVisible.set(true);
   }
 
-  getActionMenuItems(user: User, menu: any): MenuItem[] {
+  getActionMenuItems(user: User, menu: { hide: () => void }): MenuItem[] {
     const items: MenuItem[] = [];
 
     if (user.status === 'Active') {

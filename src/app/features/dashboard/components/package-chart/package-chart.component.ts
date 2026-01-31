@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, input, OnInit, ChangeDetectionStrategy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 
@@ -11,16 +11,16 @@ export interface PackageData {
 
 @Component({
   selector: 'app-package-chart',
-  standalone: true,
   imports: [CommonModule, ChartModule],
   templateUrl: './package-chart.component.html',
-  styleUrls: ['./package-chart.component.css']
+  styleUrls: ['./package-chart.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PackageChartComponent implements OnInit {
-  @Input() packages: PackageData[] = [];
+  packages = input<PackageData[]>([]);
   
-  data: any;
-  options: any;
+  data: unknown;
+  options: unknown;
   totalUsers = 0;
 
   ngOnInit() {
@@ -37,15 +37,15 @@ export class PackageChartComponent implements OnInit {
       { name: 'Diamond', count: 350, percentage: 3.5, color: '#3b82f6' }
     ];
 
-    const packagesToUse = this.packages.length > 0 ? this.packages : defaultPackages;
-    this.totalUsers = packagesToUse.reduce((sum, p) => sum + p.count, 0);
+    const packagesToUse = this.packages().length > 0 ? this.packages() : defaultPackages;
+    this.totalUsers = packagesToUse.reduce((sum: number, p: PackageData) => sum + p.count, 0);
 
     this.data = {
-      labels: packagesToUse.map(p => p.name),
+      labels: packagesToUse.map((p: PackageData) => p.name),
       datasets: [
         {
-          data: packagesToUse.map(p => p.count),
-          backgroundColor: packagesToUse.map(p => p.color),
+          data: packagesToUse.map((p: PackageData) => p.count),
+          backgroundColor: packagesToUse.map((p: PackageData) => p.color),
           borderWidth: 0,
           hoverOffset: 8
         }
@@ -66,7 +66,7 @@ export class PackageChartComponent implements OnInit {
           padding: 12,
           displayColors: true,
           callbacks: {
-            label: (context: any) => {
+            label: (context: { raw: number; label: string }) => {
               const percentage = ((context.raw / this.totalUsers) * 100).toFixed(1);
               return `${context.label}: ${context.raw.toLocaleString()} (${percentage}%)`;
             }
@@ -76,8 +76,8 @@ export class PackageChartComponent implements OnInit {
     };
   }
 
-  get packageList(): PackageData[] {
-    if (this.packages.length > 0) return this.packages;
+  packageList = computed(() => {
+    if (this.packages().length > 0) return this.packages();
     return [
       { name: 'Silver', count: 4520, percentage: 45.2, color: '#94a3b8' },
       { name: 'Gold', count: 2890, percentage: 28.9, color: '#F9A825' },
@@ -85,6 +85,5 @@ export class PackageChartComponent implements OnInit {
       { name: 'Ruby', count: 680, percentage: 6.8, color: '#ef4444' },
       { name: 'Diamond', count: 350, percentage: 3.5, color: '#3b82f6' }
     ];
-  }
+  });
 }
-

@@ -58,7 +58,7 @@
         </div>
 
         <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-          <p-checkbox [(ngModel)]="confirmedCheck" [binary]="true" inputId="confirmCheck"></p-checkbox>
+          <p-checkbox [formControl]="confirmedCheckControl" [binary]="true" inputId="confirmCheck"></p-checkbox>
           <label for="confirmCheck" class="text-xs text-gray-600 cursor-pointer select-none">
             I confirm that I have manually verified the receipt of these funds in the destination bank account.
           </label>
@@ -78,7 +78,7 @@
           rows="3" 
           class="w-full rounded-xl"
           [placeholder]="'Provide a detailed reason for ' + action()?.toLowerCase() + '...'"
-          [(ngModel)]="reason">
+          [formControl]="reasonControl">
         </textarea>
       </div>
     }

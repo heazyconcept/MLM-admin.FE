@@ -1,21 +1,21 @@
 <div class="bg-white rounded-xl p-4 border border-gray-100 hover:border-mlm-green-200 hover:shadow-sm transition-all cursor-pointer">
   <div class="flex items-center gap-3">
     <!-- Flag -->
-    <span class="text-2xl">{{ wallet.flag }}</span>
+    <span class="text-2xl">{{ wallet().flag }}</span>
     
     <!-- Info -->
     <div class="flex-1">
       <div class="flex items-center gap-2 mb-1">
-        <span class="text-sm font-medium text-mlm-text">{{ wallet.currency }}</span>
+        <span class="text-sm font-medium text-mlm-text">{{ wallet().currency }}</span>
       </div>
       <div class="text-lg font-semibold text-mlm-text">
-        {{ wallet.symbol }}{{ wallet.amount }}
+        {{ wallet().symbol }}{{ wallet().amount }}
       </div>
     </div>
 
     <!-- Status -->
-    <span class="text-xs font-medium" [class]="statusClass">
-      {{ wallet.status }}
+    <span class="text-xs font-medium" [class]="statusClass()">
+      {{ wallet().status }}
     </span>
   </div>
 </div>

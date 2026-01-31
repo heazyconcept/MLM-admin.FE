@@ -3,12 +3,12 @@ import { TemplateRef } from '@angular/core';
 /**
  * Formatter function type for custom cell value formatting
  */
-export type CellFormatter<T> = (value: any, row: T) => string | number | boolean;
+export type CellFormatter<T> = (value: unknown, row: T) => string | number | boolean;
 
 /**
  * Column configuration for the data table
  */
-export interface TableColumn<T = any> {
+export interface TableColumn<T = unknown> {
   /** Field name in the data object */
   field: keyof T | string;
   
@@ -28,7 +28,7 @@ export interface TableColumn<T = any> {
   formatter?: CellFormatter<T>;
   
   /** Template reference for custom cell rendering */
-  template?: TemplateRef<any>;
+  template?: TemplateRef<unknown>;
   
   /** CSS class for the column */
   class?: string;
@@ -46,7 +46,7 @@ export interface TableColumn<T = any> {
 /**
  * Action button configuration for table rows
  */
-export interface TableAction<T = any> {
+export interface TableAction<T = unknown> {
   /** Icon class (PrimeIcons) */
   icon: string;
   
@@ -125,7 +125,7 @@ export interface TableConfig {
 /**
  * Event emitted when a row action is triggered
  */
-export interface RowActionEvent<T = any> {
+export interface RowActionEvent<T = unknown> {
   /** The action that was triggered */
   action: TableAction<T>;
   
@@ -141,5 +141,5 @@ export interface FilterChangeEvent {
   globalFilter?: string;
   
   /** Column-specific filters */
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
 }

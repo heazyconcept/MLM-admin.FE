@@ -55,7 +55,7 @@ export class WalletListComponent {
       header: 'Last Updated',
       width: '160px',
       align: 'center',
-      formatter: (value) => new Date(value).toLocaleDateString('en-US', {
+      formatter: (value: unknown) => new Date(value as string | number | Date).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric'

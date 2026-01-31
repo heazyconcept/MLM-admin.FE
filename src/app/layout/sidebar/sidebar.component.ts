@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, model } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -21,18 +21,17 @@ interface MenuSection {
 
 @Component({
   selector: 'app-sidebar',
-  standalone: true,
   imports: [CommonModule, RouterModule, ConfirmDialogModule],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.css'],
-  providers: [ConfirmationService]
+  providers: [ConfirmationService],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidebarComponent {
   private router = inject(Router);
   private confirmationService = inject(ConfirmationService);
 
-  @Input() collapsed = false;
-  @Output() collapsedChange = new EventEmitter<boolean>();
+  collapsed = model(false);
 
   menuSections: MenuSection[] = [
     {
@@ -81,8 +80,7 @@ export class SidebarComponent {
   ];
 
   toggleCollapse() {
-    this.collapsed = !this.collapsed;
-    this.collapsedChange.emit(this.collapsed);
+    this.collapsed.update(v => !v);
   }
 
   logout() {

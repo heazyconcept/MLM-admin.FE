@@ -18,11 +18,12 @@
                           <!-- Icon Avatar -->
                           <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
                              <i class="pi" 
-                                [ngClass]="{
-                                   'pi-user-plus text-blue-500': activity.type === 'Direct Referral',
-                                   'pi-users text-purple-500': activity.type === 'Matching Bonus',
-                                   'pi-sitemap text-orange-500': activity.type === 'Binary Pair'
-                                }">
+                                [class.pi-user-plus]="activity.type === 'Direct Referral'"
+                                [class.text-blue-500]="activity.type === 'Direct Referral'"
+                                [class.pi-users]="activity.type === 'Matching Bonus'"
+                                [class.text-purple-500]="activity.type === 'Matching Bonus'"
+                                [class.pi-sitemap]="activity.type === 'Binary Pair'"
+                                [class.text-orange-500]="activity.type === 'Binary Pair'">
                              </i>
                           </div>
                           

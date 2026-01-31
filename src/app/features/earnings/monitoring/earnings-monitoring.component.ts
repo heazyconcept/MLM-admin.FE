@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
@@ -6,9 +6,9 @@ import { EarningsService } from '../services/earnings.service';
 
 @Component({
   selector: 'app-earnings-monitoring',
-  standalone: true,
   imports: [CommonModule, TagModule, ButtonModule],
-  templateUrl: './earnings-monitoring.component.html'
+  templateUrl: './earnings-monitoring.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EarningsMonitoringComponent {
   earningsService = inject(EarningsService);

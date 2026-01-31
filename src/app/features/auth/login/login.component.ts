@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -9,22 +9,24 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 
 @Component({
   selector: 'app-login',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, InputTextModule, PasswordModule, FloatLabelModule],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styleUrls: ['./login.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoginComponent {
+  private fb = inject(FormBuilder);
+  private router = inject(Router);
+  private modalService = inject(ModalService);
+
   loginForm: FormGroup;
   isLoading = false;
   
   // Brand assets
   logoUrl = 'assets/logo.png';
   backgroundImageUrl = 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=1200&q=80';
-  
-  private modalService = inject(ModalService);
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor() {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]]

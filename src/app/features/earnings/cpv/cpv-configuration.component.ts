@@ -1,13 +1,13 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { EarningsService } from '../services/earnings.service';
 
 @Component({
   selector: 'app-cpv-configuration',
-  standalone: true,
   imports: [CommonModule, ButtonModule],
-  templateUrl: './cpv-configuration.component.html'
+  templateUrl: './cpv-configuration.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CpvConfigurationComponent {
   earningsService = inject(EarningsService);

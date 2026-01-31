@@ -9,7 +9,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 
 interface StatusOption {
   label: string;
@@ -27,7 +27,7 @@ interface StatusOption {
     SelectModule,
     ButtonModule,
     InputTextModule,
-    FormsModule
+    ReactiveFormsModule
   ],
   templateUrl: './withdrawals-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -40,7 +40,7 @@ export class WithdrawalsListComponent implements OnInit {
 
   withdrawals = this.withdrawalService.withdrawals;
   
-  selectedStatus = signal<string>('all');
+  selectedStatusControl = new FormControl('all');
   searchQuery = signal<string>('');
 
   statusOptions: StatusOption[] = [
@@ -55,8 +55,8 @@ export class WithdrawalsListComponent implements OnInit {
   filteredWithdrawals = computed(() => {
     let requests = this.withdrawalService.withdrawals();
     
-    if (this.selectedStatus() !== 'all') {
-      requests = requests.filter(r => r.status === this.selectedStatus());
+    if (this.selectedStatusControl.value !== 'all') {
+      requests = requests.filter(r => r.status === this.selectedStatusControl.value);
     }
     
     const query = this.searchQuery().toLowerCase();
@@ -112,7 +112,7 @@ export class WithdrawalsListComponent implements OnInit {
     // Check if we should filter by default (from route data)
     const defaultFilter = this.route.snapshot.data['defaultFilter'];
     if (defaultFilter) {
-      this.selectedStatus.set(defaultFilter);
+      this.selectedStatusControl.setValue(defaultFilter);
     }
 
     this.columns.set([
@@ -133,13 +133,16 @@ export class WithdrawalsListComponent implements OnInit {
         width: '150px',
         sortable: true,
         align: 'right',
-        formatter: (value, row) => `${row.currency} ${value.toLocaleString()}`
+        formatter: (value: unknown, row: WithdrawalRequest) => `${row.currency} ${Number(value).toLocaleString()}`
       },
-      {
+      {   
         field: 'destination',
         header: 'Destination',
         width: '200px',
-        formatter: (value) => value.length > 30 ? value.substring(0, 30) + '...' : value
+        formatter: (value: unknown) => {
+          const s = String(value ?? '');
+          return s.length > 30 ? s.substring(0, 30) + '...' : s;
+        }
       },
       {
         field: 'status',
@@ -153,7 +156,7 @@ export class WithdrawalsListComponent implements OnInit {
         header: 'Request Date',
         width: '140px',
         sortable: true,
-        formatter: (value) => new Date(value).toLocaleDateString('en-US', {
+        formatter: (value: unknown) => new Date(value as string | number | Date).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric'

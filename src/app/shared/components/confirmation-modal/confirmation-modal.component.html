@@ -18,12 +18,12 @@
           Reason {{ reasonRequired() ? '*' : '(Optional)' }}
         </label>
         <textarea 
-          [(ngModel)]="reason"
+          [formControl]="reasonControl"
           [placeholder]="reasonPlaceholder()"
           rows="3"
           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mlm-primary/50 focus:border-mlm-primary resize-none">
         </textarea>
-        @if (reasonRequired() && !reason().trim()) {
+        @if (reasonRequired() && !(reasonControl.value || '').trim()) {
           <small class="text-mlm-error">Reason is required</small>
         }
       </div>
@@ -42,7 +42,7 @@
         pButton 
         [label]="confirmLabel()"
         [class]="confirmClass()"
-        [disabled]="showReasonField() && reasonRequired() && !reason().trim()"
+        [disabled]="showReasonField() && reasonRequired() && !(reasonControl.value || '').trim()"
         (click)="onConfirm()">
       </button>
     </div>

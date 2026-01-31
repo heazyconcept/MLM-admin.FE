@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface WalletData {
@@ -11,18 +11,18 @@ export interface WalletData {
 
 @Component({
   selector: 'app-wallet-card',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './wallet-card.component.html',
-  styleUrls: ['./wallet-card.component.css']
+  styleUrls: ['./wallet-card.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WalletCardComponent {
-  @Input() wallet!: WalletData;
+  wallet = input.required<WalletData>();
 
-  get statusClass(): string {
-    return this.wallet.status === 'Active' 
+  statusClass = computed(() => {
+    return this.wallet().status === 'Active' 
       ? 'text-mlm-success' 
       : 'text-mlm-secondary';
-  }
+  });
 }
 

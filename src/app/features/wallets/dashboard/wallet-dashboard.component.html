@@ -12,14 +12,14 @@
     <!-- System Status Pill -->
     <div
       class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold"
-      [ngClass]="stats().lockedWallets + stats().frozenWallets > 0 
-        ? 'bg-red-50 text-red-600' 
-        : 'bg-green-50 text-green-600'">
+      [class.bg-red-50]="stats().lockedWallets + stats().frozenWallets > 0"
+      [class.text-red-600]="stats().lockedWallets + stats().frozenWallets > 0"
+      [class.bg-green-50]="stats().lockedWallets + stats().frozenWallets === 0"
+      [class.text-green-600]="stats().lockedWallets + stats().frozenWallets === 0">
       <span
         class="w-2 h-2 rounded-full"
-        [ngClass]="stats().lockedWallets + stats().frozenWallets > 0 
-          ? 'bg-red-500' 
-          : 'bg-green-500'">
+        [class.bg-red-500]="stats().lockedWallets + stats().frozenWallets > 0"
+        [class.bg-green-500]="stats().lockedWallets + stats().frozenWallets === 0">
       </span>
       {{ stats().lockedWallets + stats().frozenWallets > 0 ? 'Attention Required' : 'System Healthy' }}
     </div>
