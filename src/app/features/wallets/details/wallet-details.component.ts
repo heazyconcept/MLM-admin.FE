@@ -56,7 +56,7 @@ export class WalletDetailsComponent {
       header: 'Date',
       width: '200px',
       align: 'right',
-      formatter: (value) => new Date(value).toLocaleString('en-US', {
+      formatter: (value: unknown) => new Date(value as string | number | Date).toLocaleString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',

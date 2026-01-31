@@ -7,7 +7,6 @@ import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-wallet-dashboard',
-  standalone: true,
   imports: [CommonModule, ChartModule, RouterModule, ButtonModule],
   templateUrl: './wallet-dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush

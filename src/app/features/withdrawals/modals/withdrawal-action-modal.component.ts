@@ -1,6 +1,6 @@
-import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
@@ -12,7 +12,7 @@ export type ActionType = 'Approve' | 'Reject' | 'MarkProcessing' | 'MarkPaid';
   selector: 'app-withdrawal-action-modal',
   imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     DialogModule,
     ButtonModule,
     TextareaModule
@@ -28,7 +28,7 @@ export class WithdrawalActionModalComponent {
   confirmed = output<{ action: ActionType, reason?: string }>();
   cancelled = output<void>();
 
-  reason = signal<string>('');
+  reasonControl = new FormControl('');
 
   get title(): string {
     switch (this.action()) {
@@ -102,21 +102,22 @@ export class WithdrawalActionModalComponent {
 
   onConfirm() {
     const action = this.action();
-    if (action === 'Reject' && !this.reason().trim()) {
+    const reasonValue = this.reasonControl.value || '';
+    if (action === 'Reject' && !reasonValue.trim()) {
       return;
     }
     
     if (action) {
       this.confirmed.emit({ 
         action: action, 
-        reason: action === 'Reject' ? this.reason() : undefined 
+        reason: action === 'Reject' ? reasonValue : undefined 
       });
-      this.reason.set('');
+      this.reasonControl.reset('');
     }
   }
 
   onCancel() {
     this.cancelled.emit();
-    this.reason.set('');
+    this.reasonControl.reset('');
   }
 }

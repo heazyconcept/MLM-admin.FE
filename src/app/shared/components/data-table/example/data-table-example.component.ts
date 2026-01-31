@@ -1,4 +1,4 @@
-import { Component, signal, ViewChild, TemplateRef, AfterViewInit } from '@angular/core';
+import { Component, signal, ViewChild, TemplateRef, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { DataTableComponent } from '../data-table.component';
 import { TableColumn, TableAction } from '../data-table.types';
 import { StatusBadgeComponent } from '../../status-badge/status-badge.component';
@@ -60,12 +60,13 @@ interface User {
         </div>
       </app-data-table>
     </div>
-  `
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DataTableExampleComponent implements AfterViewInit {
-  @ViewChild('userCell') userCellTemplate!: TemplateRef<any>;
-  @ViewChild('statusCell') statusCellTemplate!: TemplateRef<any>;
-  @ViewChild('packageCell') packageCellTemplate!: TemplateRef<any>;
+  @ViewChild('userCell') userCellTemplate!: TemplateRef<unknown>;
+  @ViewChild('statusCell') statusCellTemplate!: TemplateRef<unknown>;
+  @ViewChild('packageCell') packageCellTemplate!: TemplateRef<unknown>;
 
   loading = signal(false);
   columns = signal<TableColumn<User>[]>([]);
@@ -172,7 +173,7 @@ export class DataTableExampleComponent implements AfterViewInit {
         width: '150px',
         align: 'center',
         sortable: true,
-        formatter: (value) => new Date(value).toLocaleDateString('en-US', {
+        formatter: (value: unknown) => new Date(value as string | number | Date).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric'

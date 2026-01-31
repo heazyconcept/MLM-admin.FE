@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface WalletSummaryData {
@@ -11,13 +11,13 @@ export interface WalletSummaryData {
 
 @Component({
   selector: 'app-wallet-summary',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './wallet-summary.component.html',
-  styleUrls: ['./wallet-summary.component.css']
+  styleUrls: ['./wallet-summary.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WalletSummaryComponent {
-  @Input() wallets: WalletSummaryData[] = [];
-  @Input() totalBalance = '$0.00';
+  wallets = input<WalletSummaryData[]>([]);
+  totalBalance = input('$0.00');
 }
 

@@ -1,7 +1,7 @@
 import { Component, inject, computed, signal, ChangeDetectionStrategy, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { PaymentService, Payment, PaymentStatus, PaymentPurpose } from '../services/payment.service';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 import { DataTableTemplateDirective } from '../../../shared/components/data-table/data-table-template.directive';
@@ -14,7 +14,7 @@ import { ButtonModule } from 'primeng/button';
   imports: [
     CommonModule,
     RouterModule,
-    FormsModule,
+    ReactiveFormsModule,
     DataTableComponent,
     DataTableTemplateDirective,
     StatusBadgeComponent,
@@ -33,8 +33,8 @@ export class PaymentsListComponent implements OnInit {
 
   payments = this.paymentService.payments;
   
-  selectedStatus = signal<string>('all');
-  selectedMethod = signal<string>('all');
+  selectedStatusControl = new FormControl('all');
+  selectedMethodControl = new FormControl('all');
   searchQuery = signal<string>('');
 
   statusOptions = [
@@ -56,13 +56,15 @@ export class PaymentsListComponent implements OnInit {
 
   filteredPayments = computed(() => {
     let requests = this.payments();
+    const selectedStatus = this.selectedStatusControl.value || 'all';
+    const selectedMethod = this.selectedMethodControl.value || 'all';
     
-    if (this.selectedStatus() !== 'all') {
-      requests = requests.filter(r => r.status === this.selectedStatus());
+     if (selectedStatus !== 'all') {
+      requests = requests.filter(r => r.status === selectedStatus);
     }
 
-    if (this.selectedMethod() !== 'all') {
-      requests = requests.filter(r => r.method === this.selectedMethod());
+    if (selectedMethod !== 'all') {
+      requests = requests.filter(r => r.method === selectedMethod);
     }
     
     const query = this.searchQuery().toLowerCase();
@@ -113,7 +115,7 @@ export class PaymentsListComponent implements OnInit {
     // Check for query params
     this.route.queryParams.subscribe(params => {
       if (params['status']) {
-        this.selectedStatus.set(params['status']);
+        this.selectedStatusControl.setValue(params['status']);
       }
     });
 
@@ -142,7 +144,7 @@ export class PaymentsListComponent implements OnInit {
         width: '140px',
         sortable: true,
         align: 'right',
-        formatter: (value, row) => `${row.currency} ${value.toLocaleString()}`
+        formatter: (value: unknown, row: Payment) => `${row.currency} ${Number(value).toLocaleString()}`
       },
       {
         field: 'method',
@@ -161,7 +163,7 @@ export class PaymentsListComponent implements OnInit {
         header: 'Date',
         width: '140px',
         sortable: true,
-        formatter: (value) => new Date(value).toLocaleDateString('en-US', {
+        formatter: (value: unknown) => new Date(value as string | number | Date).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric'

@@ -1,6 +1,6 @@
 import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
@@ -13,7 +13,7 @@ export type PaymentActionType = 'ConfirmSuccess' | 'Fail' | 'Flag' | 'Reverse';
   selector: 'app-payment-action-modal',
   imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     DialogModule,
     ButtonModule,
     TextareaModule,
@@ -30,8 +30,8 @@ export class PaymentActionModalComponent {
   confirmed = output<{ action: PaymentActionType, reason?: string }>();
   cancelled = output<void>();
 
-  reason = signal<string>('');
-  confirmedCheck = signal<boolean>(false);
+  reasonControl = new FormControl('');
+  confirmedCheckControl = new FormControl(false);
   fileSelected = signal<boolean>(false);
 
   get title(): string {
@@ -54,13 +54,13 @@ export class PaymentActionModalComponent {
 
   get confirmDisabled(): boolean {
     if (this.action() === 'Fail' || this.action() === 'Reverse') {
-      return !this.reason().trim();
+      return !(this.reasonControl.value || '').trim();
     }
     if (this.action() === 'Flag') {
-      return !this.reason().trim();
+      return !(this.reasonControl.value || '').trim();
     }
     if (this.isManualConfirmation) {
-      return !this.confirmedCheck() || !this.fileSelected();
+      return !this.confirmedCheckControl.value || !this.fileSelected();
     }
     return false;
   }
@@ -77,7 +77,7 @@ export class PaymentActionModalComponent {
     
     this.confirmed.emit({ 
       action: this.action()!, 
-      reason: this.reason() || undefined 
+      reason: this.reasonControl.value || undefined 
     });
     this.reset();
   }
@@ -88,8 +88,8 @@ export class PaymentActionModalComponent {
   }
 
   private reset() {
-    this.reason.set('');
-    this.confirmedCheck.set(false);
+    this.reasonControl.reset('');
+    this.confirmedCheckControl.reset(false);
     this.fileSelected.set(false);
   }
 }

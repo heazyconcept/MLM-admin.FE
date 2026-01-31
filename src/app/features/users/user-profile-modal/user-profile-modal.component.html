@@ -1,5 +1,6 @@
 <p-dialog 
-  [(visible)]="visible"
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
   [header]="'User Profile'"
   [modal]="true"
   [style]="{width: '800px', maxHeight: '90vh'}"
@@ -7,34 +8,34 @@
   [resizable]="false"
   (onHide)="close()">
   
-  @if (user) {
+  @if (user(); as userData) {
     <!-- Header with User Info -->
     <div class="flex items-start justify-between pb-4 mb-4 border-b border-gray-100">
       <div class="flex items-center gap-4">
         <div class="w-16 h-16 rounded-full bg-mlm-green-100 flex items-center justify-center">
           <span class="text-2xl font-bold text-mlm-primary">
-            {{ user.fullName.charAt(0) }}
+            {{ userData.fullName.charAt(0) }}
           </span>
         </div>
         <div>
-          <h3 class="text-xl font-semibold text-mlm-text">{{ user.fullName }}</h3>
-          <p class="text-mlm-secondary">&#64;{{ user.username }}</p>
+          <h3 class="text-xl font-semibold text-mlm-text">{{ userData.fullName }}</h3>
+          <p class="text-mlm-secondary">&#64;{{ userData.username }}</p>
           <div class="flex items-center gap-2 mt-1">
-            <app-status-badge [status]="user.status"></app-status-badge>
+            <app-status-badge [status]="userData.status"></app-status-badge>
             <span 
               class="px-2 py-0.5 rounded-full text-xs font-medium text-white"
-              [style.background-color]="getPackageColor(user.package)">
-              {{ user.package }}
+              [style.background-color]="getPackageColor(userData.package)">
+              {{ userData.package }}
             </span>
             <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-mlm-background text-mlm-secondary">
-              {{ user.role }}
+              {{ userData.role }}
             </span>
           </div>
         </div>
       </div>
       <div class="text-right">
         <p class="text-sm text-mlm-secondary">User ID</p>
-        <p class="font-mono font-medium text-mlm-text">{{ user.id }}</p>
+        <p class="font-mono font-medium text-mlm-text">{{ userData.id }}</p>
       </div>
     </div>
 
@@ -76,27 +77,27 @@
         <div class="grid grid-cols-2 gap-4 py-2">
           <div>
             <label class="text-sm text-mlm-secondary">Full Name</label>
-            <p class="font-medium text-mlm-text">{{ user.fullName }}</p>
+            <p class="font-medium text-mlm-text">{{ userData.fullName }}</p>
           </div>
           <div>
             <label class="text-sm text-mlm-secondary">Username</label>
-            <p class="font-medium text-mlm-text">{{ user.username }}</p>
+            <p class="font-medium text-mlm-text">{{ userData.username }}</p>
           </div>
           <div>
             <label class="text-sm text-mlm-secondary">User ID</label>
-            <p class="font-mono font-medium text-mlm-text">{{ user.id }}</p>
+            <p class="font-mono font-medium text-mlm-text">{{ userData.id }}</p>
           </div>
           <div>
             <label class="text-sm text-mlm-secondary">Registration Date</label>
-            <p class="font-medium text-mlm-text">{{ formatDate(user.registrationDate) }}</p>
+            <p class="font-medium text-mlm-text">{{ formatDate(userData.registrationDate) }}</p>
           </div>
           <div>
             <label class="text-sm text-mlm-secondary">Package</label>
-            <p class="font-medium text-mlm-text">{{ user.package }}</p>
+            <p class="font-medium text-mlm-text">{{ userData.package }}</p>
           </div>
           <div>
             <label class="text-sm text-mlm-secondary">Role</label>
-            <p class="font-medium text-mlm-text">{{ user.role }}</p>
+            <p class="font-medium text-mlm-text">{{ userData.role }}</p>
           </div>
         </div>
         </div>
@@ -108,11 +109,11 @@
         <div class="grid grid-cols-2 gap-4 py-2">
           <div>
             <label class="text-sm text-mlm-secondary">Email Address</label>
-            <p class="font-medium text-mlm-text">{{ user.email }}</p>
+            <p class="font-medium text-mlm-text">{{ userData.email }}</p>
           </div>
           <div>
             <label class="text-sm text-mlm-secondary">Phone Number</label>
-            <p class="font-medium text-mlm-text">{{ user.phone }}</p>
+            <p class="font-medium text-mlm-text">{{ userData.phone }}</p>
           </div>
         </div>
         </div>
@@ -124,15 +125,15 @@
         <div class="grid grid-cols-2 gap-4 py-2">
           <div>
             <label class="text-sm text-mlm-secondary">Upline ID</label>
-            <p class="font-mono font-medium text-mlm-text">{{ user.upline || 'N/A' }}</p>
+            <p class="font-mono font-medium text-mlm-text">{{ userData.upline || 'N/A' }}</p>
           </div>
           <div>
             <label class="text-sm text-mlm-secondary">Total Downlines</label>
-            <p class="font-medium text-mlm-text">{{ user.downlinesCount }}</p>
+            <p class="font-medium text-mlm-text">{{ userData.downlinesCount }}</p>
           </div>
           <div>
             <label class="text-sm text-mlm-secondary">Current Rank</label>
-            <p class="font-medium text-mlm-text">{{ user.rank }}</p>
+            <p class="font-medium text-mlm-text">{{ userData.rank }}</p>
           </div>
         </div>
         </div>
@@ -152,7 +153,7 @@
                 <p class="text-xs text-mlm-secondary">Withdrawable</p>
               </div>
             </div>
-            <span class="font-semibold text-mlm-text">{{ formatCurrency(user.wallets.cash) }}</span>
+            <span class="font-semibold text-mlm-text">{{ formatCurrency(userData.wallets.cash) }}</span>
           </div>
           <div class="flex items-center justify-between p-3 rounded-lg bg-mlm-background">
             <div class="flex items-center gap-3">
@@ -164,7 +165,7 @@
                 <p class="text-xs text-mlm-secondary">Non-Withdrawable</p>
               </div>
             </div>
-            <span class="font-semibold text-mlm-text">{{ formatCurrency(user.wallets.productVoucher) }}</span>
+            <span class="font-semibold text-mlm-text">{{ formatCurrency(userData.wallets.productVoucher) }}</span>
           </div>
           <div class="flex items-center justify-between p-3 rounded-lg bg-mlm-background">
             <div class="flex items-center gap-3">
@@ -176,7 +177,7 @@
                 <p class="text-xs text-mlm-secondary">Non-Withdrawable</p>
               </div>
             </div>
-            <span class="font-semibold text-mlm-text">{{ formatCurrency(user.wallets.autoship) }}</span>
+            <span class="font-semibold text-mlm-text">{{ formatCurrency(userData.wallets.autoship) }}</span>
           </div>
         </div>
         </div>
@@ -186,7 +187,7 @@
       @if (activeTab === 'activity') {
         <div>
         <div class="space-y-3 py-2 max-h-[300px] overflow-y-auto">
-          @for (activity of user.activityLog; track activity.id) {
+          @for (activity of userData.activityLog; track activity.id) {
             <div class="flex items-start gap-3 pb-3 border-b border-gray-50 last:border-0">
               <div class="w-2 h-2 rounded-full bg-mlm-primary mt-2 flex-shrink-0"></div>
               <div class="flex-1">
@@ -199,7 +200,7 @@
               </div>
             </div>
           }
-          @if (user.activityLog.length === 0) {
+          @if (userData.activityLog.length === 0) {
             <div class="text-center py-8">
               <i class="pi pi-inbox text-3xl text-mlm-secondary/50 mb-2"></i>
               <p class="text-mlm-secondary">No activity recorded</p>
@@ -214,32 +215,33 @@
   <ng-template pTemplate="footer">
     <div class="flex items-center justify-between">
       <div class="flex gap-2">
-        @if (user?.status === 'Active') {
-          <button 
-            pButton 
-            label="Suspend" 
-            icon="pi pi-ban"
-            class="p-button-danger p-button-outlined"
-            (click)="onAction('suspend')">
-          </button>
-          <button 
-            pButton 
-            label="Flag" 
-            icon="pi pi-flag"
-            class="p-button-warning p-button-outlined"
-            (click)="onAction('flag')">
-          </button>
-        }
-        @if (user?.status === 'Suspended') {
-          <button 
-            pButton 
-            label="Reactivate" 
-            icon="pi pi-check"
-            class="p-button-success p-button-outlined"
-            (click)="onAction('reactivate')">
-          </button>
-        }
-        @if (user?.status === 'Flagged') {
+        @if (user(); as u) {
+          @if (u.status === 'Active') {
+            <button 
+              pButton 
+              label="Suspend" 
+              icon="pi pi-ban"
+              class="p-button-danger p-button-outlined"
+              (click)="onAction('suspend')">
+            </button>
+            <button 
+              pButton 
+              label="Flag" 
+              icon="pi pi-flag"
+              class="p-button-warning p-button-outlined"
+              (click)="onAction('flag')">
+            </button>
+          }
+          @if (u.status === 'Suspended') {
+            <button 
+              pButton 
+              label="Reactivate" 
+              icon="pi pi-check"
+              class="p-button-success p-button-outlined"
+              (click)="onAction('reactivate')">
+            </button>
+          }
+          @if (u.status === 'Flagged') {
           <button 
             pButton 
             label="Remove Flag" 
@@ -254,6 +256,7 @@
             class="p-button-danger p-button-outlined"
             (click)="onAction('suspend')">
           </button>
+          }
         }
         <button 
           pButton 

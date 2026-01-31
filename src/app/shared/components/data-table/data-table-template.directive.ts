@@ -1,8 +1,7 @@
-import { Directive, input, TemplateRef } from '@angular/core';
+import { Directive, input, TemplateRef, inject } from '@angular/core';
 
 @Directive({
-  selector: 'ng-template[appDataTableTemplate]',
-  standalone: true
+  selector: 'ng-template[appDataTableTemplate]'
 })
 export class DataTableTemplateDirective {
   /**
@@ -10,5 +9,5 @@ export class DataTableTemplateDirective {
    */
   name = input.required<string>({ alias: 'appDataTableTemplate' });
   
-  constructor(public templateRef: TemplateRef<any>) {}
+  templateRef = inject(TemplateRef<unknown>);
 }

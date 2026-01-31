@@ -1,14 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { LoadingComponent } from "../../shared/components/loading/loading.component";
 import { ModalComponent } from "../../shared/components/modal/modal.component";
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   imports: [RouterOutlet, LoadingComponent, ModalComponent],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrl: './app.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent {
   title = 'mlm-admin.fe';

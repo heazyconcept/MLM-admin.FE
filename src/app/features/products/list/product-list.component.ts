@@ -21,7 +21,6 @@ import { TableColumn, TableConfig, TableAction } from '../../../shared/component
 
 @Component({
   selector: 'app-product-list',
-  standalone: true,
   imports: [
     CommonModule, 
     TableModule, 

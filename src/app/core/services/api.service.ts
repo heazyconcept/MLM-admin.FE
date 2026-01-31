@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -7,27 +7,26 @@ import { Observable } from 'rxjs';
 })
 export class ApiService {
   // Base URL can be configured in environment files
-  private baseUrl = 'http://localhost:3000/api'; 
+  private baseUrl = 'http://localhost:3000/api';
+  private http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
-
-  get<T>(endpoint: string, params?: any): Observable<T> {
+  get<T>(endpoint: string, params?: Record<string, unknown>): Observable<T> {
     let httpParams = new HttpParams();
     if (params) {
       Object.keys(params).forEach(key => {
         if (params[key] !== null && params[key] !== undefined) {
-          httpParams = httpParams.set(key, params[key]);
+          httpParams = httpParams.set(key, String(params[key]));
         }
       });
     }
     return this.http.get<T>(`${this.baseUrl}/${endpoint}`, { params: httpParams });
   }
 
-  post<T>(endpoint: string, body: any): Observable<T> {
+  post<T>(endpoint: string, body: unknown): Observable<T> {
     return this.http.post<T>(`${this.baseUrl}/${endpoint}`, body);
   }
 
-  put<T>(endpoint: string, body: any): Observable<T> {
+  put<T>(endpoint: string, body: unknown): Observable<T> {
     return this.http.put<T>(`${this.baseUrl}/${endpoint}`, body);
   }
 

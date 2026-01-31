@@ -1,32 +1,34 @@
-import { Component, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-stat-card',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './stat-card.component.html',
-  styleUrls: ['./stat-card.component.css']
+  styleUrls: ['./stat-card.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StatCardComponent {
-  @Input() title = '';
-  @Input() value = '';
-  @Input() subtitle = '';
-  @Input() icon = '';
-  @Input() iconBg = 'bg-mlm-green-100';
-  @Input() iconColor = 'text-mlm-primary';
-  @Input() change: number | null = null;
-  @Input() changeLabel = 'from last month';
-  @Input() showMenu = true;
-  @Input() compact = false;
+  title = input('');
+  value = input('');
+  subtitle = input('');
+  icon = input('');
+  iconBg = input('bg-mlm-green-100');
+  iconColor = input('text-mlm-primary');
+  change = input<number | null>(null);
+  changeLabel = input('from last month');
+  showMenu = input(true);
+  compact = input(false);
 
-  get isPositive(): boolean {
-    return this.change !== null && this.change >= 0;
-  }
+  isPositive = computed(() => {
+    const changeVal = this.change();
+    return changeVal !== null && changeVal >= 0;
+  });
 
-  get changeFormatted(): string {
-    if (this.change === null) return '';
-    const sign = this.isPositive ? '+' : '';
-    return `${sign}${this.change}%`;
-  }
+  changeFormatted = computed(() => {
+    const changeVal = this.change();
+    if (changeVal === null) return '';
+    const sign = this.isPositive() ? '+' : '';
+    return `${sign}${changeVal}%`;
+  });
 }

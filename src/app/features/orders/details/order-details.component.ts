@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, effect } from '@angular/core';
+import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +16,6 @@ import { OrderStatus } from '../../../core/models/order.model';
 
 @Component({
   selector: 'app-order-details',
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -26,7 +25,8 @@ import { OrderStatus } from '../../../core/models/order.model';
     TimelineModule
   ],
   templateUrl: './order-details.component.html',
-  styleUrls: ['./order-details.component.css']
+  styleUrls: ['./order-details.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OrderDetailsComponent {
   private route = inject(ActivatedRoute);

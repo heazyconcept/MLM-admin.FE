@@ -9,12 +9,12 @@
   <!-- Total Balance -->
   <div class="mb-4 pb-4 border-b border-gray-100">
     <p class="text-sm text-mlm-secondary mb-1">Total System Balance</p>
-    <p class="text-3xl font-bold text-mlm-text">{{ totalBalance }}</p>
+    <p class="text-3xl font-bold text-mlm-text">{{ totalBalance() }}</p>
   </div>
 
   <!-- Wallet Types -->
   <div class="space-y-3">
-    @for (wallet of wallets; track wallet.type) {
+    @for (wallet of wallets(); track wallet.type) {
       <div class="flex items-center justify-between p-3 rounded-lg bg-mlm-background hover:bg-mlm-green-50/50 transition-colors">
         <div class="flex items-center gap-3">
           <div 

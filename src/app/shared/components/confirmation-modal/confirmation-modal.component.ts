@@ -1,6 +1,6 @@
-import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 
@@ -11,7 +11,7 @@ export interface ConfirmationResult {
 
 @Component({
   selector: 'app-confirmation-modal',
-  imports: [CommonModule, FormsModule, DialogModule, ButtonModule],
+  imports: [CommonModule, ReactiveFormsModule, DialogModule, ButtonModule],
   templateUrl: './confirmation-modal.component.html',
   styleUrls: ['./confirmation-modal.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -33,13 +33,13 @@ export class ConfirmationModalComponent {
   confirm = output<ConfirmationResult>();
   cancel = output<void>();
 
-  reason = signal('');
+  reasonControl = new FormControl('');
 
   onConfirm(): void {
-    if (this.showReasonField() && this.reasonRequired() && !this.reason().trim()) {
+    if (this.showReasonField() && this.reasonRequired() && !(this.reasonControl.value || '').trim()) {
       return;
     }
-    this.confirm.emit({ confirmed: true, reason: this.reason() });
+    this.confirm.emit({ confirmed: true, reason: this.reasonControl.value || '' });
     this.close();
   }
 
@@ -49,7 +49,7 @@ export class ConfirmationModalComponent {
   }
 
   close(): void {
-    this.reason.set('');
+    this.reasonControl.reset('');
     this.visibleChange.emit(false);
   }
 }

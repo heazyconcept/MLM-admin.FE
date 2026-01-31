@@ -38,9 +38,9 @@
           rows="3" 
           class="w-full rounded-xl border-gray-100 focus:border-red-200 focus:ring-red-200/20"
           placeholder="Enter the reason why this request is being rejected..."
-          [(ngModel)]="reason">
+          [formControl]="reasonControl">
         </textarea>
-        @if (!reason().trim()) {
+        @if (!(reasonControl.value || '').trim()) {
           <p class="text-[10px] text-red-500 font-medium">Please provide a reason to continue</p>
         }
       </div>
@@ -59,7 +59,7 @@
         [label]="confirmLabel" 
         [severity]="confirmSeverity"
         class="flex-1"
-        [disabled]="action() === 'Reject' && !reason().trim()"
+        [disabled]="action() === 'Reject' && !(reasonControl.value || '').trim()"
         (click)="onConfirm()">
       </button>
     </div>

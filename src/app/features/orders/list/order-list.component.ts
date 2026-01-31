@@ -1,7 +1,7 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 
 // PrimeNG
 import { TableModule } from 'primeng/table';
@@ -21,10 +21,9 @@ import { TableColumn, TableConfig, TableAction } from '../../../shared/component
 
 @Component({
   selector: 'app-order-list',
-  standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     TableModule,
     ButtonModule,
     InputTextModule,
@@ -36,7 +35,8 @@ import { TableColumn, TableConfig, TableAction } from '../../../shared/component
     DataTableTemplateDirective
   ],
   templateUrl: './order-list.component.html',
-  styleUrls: ['./order-list.component.css']
+  styleUrls: ['./order-list.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OrderListComponent {
   private orderService = inject(OrderService);
@@ -45,9 +45,9 @@ export class OrderListComponent {
   // State
   orders = this.orderService.orders;
   
-  searchQuery = signal('');
-  selectedStatus = signal<OrderStatus | null>(null);
-  selectedFulfilment = signal<string | null>(null);
+  searchQueryControl = new FormControl('');
+  selectedStatusControl = new FormControl<OrderStatus | null>(null);
+  selectedFulfilmentControl = new FormControl<string | null>(null);
 
   // Options
   statusOptions = [
@@ -70,9 +70,9 @@ export class OrderListComponent {
   // Filtering
   filteredOrders = computed(() => {
     let list = this.orders();
-    const search = this.searchQuery().toLowerCase();
-    const status = this.selectedStatus();
-    const fulfilment = this.selectedFulfilment();
+    const search = (this.searchQueryControl.value || '').toLowerCase();
+    const status = this.selectedStatusControl.value;
+    const fulfilment = this.selectedFulfilmentControl.value;
 
     // Search
     if (search) {

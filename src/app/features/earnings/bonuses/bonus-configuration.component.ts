@@ -1,6 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { CardModule } from 'primeng/card';
@@ -11,10 +11,10 @@ import { EarningsService, BonusRule } from '../services/earnings.service';
 
 @Component({
   selector: 'app-bonus-configuration',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, InputNumberModule, CardModule, TagModule, ToastModule],
+  imports: [CommonModule, ReactiveFormsModule, ButtonModule, InputNumberModule, CardModule, TagModule, ToastModule],
   providers: [MessageService],
-  templateUrl: './bonus-configuration.component.html'
+  templateUrl: './bonus-configuration.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BonusConfigurationComponent {
   earningsService = inject(EarningsService);
@@ -24,25 +24,34 @@ export class BonusConfigurationComponent {
   
   // Track editing state locally
   editingId = signal<string | null>(null);
-  editValues: Record<string, number> = {};
+  editControls: Record<string, FormControl<number | null>> = {};
 
   isEditing(id: string): boolean {
     return this.editingId() === id;
   }
 
+  getEditControl(id: string): FormControl<number | null> {
+    if (!this.editControls[id]) {
+      this.editControls[id] = new FormControl<number | null>(null);
+    }
+    return this.editControls[id];
+  }
+
   startEdit(bonus: BonusRule) {
-    this.editValues[bonus.id] = bonus.value;
+    this.getEditControl(bonus.id).setValue(bonus.value);
     this.editingId.set(bonus.id);
   }
 
   cancelEdit(id: string) {
     this.editingId.set(null);
-    delete this.editValues[id];
+    if (this.editControls[id]) {
+      this.editControls[id].reset();
+    }
   }
 
   saveEdit(bonus: BonusRule) {
-    const newValue = this.editValues[bonus.id];
-    if (newValue !== undefined) {
+    const newValue = this.editControls[bonus.id]?.value;
+    if (newValue !== undefined && newValue !== null) {
       this.earningsService.updateBonus({ ...bonus, value: newValue });
       this.messageService.add({ severity: 'success', summary: 'Updated', detail: `${bonus.name} value updated successfully.` });
       this.cancelEdit(bonus.id);

@@ -19,7 +19,7 @@
 
     <!-- Legend -->
     <div class="flex-1 w-full space-y-3">
-      @for (pkg of packageList; track pkg.name) {
+      @for (pkg of packageList(); track pkg.name) {
         <div class="flex items-center justify-between py-1 px-2 rounded-lg hover:bg-mlm-background transition-colors">
           <div class="flex items-center gap-2">
             <span 

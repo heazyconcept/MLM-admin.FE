@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, output, model, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -7,28 +7,27 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 
 @Component({
   selector: 'app-user-profile-modal',
-  standalone: true,
   imports: [CommonModule, DialogModule, ButtonModule, StatusBadgeComponent],
   templateUrl: './user-profile-modal.component.html',
-  styleUrls: ['./user-profile-modal.component.css']
+  styleUrls: ['./user-profile-modal.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserProfileModalComponent {
-  @Input() visible = false;
-  @Input() user: User | null = null;
+  visible = model(false);
+  user = input<User | null>(null);
 
-  @Output() visibleChange = new EventEmitter<boolean>();
-  @Output() actionClick = new EventEmitter<{ action: string; user: User }>();
+  actionClick = output<{ action: string; user: User }>();
 
   activeTab = 'basic';
 
   close(): void {
-    this.visible = false;
-    this.visibleChange.emit(false);
+    this.visible.set(false);
   }
 
   onAction(action: string): void {
-    if (this.user) {
-      this.actionClick.emit({ action, user: this.user });
+    const currentUser = this.user();
+    if (currentUser) {
+      this.actionClick.emit({ action, user: currentUser });
     }
   }
 

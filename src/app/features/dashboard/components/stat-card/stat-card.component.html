@@ -2,21 +2,21 @@
   <!-- Header -->
   <div class="flex items-start justify-between mb-3">
     <div class="flex items-center gap-3">
-      @if (icon) {
+      @if (icon()) {
         <div 
           class="w-10 h-10 rounded-lg flex items-center justify-center"
-          [class]="iconBg">
-          <i [class]="icon + ' ' + iconColor"></i>
+          [class]="iconBg()">
+          <i [class]="icon() + ' ' + iconColor()"></i>
         </div>
       }
       <div>
-        <span class="text-sm font-medium text-mlm-secondary">{{ title }}</span>
-        @if (subtitle) {
-          <p class="text-xs text-mlm-secondary/70">{{ subtitle }}</p>
+        <span class="text-sm font-medium text-mlm-secondary">{{ title() }}</span>
+        @if (subtitle()) {
+          <p class="text-xs text-mlm-secondary/70">{{ subtitle() }}</p>
         }
       </div>
     </div>
-    @if (showMenu) {
+    @if (showMenu()) {
       <button class="p-1 rounded hover:bg-gray-100 text-mlm-secondary transition-colors">
         <i class="pi pi-ellipsis-h"></i>
       </button>
@@ -25,20 +25,20 @@
 
   <!-- Value -->
   <div class="mb-2">
-    <span class="text-2xl font-bold text-mlm-text">{{ value }}</span>
+    <span class="text-2xl font-bold text-mlm-text">{{ value() }}</span>
   </div>
 
   <!-- Change Indicator -->
-  @if (change !== null) {
+  @if (change() !== null) {
     <div class="flex items-center gap-2">
       <span 
         class="flex items-center gap-1 text-sm font-medium"
-        [class.text-mlm-success]="isPositive"
-        [class.text-mlm-error]="!isPositive">
-        <i class="pi text-xs" [class.pi-arrow-up]="isPositive" [class.pi-arrow-down]="!isPositive"></i>
-        {{ changeFormatted }}
+        [class.text-mlm-success]="isPositive()"
+        [class.text-mlm-error]="!isPositive()">
+        <i class="pi text-xs" [class.pi-arrow-up]="isPositive()" [class.pi-arrow-down]="!isPositive()"></i>
+        {{ changeFormatted() }}
       </span>
-      <span class="text-sm text-mlm-secondary">{{ changeLabel }}</span>
+      <span class="text-sm text-mlm-secondary">{{ changeLabel() }}</span>
     </div>
   }
 </div>

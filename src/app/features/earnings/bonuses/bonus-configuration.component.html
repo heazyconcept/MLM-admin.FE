@@ -39,7 +39,7 @@
                  <!-- Edit Mode -->
                  @else {
                     <p-inputNumber 
-                      [(ngModel)] = "editValues[bonus.id]" 
+                      [formControl]="getEditControl(bonus.id)" 
                       [suffix]="bonus.type === 'percentage' ? '%' : ''" 
                       [prefix]="bonus.type === 'flat' ? '$' : ''"
                       mode="decimal" 

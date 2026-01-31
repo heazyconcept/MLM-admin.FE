@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProgressBarModule } from 'primeng/progressbar';
 
@@ -14,13 +14,13 @@ export interface SavingsPlan {
 
 @Component({
   selector: 'app-savings-plan',
-  standalone: true,
   imports: [CommonModule, ProgressBarModule],
   templateUrl: './savings-plan.component.html',
-  styleUrls: ['./savings-plan.component.css']
+  styleUrls: ['./savings-plan.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SavingsPlanComponent {
-  @Input() plans: SavingsPlan[] = [];
+  plans = input<SavingsPlan[]>([]);
 
   formatCurrency(value: number): string {
     return '$' + value.toLocaleString();
