@@ -61,9 +61,17 @@ export class SidebarComponent {
       ]
     },
     {
+      title: 'REPORTS & AUDIT',
+      items: [
+        { label: 'Reports', icon: 'pi pi-file-edit', route: '/admin/reports' },
+        { label: 'Audit Logs', icon: 'pi pi-history', route: '/admin/audit' }
+      ]
+    },
+    {
       title: 'FEATURES',
       items: [
         { label: 'Products', icon: 'pi pi-shopping-bag', route: '/admin/products' },
+        { label: 'Merchants', icon: 'pi pi-store', route: '/admin/merchants' },
         { label: 'Logistics', icon: 'pi pi-truck', route: '/admin/logistics' },
         { label: 'Subscriptions', icon: 'pi pi-credit-card', route: '/admin/subscriptions' },
         { label: 'Feedback', icon: 'pi pi-comments', route: '/admin/feedback' }

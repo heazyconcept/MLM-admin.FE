@@ -1,0 +1,75 @@
+<div class="min-h-screen bg-linear-to-br from-gray-50 via-white to-purple-50/30 p-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-black text-mlm-text mb-2">Audit Logs</h1>
+    <p class="text-mlm-secondary">View system activities. Read-only; immutable records.</p>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white border border-gray-200 rounded-xl px-5 py-4 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center gap-4 flex-wrap">
+      <div class="flex items-center gap-2">
+        <label for="actor-filter" class="text-sm font-medium text-gray-700">Actor</label>
+        <p-select
+          id="actor-filter"
+          [options]="actorOptions"
+          [ngModel]="actorFilter()"
+          (ngModelChange)="actorFilter.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Actor"
+          appendTo="body"
+          styleClass="min-w-[140px] h-10">
+        </p-select>
+      </div>
+      <div class="flex items-center gap-2">
+        <label for="action-filter" class="text-sm font-medium text-gray-700">Action type</label>
+        <p-select
+          id="action-filter"
+          [options]="actionTypeOptions"
+          [ngModel]="actionTypeFilter()"
+          (ngModelChange)="actionTypeFilter.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Action"
+          appendTo="body"
+          styleClass="min-w-[140px] h-10">
+        </p-select>
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="text-sm font-medium text-gray-700">Date range</label>
+        <p-datepicker
+          [ngModel]="dateRange()"
+          (ngModelChange)="dateRange.set($event)"
+          selectionMode="range"
+          placeholder="From – To"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          styleClass="w-64"
+          inputStyleClass="w-full h-10 border-gray-300"
+          panelStyleClass="p-datepicker-premium">
+        </p-datepicker>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit log table -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <app-data-table
+      [data]="filteredLogs()"
+      [columns]="columns()"
+      [config]="tableConfig"
+      [actions]="actions()"
+      emptyMessage="No audit log entries"
+      emptyIcon="pi pi-history">
+    </app-data-table>
+  </div>
+</div>
+
+<!-- Audit detail drawer -->
+<app-audit-detail-drawer
+  [visible]="detailVisible()"
+  [entry]="selectedEntry()"
+  (visibleChange)="onDetailClose()">
+</app-audit-detail-drawer>

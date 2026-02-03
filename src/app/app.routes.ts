@@ -75,6 +75,21 @@ export const routes: Routes = [
         loadComponent: () => import('./features/orders/logistics/logistics-config.component').then(m => m.LogisticsConfigComponent)
       },
       {
+        path: 'reports',
+        loadComponent: () => import('./features/reports/reports-overview.component').then(m => m.ReportsOverviewComponent)
+      },
+      {
+        path: 'audit',
+        loadComponent: () => import('./features/audit/audit-logs.component').then(m => m.AuditLogsComponent)
+      },
+      {
+        path: 'merchants',
+        children: [
+          { path: '', loadComponent: () => import('./features/merchants/list/merchants-list.component').then(m => m.MerchantsListComponent) },
+          { path: ':id', loadComponent: () => import('./features/merchants/details/merchant-details.component').then(m => m.MerchantDetailsComponent) }
+        ]
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'

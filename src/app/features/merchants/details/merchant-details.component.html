@@ -1,0 +1,334 @@
+@if (merchant(); as m) {
+  <div class="min-h-screen bg-gray-50 px-8 py-6">
+    <p-toast></p-toast>
+
+    <!-- Confirmation Modals -->
+    <app-confirmation-modal
+      [visible]="showApproveModal()"
+      title="Approve Merchant"
+      message="Are you sure you want to approve this merchant? They will be able to fulfill orders and access the merchant dashboard."
+      confirmLabel="Approve"
+      cancelLabel="Cancel"
+      (confirm)="handleApproveConfirm($event)"
+      (cancel)="handleModalCancel('approve')">
+    </app-confirmation-modal>
+
+    <app-confirmation-modal
+      [visible]="showSuspendModal()"
+      title="Suspend Merchant"
+      message="This merchant will be temporarily suspended and unable to fulfill orders. Please provide a reason for suspension."
+      confirmLabel="Suspend"
+      cancelLabel="Cancel"
+      [showReasonField]="true"
+      [reasonRequired]="true"
+      reasonPlaceholder="Enter reason for suspension..."
+      (confirm)="handleSuspendConfirm($event)"
+      (cancel)="handleModalCancel('suspend')">
+    </app-confirmation-modal>
+
+    <app-confirmation-modal
+      [visible]="showReactivateModal()"
+      title="Reactivate Merchant"
+      message="This merchant will be reactivated and able to fulfill orders again."
+      confirmLabel="Reactivate"
+      cancelLabel="Cancel"
+      (confirm)="handleReactivateConfirm($event)"
+      (cancel)="handleModalCancel('reactivate')">
+    </app-confirmation-modal>
+
+    <!-- ================= HEADER ================= -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-2">
+        <button
+          [routerLink]="['/admin/merchants']"
+          class="p-2 rounded-md hover:bg-gray-100">
+          <i class="pi pi-arrow-left"></i>
+        </button>
+        Back to merchants
+      </div>
+
+      <!-- Suspended Warning Banner -->
+      @if (isSuspended()) {
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div class="flex items-start gap-3">
+            <i class="pi pi-exclamation-triangle text-red-600 text-lg mt-0.5"></i>
+            <div>
+              <h4 class="font-semibold text-red-900 mb-1">Merchant Suspended</h4>
+              <p class="text-sm text-red-700">
+                This merchant is currently suspended and cannot fulfill orders.
+                @if (m.suspendedReason) {
+                  <br><span class="font-medium">Reason:</span> {{ m.suspendedReason }}
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-semibold text-gray-900">
+            {{ m.businessName }} <span class="text-gray-400">#{{ m.id }}</span>
+          </h1>
+          <p class="text-sm text-gray-500">
+            Registered {{ formatDate(m.registrationDate) }}
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <app-status-badge [status]="m.status"></app-status-badge>
+
+          @if (canApprove()) {
+            <button
+              pButton
+              label="Approve"
+              icon="pi pi-check"
+              class="p-button-success"
+              (click)="onApprove()">
+            </button>
+          }
+
+          @if (canSuspend()) {
+            <button
+              pButton
+              label="Suspend"
+              icon="pi pi-ban"
+              class="p-button-outlined p-button-danger"
+              (click)="onSuspend()">
+            </button>
+          }
+
+          @if (canReactivate()) {
+            <button
+              pButton
+              label="Reactivate"
+              icon="pi pi-check-circle"
+              class="p-button-success"
+              (click)="onReactivate()">
+            </button>
+          }
+
+          <button
+            pButton
+            label="Change Type"
+            icon="pi pi-refresh"
+            class="p-button-outlined"
+            (click)="onChangeType()">
+          </button>
+
+          <button
+            pButton
+            label="Assign Regions"
+            icon="pi pi-map"
+            class="p-button-outlined"
+            (click)="onAssignRegions()">
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= CONTENT GRID ================= -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+      <!-- ===== MAIN COLUMN ===== -->
+      <div class="lg:col-span-8 space-y-8">
+
+        <!-- Merchant Profile -->
+        <div class="bg-white border border-gray-200 rounded-xl p-8">
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Merchant Profile</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Business Name</p>
+              <p class="font-medium text-gray-900">{{ m.businessName }}</p>
+            </div>
+
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Merchant ID</p>
+              <p class="font-mono font-medium text-gray-900">{{ m.id }}</p>
+            </div>
+
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Merchant Type</p>
+              <div class="flex items-center gap-2">
+                <i [class]="getTypeIcon(m.type) + ' text-mlm-primary'"></i>
+                <p class="font-medium text-gray-900">{{ m.type }}</p>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Status</p>
+              <app-status-badge [status]="m.status"></app-status-badge>
+            </div>
+
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Email</p>
+              <p class="font-medium text-gray-900">{{ m.email }}</p>
+            </div>
+
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Phone</p>
+              <p class="font-medium text-gray-900">{{ m.phone }}</p>
+            </div>
+
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Registration Date</p>
+              <p class="font-medium text-gray-900">{{ formatDate(m.registrationDate) }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Owner Details -->
+        <div class="bg-white border border-gray-200 rounded-xl p-8">
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Owner Details</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Owner Name</p>
+              <p class="font-medium text-gray-900">{{ m.ownerName }}</p>
+            </div>
+
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Owner ID</p>
+              <p class="font-mono font-medium text-gray-900">{{ m.ownerId }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coverage Regions -->
+        <div class="bg-white border border-gray-200 rounded-xl p-8">
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Coverage Regions</h2>
+
+          @if (m.region.length > 0) {
+            <div class="flex flex-wrap gap-2">
+              @for (region of m.region; track region) {
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                  <i class="pi pi-map-marker mr-2"></i>
+                  {{ region }}
+                </span>
+              }
+            </div>
+          } @else {
+            <p class="text-gray-500 text-sm">No regions assigned</p>
+          }
+        </div>
+
+        <!-- Assigned Products -->
+        <div class="bg-white border border-gray-200 rounded-xl p-8">
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Assigned Products</h2>
+
+          @if (m.assignedProductIds.length > 0) {
+            <div class="flex flex-wrap gap-2">
+              @for (productId of m.assignedProductIds; track productId) {
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                  {{ productId }}
+                </span>
+              }
+            </div>
+          } @else {
+            <p class="text-gray-500 text-sm">No products assigned</p>
+          }
+        </div>
+
+        <!-- Performance Summary -->
+        @if (performance()) {
+          <app-performance-card
+            [ordersFulfilled]="performance()!.ordersFulfilled"
+            [deliverySuccessRate]="performance()!.deliverySuccessRate"
+            [earnings]="performance()!.earnings"
+            [customerRating]="performance()!.customerRating ?? null">
+          </app-performance-card>
+        }
+
+      </div>
+
+      <!-- ===== SIDEBAR COLUMN ===== -->
+      <div class="lg:col-span-4 space-y-8">
+
+        <!-- Status History -->
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-6">Status History</h3>
+
+          <div class="space-y-4">
+            @for (entry of m.statusHistory; track $index) {
+              <div class="border-l-2 border-gray-200 pl-4">
+                <div class="flex items-start justify-between mb-1">
+                  <app-status-badge [status]="entry.status"></app-status-badge>
+                  <span class="text-xs text-gray-400">
+                    {{ formatDate(entry.date) }}
+                  </span>
+                </div>
+                @if (entry.reason) {
+                  <p class="text-sm text-gray-600 mt-2">{{ entry.reason }}</p>
+                }
+                @if (entry.changedBy) {
+                  <p class="text-xs text-gray-400 mt-1">By: {{ entry.changedBy }}</p>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Change Type Modal -->
+    <app-confirmation-modal
+      [visible]="showChangeTypeModal()"
+      title="Change Merchant Type"
+      [message]="'Current type: ' + m.type"
+      confirmLabel="Update Type"
+      cancelLabel="Cancel"
+      (confirm)="handleChangeTypeConfirm($event)"
+      (cancel)="handleModalCancel('changeType')">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Select New Type</label>
+        <select
+          [(ngModel)]="selectedType"
+          class="w-full h-10 px-4 rounded-lg border border-gray-300 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+          @for (option of typeOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+    </app-confirmation-modal>
+
+    <!-- Assign Regions Modal -->
+    <app-confirmation-modal
+      [visible]="showAssignRegionsModal()"
+      title="Assign Regions"
+      message="Select the regions this merchant can operate in."
+      confirmLabel="Update Regions"
+      cancelLabel="Cancel"
+      (confirm)="handleAssignRegionsConfirm($event)"
+      (cancel)="handleModalCancel('assignRegions')">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Select Regions</label>
+        <app-region-selector
+          [regions]="availableRegions()"
+          [selected]="selectedRegions()"
+          (selectedChange)="onRegionsChange($event)">
+        </app-region-selector>
+      </div>
+    </app-confirmation-modal>
+
+  </div>
+} @else {
+  <div class="min-h-screen bg-gray-50 px-8 py-6">
+    <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+      <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+        <i class="pi pi-exclamation-circle text-gray-400 text-2xl"></i>
+      </div>
+      <h3 class="text-gray-900 font-bold mb-2">Merchant Not Found</h3>
+      <p class="text-gray-500 text-sm mb-4">The requested merchant could not be found.</p>
+      <button
+        pButton
+        label="Back to Merchants"
+        icon="pi pi-arrow-left"
+        class="p-button-outlined"
+        [routerLink]="['/admin/merchants']">
+      </button>
+    </div>
+  </div>
+}
