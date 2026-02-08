@@ -83,6 +83,19 @@ export const routes: Routes = [
         loadComponent: () => import('./features/audit/audit-logs.component').then(m => m.AuditLogsComponent)
       },
       {
+        path: 'system',
+        loadComponent: () => import('./features/system/config/system-layout.component').then(m => m.SystemLayoutComponent),
+        children: [
+          { path: '', redirectTo: 'overview', pathMatch: 'full' },
+          { path: 'overview', loadComponent: () => import('./features/system/overview/system-overview.component').then(m => m.SystemOverviewComponent) },
+          { path: 'general', loadComponent: () => import('./features/system/general/general-settings.component').then(m => m.GeneralSettingsComponent) },
+          { path: 'financial', loadComponent: () => import('./features/system/financial/financial-rules.component').then(m => m.FinancialRulesComponent) },
+          { path: 'currency', loadComponent: () => import('./features/system/currency/currency-localization.component').then(m => m.CurrencyLocalizationComponent) },
+          { path: 'features', loadComponent: () => import('./features/system/features/feature-toggles.component').then(m => m.FeatureTogglesComponent) },
+          { path: 'thresholds', loadComponent: () => import('./features/system/thresholds/thresholds-limits.component').then(m => m.ThresholdsLimitsComponent) }
+        ]
+      },
+      {
         path: 'merchants',
         children: [
           { path: '', loadComponent: () => import('./features/merchants/list/merchants-list.component').then(m => m.MerchantsListComponent) },

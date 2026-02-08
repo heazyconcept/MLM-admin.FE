@@ -1,0 +1,13 @@
+<div class="rounded-lg border border-gray-200 bg-gray-50 p-4" role="region" [attr.aria-label]="title()">
+  <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ title() }}</h3>
+  <ul class="space-y-2 text-sm">
+    @for (item of changes(); track item.field) {
+      <li class="flex flex-wrap items-baseline gap-2">
+        <span class="font-medium text-gray-700">{{ item.field }}:</span>
+        <span class="text-gray-500">{{ item.old }}</span>
+        <span class="text-gray-400" aria-hidden="true">→</span>
+        <span class="text-gray-900">{{ item.new }}</span>
+      </li>
+    }
+  </ul>
+</div>

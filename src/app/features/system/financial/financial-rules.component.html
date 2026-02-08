@@ -1,0 +1,67 @@
+<div class="space-y-8 max-w-2xl">
+  <p class="text-sm text-gray-500">Informational and future-effective only. Changes do not affect historical data.</p>
+
+  <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-6" [formGroup]="form">
+    <h2 class="text-lg font-semibold text-gray-900">Financial Rules</h2>
+
+    <div class="grid grid-cols-1 gap-4">
+      <app-config-input
+        label="Withdrawal cash percentage"
+        type="number"
+        [control]="cashControl"
+        [min]="0"
+        [max]="100"
+        [error]="cashControl.touched && cashControl.invalid ? 'Enter 0–100' : null">
+      </app-config-input>
+
+      <app-config-input
+        label="Withdrawal voucher percentage"
+        type="number"
+        [control]="voucherControl"
+        [min]="0"
+        [max]="100"
+        [error]="voucherControl.touched && voucherControl.invalid ? 'Enter 0–100' : null">
+      </app-config-input>
+
+      <app-config-input
+        label="Fee (percent)"
+        type="number"
+        [control]="feeControl"
+        [min]="0"
+        [max]="100"
+        [error]="feeControl.touched && feeControl.invalid ? 'Enter 0–100' : null">
+      </app-config-input>
+
+      <div>
+        <label class="text-sm font-medium text-gray-700">Earnings distribution (read-only)</label>
+        <p class="mt-1 text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-readonly="true">{{ config.financial().earningsSummary }}</p>
+      </div>
+    </div>
+
+    @if (lastModified(); as lm) {
+      <p class="text-xs text-gray-500 pt-2 border-t border-gray-100">Last modified: {{ lm }}@if (lastModifiedBy()) { by {{ lastModifiedBy() }}}.</p>
+    }
+
+    <div class="flex justify-end pt-4">
+      <button
+        pButton
+        label="Save"
+        icon="pi pi-check"
+        class="p-button-primary"
+        [disabled]="!isDirty() || form.invalid"
+        (click)="onSaveClick()">
+      </button>
+    </div>
+  </div>
+</div>
+
+<app-confirmation-modal
+  [visible]="confirmVisible()"
+  (visibleChange)="confirmVisible.set(false)"
+  title="Confirm financial rules"
+  message="Are you sure you want to save these financial rules?"
+  confirmLabel="Save"
+  cancelLabel="Cancel"
+  (confirm)="onConfirm($event)"
+  (cancel)="onCancelConfirm()">
+</app-confirmation-modal>

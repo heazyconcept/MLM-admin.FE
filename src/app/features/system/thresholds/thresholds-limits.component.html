@@ -1,0 +1,68 @@
+<div class="space-y-8 max-w-2xl">
+  <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-6" [formGroup]="form">
+    <h2 class="text-lg font-semibold text-gray-900">Thresholds & Limits</h2>
+
+    <div class="grid grid-cols-1 gap-4">
+      <app-config-input
+        label="Minimum withdrawal amount"
+        type="number"
+        [control]="minControl"
+        [min]="0"
+        [error]="minControl.touched && minControl.invalid ? 'Required, min 0' : null">
+      </app-config-input>
+
+      <app-config-input
+        label="Maximum withdrawal amount"
+        type="number"
+        [control]="maxControl"
+        [min]="0"
+        [error]="maxControl.touched && maxControl.invalid ? 'Required, min 0' : null">
+      </app-config-input>
+
+      <app-config-input
+        label="Daily transaction limit"
+        type="number"
+        [control]="dailyControl"
+        [min]="0"
+        [error]="dailyControl.touched && dailyControl.invalid ? 'Required, min 0' : null">
+      </app-config-input>
+
+      <app-config-input
+        label="Rank progression threshold"
+        type="number"
+        [control]="rankControl"
+        [min]="0"
+        [error]="rankControl.touched && rankControl.invalid ? 'Required, min 0' : null">
+      </app-config-input>
+    </div>
+
+    @if (lastModified(); as lm) {
+      <p class="text-xs text-gray-500 pt-2 border-t border-gray-100">Last modified: {{ lm }}@if (lastModifiedBy()) { by {{ lastModifiedBy() }}}.</p>
+    }
+
+    <div class="flex justify-end pt-4">
+      <button
+        pButton
+        label="Save"
+        icon="pi pi-check"
+        class="p-button-primary"
+        [disabled]="!isDirty() || form.invalid"
+        (click)="onSaveClick()">
+      </button>
+    </div>
+  </div>
+</div>
+
+<app-confirmation-modal
+  [visible]="confirmVisible()"
+  (visibleChange)="confirmVisible.set(false)"
+  title="Confirm thresholds"
+  message="Changing thresholds and limits can affect withdrawals and rankings. Please provide a reason."
+  confirmLabel="Save"
+  cancelLabel="Cancel"
+  [showReasonField]="true"
+  [reasonRequired]="true"
+  reasonPlaceholder="Reason for change..."
+  (confirm)="onConfirm($event)"
+  (cancel)="onCancelConfirm()">
+</app-confirmation-modal>

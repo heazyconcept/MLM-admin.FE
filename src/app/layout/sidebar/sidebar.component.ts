@@ -80,7 +80,7 @@ export class SidebarComponent {
     {
       title: 'GENERAL',
       items: [
-        { label: 'Settings', icon: 'pi pi-cog', route: '/admin/settings' },
+        { label: 'System Settings', icon: 'pi pi-cog', route: '/admin/system' },
         { label: 'Help Desk', icon: 'pi pi-question-circle', route: '/admin/help' },
         { label: 'Log out', icon: 'pi pi-sign-out', action: () => this.logout() }
       ]
