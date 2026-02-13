@@ -2,6 +2,15 @@
   <div class="min-h-screen bg-gray-50 px-8 py-6">
     <p-toast></p-toast>
 
+    @if (isViewOnly()) {
+      <div class="mb-6">
+        <app-info-banner
+          message="You have view-only access. Contact an administrator for changes."
+          type="info">
+        </app-info-banner>
+      </div>
+    }
+
     <!-- Confirmation Modals -->
     <app-confirmation-modal
       [visible]="showApproveModal()"
@@ -78,7 +87,7 @@
         <div class="flex items-center gap-3">
           <app-status-badge [status]="m.status"></app-status-badge>
 
-          @if (canApprove()) {
+          @if (canApproveMerchant() && canApprove()) {
             <button
               pButton
               label="Approve"
@@ -88,7 +97,7 @@
             </button>
           }
 
-          @if (canSuspend()) {
+          @if (canApproveMerchant() && canSuspend()) {
             <button
               pButton
               label="Suspend"
@@ -98,7 +107,7 @@
             </button>
           }
 
-          @if (canReactivate()) {
+          @if (canApproveMerchant() && canReactivate()) {
             <button
               pButton
               label="Reactivate"
@@ -108,21 +117,25 @@
             </button>
           }
 
-          <button
-            pButton
-            label="Change Type"
-            icon="pi pi-refresh"
-            class="p-button-outlined"
-            (click)="onChangeType()">
-          </button>
+          @if (canApproveMerchant()) {
+            <button
+              pButton
+              label="Change Type"
+              icon="pi pi-refresh"
+              class="p-button-outlined"
+              (click)="onChangeType()">
+            </button>
+          }
 
-          <button
-            pButton
-            label="Assign Regions"
-            icon="pi pi-map"
-            class="p-button-outlined"
-            (click)="onAssignRegions()">
-          </button>
+          @if (canAssignMerchant()) {
+            <button
+              pButton
+              label="Assign Regions"
+              icon="pi pi-map"
+              class="p-button-outlined"
+              (click)="onAssignRegions()">
+            </button>
+          }
         </div>
       </div>
     </div>

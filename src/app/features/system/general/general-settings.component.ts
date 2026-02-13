@@ -11,6 +11,9 @@ import { ReactiveFormsModule, FormBuilder, FormControl, Validators } from '@angu
 import { ButtonModule } from 'primeng/button';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { InputTextModule } from 'primeng/inputtext';
+import { PermissionService } from '../../../core/services/permission.service';
+import { Feature, Action } from '../../../core/models/admin-permission.model';
+import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { ConfigInputComponent } from '../../../shared/components/config-input/config-input.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { SystemConfigService } from '../services/system-config.service';
@@ -23,6 +26,7 @@ import { SystemConfigService } from '../services/system-config.service';
     ButtonModule,
     ToggleSwitchModule,
     InputTextModule,
+    InfoBannerComponent,
     ConfigInputComponent,
     ConfirmationModalComponent,
   ],
@@ -32,6 +36,12 @@ import { SystemConfigService } from '../services/system-config.service';
 export class GeneralSettingsComponent {
   private fb = inject(FormBuilder);
   protected config = inject(SystemConfigService);
+  protected permission = inject(PermissionService);
+
+  canChangeSystemConfig = computed(
+    () => this.permission.canEdit(Feature.SystemConfig) && this.permission.canPerform(Action.ChangeSystemConfig)
+  );
+  isViewOnly = computed(() => !this.permission.canEdit(Feature.SystemConfig));
 
   confirmVisible = signal(false);
   initialMaintenance = signal(false);

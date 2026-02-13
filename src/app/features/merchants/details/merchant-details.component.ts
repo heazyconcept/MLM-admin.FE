@@ -2,7 +2,10 @@ import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit } 
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { MerchantService, Merchant, MerchantType, MerchantPerformance } from '../services/merchant.service';
+import { PermissionService } from '../../../core/services/permission.service';
+import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
+import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { PerformanceCardComponent } from '../../../shared/components/performance-card/performance-card.component';
 import { RegionSelectorComponent } from '../../../shared/components/region-selector/region-selector.component';
 import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
@@ -23,6 +26,7 @@ interface TypeOption {
     CommonModule,
     RouterModule,
     StatusBadgeComponent,
+    InfoBannerComponent,
     PerformanceCardComponent,
     RegionSelectorComponent,
     ConfirmationModalComponent,
@@ -40,6 +44,15 @@ export class MerchantDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private messageService = inject(MessageService);
+  protected permission = inject(PermissionService);
+
+  canApproveMerchant = computed(
+    () => this.permission.canEdit(Feature.Merchants) && this.permission.canPerform(Action.ApproveMerchant)
+  );
+  canAssignMerchant = computed(
+    () => this.permission.canEdit(Feature.Merchants) && this.permission.canPerform(Action.AssignMerchant)
+  );
+  isViewOnly = computed(() => !this.permission.canEdit(Feature.Merchants));
 
   merchant = signal<Merchant | null>(null);
   performance = signal<MerchantPerformance | null>(null);

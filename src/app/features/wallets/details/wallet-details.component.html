@@ -1,6 +1,15 @@
 @if (wallet(); as w) {
 <div class="min-h-screen bg-[#FAFBFC]">
   <p-toast></p-toast>
+
+  @if (isViewOnly()) {
+    <div class="mb-6 px-6">
+      <app-info-banner
+        message="You have view-only access. Contact an administrator for changes."
+        type="info">
+      </app-info-banner>
+    </div>
+  }
   
   <!-- Page Header -->
   <header class="bg-white border-b border-gray-100 shadow-sm">
@@ -34,24 +43,26 @@
         </div>
 
         <!-- Action Grid -->
-        <div class="flex items-center gap-3">
-          <button 
-           pButton 
-           [label]="w.status === 'Locked' ? 'Unlock Wallet' : 'Lock Wallet'" 
-           [icon]="w.status === 'Locked' ? 'pi pi-lock-open' : 'pi pi-lock'" 
-           [class]="w.status === 'Locked' ? 'p-button-success' : 'p-button-danger'"
-           class="p-button-sm text-xs font-semibold px-4"
-           (click)="toggleLock(w)">
-          </button>
-          
-          <button 
-           pButton 
-           label="Adjust Funds" 
-           icon="pi pi-wallet" 
-           class="p-button-outlined p-button-secondary p-button-sm text-xs font-semibold px-4"
-           (click)="openAdjustment()">
-          </button>
-        </div>
+        @if (canPerformWalletActions()) {
+          <div class="flex items-center gap-3">
+            <button 
+             pButton 
+             [label]="w.status === 'Locked' ? 'Unlock Wallet' : 'Lock Wallet'" 
+             [icon]="w.status === 'Locked' ? 'pi pi-lock-open' : 'pi pi-lock'" 
+             [class]="w.status === 'Locked' ? 'p-button-success' : 'p-button-danger'"
+             class="p-button-sm text-xs font-semibold px-4"
+             (click)="toggleLock(w)">
+            </button>
+            
+            <button 
+             pButton 
+             label="Adjust Funds" 
+             icon="pi pi-wallet" 
+             class="p-button-outlined p-button-secondary p-button-sm text-xs font-semibold px-4"
+             (click)="openAdjustment()">
+            </button>
+          </div>
+        }
       </div>
     </div>
   </header>

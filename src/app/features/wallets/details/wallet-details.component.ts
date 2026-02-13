@@ -2,6 +2,9 @@ import { Component, inject, computed, ChangeDetectionStrategy, signal } from '@a
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { WalletService, Wallet, LedgerEntry } from '../services/wallet.service';
+import { PermissionService } from '../../../core/services/permission.service';
+import { Feature, Action } from '../../../core/models/admin-permission.model';
+import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 import { DataTableTemplateDirective } from '../../../shared/components/data-table/data-table-template.directive';
 import { TableColumn, TableConfig } from '../../../shared/components/data-table/data-table.types';
@@ -14,7 +17,7 @@ import { ToastModule } from 'primeng/toast';
 
 @Component({
   selector: 'app-wallet-details',
-  imports: [CommonModule, RouterModule, DataTableComponent, DataTableTemplateDirective, FundsAdjustmentModalComponent, WalletActionModalComponent, ButtonModule, TagModule, ToastModule],
+  imports: [CommonModule, RouterModule, InfoBannerComponent, DataTableComponent, DataTableTemplateDirective, FundsAdjustmentModalComponent, WalletActionModalComponent, ButtonModule, TagModule, ToastModule],
   providers: [MessageService],
   templateUrl: './wallet-details.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -23,6 +26,12 @@ export class WalletDetailsComponent {
   private route = inject(ActivatedRoute);
   private walletService = inject(WalletService);
   private messageService = inject(MessageService);
+  protected permission = inject(PermissionService);
+
+  canPerformWalletActions = computed(
+    () => this.permission.canEdit(Feature.Wallets) && this.permission.canPerform(Action.ManualWalletAdjustment)
+  );
+  isViewOnly = computed(() => !this.permission.canEdit(Feature.Wallets));
 
   walletId = signal<string>(this.route.snapshot.paramMap.get('id') || '');
   

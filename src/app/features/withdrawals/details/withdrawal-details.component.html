@@ -2,6 +2,15 @@
   <div class="min-h-screen bg-gray-50 px-8 py-6">
     <p-toast></p-toast>
 
+    @if (isViewOnly()) {
+      <div class="mb-6">
+        <app-info-banner
+          message="You have view-only access. Contact an administrator for changes."
+          type="info">
+        </app-info-banner>
+      </div>
+    }
+
     <app-withdrawal-action-modal
       [visible]="showConfirmModal()"
       [withdrawal]="w"
@@ -34,7 +43,7 @@
         <div class="flex items-center gap-3">
           <app-status-badge [status]="w.status"></app-status-badge>
 
-          @if (canReject()) {
+          @if (canPerformWithdrawalActions() && canReject()) {
             <button
               pButton
               label="Reject"
@@ -44,7 +53,7 @@
             </button>
           }
 
-          @if (canApprove()) {
+          @if (canPerformWithdrawalActions() && canApprove()) {
             <button
               pButton
               label="Approve"
@@ -54,7 +63,7 @@
             </button>
           }
 
-          @if (canMarkProcessing()) {
+          @if (canPerformWithdrawalActions() && canMarkProcessing()) {
             <button 
               pButton 
               label="Processing" 
@@ -64,7 +73,7 @@
             </button>
           }
 
-          @if (canMarkPaid()) {
+          @if (canPerformWithdrawalActions() && canMarkPaid()) {
             <button 
               pButton 
               label="Mark Paid" 

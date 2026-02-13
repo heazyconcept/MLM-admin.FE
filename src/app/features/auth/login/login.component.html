@@ -71,6 +71,20 @@
           }
         </div>
 
+        <!-- Role Selector (Demo) -->
+        <div class="flex flex-col gap-1">
+          <label for="role" class="text-sm font-medium text-mlm-text">Login as (Demo)</label>
+          <p-select
+            id="role"
+            [options]="roleOptions"
+            formControlName="role"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full"
+            placeholder="Select role">
+          </p-select>
+        </div>
+
         <!-- Remember Me & Forgot Password -->
         <div class="flex items-center justify-between">
           <label class="flex items-center gap-2 cursor-pointer group">

@@ -1,4 +1,10 @@
 <div class="space-y-8 max-w-2xl">
+  @if (isViewOnly()) {
+    <app-info-banner
+      message="You have view-only access. Contact an administrator for changes."
+      type="info">
+    </app-info-banner>
+  }
   <app-info-banner
     message="Enabling or disabling features may affect user experience and available modules. Provide a reason when saving."
     type="warning">
@@ -18,7 +24,8 @@
             [ngModel]="f.enabled"
             (ngModelChange)="setEnabled(f.id, $event)"
             [inputId]="'feature-' + f.id"
-            [ariaLabel]="'Toggle ' + f.name">
+            [ariaLabel]="'Toggle ' + f.name"
+            [disabled]="!canToggleFeatures()">
           </p-toggleSwitch>
         </li>
       }
@@ -30,7 +37,7 @@
         label="Save"
         icon="pi pi-check"
         class="p-button-primary"
-        [disabled]="!isDirty()"
+        [disabled]="!isDirty() || !canToggleFeatures()"
         (click)="onSaveClick()">
       </button>
     </div>

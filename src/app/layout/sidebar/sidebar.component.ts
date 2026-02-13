@@ -1,13 +1,17 @@
-import { Component, inject, ChangeDetectionStrategy, model } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, model, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { PermissionService } from '../../core/services/permission.service';
+import { AuthService } from '../../core/services/auth.service';
+import { Feature } from '../../core/models/admin-permission.model';
 
 interface MenuItem {
   label: string;
   icon: string;
   route?: string;
+  feature?: Feature;
   badge?: number;
   action?: () => void;
   submenu?: MenuItem[];
@@ -30,65 +34,81 @@ interface MenuSection {
 export class SidebarComponent {
   private router = inject(Router);
   private confirmationService = inject(ConfirmationService);
+  private permission = inject(PermissionService);
+  private auth = inject(AuthService);
 
   collapsed = model(false);
 
-  menuSections: MenuSection[] = [
+  private menuSections: MenuSection[] = [
     {
       title: 'MAIN MENU',
       items: [
-        { label: 'Dashboard', icon: 'pi pi-th-large', route: '/admin/dashboard' },
-        { label: 'User Management', icon: 'pi pi-users', route: '/admin/users' },
-        { label: 'Payments', icon: 'pi pi-credit-card', route: '/admin/payments' },
-        { label: 'Orders', icon: 'pi pi-box', route: '/admin/orders' },
-        { 
-          label: 'Wallets', 
-          icon: 'pi pi-wallet', 
+        { label: 'Dashboard', icon: 'pi pi-th-large', route: '/admin/dashboard', feature: Feature.Dashboard },
+        { label: 'Users', icon: 'pi pi-users', route: '/admin/users', feature: Feature.Users },
+        { label: 'Earnings', icon: 'pi pi-dollar', route: '/admin/earnings', feature: Feature.Earnings },
+        {
+          label: 'Wallets',
+          icon: 'pi pi-wallet',
+          feature: Feature.Wallets,
           submenu: [
-            { label: 'Overview', icon: 'pi pi-chart-bar', route: '/admin/wallets/overview' },
-            { label: 'All Wallets', icon: 'pi pi-list', route: '/admin/wallets' }
+            { label: 'Overview', icon: 'pi pi-chart-bar', route: '/admin/wallets/overview', feature: Feature.Wallets },
+            { label: 'All Wallets', icon: 'pi pi-list', route: '/admin/wallets', feature: Feature.Wallets }
           ]
         },
-        { 
-          label: 'Withdrawals', 
-          icon: 'pi pi-money-bill', 
+        {
+          label: 'Withdrawals',
+          icon: 'pi pi-money-bill',
+          feature: Feature.Withdrawals,
           submenu: [
-            { label: 'All Requests', icon: 'pi pi-list', route: '/admin/withdrawals' },
-            { label: 'Pending', icon: 'pi pi-clock', route: '/admin/withdrawals/pending' }
+            { label: 'All Requests', icon: 'pi pi-list', route: '/admin/withdrawals', feature: Feature.Withdrawals },
+            { label: 'Pending', icon: 'pi pi-clock', route: '/admin/withdrawals/pending', feature: Feature.Withdrawals }
           ]
         },
-        { label: 'Earnings', icon: 'pi pi-dollar', route: '/admin/earnings' }
+        { label: 'Payments', icon: 'pi pi-credit-card', route: '/admin/payments', feature: Feature.Payments },
+        { label: 'Products', icon: 'pi pi-shopping-bag', route: '/admin/products', feature: Feature.Products },
+        {
+          label: 'Orders & Logistics',
+          icon: 'pi pi-box',
+          feature: Feature.OrdersLogistics,
+          submenu: [
+            { label: 'Orders', icon: 'pi pi-box', route: '/admin/orders', feature: Feature.OrdersLogistics },
+            { label: 'Logistics', icon: 'pi pi-truck', route: '/admin/logistics', feature: Feature.OrdersLogistics }
+          ]
+        },
+        { label: 'Merchants', icon: 'pi pi-store', route: '/admin/merchants', feature: Feature.Merchants },
+        { label: 'Notifications', icon: 'pi pi-bell', route: '/admin/notifications', feature: Feature.Notifications }
       ]
     },
     {
       title: 'REPORTS & AUDIT',
       items: [
-        { label: 'Reports', icon: 'pi pi-file-edit', route: '/admin/reports' },
-        { label: 'Audit Logs', icon: 'pi pi-history', route: '/admin/audit' }
-      ]
-    },
-    {
-      title: 'FEATURES',
-      items: [
-        { label: 'Products', icon: 'pi pi-shopping-bag', route: '/admin/products' },
-        { label: 'Merchants', icon: 'pi pi-store', route: '/admin/merchants' },
-        { label: 'Logistics', icon: 'pi pi-truck', route: '/admin/logistics' },
-        { label: 'Subscriptions', icon: 'pi pi-credit-card', route: '/admin/subscriptions' },
-        { label: 'Feedback', icon: 'pi pi-comments', route: '/admin/feedback' }
+        { label: 'Reports', icon: 'pi pi-file-edit', route: '/admin/reports', feature: Feature.ReportsAudit },
+        { label: 'Audit Logs', icon: 'pi pi-history', route: '/admin/audit', feature: Feature.ReportsAudit }
       ]
     },
     {
       title: 'GENERAL',
       items: [
-        { label: 'System Settings', icon: 'pi pi-cog', route: '/admin/system' },
-        { label: 'Help Desk', icon: 'pi pi-question-circle', route: '/admin/help' },
+        { label: 'System Configuration', icon: 'pi pi-cog', route: '/admin/system', feature: Feature.SystemConfig },
         { label: 'Log out', icon: 'pi pi-sign-out', action: () => this.logout() }
       ]
     }
   ];
 
+  filteredMenuSections = computed(() => {
+    return this.menuSections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => {
+          if (!item.feature) return true;
+          return this.permission.hasAccess(item.feature);
+        })
+      }))
+      .filter((section) => section.items.length > 0);
+  });
+
   toggleCollapse() {
-    this.collapsed.update(v => !v);
+    this.collapsed.update((v) => !v);
   }
 
   logout() {
@@ -101,10 +121,9 @@ export class SidebarComponent {
       acceptIcon: 'none',
       rejectIcon: 'none',
       accept: () => {
-        localStorage.removeItem('token');
+        this.auth.logout();
         this.router.navigate(['/login']);
       }
     });
   }
 }
-

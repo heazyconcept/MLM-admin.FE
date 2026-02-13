@@ -1,0 +1,41 @@
+/**
+ * Admin permission types aligned with admin-navigation-permission-matrix.md
+ */
+
+export enum AdminRole {
+  SuperAdmin = 'SuperAdmin',
+  FinanceAdmin = 'FinanceAdmin',
+  OperationsAdmin = 'OperationsAdmin',
+  SupportAdmin = 'SupportAdmin',
+  ReadOnlyAdmin = 'ReadOnlyAdmin'
+}
+
+export enum Feature {
+  Dashboard = 'Dashboard',
+  Users = 'Users',
+  Earnings = 'Earnings',
+  Wallets = 'Wallets',
+  Withdrawals = 'Withdrawals',
+  Payments = 'Payments',
+  Products = 'Products',
+  OrdersLogistics = 'OrdersLogistics',
+  Merchants = 'Merchants',
+  Notifications = 'Notifications',
+  ReportsAudit = 'ReportsAudit',
+  SystemConfig = 'SystemConfig'
+}
+
+export enum Action {
+  ApproveWithdrawal = 'ApproveWithdrawal',
+  ManualWalletAdjustment = 'ManualWalletAdjustment',
+  MarkPaymentSuccessful = 'MarkPaymentSuccessful',
+  UpdateOrderStatus = 'UpdateOrderStatus',
+  AssignMerchant = 'AssignMerchant',
+  ApproveMerchant = 'ApproveMerchant',
+  SuspendUser = 'SuspendUser',
+  ResetUserPassword = 'ResetUserPassword',
+  ChangeSystemConfig = 'ChangeSystemConfig',
+  ToggleFeatures = 'ToggleFeatures'
+}
+
+export type AccessLevel = 'full' | 'view' | 'none';

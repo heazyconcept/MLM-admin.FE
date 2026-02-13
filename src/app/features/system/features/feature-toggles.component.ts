@@ -10,6 +10,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { PermissionService } from '../../../core/services/permission.service';
+import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { SystemConfigService, FeatureToggleItem } from '../services/system-config.service';
@@ -29,6 +31,12 @@ import { SystemConfigService, FeatureToggleItem } from '../services/system-confi
 })
 export class FeatureTogglesComponent {
   protected config = inject(SystemConfigService);
+  protected permission = inject(PermissionService);
+
+  canToggleFeatures = computed(
+    () => this.permission.canEdit(Feature.SystemConfig) && this.permission.canPerform(Action.ToggleFeatures)
+  );
+  isViewOnly = computed(() => !this.permission.canEdit(Feature.SystemConfig));
 
   confirmVisible = signal(false);
   localFeatures = signal<FeatureToggleItem[]>([]);
@@ -52,6 +60,7 @@ export class FeatureTogglesComponent {
   }
 
   setEnabled(id: string, enabled: boolean): void {
+    if (!this.canToggleFeatures()) return;
     this.localFeatures.update((list) =>
       list.map((f) => (f.id === id ? { ...f, enabled } : f))
     );

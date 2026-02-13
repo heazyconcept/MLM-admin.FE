@@ -1,4 +1,10 @@
 <div class="space-y-8 max-w-2xl">
+  @if (isViewOnly()) {
+    <app-info-banner
+      message="You have view-only access. Contact an administrator for changes."
+      type="info">
+    </app-info-banner>
+  }
   <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-6" [formGroup]="form">
     <h2 class="text-lg font-semibold text-gray-900">General Settings</h2>
 
@@ -21,7 +27,8 @@
         <p-toggleSwitch
           formControlName="maintenanceMode"
           [inputId]="'maintenance-mode'"
-          ariaLabel="Toggle maintenance mode">
+          ariaLabel="Toggle maintenance mode"
+          [disabled]="!canChangeSystemConfig()">
         </p-toggleSwitch>
       </div>
 
@@ -30,7 +37,8 @@
         type="text"
         [control]="supportContactControl"
         placeholder="support&#64;example.com"
-        [error]="supportContactControl.touched && supportContactControl.invalid ? 'Valid email required' : null">
+        [error]="supportContactControl.touched && supportContactControl.invalid ? 'Valid email required' : null"
+        [disabled]="!canChangeSystemConfig()">
       </app-config-input>
     </div>
 
@@ -44,7 +52,7 @@
         label="Save"
         icon="pi pi-check"
         class="p-button-primary"
-        [disabled]="!isDirty() || form.invalid"
+        [disabled]="!isDirty() || form.invalid || !canChangeSystemConfig()"
         (click)="onSaveClick()">
       </button>
     </div>
