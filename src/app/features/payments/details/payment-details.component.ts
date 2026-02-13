@@ -1,8 +1,11 @@
 import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
-import { PaymentService, Payment } from '../services/payment.service';
+import { PaymentService } from '../services/payment.service';
+import { PermissionService } from '../../../core/services/permission.service';
+import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
+import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { PaymentActionModalComponent, PaymentActionType } from '../modals/payment-action-modal.component';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
@@ -14,6 +17,7 @@ import { MessageService } from 'primeng/api';
     CommonModule,
     RouterModule,
     StatusBadgeComponent,
+    InfoBannerComponent,
     PaymentActionModalComponent,
     ButtonModule,
     ToastModule
@@ -26,6 +30,12 @@ export class PaymentDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private paymentService = inject(PaymentService);
   private messageService = inject(MessageService);
+  protected permission = inject(PermissionService);
+
+  canPerformPaymentActions = computed(
+    () => this.permission.canEdit(Feature.Payments) && this.permission.canPerform(Action.MarkPaymentSuccessful)
+  );
+  isViewOnly = computed(() => !this.permission.canEdit(Feature.Payments));
 
   paymentId = signal<string | null>(null);
   

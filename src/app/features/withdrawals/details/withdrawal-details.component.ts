@@ -1,8 +1,11 @@
 import { Component, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { WithdrawalService, WithdrawalRequest, StatusHistory } from '../services/withdrawal.service';
+import { WithdrawalService } from '../services/withdrawal.service';
+import { PermissionService } from '../../../core/services/permission.service';
+import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
+import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { WithdrawalActionModalComponent, ActionType } from '../modals/withdrawal-action-modal.component';
 import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
@@ -14,6 +17,7 @@ import { ToastModule } from 'primeng/toast';
     CommonModule,
     RouterModule,
     StatusBadgeComponent,
+    InfoBannerComponent,
     WithdrawalActionModalComponent,
     ButtonModule,
     ToastModule
@@ -27,6 +31,12 @@ export class WithdrawalDetailsComponent {
   private route = inject(ActivatedRoute);
   private withdrawalService = inject(WithdrawalService);
   private messageService = inject(MessageService);
+  protected permission = inject(PermissionService);
+
+  canPerformWithdrawalActions = computed(
+    () => this.permission.canEdit(Feature.Withdrawals) && this.permission.canPerform(Action.ApproveWithdrawal)
+  );
+  isViewOnly = computed(() => !this.permission.canEdit(Feature.Withdrawals));
 
   withdrawalId = signal<string | null>(this.route.snapshot.paramMap.get('id'));
 

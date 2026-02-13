@@ -1,0 +1,45 @@
+<div class="bg-white border border-gray-200 rounded-xl p-6">
+  <h3 class="text-lg font-semibold text-mlm-text mb-4">Performance Summary</h3>
+  
+  <div class="grid grid-cols-2 gap-4">
+    <!-- Orders Fulfilled -->
+    <div class="p-4 bg-gray-50 rounded-lg">
+      <div class="flex items-center gap-2 mb-2">
+        <i class="pi pi-box text-mlm-primary"></i>
+        <span class="text-sm text-mlm-secondary">Orders Fulfilled</span>
+      </div>
+      <p class="text-2xl font-bold text-mlm-text">{{ ordersFulfilled() }}</p>
+    </div>
+
+    <!-- Delivery Success Rate -->
+    <div class="p-4 bg-gray-50 rounded-lg">
+      <div class="flex items-center gap-2 mb-2">
+        <i class="pi pi-check-circle text-green-600"></i>
+        <span class="text-sm text-mlm-secondary">Delivery Success Rate</span>
+      </div>
+      <p class="text-2xl font-bold text-mlm-text">{{ formatPercentage(deliverySuccessRate()) }}</p>
+    </div>
+
+    <!-- Merchant Earnings -->
+    <div class="p-4 bg-gray-50 rounded-lg">
+      <div class="flex items-center gap-2 mb-2">
+        <i class="pi pi-dollar text-mlm-primary"></i>
+        <span class="text-sm text-mlm-secondary">Merchant Earnings</span>
+      </div>
+      <p class="text-2xl font-bold text-mlm-text">{{ formatCurrency(earnings()) }}</p>
+    </div>
+
+    <!-- Customer Rating -->
+    <div class="p-4 bg-gray-50 rounded-lg">
+      <div class="flex items-center gap-2 mb-2">
+        <i class="pi pi-star-fill text-yellow-500"></i>
+        <span class="text-sm text-mlm-secondary">Customer Rating</span>
+      </div>
+      @if (customerRating() !== null) {
+        <p class="text-2xl font-bold text-mlm-text">{{ customerRating() }}<span class="text-lg text-mlm-secondary">/5.0</span></p>
+      } @else {
+        <p class="text-lg text-mlm-secondary">N/A</p>
+      }
+    </div>
+  </div>
+</div>

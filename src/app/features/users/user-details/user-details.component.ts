@@ -1,10 +1,12 @@
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy, computed } from '@angular/core';
-// Trigger re-build
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { PermissionService } from '../../../core/services/permission.service';
+import { Feature, Action } from '../../../core/models/admin-permission.model';
+import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { UsersService, User } from '../services/users.service';
 
@@ -28,6 +30,7 @@ interface ActionConfig {
     RouterModule, 
     ButtonModule, 
     ToastModule,
+    InfoBannerComponent,
     ConfirmationModalComponent
   ],
   providers: [MessageService],
@@ -40,6 +43,15 @@ export class UserDetailsComponent implements OnInit {
   private router = inject(Router);
   private usersService = inject(UsersService);
   private messageService = inject(MessageService);
+  protected permission = inject(PermissionService);
+
+  canSuspendUser = computed(
+    () => this.permission.canEdit(Feature.Users) && this.permission.canPerform(Action.SuspendUser)
+  );
+  canResetPassword = computed(
+    () => this.permission.canEdit(Feature.Users) && this.permission.canPerform(Action.ResetUserPassword)
+  );
+  isViewOnly = computed(() => !this.permission.canEdit(Feature.Users));
 
   user = signal<User | null>(null);
   activeTab = signal('basic');

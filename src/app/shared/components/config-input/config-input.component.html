@@ -1,0 +1,48 @@
+<div class="flex flex-col gap-1.5">
+  <label [attr.for]="id() ?? label()" class="text-sm font-medium text-gray-700">
+    {{ label() }}
+  </label>
+  @if (control(); as ctrl) {
+    @if (type() === 'number') {
+      <p-inputNumber
+        [id]="id() ?? label()"
+        [formControl]="ctrl"
+        [disabled]="disabled()"
+        [readonly]="readOnly()"
+        [min]="min() ?? undefined"
+        [max]="max() ?? undefined"
+        [placeholder]="placeholder()"
+        [inputStyleClass]="'w-full'"
+        [aria-describedby]="error() ? (id() ?? label()) + '-error' : null"
+        [attr.aria-invalid]="!!error()">
+      </p-inputNumber>
+    } @else {
+      <input
+        pInputText
+        [id]="id() ?? label()"
+        [type]="type()"
+        [formControl]="ctrl"
+        [disabled]="disabled()"
+        [readonly]="readOnly()"
+        [placeholder]="placeholder()"
+        class="w-full"
+        [attr.aria-describedby]="error() ? (id() ?? label()) + '-error' : null"
+        [attr.aria-invalid]="!!error()">
+    }
+  } @else {
+    <input
+      [id]="id() ?? label()"
+      [type]="type()"
+      [value]="value() ?? ''"
+      (input)="onValueInput($event)"
+      [disabled]="disabled()"
+      [readonly]="readOnly()"
+      [placeholder]="placeholder()"
+      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mlm-primary/50 focus:border-mlm-primary"
+      [attr.aria-describedby]="error() ? (id() ?? label()) + '-error' : null"
+      [attr.aria-invalid]="!!error()">
+  }
+  @if (error()) {
+    <small [id]="(id() ?? label()) + '-error'" class="text-red-500 text-xs">{{ error() }}</small>
+  }
+</div>

@@ -1,0 +1,14 @@
+<p-multiSelect
+  [options]="regions()"
+  [ngModel]="selected()"
+  (ngModelChange)="onSelectedChange($event)"
+  [placeholder]="placeholder()"
+  [disabled]="disabled()"
+  optionLabel=""
+  display="chip"
+  [showToggleAll]="true"
+  [filter]="true"
+  filterPlaceholder="Search regions"
+  styleClass="w-full"
+  [panelStyle]="{ 'min-width': '100%' }">
+</p-multiSelect>

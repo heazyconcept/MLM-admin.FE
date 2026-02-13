@@ -12,13 +12,17 @@ import { MenuItem } from 'primeng/api';
 
 // App
 import { OrderService } from '../../../core/services/order.service';
+import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { OrderStatus } from '../../../core/models/order.model';
+import { PermissionService } from '../../../core/services/permission.service';
+import { Feature, Action } from '../../../core/models/admin-permission.model';
 
 @Component({
   selector: 'app-order-details',
   imports: [
     CommonModule,
     FormsModule,
+    InfoBannerComponent,
     ButtonModule,
     TagModule,
     SplitButtonModule,
@@ -32,6 +36,12 @@ export class OrderDetailsComponent {
   private route = inject(ActivatedRoute);
   private location = inject(Location);
   private orderService = inject(OrderService);
+  protected permission = inject(PermissionService);
+
+  canUpdateOrderStatus = computed(
+    () => this.permission.canEdit(Feature.OrdersLogistics) && this.permission.canPerform(Action.UpdateOrderStatus)
+  );
+  isViewOnly = computed(() => !this.permission.canEdit(Feature.OrdersLogistics));
 
   orderId = signal<string>('');
   

@@ -2,6 +2,15 @@
   <div class="min-h-screen bg-gray-50 px-8 py-6">
     <p-toast></p-toast>
 
+    @if (isViewOnly()) {
+      <div class="mb-6">
+        <app-info-banner
+          message="You have view-only access. Contact an administrator for changes."
+          type="info">
+        </app-info-banner>
+      </div>
+    }
+
     <app-payment-action-modal
       [visible]="showActionModal()"
       [payment]="p"
@@ -35,7 +44,7 @@
           <app-status-badge [status]="p.status"></app-status-badge>
 
           <div class="flex gap-2">
-            @if (canFlag) {
+            @if (canPerformPaymentActions() && canFlag) {
               <button
                 pButton
                 label="Flag"
@@ -45,7 +54,7 @@
               </button>
             }
 
-            @if (canFail) {
+            @if (canPerformPaymentActions() && canFail) {
               <button
                 pButton
                 label="Fail"
@@ -55,7 +64,7 @@
               </button>
             }
 
-            @if (canConfirmSuccessful) {
+            @if (canPerformPaymentActions() && canConfirmSuccessful) {
               <button
                 pButton
                 label="Confirm Successful"
@@ -65,7 +74,7 @@
               </button>
             }
 
-            @if (canReverse) {
+            @if (canPerformPaymentActions() && canReverse) {
               <button
                 pButton
                 label="Reverse"

@@ -1,0 +1,59 @@
+<div class="space-y-8 max-w-2xl">
+  @if (isViewOnly()) {
+    <app-info-banner
+      message="You have view-only access. Contact an administrator for changes."
+      type="info">
+    </app-info-banner>
+  }
+  <app-info-banner
+    message="Enabling or disabling features may affect user experience and available modules. Provide a reason when saving."
+    type="warning">
+  </app-info-banner>
+
+  <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-6">
+    <h2 class="text-lg font-semibold text-gray-900">Feature Toggles</h2>
+
+    <ul class="space-y-4" role="list">
+      @for (f of features(); track f.id) {
+        <li class="flex items-start justify-between gap-4 p-4 rounded-lg border border-gray-100 hover:bg-gray-50/50 transition">
+          <div class="min-w-0 flex-1">
+            <h3 class="font-medium text-gray-900">{{ f.name }}</h3>
+            <p class="text-sm text-gray-500 mt-0.5">{{ f.description }}</p>
+          </div>
+          <p-toggleSwitch
+            [ngModel]="f.enabled"
+            (ngModelChange)="setEnabled(f.id, $event)"
+            [inputId]="'feature-' + f.id"
+            [ariaLabel]="'Toggle ' + f.name"
+            [disabled]="!canToggleFeatures()">
+          </p-toggleSwitch>
+        </li>
+      }
+    </ul>
+
+    <div class="flex justify-end pt-4">
+      <button
+        pButton
+        label="Save"
+        icon="pi pi-check"
+        class="p-button-primary"
+        [disabled]="!isDirty() || !canToggleFeatures()"
+        (click)="onSaveClick()">
+      </button>
+    </div>
+  </div>
+</div>
+
+<app-confirmation-modal
+  [visible]="confirmVisible()"
+  (visibleChange)="confirmVisible.set(false)"
+  title="Confirm feature changes"
+  message="Changing feature toggles can impact the system. Please provide a reason for this change."
+  confirmLabel="Save"
+  cancelLabel="Cancel"
+  [showReasonField]="true"
+  [reasonRequired]="true"
+  reasonPlaceholder="Reason for change..."
+  (confirm)="onConfirm($event)"
+  (cancel)="onCancelConfirm()">
+</app-confirmation-modal>

@@ -1,5 +1,14 @@
 <p-toast></p-toast>
 
+@if (isViewOnly()) {
+  <div class="mb-6 px-6">
+    <app-info-banner
+      message="You have view-only access. Contact an administrator for changes."
+      type="info">
+    </app-info-banner>
+  </div>
+}
+
 <div class="min-h-screen bg-[#FAFBFC]">
   <!-- Page Header -->
   <header class="bg-white border-b border-gray-100 shadow-sm">
@@ -46,22 +55,28 @@
         </div>
 
         <!-- Action Grid -->
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2 bg-gray-50 p-1.5 rounded-lg border border-gray-100">
-            @if (user()?.status === 'Active') {
-              <button pButton label="Suspend" icon="pi pi-ban" class="p-button-danger p-button-sm text-xs font-semibold px-4" (click)="onAction('suspend')"></button>
-              <button pButton label="Flag" icon="pi pi-flag" class="p-button-warning p-button-sm text-xs font-semibold px-4" (click)="onAction('flag')"></button>
+        @if (canSuspendUser() || canResetPassword()) {
+          <div class="flex items-center gap-3">
+            @if (canSuspendUser()) {
+              <div class="flex items-center gap-2 bg-gray-50 p-1.5 rounded-lg border border-gray-100">
+                @if (user()?.status === 'Active') {
+                  <button pButton label="Suspend" icon="pi pi-ban" class="p-button-danger p-button-sm text-xs font-semibold px-4" (click)="onAction('suspend')"></button>
+                  <button pButton label="Flag" icon="pi pi-flag" class="p-button-warning p-button-sm text-xs font-semibold px-4" (click)="onAction('flag')"></button>
+                }
+                @if (user()?.status === 'Suspended') {
+                  <button pButton label="Reactivate" icon="pi pi-check" class="p-button-success p-button-sm text-xs font-semibold px-4" (click)="onAction('reactivate')"></button>
+                }
+                @if (user()?.status === 'Flagged') {
+                  <button pButton label="Remove Flag" icon="pi pi-flag-fill" class="p-button-sm text-xs font-semibold px-4" (click)="onAction('unflag')"></button>
+                  <button pButton label="Suspend" icon="pi pi-ban" class="p-button-danger p-button-sm text-xs font-semibold px-4" (click)="onAction('suspend')"></button>
+                }
+              </div>
             }
-            @if (user()?.status === 'Suspended') {
-              <button pButton label="Reactivate" icon="pi pi-check" class="p-button-success p-button-sm text-xs font-semibold px-4" (click)="onAction('reactivate')"></button>
-            }
-            @if (user()?.status === 'Flagged') {
-              <button pButton label="Remove Flag" icon="pi pi-flag-fill" class="p-button-sm text-xs font-semibold px-4" (click)="onAction('unflag')"></button>
-              <button pButton label="Suspend" icon="pi pi-ban" class="p-button-danger p-button-sm text-xs font-semibold px-4" (click)="onAction('suspend')"></button>
+            @if (canResetPassword()) {
+              <button pButton label="Reset Password" icon="pi pi-key" class="p-button-text p-button-secondary text-xs font-semibold" (click)="onAction('resetPassword')"></button>
             }
           </div>
-          <button pButton label="Reset Password" icon="pi pi-key" class="p-button-text p-button-secondary text-xs font-semibold" (click)="onAction('resetPassword')"></button>
-        </div>
+        }
       </div>
 
       <!-- Tab Navigation -->

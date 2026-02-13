@@ -1,0 +1,80 @@
+<div class="space-y-8 max-w-2xl">
+  <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-6" [formGroup]="form">
+    <h2 class="text-lg font-semibold text-gray-900">Currency & Localization</h2>
+
+    <div class="grid grid-cols-1 gap-4">
+      <div>
+        <label class="text-sm font-medium text-gray-700">Base currency</label>
+        <p class="mt-1 text-gray-900 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2" aria-readonly="true">{{ config.currency().baseCurrency }}</p>
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-700">Supported currencies</label>
+        <p class="mt-1 text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2" aria-readonly="true">{{ config.currency().supportedCurrencies.join(', ') }}</p>
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-700">Exchange rates (mock)</label>
+        <div class="mt-1 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+          @for (pair of config.currency().exchangeRates | keyvalue; track pair.key) {
+            <span class="mr-3">{{ pair.key }}: {{ pair.value }}</span>
+          }
+        </div>
+      </div>
+
+      <div>
+        <label for="locale-select" class="text-sm font-medium text-gray-700">Locale</label>
+        <p-select
+          id="locale-select"
+          [options]="localeOptions"
+          formControlName="locale"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select locale"
+          appendTo="body"
+          styleClass="w-full mt-1">
+        </p-select>
+      </div>
+
+      <div>
+        <label for="timezone-select" class="text-sm font-medium text-gray-700">Timezone</label>
+        <p-select
+          id="timezone-select"
+          [options]="timezoneOptions"
+          formControlName="timezone"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select timezone"
+          appendTo="body"
+          styleClass="w-full mt-1">
+        </p-select>
+      </div>
+    </div>
+
+    @if (lastModified(); as lm) {
+      <p class="text-xs text-gray-500 pt-2 border-t border-gray-100">Last modified: {{ lm }}@if (lastModifiedBy()) { by {{ lastModifiedBy() }}}.</p>
+    }
+
+    <div class="flex justify-end pt-4">
+      <button
+        pButton
+        label="Save"
+        icon="pi pi-check"
+        class="p-button-primary"
+        [disabled]="!isDirty()"
+        (click)="onSaveClick()">
+      </button>
+    </div>
+  </div>
+</div>
+
+<app-confirmation-modal
+  [visible]="confirmVisible()"
+  (visibleChange)="confirmVisible.set(false)"
+  title="Confirm currency settings"
+  message="Are you sure you want to save these currency and localization settings?"
+  confirmLabel="Save"
+  cancelLabel="Cancel"
+  (confirm)="onConfirm($event)"
+  (cancel)="onCancelConfirm()">
+</app-confirmation-modal>

@@ -1,5 +1,11 @@
 @if (order(); as orderData) {
 <div class="mx-auto p-6 space-y-8">
+  @if (isViewOnly()) {
+    <app-info-banner
+      message="You have view-only access. Contact an administrator for changes."
+      type="info">
+    </app-info-banner>
+  }
   
   <!-- Header -->
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -22,25 +28,27 @@
     </div>
 
     <!-- Actions -->
-    <div class="flex items-center gap-3">
-       <button 
-        pButton 
-        [label]="orderData.isFlagged ? 'Unflag Order' : 'Flag Order'" 
-        icon="pi pi-flag" 
-        [class.p-button-danger]="!orderData.isFlagged"
-        [class.p-button-outlined]="orderData.isFlagged"
-        [class.p-button-text]="orderData.isFlagged"
-        class="p-button-sm"
-        (click)="flagOrder()">
-      </button>
-      
-      <p-splitButton 
-        label="Update Status" 
-        icon="pi pi-refresh" 
-        [model]="statusMenuItems" 
-        styleClass="p-button-sm p-button-primary">
-      </p-splitButton>
-    </div>
+    @if (canUpdateOrderStatus()) {
+      <div class="flex items-center gap-3">
+         <button 
+          pButton 
+          [label]="orderData.isFlagged ? 'Unflag Order' : 'Flag Order'" 
+          icon="pi pi-flag" 
+          [class.p-button-danger]="!orderData.isFlagged"
+          [class.p-button-outlined]="orderData.isFlagged"
+          [class.p-button-text]="orderData.isFlagged"
+          class="p-button-sm"
+          (click)="flagOrder()">
+        </button>
+        
+        <p-splitButton 
+          label="Update Status" 
+          icon="pi pi-refresh" 
+          [model]="statusMenuItems" 
+          styleClass="p-button-sm p-button-primary">
+        </p-splitButton>
+      </div>
+    }
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -212,7 +220,7 @@
         <div class="p-6">
           <textarea 
             rows="4" 
-            class="w-full text-sm !bg-yellow-50 !border-yellow-200 text-slate-700 placeholder:text-yellow-700/50 focus:!border-yellow-400 focus:!ring-yellow-400" 
+            class="w-full text-sm  border-yellow-200! text-slate-700 placeholder:text-yellow-700/50 focus:border-yellow-400! focus:ring-yellow-400!" 
             placeholder="Add internal notes about this order..."
             [ngModel]="orderData.internalNotes"></textarea>
            <div class="flex justify-end mt-2">
