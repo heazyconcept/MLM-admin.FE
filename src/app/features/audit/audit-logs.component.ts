@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
+import { ApiService } from '../../core/services/api.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
 import {
   TableColumn,
@@ -30,6 +31,23 @@ export interface AuditLogEntry {
   beforeSnapshot?: Record<string, unknown>;
   afterSnapshot?: Record<string, unknown>;
   relatedEntities?: string[];
+}
+
+interface AdminAuditItem {
+  id: string;
+  actorId: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+interface AdminAuditResponse {
+  items: AdminAuditItem[];
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 interface FilterOption {
@@ -53,11 +71,13 @@ interface FilterOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuditLogsComponent implements OnInit {
+  private readonly api = inject(ApiService);
   actorFilter = signal<string>('all');
   actionTypeFilter = signal<string>('all');
   dateRange = signal<Date[] | null>(null);
 
   auditLogs = signal<AuditLogEntry[]>([]);
+  tableLoading = signal(false);
   detailVisible = signal(false);
   selectedEntry = signal<AuditLogEntry | null>(null);
 
@@ -139,7 +159,7 @@ export class AuditLogsComponent implements OnInit {
   ]);
 
   ngOnInit(): void {
-    this.auditLogs.set(this.getMockAuditLogs());
+    this.loadAuditLogs();
   }
 
   openDetail(entry: AuditLogEntry): void {
@@ -152,66 +172,41 @@ export class AuditLogsComponent implements OnInit {
     this.selectedEntry.set(null);
   }
 
-  private getMockAuditLogs(): AuditLogEntry[] {
-    const now = Date.now();
-    const entries: AuditLogEntry[] = [
-      {
-        id: 'audit-1',
-        timestamp: new Date(now - 3600000).toISOString(),
-        actor: 'Admin',
-        action: 'Update',
-        entity: 'User',
-        referenceId: 'USR-1001',
-        description: 'Updated user profile status',
-        beforeSnapshot: { status: 'pending' },
-        afterSnapshot: { status: 'active' },
-        relatedEntities: ['USR-1001', 'ROLE-2'],
+  private loadAuditLogs(): void {
+    this.tableLoading.set(true);
+    this.api.get<AdminAuditResponse>('admin/audit').subscribe({
+      next: (response) => {
+        const mapped: AuditLogEntry[] = (response.items ?? []).map((e) => {
+          const metadata = e.metadata ?? {};
+          const actorType = (metadata['actorType'] as string | undefined) ?? 'ADMIN';
+          const username = (metadata['username'] as string | undefined) ?? undefined;
+
+          const descriptionParts: string[] = [];
+          descriptionParts.push(e.action);
+          if (username) {
+            descriptionParts.push(`by ${username}`);
+          }
+
+          return {
+            id: e.id,
+            timestamp: e.createdAt,
+            actor: actorType === 'SYSTEM' ? 'System' : 'Admin',
+            action: e.action,
+            entity: e.entityType,
+            referenceId: e.entityId,
+            description: descriptionParts.join(' '),
+            beforeSnapshot: undefined,
+            afterSnapshot: metadata,
+            relatedEntities: [e.entityId, e.actorId].filter(Boolean),
+          };
+        });
+        this.auditLogs.set(mapped);
+        this.tableLoading.set(false);
       },
-      {
-        id: 'audit-2',
-        timestamp: new Date(now - 7200000).toISOString(),
-        actor: 'System',
-        action: 'Create',
-        entity: 'Withdrawal',
-        referenceId: 'WDR-2002',
-        description: 'Withdrawal request created',
-        afterSnapshot: { amount: 500, currency: 'USD' },
-        relatedEntities: ['WDR-2002', 'WAL-301'],
-      },
-      {
-        id: 'audit-3',
-        timestamp: new Date(now - 86400000).toISOString(),
-        actor: 'Admin',
-        action: 'Login',
-        entity: 'Session',
-        referenceId: 'SES-3003',
-        description: 'Admin login from dashboard',
-        relatedEntities: ['SES-3003'],
-      },
-      {
-        id: 'audit-4',
-        timestamp: new Date(now - 172800000).toISOString(),
-        actor: 'System',
-        action: 'Delete',
-        entity: 'Cache',
-        referenceId: 'CACHE-404',
-        description: 'Expired cache entry removed',
-        beforeSnapshot: { key: 'session:abc', ttl: 3600 },
-        relatedEntities: [],
-      },
-      {
-        id: 'audit-5',
-        timestamp: new Date(now - 259200000).toISOString(),
-        actor: 'Admin',
-        action: 'Update',
-        entity: 'Order',
-        referenceId: 'ORD-5005',
-        description: 'Order status changed to shipped',
-        beforeSnapshot: { status: 'processing' },
-        afterSnapshot: { status: 'shipped' },
-        relatedEntities: ['ORD-5005', 'LOG-601'],
-      },
-    ];
-    return entries;
+      error: () => {
+        this.auditLogs.set([]);
+        this.tableLoading.set(false);
+      }
+    });
   }
 }

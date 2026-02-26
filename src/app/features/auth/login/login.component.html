@@ -22,28 +22,23 @@
 
       <!-- Login Form -->
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
-        <!-- Email Field -->
+        <!-- Username Field -->
         <div class="flex flex-col gap-1">
           <p-floatlabel variant="on">
             <input 
               pInputText
-              id="email" 
-              type="email" 
-              autocomplete="email" 
-              formControlName="email"
+              id="username" 
+              type="text" 
+              autocomplete="username" 
+              formControlName="username"
               fluid
-              [invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
-            <label for="email">Email Address</label>
+              [invalid]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
+            <label for="username">Username</label>
           </p-floatlabel>
-          @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+          @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
             <small class="text-mlm-error flex items-center gap-1 mt-1">
               <i class="pi pi-exclamation-circle text-xs"></i>
-              @if (loginForm.get('email')?.errors?.['required']) {
-                <span>Email is required</span>
-              }
-              @if (loginForm.get('email')?.errors?.['email']) {
-                <span>Please enter a valid email address</span>
-              }
+              <span>Username is required</span>
             </small>
           }
         </div>
@@ -69,20 +64,6 @@
               <span>Password is required</span>
             </small>
           }
-        </div>
-
-        <!-- Role Selector (Demo) -->
-        <div class="flex flex-col gap-1">
-          <label for="role" class="text-sm font-medium text-mlm-text">Login as (Demo)</label>
-          <p-select
-            id="role"
-            [options]="roleOptions"
-            formControlName="role"
-            optionLabel="label"
-            optionValue="value"
-            styleClass="w-full"
-            placeholder="Select role">
-          </p-select>
         </div>
 
         <!-- Remember Me & Forgot Password -->

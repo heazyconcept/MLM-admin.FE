@@ -8,6 +8,9 @@ import { DataTableTemplateDirective } from '../../../shared/components/data-tabl
 import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ButtonModule } from 'primeng/button';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { AdminFundingModalComponent, AdminFundingPayload } from '../modals/admin-funding-modal.component';
 
 @Component({
   selector: 'app-payments-list',
@@ -18,20 +21,26 @@ import { ButtonModule } from 'primeng/button';
     DataTableComponent,
     DataTableTemplateDirective,
     StatusBadgeComponent,
-    ButtonModule
+    ButtonModule,
+    ToastModule,
+    AdminFundingModalComponent
   ],
   templateUrl: './payments-list.component.html',
+  providers: [MessageService],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PaymentsListComponent implements OnInit {
   private paymentService = inject(PaymentService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private messageService = inject(MessageService);
 
   @ViewChild('purpose', { static: true }) purposeTemplate!: TemplateRef<unknown>;
   @ViewChild('status', { static: true }) statusTemplate!: TemplateRef<unknown>;
 
   payments = this.paymentService.payments;
+  tableLoading = signal(false);
+  fundingModalVisible = signal(false);
   
   selectedStatusControl = new FormControl('all');
   selectedMethodControl = new FormControl('all');
@@ -53,6 +62,9 @@ export class PaymentsListComponent implements OnInit {
     { label: 'PayPal', value: 'PayPal' },
     { label: 'Flutterwave', value: 'Flutterwave' }
   ];
+
+  fromDateControl = new FormControl<string | null>(null);
+  toDateControl = new FormControl<string | null>(null);
 
   filteredPayments = computed(() => {
     let requests = this.payments();
@@ -117,6 +129,7 @@ export class PaymentsListComponent implements OnInit {
       if (params['status']) {
         this.selectedStatusControl.setValue(params['status']);
       }
+      this.fetchPayments();
     });
 
     this.columns.set([
@@ -170,6 +183,63 @@ export class PaymentsListComponent implements OnInit {
         })
       }
     ]);
+
+    this.selectedStatusControl.valueChanges.subscribe(() => {
+      this.fetchPayments();
+    });
+
+    this.fromDateControl.valueChanges.subscribe(() => {
+      this.fetchPayments();
+    });
+
+    this.toDateControl.valueChanges.subscribe(() => {
+      this.fetchPayments();
+    });
+  }
+
+  private fetchPayments(): void {
+    const selectedStatus = this.selectedStatusControl.value as PaymentStatus | 'all' | null;
+    const status = selectedStatus && selectedStatus !== 'all' ? (selectedStatus as PaymentStatus) : undefined;
+
+    const fromDateStr = this.fromDateControl.value;
+    const toDateStr = this.toDateControl.value;
+    const fromDate = fromDateStr ? new Date(fromDateStr) : undefined;
+    const toDate = toDateStr ? new Date(toDateStr) : undefined;
+
+    this.tableLoading.set(true);
+    this.paymentService.loadFromApi({ status, fromDate, toDate, limit: 50, offset: 0 }).subscribe({
+      next: () => this.tableLoading.set(false),
+      error: () => this.tableLoading.set(false)
+    });
+  }
+
+  openFundingModal(): void {
+    this.fundingModalVisible.set(true);
+  }
+
+  handleFundingConfirmed(payload: AdminFundingPayload): void {
+    this.paymentService.adminFundUser(payload).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Funding Successful',
+          detail: `Funded user ${payload.userId} with ${payload.currency} ${payload.amount}`
+        });
+        this.fundingModalVisible.set(false);
+        this.fetchPayments();
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Funding Failed',
+          detail: 'Unable to complete admin funding. Please try again.'
+        });
+      }
+    });
+  }
+
+  handleFundingCancelled(): void {
+    this.fundingModalVisible.set(false);
   }
 
   viewDetails(payment: Payment) {

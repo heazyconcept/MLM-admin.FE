@@ -118,7 +118,8 @@
       [data]="filteredWithdrawals()"
       [columns]="columns()"
       [config]="tableConfig()"
-      [actions]="actions()">
+      [actions]="actions()"
+      [loading]="tableLoading()">
       
       <!-- Custom Status Template -->
       <ng-template appDataTableTemplate="status" let-row>
@@ -127,20 +128,5 @@
     </app-data-table>
   </div>
 
-  <!-- Empty State -->
-  @if (filteredWithdrawals().length === 0) {
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
-      <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-        <i class="pi pi-inbox text-gray-400 text-2xl"></i>
-      </div>
-      <h3 class="text-gray-900 font-bold mb-2">No Withdrawal Requests</h3>
-      <p class="text-gray-500 text-sm">
-        @if (searchQuery() || selectedStatusControl.value !== 'all') {
-          No requests match your current filters.
-        } @else {
-          There are no withdrawal requests at the moment.
-        }
-      </p>
-    </div>
-  }
+  
 </div>

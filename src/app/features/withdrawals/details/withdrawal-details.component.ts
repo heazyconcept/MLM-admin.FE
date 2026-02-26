@@ -59,7 +59,7 @@ export class WithdrawalDetailsComponent {
     this.withdrawal()?.status === 'Approved'
   );
   canMarkProcessing = computed(() => this.withdrawal()?.status === 'Approved');
-  canMarkPaid = computed(() => this.withdrawal()?.status === 'Processing');
+  canMarkPaid = computed(() => this.withdrawal()?.status === 'Approved' || this.withdrawal()?.status === 'Processing');
 
   onApprove() {
     this.openModal('Approve');
@@ -70,7 +70,7 @@ export class WithdrawalDetailsComponent {
   }
 
   onMarkProcessing() {
-    this.openModal('MarkProcessing');
+    // Backend does not expose a dedicated 'processing' endpoint; keep this as a no-op for now
   }
 
   onMarkPaid() {
@@ -88,20 +88,26 @@ export class WithdrawalDetailsComponent {
 
     switch (event.action) {
       case 'Approve':
-        this.withdrawalService.approveWithdrawal(w.id);
-        this.showToast('success', 'Approved', 'Withdrawal request has been approved');
+        this.withdrawalService.approveWithdrawal(w.id).subscribe({
+          next: () => this.showToast('success', 'Approved', 'Withdrawal request has been approved'),
+          error: () => this.showToast('error', 'Error', 'Failed to approve withdrawal')
+        });
         break;
       case 'Reject':
-        this.withdrawalService.rejectWithdrawal(w.id, event.reason || 'Rejected by Admin');
-        this.showToast('error', 'Rejected', 'Withdrawal request has been rejected');
+        this.withdrawalService.rejectWithdrawal(w.id, event.reason || 'Rejected by Admin').subscribe({
+          next: () => this.showToast('error', 'Rejected', 'Withdrawal request has been rejected'),
+          error: () => this.showToast('error', 'Error', 'Failed to reject withdrawal')
+        });
         break;
       case 'MarkProcessing':
-        this.withdrawalService.updateStatus(w.id, 'Processing');
-        this.showToast('info', 'Processing', 'Withdrawal marked as processing');
+        // No direct backend equivalent; documented as a gap
+        this.showToast('info', 'Not Supported', 'Processing state is not supported by the API');
         break;
       case 'MarkPaid':
-        this.withdrawalService.updateStatus(w.id, 'Paid');
-        this.showToast('success', 'Paid', 'Withdrawal marked as paid');
+        this.withdrawalService.markPaid(w.id, `ADMIN-${w.id}-${Date.now()}`).subscribe({
+          next: () => this.showToast('success', 'Paid', 'Withdrawal marked as paid'),
+          error: () => this.showToast('error', 'Error', 'Failed to mark withdrawal as paid')
+        });
         break;
     }
 

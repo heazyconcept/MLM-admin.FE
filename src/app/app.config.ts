@@ -1,7 +1,8 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { loadingInterceptor } from './core/interceptors/loading.interceptor';
+import { authInterceptor } from './core/interceptors/auth.interceptors';
+import { errorInterceptor } from './core/interceptors/error.interceptors';
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
 import { definePreset } from '@primeuix/themes';
@@ -49,9 +50,7 @@ export const appConfig: ApplicationConfig = {
     DialogService,
     ConfirmationService,
     provideHttpClient(
-
-
-      withInterceptors([loadingInterceptor])
+      withInterceptors([authInterceptor, errorInterceptor])
     )
   ]
 };

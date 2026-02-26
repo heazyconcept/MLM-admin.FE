@@ -1,0 +1,116 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  header="Admin Funding"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '480px' }"
+  styleClass="modern-dialog"
+  (onHide)="onCancel()"
+>
+  <form [formGroup]="form" class="flex flex-col gap-5 pt-2">
+    <div class="space-y-2">
+      <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">
+        User ID <span class="text-red-500">*</span>
+      </label>
+      <input
+        type="text"
+        pInputText
+        formControlName="userId"
+        placeholder="Enter user ID"
+        class="w-full"
+      />
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div class="space-y-2">
+        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">
+          Amount <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="number"
+          pInputText
+          formControlName="amount"
+          min="0"
+          step="0.01"
+          placeholder="0.00"
+          class="w-full"
+        />
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">
+          Currency <span class="text-red-500">*</span>
+        </label>
+        <select
+          formControlName="currency"
+          class="w-full h-10 px-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+        >
+          @for (opt of currencyOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="space-y-2">
+      <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">
+        Provider <span class="text-red-500">*</span>
+      </label>
+      <select
+        formControlName="provider"
+        class="w-full h-10 px-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+      >
+        @for (opt of providerOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="space-y-2">
+      <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">
+        Reference
+      </label>
+      <input
+        type="text"
+        pInputText
+        formControlName="reference"
+        placeholder="Optional external reference"
+        class="w-full"
+      />
+    </div>
+
+    <div class="space-y-2">
+      <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">
+        Internal Notes
+      </label>
+      <textarea
+        pTextarea
+        [autoResize]="true"
+        rows="3"
+        formControlName="notes"
+        placeholder="Optional notes visible only to admins"
+        class="w-full rounded-xl"
+      ></textarea>
+    </div>
+
+    <div class="flex gap-3 mt-2">
+      <button
+        pButton
+        type="button"
+        label="Cancel"
+        class="p-button-outlined p-button-secondary flex-1"
+        (click)="onCancel()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Fund User"
+        class="p-button-success flex-1"
+        [disabled]="!isValid"
+        (click)="onConfirm()"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
+
