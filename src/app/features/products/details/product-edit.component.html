@@ -1,4 +1,15 @@
 <div class="w-full mx-auto p-6 md:p-10 space-y-8">
+  @if (productLoading() && !product()) {
+    <div class="flex items-center justify-center py-16">
+      <i class="pi pi-spin pi-spinner text-3xl text-gray-400"></i>
+    </div>
+  } @else if (productId() && !product()) {
+    <div class="bg-amber-50 border border-amber-100 rounded-xl p-6 text-center">
+      <p class="text-amber-800 font-medium">Product not found.</p>
+      <p class="text-sm text-amber-700 mt-1">It may have been removed or you need to open it from the product list.</p>
+      <button pButton label="Back to list" class="p-button-outlined p-button-sm mt-4" (click)="onCancel()"></button>
+    </div>
+  } @else {
   
   <!-- Header: Clean & Non-sticky -->
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -195,6 +206,7 @@
 
     </div>
   </div>
+  }
 </div>
 
 <p-toast position="bottom-right"></p-toast>

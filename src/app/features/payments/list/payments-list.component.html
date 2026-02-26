@@ -53,8 +53,8 @@
   <!-- Filters -->
   <div class="bg-white border border-gray-200 rounded-xl px-5 py-4 mb-6">
     <div class="flex flex-col gap-4">
-      <!-- Filters grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 items-stretch">
+      <!-- Filters grid (status, method, date range) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
         <!-- Status Filter -->
         <select
           [formControl]="selectedStatusControl"
@@ -87,18 +87,18 @@
             class="h-10 px-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-shadow"
           />
         </div>
+      </div>
 
-        <!-- Search -->
-        <div class="relative md:col-span-2 lg:col-span-1 xl:col-span-2">
-          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-          <input
-            type="text"
-            [value]="searchQuery()"
-            (input)="onSearch($event)"
-            placeholder="Search by ID or user..."
-            class="h-10 w-full md:w-64 lg:w-72 pl-9 pr-4 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-shadow"
-          />
-        </div>
+      <!-- Search row (full width) -->
+      <div class="relative">
+        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input
+          type="text"
+          [value]="searchQuery()"
+          (input)="onSearch($event)"
+          placeholder="Search by ID or user..."
+          class="h-10 w-full max-w-md pl-9 pr-4 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-shadow"
+        />
       </div>
 
       <!-- Actions row -->

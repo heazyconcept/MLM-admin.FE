@@ -43,6 +43,7 @@ export const routes: Routes = [
         children: [
           { path: '', redirectTo: 'overview', pathMatch: 'full' },
           { path: 'overview', loadComponent: () => import('./features/earnings/overview/earnings-overview.component').then(m => m.EarningsOverviewComponent) },
+          { path: 'packages', loadComponent: () => import('./features/earnings/packages/packages-configuration.component').then(m => m.PackagesConfigurationComponent) },
           { path: 'bonuses', loadComponent: () => import('./features/earnings/bonuses/bonus-configuration.component').then(m => m.BonusConfigurationComponent) },
           { path: 'ranking', loadComponent: () => import('./features/earnings/ranking/ranking-stages.component').then(m => m.RankingStagesComponent) },
           { path: 'cpv', loadComponent: () => import('./features/earnings/cpv/cpv-configuration.component').then(m => m.CpvConfigurationComponent) },

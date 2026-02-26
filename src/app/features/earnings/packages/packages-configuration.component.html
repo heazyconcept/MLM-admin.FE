@@ -1,0 +1,112 @@
+<p-toast></p-toast>
+<div class="space-y-6">
+  <div>
+    <h2 class="text-xl font-semibold text-gray-900">Packages & Plans</h2>
+    <p class="text-sm text-gray-500 mt-1">
+      View and update registration package configurations (price, currency, and related settings).
+    </p>
+  </div>
+
+  @if (error()) {
+    <div class="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center justify-between">
+      <p class="text-sm text-red-700">{{ error() }}</p>
+      <button pButton label="Retry" icon="pi pi-refresh" class="p-button-sm p-button-outlined" (click)="retry()"></button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div class="animate-pulse divide-y divide-gray-100">
+        @for (i of [1,2,3,4,5]; track i) {
+          <div class="px-6 py-5 flex items-center gap-4">
+            <div class="h-8 w-24 rounded bg-gray-200"></div>
+            <div class="h-6 w-32 rounded bg-gray-200"></div>
+            <div class="h-6 w-20 rounded bg-gray-200"></div>
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div
+        class="grid grid-cols-12 gap-4 px-6 py-3
+               text-[11px] font-medium uppercase tracking-wide text-gray-400
+               border-b border-gray-100 bg-gray-50">
+        <div class="col-span-3">Package</div>
+        <div class="col-span-3">Price (NGN)</div>
+        <div class="col-span-3">Earnings / Cashout</div>
+        <div class="col-span-2">PV / CPV</div>
+        <div class="col-span-1 text-right">Action</div>
+      </div>
+      @for (pkg of packages(); track getPackageId(pkg)) {
+        <div
+          class="grid grid-cols-12 gap-4 px-6 py-4 items-center
+                 border-b border-gray-100 last:border-b-0
+                 hover:bg-gray-50 transition">
+          <div class="col-span-3">
+            <span
+              class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold"
+              [class]="getPackageClass(getPackageId(pkg))">
+              {{ pkg.package }}
+            </span>
+          </div>
+          <div class="col-span-3 flex items-center gap-3">
+            @if (!isEditing(pkg)) {
+              <p class="text-lg font-semibold text-gray-900">
+                {{ pkg.priceNGN != null ? (pkg.priceNGN | currency:'NGN') : '—' }}
+              </p>
+            } @else {
+              <p-inputNumber
+                [formControl]="getPriceControl(pkg)"
+                mode="decimal"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="2"
+                styleClass="w-32 p-inputtext-sm">
+              </p-inputNumber>
+            }
+          </div>
+          <div class="col-span-3 text-sm text-gray-700">
+            <div>Earnings: <span class="font-semibold">{{ pkg.earningsPercentage }}%</span></div>
+            <div>Cashout: <span class="font-semibold">{{ pkg.cashoutPercentage }}%</span></div>
+          </div>
+          <div class="col-span-2 text-sm text-gray-700">
+            <div>PV: <span class="font-semibold">{{ pkg.registrationPV }}</span></div>
+            <div>CPV: <span class="font-semibold">{{ pkg.registrationCPV }}</span></div>
+          </div>
+          <div class="col-span-1 flex justify-end gap-2">
+            @if (!isEditing(pkg)) {
+              <button
+                pButton
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-text p-button-secondary"
+                [disabled]="isSaving(pkg)"
+                (click)="startEdit(pkg)">
+              </button>
+            } @else {
+              <button
+                pButton
+                icon="pi pi-check"
+                class="p-button-rounded p-button-success p-button-sm"
+                [loading]="isSaving(pkg)"
+                [disabled]="isSaving(pkg)"
+                (click)="saveEdit(pkg)">
+              </button>
+              <button
+                pButton
+                icon="pi pi-times"
+                class="p-button-rounded p-button-secondary p-button-text p-button-sm"
+                [disabled]="isSaving(pkg)"
+                (click)="cancelEdit(pkg)">
+              </button>
+            }
+          </div>
+        </div>
+      }
+      @if (packages().length === 0 && !loading()) {
+        <div class="px-6 py-12 text-center text-gray-500">
+          No packages configured. The API may return an empty list or use a different response shape — check admin-api-gaps.md.
+        </div>
+      }
+    </div>
+  }
+</div>

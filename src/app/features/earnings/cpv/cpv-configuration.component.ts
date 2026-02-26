@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { EarningsService } from '../services/earnings.service';
@@ -9,9 +9,13 @@ import { EarningsService } from '../services/earnings.service';
   templateUrl: './cpv-configuration.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CpvConfigurationComponent {
+export class CpvConfigurationComponent implements OnInit {
   earningsService = inject(EarningsService);
   rules = this.earningsService.cpvRules;
+
+  ngOnInit(): void {
+    this.earningsService.loadCpvRules().subscribe();
+  }
 
   getPackageClass(pkg: string): string {
     const classes: Record<string, string> = {

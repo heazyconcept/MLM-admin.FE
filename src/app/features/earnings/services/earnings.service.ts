@@ -1,4 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
+import { ApiService } from '../../../core/services/api.service';
+import { Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 
 export interface BonusRule {
   id: string;
@@ -7,6 +10,13 @@ export interface BonusRule {
   value: number;
   description: string;
   applicablePackages: string[];
+}
+
+/** GET /admin/commission-rules response */
+export interface CommissionRulesResponse {
+  rules?: unknown[];
+  pdpaRates?: Record<string, number>;
+  cdpaRates?: Record<string, number>;
 }
 
 export interface RankStage {
@@ -44,65 +54,11 @@ export interface EarningsActivity {
   providedIn: 'root'
 })
 export class EarningsService {
-  // Mock Data
-  bonuses = signal<BonusRule[]>([
-    {
-      id: 'B001',
-      name: 'Direct Referral Bonus',
-      type: 'percentage',
-      value: 10,
-      description: 'Earn 10% on every direct referral sign-up.',
-      applicablePackages: ['Silver', 'Gold', 'Platinum', 'Ruby', 'Diamond']
-    },
-    {
-      id: 'B002',
-      name: 'Matching Bonus',
-      type: 'percentage',
-      value: 5,
-      description: 'Earn 5% from direct downline earnings.',
-      applicablePackages: ['Platinum', 'Ruby', 'Diamond']
-    },
-    {
-      id: 'B003',
-      name: 'Leadership Bonus',
-      type: 'flat',
-      value: 500,
-      description: 'Flat bonus for achieving Diamond rank.',
-      applicablePackages: ['Diamond']
-    }
-  ]);
+  private readonly api = inject(ApiService);
 
-  ranks = signal<RankStage[]>([
-    {
-      id: 'R001',
-      name: 'Starter',
-      level: 1,
-      requirements: { personalSales: 0, teamSales: 0, directReferrals: 0 },
-      benefits: { bonus: 0, capLimit: 1000 }
-    },
-    {
-      id: 'R002',
-      name: 'Manager',
-      level: 2,
-      requirements: { personalSales: 500, teamSales: 5000, directReferrals: 3 },
-      benefits: { bonus: 100, capLimit: 5000 }
-    },
-    {
-      id: 'R003',
-      name: 'Director',
-      level: 3,
-      requirements: { personalSales: 2000, teamSales: 25000, directReferrals: 5 },
-      benefits: { bonus: 1000, capLimit: 20000 }
-    }
-  ]);
-
-  cpvRules = signal<CpvRule[]>([
-    { id: 'C001', package: 'Silver', registrationCpv: 50, productCpvMultiplier: 0.8 },
-    { id: 'C002', package: 'Gold', registrationCpv: 100, productCpvMultiplier: 0.9 },
-    { id: 'C003', package: 'Platinum', registrationCpv: 200, productCpvMultiplier: 1.0 },
-    { id: 'C004', package: 'Ruby', registrationCpv: 500, productCpvMultiplier: 1.1 },
-    { id: 'C005', package: 'Diamond', registrationCpv: 1000, productCpvMultiplier: 1.2 }
-  ]);
+  bonuses = signal<BonusRule[]>([]);
+  ranks = signal<RankStage[]>([]);
+  cpvRules = signal<CpvRule[]>([]);
 
   recentActivity = signal<EarningsActivity[]>([
     { id: 'TX-1001', user: 'Sarah Okonkwo', type: 'Direct Referral', amount: 50, timestamp: new Date(Date.now() - 1000 * 60 * 5), status: 'Processed' },
@@ -119,15 +75,125 @@ export class EarningsService {
     };
   }
 
-  updateBonus(updatedBonus: BonusRule) {
-    this.bonuses.update(bonuses =>
-      bonuses.map(b => b.id === updatedBonus.id ? updatedBonus : b)
+  loadCommissionRules(): Observable<BonusRule[]> {
+    return this.api.get<CommissionRulesResponse>('admin/commission-rules').pipe(
+      map((res) => this.mapCommissionRulesToBonuses(res)),
+      tap((bonuses) => this.bonuses.set(bonuses))
     );
   }
 
-  updateRank(updatedRank: RankStage) {
-    this.ranks.update(ranks =>
-      ranks.map(r => r.id === updatedRank.id ? updatedRank : r)
+  saveCommissionRules(): Observable<BonusRule[]> {
+    const current = this.bonuses();
+
+    const payload: CommissionRulesResponse = {
+      pdpaRates: {},
+      cdpaRates: {}
+    };
+
+    for (const rule of current) {
+      if (rule.id.startsWith('pdpa-')) {
+        const pkg = rule.id.substring('pdpa-'.length);
+        if (pkg) {
+          payload.pdpaRates![pkg] = rule.value / 100; // UI stores percentage (e.g. 5 => 0.05)
+        }
+      } else if (rule.id.startsWith('cdpa-')) {
+        const pkg = rule.id.substring('cdpa-'.length);
+        if (pkg) {
+          payload.cdpaRates![pkg] = rule.value;
+        }
+      }
+    }
+
+    return this.api.put<CommissionRulesResponse>('admin/commission-rules', payload).pipe(
+      map((res) => this.mapCommissionRulesToBonuses(res)),
+      tap((bonuses) => this.bonuses.set(bonuses))
     );
+  }
+
+  private mapCommissionRulesToBonuses(res: CommissionRulesResponse): BonusRule[] {
+    const list: BonusRule[] = [];
+    const packages = ['NICKEL', 'SILVER', 'GOLD', 'PLATINUM', 'RUBY', 'DIAMOND'];
+
+    if (res.pdpaRates && typeof res.pdpaRates === 'object') {
+      for (const pkg of packages) {
+        const rate = res.pdpaRates[pkg];
+        if (rate != null) {
+          list.push({
+            id: `pdpa-${pkg}`,
+            name: `PDPA (${pkg})`,
+            type: 'percentage',
+            value: typeof rate === 'number' ? rate * 100 : 0,
+            description: `Personal direct purchase allowance - ${pkg}`,
+            applicablePackages: [pkg],
+          });
+        }
+      }
+    }
+
+    if (res.cdpaRates && typeof res.cdpaRates === 'object') {
+      for (const pkg of packages) {
+        const rate = res.cdpaRates[pkg];
+        if (rate != null) {
+          list.push({
+            id: `cdpa-${pkg}`,
+            name: `CDPA (${pkg})`,
+            type: 'percentage',
+            value: typeof rate === 'number' ? rate : 0,
+            description: `Commission on direct purchase allowance - ${pkg}`,
+            applicablePackages: [pkg],
+          });
+        }
+      }
+    }
+
+    if (res.rules && Array.isArray(res.rules)) {
+      (res.rules as any[]).forEach((r: any, i: number) => {
+        list.push({
+          id: r.id ?? `rule-${i}`,
+          name: r.name ?? r.rank ?? r.tier ?? `Rule ${i + 1}`,
+          type: (r.type === 'flat' ? 'flat' : 'percentage') as 'percentage' | 'flat',
+          value: Number(r.value ?? r.rate ?? r.percentage ?? 0),
+          description: r.description ?? '',
+          applicablePackages: Array.isArray(r.applicablePackages) ? r.applicablePackages : (r.package ? [r.package] : []),
+        });
+      });
+    }
+
+    return list;
+  }
+
+  updateBonus(updated: BonusRule): void {
+    const current = this.bonuses();
+    this.bonuses.set(
+      current.map((b) => (b.id === updated.id ? { ...b, value: updated.value } : b))
+    );
+  }
+
+  saveCpvRules(): Observable<CpvRule[]> {
+    const payload = this.cpvRules();
+    return this.api.put<CpvRule[]>('admin/cpv-rules', payload).pipe(
+      tap((rules) => this.cpvRules.set(rules))
+    );
+  }
+
+  saveRankingRules(): Observable<RankStage[]> {
+    const payload = this.ranks();
+    return this.api.put<RankStage[]>('admin/ranking-rules', payload).pipe(
+      tap((ranks) => this.ranks.set(ranks))
+    );
+  }
+
+  loadCpvRules(): Observable<CpvRule[]> {
+    return this.api.get<CpvRule[]>('admin/cpv-rules').pipe(rules => {
+      (rules as any).subscribe((data: CpvRule[]) => this.cpvRules.set(data));
+      return rules as unknown as Observable<CpvRule[]>;
+    });
+  }
+
+  loadRankingRules(): Observable<RankStage[]> {
+    return this.api.get<RankStage[]>('admin/ranking-rules').pipe(rules => {
+      (rules as any).subscribe((data: RankStage[]) => this.ranks.set(data));
+      return rules as unknown as Observable<RankStage[]>;
+    });
   }
 }
