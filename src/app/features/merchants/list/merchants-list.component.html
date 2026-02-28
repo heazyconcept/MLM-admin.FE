@@ -139,8 +139,26 @@
     </div>
   </div>
 
+  <!-- Loading / Error -->
+  @if (loadingError()) {
+    <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm">
+      {{ loadingError() }}
+      <button
+        type="button"
+        (click)="loadMerchants()"
+        class="ml-3 underline font-medium">
+        Retry
+      </button>
+    </div>
+  }
+
   <!-- Data Table -->
-  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative">
+    @if (loading()) {
+      <div class="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+        <i class="pi pi-spin pi-spinner text-2xl text-gray-500"></i>
+      </div>
+    }
     <app-data-table
       [data]="filteredMerchants()"
       [columns]="columns()"
@@ -155,7 +173,7 @@
   </div>
 
   <!-- Empty State -->
-  @if (filteredMerchants().length === 0) {
+  @if (!loading() && filteredMerchants().length === 0) {
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
       <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
         <i class="pi pi-inbox text-gray-400 text-2xl"></i>

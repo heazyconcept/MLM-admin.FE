@@ -1,7 +1,7 @@
-import { Component, inject, computed, signal, ChangeDetectionStrategy, OnInit, ViewChild, TemplateRef } from '@angular/core';
+import { Component, inject, computed, signal, ChangeDetectionStrategy, OnInit, ViewChild, TemplateRef, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { MerchantService, Merchant, MerchantStatus, MerchantType } from '../services/merchant.service';
+import { MerchantService, Merchant, MerchantStatus, MerchantType, AdminMerchantFilters } from '../services/merchant.service';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 import { DataTableTemplateDirective } from '../../../shared/components/data-table/data-table-template.directive';
 import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
@@ -10,6 +10,7 @@ import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface StatusOption {
   label: string;
@@ -41,13 +42,17 @@ export class MerchantsListComponent implements OnInit {
   private merchantService = inject(MerchantService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   @ViewChild('status', { static: true }) statusTemplate!: TemplateRef<unknown>;
 
   merchants = this.merchantService.merchants;
-  
-  selectedStatusControl = new FormControl('all');
-  selectedTypeControl = new FormControl('all');
+  loading = this.merchantService.loading;
+  loadingError = this.merchantService.loadingError;
+  listTotal = this.merchantService.listTotal;
+
+  selectedStatusControl = new FormControl<string>('all');
+  selectedTypeControl = new FormControl<string>('all');
   searchQuery = signal<string>('');
 
   statusOptions: StatusOption[] = [
@@ -64,39 +69,26 @@ export class MerchantsListComponent implements OnInit {
     { label: 'Global', value: 'Global' }
   ];
 
+  /** Client-side search only; status/type filter is done by API. */
   filteredMerchants = computed(() => {
     let merchants = this.merchantService.merchants();
-    
-    if (this.selectedStatusControl.value !== 'all') {
-      merchants = merchants.filter((m: Merchant) => m.status === this.selectedStatusControl.value);
-    }
-
-    if (this.selectedTypeControl.value !== 'all') {
-      merchants = merchants.filter((m: Merchant) => m.type === this.selectedTypeControl.value);
-    }
-    
     const query = this.searchQuery().toLowerCase();
     if (query) {
-      merchants = merchants.filter((m: Merchant) => 
+      merchants = merchants.filter((m: Merchant) =>
         m.businessName.toLowerCase().includes(query) ||
         m.ownerName.toLowerCase().includes(query) ||
         m.id.toLowerCase().includes(query)
       );
     }
-    
     return merchants;
   });
 
-  stats = computed(() => {
-    const all = this.merchantService.merchants();
-    
-    return {
-      total: all.length,
-      pending: this.merchantService.pendingCount(),
-      approved: this.merchantService.approvedCount(),
-      suspended: this.merchantService.suspendedCount()
-    };
-  });
+  stats = computed(() => ({
+    total: this.merchantService.listTotal(),
+    pending: this.merchantService.pendingCount(),
+    approved: this.merchantService.approvedCount(),
+    suspended: this.merchantService.suspendedCount()
+  }));
 
   columns = signal<TableColumn<Merchant>[]>([]);
   
@@ -118,16 +110,38 @@ export class MerchantsListComponent implements OnInit {
     }
   ]);
 
+  private buildFilters(): AdminMerchantFilters {
+    const status = this.selectedStatusControl.value;
+    const type = this.selectedTypeControl.value;
+    const filters: AdminMerchantFilters = { limit: 500, offset: 0 };
+    if (status && status !== 'all') {
+      filters.status = status === 'Pending' ? 'PENDING' : status === 'Approved' ? 'ACTIVE' : 'SUSPENDED';
+    }
+    if (type && type !== 'all') {
+      filters.type = type.toUpperCase() as 'REGIONAL' | 'NATIONAL' | 'GLOBAL';
+    }
+    const search = this.searchQuery();
+    if (search?.trim()) filters.search = search.trim();
+    return filters;
+  }
+
+  loadMerchants(): void {
+    this.merchantService.loadMerchants(this.buildFilters()).subscribe();
+  }
+
   ngOnInit() {
-    // Check if we should filter by default (from route data or query params)
     const defaultFilter = this.route.snapshot.data['defaultFilter'];
     const statusParam = this.route.snapshot.queryParamMap.get('status');
-    
     if (statusParam) {
       this.selectedStatusControl.setValue(statusParam);
     } else if (defaultFilter) {
       this.selectedStatusControl.setValue(defaultFilter);
     }
+
+    this.loadMerchants();
+
+    this.selectedStatusControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.loadMerchants());
+    this.selectedTypeControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.loadMerchants());
 
     this.columns.set([
       {

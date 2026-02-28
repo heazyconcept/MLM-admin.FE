@@ -85,20 +85,30 @@ export class MerchantDetailsComponent implements OnInit {
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      const merchant = this.merchantService.getMerchantById(id);
-      if (merchant) {
-        this.merchant.set(merchant);
-        this.performance.set(this.merchantService.getPerformance(id));
-        this.selectedRegions.set([...merchant.region]);
-      } else {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Not Found',
-          detail: 'Merchant not found'
-        });
-        this.router.navigate(['/admin/merchants']);
-      }
+      this.merchantService.loadMerchant(id).subscribe(m => {
+        if (m) {
+          this.merchant.set(m);
+          this.performance.set(this.merchantService.getPerformance(id));
+          this.selectedRegions.set([...m.region]);
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Not Found',
+            detail: 'Merchant not found'
+          });
+          this.router.navigate(['/admin/merchants']);
+        }
+      });
     }
+  }
+
+  private refreshMerchant(id: string): void {
+    this.merchantService.loadMerchant(id).subscribe(m => {
+      if (m) {
+        this.merchant.set(m);
+        this.selectedRegions.set([...m.region]);
+      }
+    });
   }
 
   // Action handlers
@@ -130,15 +140,23 @@ export class MerchantDetailsComponent implements OnInit {
   handleApproveConfirm(event: { confirmed: boolean; reason?: string }) {
     if (event.confirmed) {
       const id = this.merchant()?.id;
-      if (id && this.merchantService.approveMerchant(id)) {
-        const updated = this.merchantService.getMerchantById(id);
-        if (updated) {
-          this.merchant.set(updated);
-        }
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Merchant Approved',
-          detail: 'The merchant has been approved successfully'
+      if (id) {
+        this.merchantService.approveMerchant(id).subscribe({
+          next: () => {
+            this.refreshMerchant(id);
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Merchant Approved',
+              detail: 'The merchant has been approved successfully'
+            });
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to approve merchant'
+            });
+          }
         });
       }
     }
@@ -148,15 +166,23 @@ export class MerchantDetailsComponent implements OnInit {
   handleSuspendConfirm(event: { confirmed: boolean; reason?: string }) {
     if (event.confirmed && event.reason) {
       const id = this.merchant()?.id;
-      if (id && this.merchantService.suspendMerchant(id, event.reason)) {
-        const updated = this.merchantService.getMerchantById(id);
-        if (updated) {
-          this.merchant.set(updated);
-        }
-        this.messageService.add({
-          severity: 'warn',
-          summary: 'Merchant Suspended',
-          detail: 'The merchant has been suspended'
+      if (id) {
+        this.merchantService.suspendMerchant(id, event.reason).subscribe({
+          next: () => {
+            this.refreshMerchant(id);
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Merchant Suspended',
+              detail: 'The merchant has been suspended'
+            });
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to suspend merchant'
+            });
+          }
         });
       }
     }
@@ -166,15 +192,23 @@ export class MerchantDetailsComponent implements OnInit {
   handleReactivateConfirm(event: { confirmed: boolean; reason?: string }) {
     if (event.confirmed) {
       const id = this.merchant()?.id;
-      if (id && this.merchantService.reactivateMerchant(id)) {
-        const updated = this.merchantService.getMerchantById(id);
-        if (updated) {
-          this.merchant.set(updated);
-        }
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Merchant Reactivated',
-          detail: 'The merchant has been reactivated successfully'
+      if (id) {
+        this.merchantService.reactivateMerchant(id).subscribe({
+          next: () => {
+            this.refreshMerchant(id);
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Merchant Reactivated',
+              detail: 'The merchant has been reactivated successfully'
+            });
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to reactivate merchant'
+            });
+          }
         });
       }
     }
