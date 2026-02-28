@@ -1,4 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { ApiService } from '../../../core/services/api.service';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export type PaymentStatus = 'Pending' | 'Successful' | 'Failed' | 'Reversed';
 export type PaymentPurpose = 'Registration' | 'Funding' | 'Upgrade';
@@ -26,69 +29,94 @@ export interface Payment {
   statusHistory: PaymentStatusHistory[];
 }
 
+interface AdminPaymentItem {
+  id: string;
+  userId?: string;
+  userEmail?: string;
+  userName?: string;
+  amount: number;
+  currency: string;
+  status: string;
+  type?: string;
+  provider?: string;
+  createdAt: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface AdminPaymentsResponse {
+  items: AdminPaymentItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class PaymentService {
-  private paymentsSignal = signal<Payment[]>(this.generateMockPayments());
+  private readonly api = inject(ApiService);
+
+  private paymentsSignal = signal<Payment[]>([]);
 
   readonly payments = computed(() => this.paymentsSignal());
 
-  private generateMockPayments(): Payment[] {
-    const statuses: PaymentStatus[] = ['Pending', 'Successful', 'Failed', 'Reversed'];
-    const purposes: PaymentPurpose[] = ['Registration', 'Funding', 'Upgrade'];
-    const methods = ['Stripe', 'Bank Transfer', 'USDT (TRC20)', 'PayPal', 'Flutterwave'];
-    
-    const mockPayments: Payment[] = [];
-    const now = new Date();
+  loadFromApi(options?: { status?: PaymentStatus; userId?: string; fromDate?: Date; toDate?: Date; limit?: number; offset?: number }): Observable<Payment[]> {
+    const params: Record<string, unknown> = {};
 
-    for (let i = 1; i <= 25; i++) {
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
-      const purpose = purposes[Math.floor(Math.random() * purposes.length)];
-      const method = methods[Math.floor(Math.random() * methods.length)];
-      const amount = Math.floor(Math.random() * 5000) + 50;
-      const date = new Date(now.getTime() - Math.random() * 10 * 24 * 60 * 60 * 1000);
-
-      const payment: Payment = {
-        id: `PAY-${1000 + i}`,
-        userId: `USR-${200 + i}`,
-        userName: `User ${i}`,
-        userEmail: `user${i}@example.com`,
-        purpose,
-        amount,
-        currency: 'USD',
-        method,
-        status,
-        date,
-        notes: i % 5 === 0 ? 'Transaction requires manual review' : undefined,
-        proofUrl: method === 'Bank Transfer' ? 'https://example.com/proof.jpg' : undefined,
-        statusHistory: [
-          {
-            status: 'Pending',
-            timestamp: new Date(date.getTime() - 1000 * 60 * 30),
-            admin: 'System'
-          }
-        ]
+    if (options?.status && options.status !== 'Reversed') {
+      const statusMap: Record<PaymentStatus, string> = {
+        Pending: 'INITIATED',
+        Successful: 'SUCCESS',
+        Failed: 'FAILED',
+        Reversed: ''
       };
-
-      if (status !== 'Pending') {
-        payment.statusHistory.push({
-          status,
-          timestamp: new Date(date.getTime() + 1000 * 60 * 60 * 2),
-          admin: 'Admin Sarah',
-          reason: status === 'Failed' || status === 'Reversed' ? 'Verification failed' : undefined
-        });
+      const apiStatus = statusMap[options.status];
+      if (apiStatus) {
+        params['status'] = apiStatus;
       }
-
-      mockPayments.push(payment);
     }
 
-    return mockPayments.sort((a, b) => b.date.getTime() - a.date.getTime());
+    if (options?.userId) {
+      params['userId'] = options.userId;
+    }
+
+    if (options?.fromDate) {
+      params['fromDate'] = options.fromDate.toISOString();
+    }
+
+    if (options?.toDate) {
+      params['toDate'] = options.toDate.toISOString();
+    }
+
+    if (options?.limit !== undefined) {
+      params['limit'] = options.limit;
+    }
+
+    if (options?.offset !== undefined) {
+      params['offset'] = options.offset;
+    }
+
+    return this.api.get<AdminPaymentsResponse | AdminPaymentItem[]>('admin/payments', params).pipe(
+      map(response => {
+        const items = Array.isArray(response) ? response : response.items ?? [];
+        const mapped = items.map(p => this.mapAdminPayment(p));
+        this.paymentsSignal.set(mapped);
+        return mapped;
+      })
+    );
   }
 
   getPaymentById(id: string | null) {
     if (!id) return null;
     return this.payments().find(p => p.id === id);
+  }
+
+  verifyPayment(id: string): Observable<void> {
+    return this.api.post<void>(`admin/payments/${id}/verify`, {});
+  }
+
+  adminFundUser(body: { userId: string; amount: number; currency: string; provider: string; reference?: string; notes?: string }): Observable<void> {
+    return this.api.post<void>('admin/payments/fund', body);
   }
 
   updateStatus(id: string, status: PaymentStatus, admin: string, reason?: string) {
@@ -132,5 +160,51 @@ export class PaymentService {
         return p;
       });
     });
+  }
+
+  private mapAdminPayment(item: AdminPaymentItem): Payment {
+    const statusMap: Record<string, PaymentStatus> = {
+      INITIATED: 'Pending',
+      SUCCESS: 'Successful',
+      FAILED: 'Failed'
+    };
+
+    const purposeMap: Record<string, PaymentPurpose> = {
+      REGISTRATION: 'Registration',
+      UPGRADE: 'Upgrade',
+      WALLET_FUNDING: 'Funding',
+      ADMIN_FUNDING: 'Funding'
+    };
+
+    const status = statusMap[item.status] ?? 'Pending';
+    const typeKey = (item.type || '').toUpperCase();
+    const purpose = purposeMap[typeKey] ?? 'Funding';
+
+    const userName = item.userName
+      || (item.userEmail ? item.userEmail.split('@')[0] : '')
+      || item.userId
+      || 'User';
+
+    return {
+      id: item.id,
+      userId: item.userId || '',
+      userName,
+      userEmail: item.userEmail || '',
+      purpose,
+      amount: item.amount,
+      currency: item.currency,
+      method: item.provider || 'Unknown',
+      status,
+      date: new Date(item.createdAt),
+      notes: undefined,
+      proofUrl: undefined,
+      statusHistory: [
+        {
+          status,
+          timestamp: new Date(item.createdAt),
+          admin: 'System'
+        }
+      ]
+    };
   }
 }

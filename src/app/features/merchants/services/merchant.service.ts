@@ -1,4 +1,6 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { Observable, tap, map, catchError, of } from 'rxjs';
+import { ApiService } from '../../../core/services/api.service';
 
 // Types
 export type MerchantStatus = 'Pending' | 'Approved' | 'Suspended';
@@ -35,11 +37,51 @@ export interface MerchantPerformance {
   customerRating?: number;
 }
 
+/** Query params for GET /admin/merchants (AdminMerchantFiltersDto) */
+export interface AdminMerchantFilters {
+  status?: 'PENDING' | 'ACTIVE' | 'SUSPENDED';
+  type?: 'REGIONAL' | 'NATIONAL' | 'GLOBAL';
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+// --- API response DTOs (align with backend; API.md / docs-json) ---
+type ApiMerchantStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED';
+type ApiMerchantType = 'REGIONAL' | 'NATIONAL' | 'GLOBAL';
+
+interface AdminMerchantApi {
+  id: string;
+  businessName?: string;
+  name?: string;
+  status: ApiMerchantStatus;
+  userId?: string;
+  ownerId?: string;
+  type?: ApiMerchantType;
+  serviceAreas?: string[];
+  region?: string[];
+  createdAt: string;
+  email?: string;
+  phone?: string;
+  suspendedReason?: string;
+  assignedProductIds?: string[];
+  productIds?: string[];
+}
+
+interface AdminMerchantsListResponse {
+  merchants: AdminMerchantApi[];
+  total: number;
+  limit?: number;
+  offset?: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class MerchantService {
-  // Mock regions list
+  private readonly api = inject(ApiService);
+
+  // Mock regions list (for Assign Regions UI until API supports it)
   private readonly regionsList = signal<string[]>([
     'North Region',
     'South Region',
@@ -51,124 +93,228 @@ export class MerchantService {
     'Rural Districts'
   ]);
 
-  // Private state
-  private readonly merchantsState = signal<Merchant[]>(this.generateMockMerchants());
+  // State (updated by loadMerchants / loadMerchant)
+  private readonly merchantsState = signal<Merchant[]>([]);
   private readonly selectedMerchantState = signal<Merchant | null>(null);
+  private readonly listTotalState = signal<number>(0);
+  private readonly loadingState = signal<boolean>(false);
+  private readonly loadingErrorState = signal<string | null>(null);
 
-  // Public readonly signals
   readonly merchants = this.merchantsState.asReadonly();
   readonly selectedMerchant = this.selectedMerchantState.asReadonly();
   readonly regions = this.regionsList.asReadonly();
+  readonly listTotal = this.listTotalState.asReadonly();
+  readonly loading = this.loadingState.asReadonly();
+  readonly loadingError = this.loadingErrorState.asReadonly();
 
-  // Computed signals
-  readonly pendingCount = computed(() => 
+  readonly pendingCount = computed(() =>
     this.merchantsState().filter((m: Merchant) => m.status === 'Pending').length
   );
-
-  readonly approvedCount = computed(() => 
+  readonly approvedCount = computed(() =>
     this.merchantsState().filter((m: Merchant) => m.status === 'Approved').length
   );
-
-  readonly suspendedCount = computed(() => 
+  readonly suspendedCount = computed(() =>
     this.merchantsState().filter((m: Merchant) => m.status === 'Suspended').length
   );
 
-  // Methods
+  private mapApiToMerchant(api: AdminMerchantApi): Merchant {
+    const statusMap: Record<ApiMerchantStatus, MerchantStatus> = {
+      PENDING: 'Pending',
+      ACTIVE: 'Approved',
+      SUSPENDED: 'Suspended'
+    };
+    const typeMap: Record<ApiMerchantType, MerchantType> = {
+      REGIONAL: 'Regional',
+      NATIONAL: 'National',
+      GLOBAL: 'Global'
+    };
+    const name = api.businessName ?? api.name ?? 'Merchant';
+    const ownerId = api.userId ?? api.ownerId ?? '';
+    const region = api.serviceAreas ?? api.region ?? [];
+    const productIds = api.assignedProductIds ?? api.productIds ?? [];
+    return {
+      id: api.id,
+      businessName: name,
+      ownerId,
+      ownerName: api.email?.split('@')[0] ?? ownerId,
+      type: api.type ? typeMap[api.type] : 'Regional',
+      region,
+      status: statusMap[api.status] ?? 'Pending',
+      assignedProductIds: Array.isArray(productIds) ? productIds : [],
+      statusHistory: [],
+      suspendedReason: api.suspendedReason,
+      registrationDate: new Date(api.createdAt),
+      email: api.email ?? '',
+      phone: api.phone ?? ''
+    };
+  }
+
+  /** Load list from API and update merchants + listTotal. */
+  loadMerchants(filters?: AdminMerchantFilters): Observable<{ merchants: Merchant[]; total: number }> {
+    this.loadingState.set(true);
+    this.loadingErrorState.set(null);
+    const params: Record<string, string | number> = {};
+    if (filters?.status) params['status'] = filters.status;
+    if (filters?.type) params['type'] = filters.type;
+    if (filters?.search) params['search'] = filters.search;
+    if (filters?.limit != null) params['limit'] = filters.limit;
+    if (filters?.offset != null) params['offset'] = filters.offset;
+
+    return this.api.get<AdminMerchantsListResponse>('admin/merchants', params).pipe(
+      map(res => {
+        const raw = res as unknown as { merchants?: AdminMerchantApi[]; data?: AdminMerchantApi[]; items?: AdminMerchantApi[] };
+        const list = Array.isArray(raw.merchants) ? raw.merchants
+          : Array.isArray(raw.data) ? raw.data
+          : Array.isArray(raw.items) ? raw.items
+          : Array.isArray(res) ? (res as AdminMerchantApi[]) : [];
+        const total = typeof (res as AdminMerchantsListResponse).total === 'number'
+          ? (res as AdminMerchantsListResponse).total : list.length;
+        const merchants = list.map((m: AdminMerchantApi) => this.mapApiToMerchant(m));
+        return { merchants, total };
+      }),
+      tap(({ merchants, total }) => {
+        this.merchantsState.set(merchants);
+        this.listTotalState.set(total);
+        this.loadingState.set(false);
+        this.loadingErrorState.set(null);
+      }),
+      catchError(err => {
+        this.loadingState.set(false);
+        this.loadingErrorState.set(err?.message ?? 'Failed to load merchants');
+        this.merchantsState.set([]);
+        this.listTotalState.set(0);
+        return of({ merchants: [], total: 0 });
+      })
+    );
+  }
+
+  /** Load single merchant from API and set selectedMerchant. */
+  loadMerchant(id: string): Observable<Merchant | null> {
+    return this.api.get<AdminMerchantApi>(`admin/merchants/${id}`).pipe(
+      map(api => this.mapApiToMerchant(api)),
+      tap(m => this.selectedMerchantState.set(m)),
+      catchError(() => {
+        this.selectedMerchantState.set(null);
+        return of(null);
+      })
+    );
+  }
+
+  /** Sync get from current state (e.g. after navigation). */
   getMerchantById(id: string): Merchant | undefined {
-    const merchant = this.merchantsState().find((m: Merchant) => m.id === id);
-    this.selectedMerchantState.set(merchant || null);
-    return merchant;
+    const fromList = this.merchantsState().find((m: Merchant) => m.id === id);
+    if (fromList) {
+      this.selectedMerchantState.set(fromList);
+      return fromList;
+    }
+    const selected = this.selectedMerchantState();
+    if (selected?.id === id) return selected;
+    return undefined;
   }
 
-  approveMerchant(id: string): boolean {
-    const merchants = this.merchantsState();
-    const merchantIndex = merchants.findIndex((m: Merchant) => m.id === id);
-    
-    if (merchantIndex === -1) return false;
-    
-    const updatedMerchants = [...merchants];
-    const merchant = { ...updatedMerchants[merchantIndex] };
-    
-    merchant.status = 'Approved';
-    merchant.statusHistory = [
-      ...merchant.statusHistory,
-      {
-        date: new Date(),
-        status: 'Approved',
-        changedBy: 'Admin'
-      }
-    ];
-    
-    updatedMerchants[merchantIndex] = merchant;
-    this.merchantsState.set(updatedMerchants);
-    
-    if (this.selectedMerchantState()?.id === id) {
-      this.selectedMerchantState.set(merchant);
-    }
-    
-    return true;
+  approveMerchant(id: string): Observable<void> {
+    return this.api.post<void>(`admin/merchants/${id}/approve`, {}).pipe(
+      tap(() => {
+        const list = this.merchantsState().map(m => m.id === id ? { ...m, status: 'Approved' as MerchantStatus } : m);
+        this.merchantsState.set(list);
+        if (this.selectedMerchantState()?.id === id) {
+          this.selectedMerchantState.set({ ...this.selectedMerchantState()!, status: 'Approved' });
+        }
+      })
+    );
   }
 
-  suspendMerchant(id: string, reason: string): boolean {
-    const merchants = this.merchantsState();
-    const merchantIndex = merchants.findIndex((m: Merchant) => m.id === id);
-    
-    if (merchantIndex === -1) return false;
-    
-    const updatedMerchants = [...merchants];
-    const merchant = { ...updatedMerchants[merchantIndex] };
-    
-    merchant.status = 'Suspended';
-    merchant.suspendedReason = reason;
-    merchant.statusHistory = [
-      ...merchant.statusHistory,
-      {
-        date: new Date(),
-        status: 'Suspended',
-        reason,
-        changedBy: 'Admin'
-      }
-    ];
-    
-    updatedMerchants[merchantIndex] = merchant;
-    this.merchantsState.set(updatedMerchants);
-    
-    if (this.selectedMerchantState()?.id === id) {
-      this.selectedMerchantState.set(merchant);
-    }
-    
-    return true;
+  rejectMerchant(id: string, reason?: string): Observable<void> {
+    return this.api.post<void>(`admin/merchants/${id}/reject`, reason != null ? { reason } : {});
   }
 
-  reactivateMerchant(id: string): boolean {
-    const merchants = this.merchantsState();
-    const merchantIndex = merchants.findIndex((m: Merchant) => m.id === id);
-    
-    if (merchantIndex === -1) return false;
-    
-    const updatedMerchants = [...merchants];
-    const merchant = { ...updatedMerchants[merchantIndex] };
-    
-    merchant.status = 'Approved';
-    merchant.suspendedReason = undefined;
-    merchant.statusHistory = [
-      ...merchant.statusHistory,
-      {
-        date: new Date(),
-        status: 'Approved',
-        reason: 'Reactivated',
-        changedBy: 'Admin'
-      }
-    ];
-    
-    updatedMerchants[merchantIndex] = merchant;
-    this.merchantsState.set(updatedMerchants);
-    
-    if (this.selectedMerchantState()?.id === id) {
-      this.selectedMerchantState.set(merchant);
-    }
-    
-    return true;
+  suspendMerchant(id: string, reason: string): Observable<void> {
+    return this.api.post<void>(`admin/merchants/${id}/suspend`, { reason }).pipe(
+      tap(() => {
+        const list = this.merchantsState().map(m =>
+          m.id === id ? { ...m, status: 'Suspended' as MerchantStatus, suspendedReason: reason } : m
+        );
+        this.merchantsState.set(list);
+        if (this.selectedMerchantState()?.id === id) {
+          this.selectedMerchantState.set({
+            ...this.selectedMerchantState()!,
+            status: 'Suspended',
+            suspendedReason: reason
+          });
+        }
+      })
+    );
+  }
+
+  reactivateMerchant(id: string): Observable<void> {
+    return this.api.post<void>(`admin/merchants/${id}/reactivate`, {}).pipe(
+      tap(() => {
+        const list = this.merchantsState().map(m =>
+          m.id === id ? { ...m, status: 'Approved' as MerchantStatus, suspendedReason: undefined } : m
+        );
+        this.merchantsState.set(list);
+        if (this.selectedMerchantState()?.id === id) {
+          this.selectedMerchantState.set({
+            ...this.selectedMerchantState()!,
+            status: 'Approved',
+            suspendedReason: undefined
+          });
+        }
+      })
+    );
+  }
+
+  getMerchantProducts(merchantId: string): Observable<string[]> {
+    return this.api.get<{ productIds?: string[]; products?: { id: string }[] }>(`admin/merchants/${merchantId}/products`).pipe(
+      map(res => {
+        if (Array.isArray(res.productIds)) return res.productIds;
+        if (Array.isArray(res.products)) return res.products.map(p => p.id);
+        return [];
+      })
+    );
+  }
+
+  assignProduct(merchantId: string, productId: string): Observable<void> {
+    return this.api.post<void>(`admin/merchants/${merchantId}/products`, { productId }).pipe(
+      tap(() => {
+        const m = this.selectedMerchantState();
+        if (m?.id === merchantId && !m.assignedProductIds.includes(productId)) {
+          this.selectedMerchantState.set({
+            ...m,
+            assignedProductIds: [...m.assignedProductIds, productId]
+          });
+        }
+        const list = this.merchantsState().map(merchant =>
+          merchant.id === merchantId && !merchant.assignedProductIds.includes(productId)
+            ? { ...merchant, assignedProductIds: [...merchant.assignedProductIds, productId] }
+            : merchant
+        );
+        this.merchantsState.set(list);
+      })
+    );
+  }
+
+  removeProduct(merchantId: string, productId: string): Observable<void> {
+    return this.api.delete<void>(`admin/merchants/${merchantId}/products/${productId}`).pipe(
+      tap(() => {
+        const m = this.selectedMerchantState();
+        if (m?.id === merchantId) {
+          this.selectedMerchantState.set({
+            ...m,
+            assignedProductIds: m.assignedProductIds.filter(id => id !== productId)
+          });
+        }
+        this.merchantsState.set(this.merchantsState().map(merchant =>
+          merchant.id === merchantId
+            ? { ...merchant, assignedProductIds: merchant.assignedProductIds.filter(id => id !== productId) }
+            : merchant
+        ));
+      })
+    );
+  }
+
+  confirmDelivery(merchantId: string, orderId: string, body?: { proof?: string; notes?: string }): Observable<void> {
+    return this.api.post<void>(`admin/merchants/${merchantId}/orders/${orderId}/confirm-delivery`, body ?? {});
   }
 
   updateMerchantType(id: string, type: MerchantType): boolean {
@@ -233,299 +379,11 @@ export class MerchantService {
   }
 
   getPerformance(id: string): MerchantPerformance {
-    // Mock performance data - in real app, this would be fetched from API
-    const mockPerformances: Record<string, MerchantPerformance> = {
-      'MERCH-001': {
-        ordersFulfilled: 342,
-        deliverySuccessRate: 98.5,
-        earnings: 125430.50,
-        customerRating: 4.8
-      },
-      'MERCH-002': {
-        ordersFulfilled: 567,
-        deliverySuccessRate: 97.2,
-        earnings: 234560.75,
-        customerRating: 4.9
-      },
-      'MERCH-003': {
-        ordersFulfilled: 189,
-        deliverySuccessRate: 95.3,
-        earnings: 78920.30,
-        customerRating: 4.6
-      },
-      'MERCH-005': {
-        ordersFulfilled: 423,
-        deliverySuccessRate: 96.8,
-        earnings: 167890.20,
-        customerRating: 4.7
-      },
-      'MERCH-007': {
-        ordersFulfilled: 298,
-        deliverySuccessRate: 94.5,
-        earnings: 102340.60,
-        customerRating: 4.5
-      }
-    };
-
-    return mockPerformances[id] || {
+    // TODO: replace with GET from merchant performance/earnings API when available
+    return {
       ordersFulfilled: 0,
       deliverySuccessRate: 0,
       earnings: 0
     };
-  }
-
-  // Generate mock merchants
-  private generateMockMerchants(): Merchant[] {
-    return [
-      {
-        id: 'MERCH-001',
-        businessName: 'GlobalTrade Solutions',
-        ownerId: 'USR-10234',
-        ownerName: 'John Anderson',
-        type: 'Global',
-        region: ['North Region', 'South Region', 'East Region'],
-        status: 'Approved',
-        assignedProductIds: ['PROD-101', 'PROD-102', 'PROD-103', 'PROD-104'],
-        registrationDate: new Date('2025-08-15'),
-        email: 'john.anderson@globaltrade.com',
-        phone: '+1-555-0101',
-        statusHistory: [
-          {
-            date: new Date('2025-08-15'),
-            status: 'Pending',
-            changedBy: 'System'
-          },
-          {
-            date: new Date('2025-08-18'),
-            status: 'Approved',
-            changedBy: 'Admin'
-          }
-        ]
-      },
-      {
-        id: 'MERCH-002',
-        businessName: 'Metro Distributors Inc',
-        ownerId: 'USR-10567',
-        ownerName: 'Sarah Chen',
-        type: 'National',
-        region: ['Metropolitan Area', 'Suburban Zone'],
-        status: 'Approved',
-        assignedProductIds: ['PROD-201', 'PROD-202', 'PROD-203', 'PROD-204', 'PROD-205'],
-        registrationDate: new Date('2025-09-02'),
-        email: 'sarah.chen@metrodist.com',
-        phone: '+1-555-0102',
-        statusHistory: [
-          {
-            date: new Date('2025-09-02'),
-            status: 'Pending',
-            changedBy: 'System'
-          },
-          {
-            date: new Date('2025-09-05'),
-            status: 'Approved',
-            changedBy: 'Admin'
-          }
-        ]
-      },
-      {
-        id: 'MERCH-003',
-        businessName: 'Regional Wholesale Co',
-        ownerId: 'USR-10892',
-        ownerName: 'Michael Brown',
-        type: 'Regional',
-        region: ['West Region'],
-        status: 'Suspended',
-        suspendedReason: 'Multiple delivery failures and customer complaints',
-        assignedProductIds: ['PROD-301', 'PROD-302'],
-        registrationDate: new Date('2025-07-20'),
-        email: 'michael.brown@regionalwholesale.com',
-        phone: '+1-555-0103',
-        statusHistory: [
-          {
-            date: new Date('2025-07-20'),
-            status: 'Pending',
-            changedBy: 'System'
-          },
-          {
-            date: new Date('2025-07-23'),
-            status: 'Approved',
-            changedBy: 'Admin'
-          },
-          {
-            date: new Date('2026-01-15'),
-            status: 'Suspended',
-            reason: 'Multiple delivery failures and customer complaints',
-            changedBy: 'Admin'
-          }
-        ]
-      },
-      {
-        id: 'MERCH-004',
-        businessName: 'Northern Commerce Hub',
-        ownerId: 'USR-11234',
-        ownerName: 'Emily Davis',
-        type: 'Regional',
-        region: ['North Region'],
-        status: 'Pending',
-        assignedProductIds: [],
-        registrationDate: new Date('2026-01-20'),
-        email: 'emily.davis@northernhub.com',
-        phone: '+1-555-0104',
-        statusHistory: [
-          {
-            date: new Date('2026-01-20'),
-            status: 'Pending',
-            changedBy: 'System'
-          }
-        ]
-      },
-      {
-        id: 'MERCH-005',
-        businessName: 'Central Logistics Partners',
-        ownerId: 'USR-11567',
-        ownerName: 'David Wilson',
-        type: 'National',
-        region: ['Central Region', 'East Region', 'West Region'],
-        status: 'Approved',
-        assignedProductIds: ['PROD-401', 'PROD-402', 'PROD-403'],
-        registrationDate: new Date('2025-10-10'),
-        email: 'david.wilson@centrallogistics.com',
-        phone: '+1-555-0105',
-        statusHistory: [
-          {
-            date: new Date('2025-10-10'),
-            status: 'Pending',
-            changedBy: 'System'
-          },
-          {
-            date: new Date('2025-10-12'),
-            status: 'Approved',
-            changedBy: 'Admin'
-          }
-        ]
-      },
-      {
-        id: 'MERCH-006',
-        businessName: 'Southern Supply Network',
-        ownerId: 'USR-11890',
-        ownerName: 'Jessica Martinez',
-        type: 'Regional',
-        region: ['South Region'],
-        status: 'Pending',
-        assignedProductIds: [],
-        registrationDate: new Date('2026-01-25'),
-        email: 'jessica.martinez@southernsupply.com',
-        phone: '+1-555-0106',
-        statusHistory: [
-          {
-            date: new Date('2026-01-25'),
-            status: 'Pending',
-            changedBy: 'System'
-          }
-        ]
-      },
-      {
-        id: 'MERCH-007',
-        businessName: 'Rural Distribution Services',
-        ownerId: 'USR-12123',
-        ownerName: 'Robert Taylor',
-        type: 'Regional',
-        region: ['Rural Districts'],
-        status: 'Approved',
-        assignedProductIds: ['PROD-501', 'PROD-502'],
-        registrationDate: new Date('2025-11-05'),
-        email: 'robert.taylor@ruraldist.com',
-        phone: '+1-555-0107',
-        statusHistory: [
-          {
-            date: new Date('2025-11-05'),
-            status: 'Pending',
-            changedBy: 'System'
-          },
-          {
-            date: new Date('2025-11-08'),
-            status: 'Approved',
-            changedBy: 'Admin'
-          }
-        ]
-      },
-      {
-        id: 'MERCH-008',
-        businessName: 'Express Delivery Systems',
-        ownerId: 'USR-12456',
-        ownerName: 'Amanda White',
-        type: 'National',
-        region: ['Metropolitan Area', 'Suburban Zone', 'Central Region'],
-        status: 'Pending',
-        assignedProductIds: [],
-        registrationDate: new Date('2026-01-28'),
-        email: 'amanda.white@expressdelivery.com',
-        phone: '+1-555-0108',
-        statusHistory: [
-          {
-            date: new Date('2026-01-28'),
-            status: 'Pending',
-            changedBy: 'System'
-          }
-        ]
-      },
-      {
-        id: 'MERCH-009',
-        businessName: 'Premium Wholesale Group',
-        ownerId: 'USR-12789',
-        ownerName: 'Christopher Lee',
-        type: 'Global',
-        region: ['North Region', 'South Region', 'East Region', 'West Region', 'Central Region'],
-        status: 'Approved',
-        assignedProductIds: ['PROD-601', 'PROD-602', 'PROD-603', 'PROD-604', 'PROD-605', 'PROD-606'],
-        registrationDate: new Date('2025-06-12'),
-        email: 'christopher.lee@premiumwholesale.com',
-        phone: '+1-555-0109',
-        statusHistory: [
-          {
-            date: new Date('2025-06-12'),
-            status: 'Pending',
-            changedBy: 'System'
-          },
-          {
-            date: new Date('2025-06-15'),
-            status: 'Approved',
-            changedBy: 'Admin'
-          }
-        ]
-      },
-      {
-        id: 'MERCH-010',
-        businessName: 'Suburban Commerce Solutions',
-        ownerId: 'USR-13012',
-        ownerName: 'Michelle Garcia',
-        type: 'Regional',
-        region: ['Suburban Zone'],
-        status: 'Suspended',
-        suspendedReason: 'Documentation verification failed',
-        assignedProductIds: ['PROD-701'],
-        registrationDate: new Date('2025-12-01'),
-        email: 'michelle.garcia@suburbancommerce.com',
-        phone: '+1-555-0110',
-        statusHistory: [
-          {
-            date: new Date('2025-12-01'),
-            status: 'Pending',
-            changedBy: 'System'
-          },
-          {
-            date: new Date('2025-12-05'),
-            status: 'Approved',
-            changedBy: 'Admin'
-          },
-          {
-            date: new Date('2026-01-10'),
-            status: 'Suspended',
-            reason: 'Documentation verification failed',
-            changedBy: 'Admin'
-          }
-        ]
-      }
-    ];
   }
 }

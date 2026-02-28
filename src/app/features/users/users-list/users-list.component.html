@@ -101,7 +101,8 @@
       [data]="filteredUsers()"
       [columns]="columns()"
       [config]="tableConfig()"
-      [actions]="actions()">
+      [actions]="actions()"
+      [loading]="tableLoading()">
 
       <!-- Custom User Template -->
       <ng-template appDataTableTemplate="fullName" let-row>

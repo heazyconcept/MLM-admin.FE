@@ -1,11 +1,20 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { AdminRole } from '../models/admin-permission.model';
+import { ApiService } from './api.service';
+import { Observable, tap } from 'rxjs';
 
 const TOKEN_KEY = 'token';
 const ROLE_KEY = 'adminRole';
 
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly api = inject(ApiService);
+
   private readonly _currentAdminRole = signal<AdminRole>(this.loadStoredRole());
   private readonly _token = signal<string | null>(this.loadStoredToken());
 
@@ -26,12 +35,16 @@ export class AuthService {
     return AdminRole.SuperAdmin;
   }
 
-  login(email: string, _password: string, role?: AdminRole): void {
-    const selectedRole = role ?? this._currentAdminRole() ?? AdminRole.SuperAdmin;
-    localStorage.setItem(TOKEN_KEY, 'mock-token-' + Date.now());
-    localStorage.setItem(ROLE_KEY, selectedRole);
-    this._token.set(localStorage.getItem(TOKEN_KEY));
-    this._currentAdminRole.set(selectedRole);
+  login(username: string, password: string): Observable<AuthResponse> {
+    return this.api.post<AuthResponse>('auth/login', { username, password }).pipe(
+      tap(response => {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(TOKEN_KEY, response.accessToken);
+        }
+        this._token.set(response.accessToken);
+        this._currentAdminRole.set(this.loadStoredRole());
+      })
+    );
   }
 
   logout(): void {

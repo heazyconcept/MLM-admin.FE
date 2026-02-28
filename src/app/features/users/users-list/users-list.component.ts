@@ -69,6 +69,7 @@ export class UsersListComponent implements OnInit {
   selectedUser = signal<User | null>(null);
   profileModalVisible = signal(false);
   globalFilter = signal('');
+  tableLoading = signal(false);
 
   // Filter signals
   statusFilter = signal('');
@@ -221,7 +222,21 @@ export class UsersListComponent implements OnInit {
   }
 
   loadUsers(): void {
-    this.users.set(this.usersService.getUsers());
+    this.tableLoading.set(true);
+    this.usersService.getUsers().subscribe({
+      next: (users) => {
+        this.users.set(users);
+        this.tableLoading.set(false);
+      },
+      error: () => {
+        this.tableLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load users from server'
+        });
+      }
+    });
   }
 
   onExport(): void {
@@ -392,48 +407,101 @@ export class UsersListComponent implements OnInit {
 
     switch (action) {
       case 'suspend':
-        this.usersService.updateUserStatus(user.id, 'Suspended', result.reason || '');
-        this.messageService.add({
-          severity: 'success',
-          summary: 'User Suspended',
-          detail: `${user.fullName} has been suspended`
+        this.usersService.updateUserStatus(user.id, 'Suspended', result.reason || '').subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'User Suspended',
+              detail: `${user.fullName} has been suspended`
+            });
+            this.loadUsers();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to suspend user'
+            });
+          }
         });
         break;
       case 'reactivate':
-        this.usersService.updateUserStatus(user.id, 'Active', '');
-        this.messageService.add({
-          severity: 'success',
-          summary: 'User Reactivated',
-          detail: `${user.fullName} has been reactivated`
+        this.usersService.updateUserStatus(user.id, 'Active', '').subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'User Reactivated',
+              detail: `${user.fullName} has been reactivated`
+            });
+            this.loadUsers();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to reactivate user'
+            });
+          }
         });
         break;
       case 'flag':
-        this.usersService.updateUserStatus(user.id, 'Flagged', result.reason || '');
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Account Flagged',
-          detail: `${user.fullName}'s account has been flagged`
+        this.usersService.updateUserStatus(user.id, 'Flagged', result.reason || '').subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Account Flagged',
+              detail: `${user.fullName}'s account has been flagged`
+            });
+            this.loadUsers();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to flag account'
+            });
+          }
         });
         break;
       case 'unflag':
-        this.usersService.updateUserStatus(user.id, 'Active', '');
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Flag Removed',
-          detail: `Flag removed from ${user.fullName}'s account`
+        this.usersService.updateUserStatus(user.id, 'Active', '').subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Flag Removed',
+              detail: `Flag removed from ${user.fullName}'s account`
+            });
+            this.loadUsers();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to remove flag'
+            });
+          }
         });
         break;
       case 'resetPassword':
-        this.usersService.addActivityLog(user.id, 'Password reset requested');
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Password Reset',
-          detail: `Password reset link sent to ${user.email}`
+        this.usersService.addActivityLog(user.id, 'Password reset requested').subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Password Reset',
+              detail: `Password reset link sent to ${user.email}`
+            });
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to reset password'
+            });
+          }
         });
         break;
     }
 
-    this.loadUsers();
     this.actionConfig.visible = false;
     this.selectedUser.set(null);
   }

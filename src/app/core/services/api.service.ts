@@ -1,13 +1,13 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  // Base URL can be configured in environment files
-  private baseUrl = 'http://localhost:3000/api';
+  private baseUrl = environment.apiBaseUrl;
   private http = inject(HttpClient);
 
   get<T>(endpoint: string, params?: Record<string, unknown>): Observable<T> {

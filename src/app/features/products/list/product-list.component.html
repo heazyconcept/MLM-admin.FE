@@ -56,8 +56,26 @@
     </div>
   </div>
 
+  @if (loadError()) {
+    <div class="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center justify-between">
+      <p class="text-sm text-red-700">{{ loadError() }}</p>
+      <button pButton label="Retry" icon="pi pi-refresh" class="p-button-sm p-button-outlined" (click)="onRefresh()"></button>
+    </div>
+  }
+
   <!-- Product Table -->
   <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+    @if (loadingProducts()) {
+      <div class="p-8 animate-pulse space-y-4">
+        @for (i of [1,2,3,4,5]; track i) {
+          <div class="flex gap-4 items-center">
+            <div class="h-12 w-12 rounded bg-slate-200"></div>
+            <div class="flex-1 h-4 rounded bg-slate-200"></div>
+            <div class="h-4 w-24 rounded bg-slate-200"></div>
+          </div>
+        }
+      </div>
+    } @else {
     <app-data-table
       [data]="filteredProducts()"
       [columns]="columns()"
@@ -110,6 +128,7 @@
       </ng-template>
 
     </app-data-table>
+    }
   </div>
 
 </div>

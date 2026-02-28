@@ -1,6 +1,7 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProductService } from '../../../core/services/product.service';
+import { AdminProductsService } from '../services/admin-products.service';
 import { Product } from '../../../core/models/product.model';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -43,15 +44,19 @@ import { TableColumn, TableConfig, TableAction } from '../../../shared/component
   styleUrls: ['./product-list.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProductListComponent {
+export class ProductListComponent implements OnInit {
   private productService = inject(ProductService);
+  private adminProducts = inject(AdminProductsService);
   private router = inject(Router);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
 
-  // State
-  products = this.productService.products;
-  categories = this.productService.categories;
+  // State: use API-backed list when available
+  products = this.adminProducts.products;
+  categories = this.adminProducts.categories;
+  loadingProducts = this.adminProducts.loadingProducts;
+  loadingCategories = this.adminProducts.loadingCategories;
+  loadError = this.adminProducts.error;
   
   searchQuery = signal('');
   selectedCategory = signal<string | null>(null);
@@ -78,9 +83,9 @@ export class ProductListComponent {
     const status = this.selectedStatus();
 
     if (search) {
-      list = list.filter(p => 
-        p.name.toLowerCase().includes(search) || 
-        p.sku.toLowerCase().includes(search)
+      list = list.filter(p =>
+        p.name.toLowerCase().includes(search) ||
+        (p.sku && p.sku.toLowerCase().includes(search))
       );
     }
 
@@ -94,6 +99,16 @@ export class ProductListComponent {
 
     return list;
   });
+
+  ngOnInit(): void {
+    this.adminProducts.loadCategories().subscribe();
+    this.adminProducts.loadProducts({ limit: 100, offset: 0 }).subscribe();
+  }
+
+  onRefresh(): void {
+    this.adminProducts.loadCategories().subscribe();
+    this.adminProducts.loadProducts({ limit: 100, offset: 0 }).subscribe();
+  }
 
   // Table configurations
   columns = signal<TableColumn<Product>[]>([
@@ -179,19 +194,30 @@ export class ProductListComponent {
 
   onDeleteProduct(product: Product) {
     this.confirmationService.confirm({
-      message: `Are you sure you want to delete "${product.name}"?`,
-      header: 'Delete Confirmation',
+      message: `Archive "${product.name}"? (Product will be marked Archived; API does not support hard delete.)`,
+      header: 'Archive Product',
       icon: 'pi pi-exclamation-triangle',
       acceptButtonStyleClass: 'p-button-danger p-button-text',
       rejectButtonStyleClass: 'p-button-text p-button-text',
       acceptIcon: 'none',
       rejectIcon: 'none',
       accept: () => {
-        this.productService.deleteProduct(product.id);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Deleted',
-          detail: 'Product deleted successfully'
+        this.adminProducts.updateProductStatus(product.id, 'Archived').subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Archived',
+              detail: 'Product archived successfully'
+            });
+            this.adminProducts.loadProducts({ limit: 100, offset: 0 }).subscribe();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Failed',
+              detail: 'Could not archive product.'
+            });
+          }
         });
       }
     });

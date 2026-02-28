@@ -1,4 +1,8 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
+import { inject } from '@angular/core';
+import { ApiService } from '../../../core/services/api.service';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export type WithdrawalStatus = 'Pending' | 'Approved' | 'Rejected' | 'Processing' | 'Paid';
 export type Currency = 'USD' | 'NGN';
@@ -30,29 +34,55 @@ export interface StatusHistory {
   reason?: string;
 }
 
+interface AdminWithdrawalItem {
+  id: string;
+  userId: string;
+  amount: number;
+  currency: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
+  destination?: string;
+  destinationType?: string;
+  createdAt: string;
+  processedAt?: string;
+  rejectionReason?: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface AdminWithdrawalsResponse {
+  items: AdminWithdrawalItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class WithdrawalService {
-  private withdrawalsSignal = signal<WithdrawalRequest[]>(this.generateMockData());
+  private readonly api = inject(ApiService);
+
+  private withdrawalsSignal = signal<WithdrawalRequest[]>([]);
   readonly withdrawals = this.withdrawalsSignal.asReadonly();
-  
+
   private statusHistoryMap = new Map<string, StatusHistory[]>();
 
-  constructor() {
-    this.init();
-  }
-
-  // Use a private method for initialization
-  private init() {
-    this.withdrawalsSignal().forEach(w => {
-      this.statusHistoryMap.set(w.id, [{
-        status: w.status,
-        timestamp: w.requestDate,
-        admin: 'System',
-        reason: 'Initial request'
-      }]);
-    });
+  loadFromApi(): Observable<WithdrawalRequest[]> {
+    return this.api.get<AdminWithdrawalsResponse>('admin/withdrawals').pipe(
+      map(response => {
+        const mapped = (response.items ?? []).map(item => this.mapAdminWithdrawal(item));
+        this.withdrawalsSignal.set(mapped);
+        this.statusHistoryMap.clear();
+        mapped.forEach(w => {
+          this.statusHistoryMap.set(w.id, [{
+            status: w.status,
+            timestamp: w.requestDate,
+            admin: 'System',
+            reason: 'Initial request'
+          }]);
+        });
+        return mapped;
+      })
+    );
   }
 
   getWithdrawalById(id: string | null): WithdrawalRequest | undefined {
@@ -60,51 +90,20 @@ export class WithdrawalService {
     return this.withdrawalsSignal().find(w => w.id === id);
   }
 
-  approveWithdrawal(id: string): void {
-    this.updateWithdrawalStatus(id, 'Approved', 'Admin User');
+  approveWithdrawal(id: string): Observable<void> {
+    return this.api.post<void>(`admin/withdrawals/${id}/approve`, {});
   }
 
-  rejectWithdrawal(id: string, reason: string): void {
-    this.withdrawalsSignal.update(withdrawals => {
-      return withdrawals.map(w => {
-        if (w.id === id) {
-          return {
-            ...w,
-            status: 'Rejected',
-            rejectionReason: reason,
-            processedDate: new Date()
-          };
-        }
-        return w;
-      });
-    });
-    
-    this.addStatusHistory(id, 'Rejected', 'Admin User', reason);
+  rejectWithdrawal(id: string, reason: string): Observable<void> {
+    return this.api.post<void>(`admin/withdrawals/${id}/reject`, { reason });
   }
 
-  updateStatus(id: string, status: WithdrawalStatus): void {
-    this.updateWithdrawalStatus(id, status, 'Admin User');
+  markPaid(id: string, payoutReference: string): Observable<void> {
+    return this.api.post<void>(`admin/withdrawals/${id}/mark-paid`, { payoutReference });
   }
 
   getStatusHistory(id: string): StatusHistory[] {
     return this.statusHistoryMap.get(id) || [];
-  }
-
-  private updateWithdrawalStatus(id: string, status: WithdrawalStatus, admin: string): void {
-    this.withdrawalsSignal.update(withdrawals => {
-      return withdrawals.map(w => {
-        if (w.id === id) {
-          return {
-            ...w,
-            status,
-            processedDate: new Date()
-          };
-        }
-        return w;
-      });
-    });
-    
-    this.addStatusHistory(id, status, admin);
   }
 
   private addStatusHistory(id: string, status: WithdrawalStatus, admin: string, reason?: string): void {
@@ -118,66 +117,35 @@ export class WithdrawalService {
     this.statusHistoryMap.set(id, history);
   }
 
-  private generateMockData(): WithdrawalRequest[] {
-    const users = [
-      { id: 'U001', name: 'John Doe', email: 'john.doe@example.com' },
-      { id: 'U002', name: 'Jane Smith', email: 'jane.smith@example.com' },
-      { id: 'U003', name: 'Michael Johnson', email: 'michael.j@example.com' },
-      { id: 'U004', name: 'Sarah Williams', email: 'sarah.w@example.com' },
-      { id: 'U005', name: 'David Brown', email: 'david.brown@example.com' },
-      { id: 'U006', name: 'Emily Davis', email: 'emily.d@example.com' },
-      { id: 'U007', name: 'James Wilson', email: 'james.wilson@example.com' },
-      { id: 'U008', name: 'Lisa Anderson', email: 'lisa.a@example.com' }
-    ];
+  private mapAdminWithdrawal(item: AdminWithdrawalItem): WithdrawalRequest {
+    const statusMap: Record<AdminWithdrawalItem['status'], WithdrawalStatus> = {
+      PENDING: 'Pending',
+      APPROVED: 'Approved',
+      REJECTED: 'Rejected',
+      PAID: 'Paid'
+    };
 
-    const destinations = [
-      { type: 'Bank Account' as const, value: 'GTBank - 0123456789' },
-      { type: 'Bank Account' as const, value: 'Access Bank - 9876543210' },
-      { type: 'Crypto Wallet' as const, value: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb' },
-      { type: 'Mobile Money' as const, value: '+234 801 234 5678' },
-      { type: 'Bank Account' as const, value: 'First Bank - 1122334455' },
-      { type: 'Crypto Wallet' as const, value: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' }
-    ];
+    const status = statusMap[item.status] ?? 'Pending';
+    const fees = 0;
 
-    const statuses: WithdrawalStatus[] = ['Pending', 'Approved', 'Rejected', 'Processing', 'Paid'];
-    
-    const withdrawals: WithdrawalRequest[] = [];
-    
-    for (let i = 1; i <= 20; i++) {
-      const user = users[Math.floor(Math.random() * users.length)];
-      const dest = destinations[Math.floor(Math.random() * destinations.length)];
-      const currency: Currency = Math.random() > 0.5 ? 'USD' : 'NGN';
-      const amount = currency === 'USD' 
-        ? Math.floor(Math.random() * 5000) + 100
-        : Math.floor(Math.random() * 2000000) + 50000;
-      const fees = Math.floor(amount * 0.02); // 2% fee
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
-      
-      const daysAgo = Math.floor(Math.random() * 30);
-      const requestDate = new Date();
-      requestDate.setDate(requestDate.getDate() - daysAgo);
-
-      withdrawals.push({
-        id: `WD${String(i).padStart(6, '0')}`,
-        userId: user.id,
-        userName: user.name,
-        userEmail: user.email,
-        amount,
-        currency,
-        destination: dest.value,
-        destinationType: dest.type,
-        status,
-        requestDate,
-        processedDate: status !== 'Pending' ? new Date(requestDate.getTime() + 86400000) : undefined,
-        rejectionReason: status === 'Rejected' ? 'Insufficient documentation provided' : undefined,
-        fees,
-        netPayout: amount - fees,
-        notes: i % 3 === 0 ? 'Urgent withdrawal request' : undefined,
-        walletBalance: amount * 2,
-        walletType: 'Main Wallet'
-      });
-    }
-
-    return withdrawals.sort((a, b) => b.requestDate.getTime() - a.requestDate.getTime());
+    return {
+      id: item.id,
+      userId: item.userId,
+      userName: (item.metadata?.['userName'] as string) || item.userId,
+      userEmail: (item.metadata?.['userEmail'] as string) || '',
+      amount: item.amount,
+      currency: (item.currency as Currency) ?? 'NGN',
+      destination: item.destination ?? '',
+      destinationType: (item.destinationType as any) ?? 'Bank Account',
+      status,
+      requestDate: new Date(item.createdAt),
+      processedDate: item.processedAt ? new Date(item.processedAt) : undefined,
+      rejectionReason: item.rejectionReason,
+      fees,
+      netPayout: item.amount - fees,
+      notes: undefined,
+      walletBalance: 0,
+      walletType: 'Main Wallet'
+    };
   }
 }

@@ -79,17 +79,19 @@ export class UserDetailsComponent implements OnInit {
   }
 
   loadUser(id: string): void {
-    const foundUser = this.usersService.getUserById(id);
-    if (foundUser) {
-      this.user.set(foundUser);
-    } else {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'User not found'
-      });
-      setTimeout(() => this.router.navigate(['/admin/users']), 2000);
-    }
+    this.usersService.getUserById(id).subscribe({
+      next: (foundUser) => {
+        this.user.set(foundUser);
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'User not found'
+        });
+        setTimeout(() => this.router.navigate(['/admin/users']), 2000);
+      }
+    });
   }
 
   onAction(action: string): void {
@@ -174,28 +176,61 @@ export class UserDetailsComponent implements OnInit {
 
     switch (action) {
       case 'suspend':
-        this.usersService.updateUserStatus(user.id, 'Suspended', result.reason || '');
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: 'User suspended' });
+        this.usersService.updateUserStatus(user.id, 'Suspended', result.reason || '').subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Success', detail: 'User suspended' });
+            this.loadUser(user.id);
+          },
+          error: () => {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to suspend user' });
+          }
+        });
         break;
       case 'reactivate':
-        this.usersService.updateUserStatus(user.id, 'Active', '');
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: 'User reactivated' });
+        this.usersService.updateUserStatus(user.id, 'Active', '').subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Success', detail: 'User reactivated' });
+            this.loadUser(user.id);
+          },
+          error: () => {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to reactivate user' });
+          }
+        });
         break;
       case 'flag':
-        this.usersService.updateUserStatus(user.id, 'Flagged', result.reason || '');
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Account flagged' });
+        this.usersService.updateUserStatus(user.id, 'Flagged', result.reason || '').subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Account flagged' });
+            this.loadUser(user.id);
+          },
+          error: () => {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to flag account' });
+          }
+        });
         break;
       case 'unflag':
-        this.usersService.updateUserStatus(user.id, 'Active', '');
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Flag removed' });
+        this.usersService.updateUserStatus(user.id, 'Active', '').subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Flag removed' });
+            this.loadUser(user.id);
+          },
+          error: () => {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to remove flag' });
+          }
+        });
         break;
       case 'resetPassword':
-        this.usersService.addActivityLog(user.id, 'Password reset requested');
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Password reset link sent' });
+        this.usersService.addActivityLog(user.id, 'Password reset requested').subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Password reset link sent' });
+          },
+          error: () => {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to reset password' });
+          }
+        });
         break;
     }
 
-    this.loadUser(user.id);
     this.actionConfig.update(prev => ({ ...prev, visible: false }));
   }
 

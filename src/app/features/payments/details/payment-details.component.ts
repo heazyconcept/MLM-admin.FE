@@ -55,6 +55,10 @@ export class PaymentDetailsComponent implements OnInit {
   ngOnInit() {
     this.route.params.subscribe(params => {
       this.paymentId.set(params['id']);
+      // Ensure payments are loaded if user lands directly on details
+      if (!this.paymentService.getPaymentById(params['id'])) {
+        this.paymentService.loadFromApi().subscribe();
+      }
     });
   }
 
@@ -101,6 +105,16 @@ export class PaymentDetailsComponent implements OnInit {
     if (event.action === 'Flag') {
       this.paymentService.flagPayment(payment.id, event.reason || 'Flagged by admin', 'Admin Sarah');
       this.messageService.add({ severity: 'warn', summary: 'Transaction Flagged', detail: 'The transaction has been flagged for review.' });
+    } else if (event.action === 'ConfirmSuccess') {
+      this.paymentService.verifyPayment(payment.id).subscribe({
+        next: () => {
+          this.paymentService.updateStatus(payment.id, 'Successful', 'Admin Sarah', event.reason);
+          this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment marked as successful via API.' });
+        },
+        error: () => {
+          this.messageService.add({ severity: 'error', summary: 'Verification Failed', detail: 'API verification failed.' });
+        }
+      });
     } else {
       let nextStatus: 'Successful' | 'Failed' | 'Reversed' = 'Successful';
       if (event.action === 'Fail') nextStatus = 'Failed';

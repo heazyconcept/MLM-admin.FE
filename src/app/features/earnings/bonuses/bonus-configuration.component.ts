@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -16,7 +16,7 @@ import { EarningsService, BonusRule } from '../services/earnings.service';
   templateUrl: './bonus-configuration.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BonusConfigurationComponent {
+export class BonusConfigurationComponent implements OnInit {
   earningsService = inject(EarningsService);
   messageService = inject(MessageService);
   
@@ -25,6 +25,10 @@ export class BonusConfigurationComponent {
   // Track editing state locally
   editingId = signal<string | null>(null);
   editControls: Record<string, FormControl<number | null>> = {};
+
+  ngOnInit(): void {
+    this.earningsService.loadCommissionRules().subscribe();
+  }
 
   isEditing(id: string): boolean {
     return this.editingId() === id;
@@ -53,8 +57,24 @@ export class BonusConfigurationComponent {
     const newValue = this.editControls[bonus.id]?.value;
     if (newValue !== undefined && newValue !== null) {
       this.earningsService.updateBonus({ ...bonus, value: newValue });
-      this.messageService.add({ severity: 'success', summary: 'Updated', detail: `${bonus.name} value updated successfully.` });
-      this.cancelEdit(bonus.id);
+      this.earningsService.saveCommissionRules().subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Updated',
+            detail: `${bonus.name} value updated successfully.`
+          });
+          this.cancelEdit(bonus.id);
+        },
+        error: (err) => {
+          console.error('Failed to save commission rules', err);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Save failed',
+            detail: `Could not save ${bonus.name}. Please try again.`
+          });
+        }
+      });
     }
   }
 }

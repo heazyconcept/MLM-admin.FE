@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ProductService } from '../../../core/services/product.service';
+import { AdminProductsService } from '../services/admin-products.service';
 import { Product, ProductStatus } from '../../../core/models/product.model';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -45,18 +46,21 @@ export class ProductEditComponent implements OnInit {
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private productService = inject(ProductService);
+  private adminProducts = inject(AdminProductsService);
   private messageService = inject(MessageService);
 
   productId = signal<string | null>(null);
   isSaving = signal(false);
   product = computed(() => {
     const id = this.productId();
-    return id ? this.productService.getProduct(id)() : null;
+    const list = this.adminProducts.products();
+    return id ? (list.find((p) => p.id === id) ?? null) : null;
   });
-  
+  productLoading = signal(true);
+
   selectedImage = signal<string | null>(null);
 
-  categories = this.productService.categories;
+  categories = this.adminProducts.categories;
   merchants = this.productService.merchants;
 
   categoryOptions = computed(() => 
@@ -90,51 +94,67 @@ export class ProductEditComponent implements OnInit {
       this.productId.set(id);
       const p = this.product();
       if (p) {
-        this.productForm.patchValue({
-          name: p.name,
-          sku: p.sku,
-          category: p.category,
-          shortDescription: p.shortDescription,
-          fullDescription: p.fullDescription,
-          price: p.price,
-          currency: p.currency,
-          pv: p.pv,
-          cpv: p.cpv,
-          visibility: p.visibility,
-          purchaseEligibility: p.purchaseEligibility,
-          status: p.status
+        this.patchFormFromProduct(p);
+        this.productLoading.set(false);
+      } else {
+        this.adminProducts.loadProducts({ limit: 500, offset: 0 }).subscribe({
+          next: () => {
+            const found = this.adminProducts.getProductById(id);
+            if (found) this.patchFormFromProduct(found);
+            this.productLoading.set(false);
+          },
+          error: () => this.productLoading.set(false)
         });
       }
+    } else {
+      this.productLoading.set(false);
     }
+  }
+
+  private patchFormFromProduct(p: Product) {
+    this.productForm.patchValue({
+      name: p.name,
+      sku: p.sku,
+      category: p.category,
+      shortDescription: p.shortDescription,
+      fullDescription: p.fullDescription,
+      price: p.price,
+      currency: p.currency,
+      pv: p.pv,
+      cpv: p.cpv,
+      visibility: p.visibility,
+      purchaseEligibility: p.purchaseEligibility,
+      status: p.status
+    });
   }
 
   onSave() {
     if (this.productForm.valid) {
-      this.isSaving.set(true);
       const id = this.productId();
-      
-      // Simulate network request
-      setTimeout(() => {
-        if (id) {
-          const updateData = {
-            ...this.productForm.value,
-            thumbnail: this.selectedImage() || this.product()?.thumbnail
-          };
-          this.productService.updateProduct(id, updateData as any);
+      if (!id) return;
+      this.isSaving.set(true);
+      const updateData = {
+        ...this.productForm.value,
+        thumbnail: this.selectedImage() || this.product()?.thumbnail
+      } as Partial<Product>;
+      this.adminProducts.updateProduct(id, updateData).subscribe({
+        next: () => {
           this.messageService.add({
             severity: 'success',
             summary: 'Success',
             detail: 'Product updated successfully'
           });
-          
-          setTimeout(() => {
-            this.router.navigate(['/admin/products']);
-            this.isSaving.set(false);
-          }, 1000);
-        } else {
-           this.isSaving.set(false);
+          this.router.navigate(['/admin/products']);
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Update failed',
+            detail: 'Could not update product. Please try again.'
+          });
+          this.isSaving.set(false);
         }
-      }, 500);
+      });
     } else {
       this.productForm.markAllAsTouched();
     }

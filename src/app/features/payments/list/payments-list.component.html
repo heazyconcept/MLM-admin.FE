@@ -1,4 +1,5 @@
 <div class="min-h-screen bg-gray-50 px-8 py-6">
+  <p-toast></p-toast>
   <!-- Header -->
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
     <div>
@@ -51,8 +52,9 @@
 
   <!-- Filters -->
   <div class="bg-white border border-gray-200 rounded-xl px-5 py-4 mb-6">
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-      <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+    <div class="flex flex-col gap-4">
+      <!-- Filters grid (status, method, date range) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
         <!-- Status Filter -->
         <select
           [formControl]="selectedStatusControl"
@@ -71,25 +73,49 @@
           }
         </select>
 
-        <!-- Search -->
-        <div class="relative flex-1 sm:w-72">
-          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <!-- Date range -->
+        <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
           <input
-            type="text"
-            [value]="searchQuery()"
-            (input)="onSearch($event)"
-            placeholder="Search by ID or user..."
-            class="h-10 w-full pl-9 pr-4 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-shadow"
+            type="date"
+            [formControl]="fromDateControl"
+            class="h-10 px-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-shadow"
+          />
+          <span class="text-xs text-gray-400 text-center sm:text-left">to</span>
+          <input
+            type="date"
+            [formControl]="toDateControl"
+            class="h-10 px-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-shadow"
           />
         </div>
       </div>
 
-      <button
-        (click)="onExport()"
-        class="h-10 px-4 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-        <i class="pi pi-download text-sm"></i>
-        Export
-      </button>
+      <!-- Search row (full width) -->
+      <div class="relative">
+        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input
+          type="text"
+          [value]="searchQuery()"
+          (input)="onSearch($event)"
+          placeholder="Search by ID or user..."
+          class="h-10 w-full max-w-md pl-9 pr-4 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-shadow"
+        />
+      </div>
+
+      <!-- Actions row -->
+      <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
+        <button
+          (click)="openFundingModal()"
+          class="h-10 px-4 rounded-lg bg-mlm-primary text-white text-sm font-medium hover:bg-brand-green-dark transition-colors flex items-center justify-center gap-2">
+          <i class="pi pi-plus text-sm"></i>
+          Admin Fund User
+        </button>
+        <button
+          (click)="onExport()"
+          class="h-10 px-4 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+          <i class="pi pi-download text-sm"></i>
+          Export
+        </button>
+      </div>
     </div>
   </div>
 
@@ -98,7 +124,8 @@
     [data]="filteredPayments()"
     [columns]="columns()"
     [config]="tableConfig()"
-    [actions]="actions()">
+    [actions]="actions()"
+    [loading]="tableLoading()">
     
     <!-- Custom Purpose Template -->
     <ng-template appDataTableTemplate="purpose" let-row>
@@ -114,6 +141,12 @@
       <app-status-badge [status]="row.status"></app-status-badge>
     </ng-template>
   </app-data-table>
+
+  <app-admin-funding-modal
+    [visible]="fundingModalVisible()"
+    (confirmed)="handleFundingConfirmed($event)"
+    (cancelled)="handleFundingCancelled()">
+  </app-admin-funding-modal>
 
   <!-- Empty State -->
   @if (filteredPayments().length === 0) {

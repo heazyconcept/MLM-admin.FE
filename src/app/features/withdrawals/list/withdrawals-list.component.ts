@@ -39,6 +39,7 @@ export class WithdrawalsListComponent implements OnInit {
   @ViewChild('status', { static: true }) statusTemplate!: TemplateRef<unknown>;
 
   withdrawals = this.withdrawalService.withdrawals;
+  tableLoading = signal(false);
   
   selectedStatusControl = new FormControl('all');
   searchQuery = signal<string>('');
@@ -163,6 +164,12 @@ export class WithdrawalsListComponent implements OnInit {
         })
       }
     ]);
+
+    this.tableLoading.set(true);
+    this.withdrawalService.loadFromApi().subscribe({
+      next: () => this.tableLoading.set(false),
+      error: () => this.tableLoading.set(false)
+    });
   }
 
   private router = inject(Router);
