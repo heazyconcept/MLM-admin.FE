@@ -120,6 +120,8 @@
        </div>
        
        <app-data-table
+         [value]="ledger()"
+         [headers]="tableHeaders()"
          [loading]="loading()">
 
          <!-- Row Template -->

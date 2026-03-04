@@ -115,11 +115,35 @@
   <!-- Data Table -->
   <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
     <app-data-table
+      [value]="filteredWithdrawals()"
+      [headers]="tableHeaders()"
       [loading]="tableLoading()">
       
-      <!-- Custom Status Template -->
+      <!-- Body Row Template -->
       <ng-template pTemplate="body" let-row>
-        <app-status-badge [status]="row.status"></app-status-badge>
+        <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+          <!-- Request ID -->
+          <td class="px-5 py-4 text-sm font-mono text-gray-600">{{ row.id }}</td>
+
+          <!-- User -->
+          <td class="px-5 py-4 font-medium text-gray-900">{{ row.userName }}</td>
+
+          <!-- Amount -->
+          <td class="px-5 py-4 text-right text-sm text-gray-700">{{ row.currency }} {{ row.amount | number }}</td>
+
+          <!-- Destination -->
+          <td class="px-5 py-4 text-sm text-gray-700">
+            {{ row.destination.length > 30 ? (row.destination | slice:0:30) + '...' : row.destination }}
+          </td>
+
+          <!-- Status -->
+          <td class="px-5 py-4 text-center">
+            <app-status-badge [status]="row.status"></app-status-badge>
+          </td>
+
+          <!-- Request Date -->
+          <td class="px-5 py-4 text-sm text-gray-700">{{ row.requestDate | date:'mediumDate' }}</td>
+        </tr>
       </ng-template>
     </app-data-table>
   </div>

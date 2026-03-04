@@ -137,6 +137,8 @@ export class AuditLogsComponent implements OnInit {
     { field: 'description', header: 'Description', sortable: true },
   ]);
 
+  tableHeaders = computed(() => this.columns().map(c => c.header));
+
   tableConfig: TableConfig = {
     paginator: true,
     rows: 10,

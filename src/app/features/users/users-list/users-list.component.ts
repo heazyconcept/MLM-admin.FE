@@ -133,6 +133,8 @@ export class UsersListComponent implements OnInit {
     }
   ]);
 
+  tableHeaders = computed(() => this.columns().map(c => c.header));
+
   tableConfig = signal<TableConfig>({
     paginator: true,
     rows: 10,
