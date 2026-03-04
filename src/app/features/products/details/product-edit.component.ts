@@ -164,15 +164,43 @@ export class ProductEditComponent implements OnInit {
     if (this.productForm.valid) {
       const id = this.productId();
       if (!id) return;
-      this.isSaving.set(true);
       const formValue = this.productForm.value;
+      const status = formValue.status as ProductStatus;
+
+      if (status === 'ACTIVE') {
+        const hasPrice = !!this.product()?.currentPrice;
+        if (!hasPrice) {
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Price Required',
+            detail: 'Set a product price before activating this product.'
+          });
+          return;
+        }
+        if (this.priceIsScheduled()) {
+          const effectiveFrom = this.product()!.currentPrice!.effectiveFrom;
+          const date = new Date(effectiveFrom).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Scheduled Price',
+            detail: `The current price is scheduled for ${date}. The product cannot be activated until that date. Set a price without a future date to activate immediately.`
+          });
+          return;
+        }
+      }
+
+      this.isSaving.set(true);
       this.adminProducts.updateProduct(id, {
         categoryId: formValue.categoryId || undefined,
         name: formValue.name || undefined,
+        sku: formValue.sku || undefined,
         description: formValue.description || '',
         visibleToAll: !!formValue.visibleToAll,
         visibleToPackages: formValue.visibleToAll ? [] : (formValue.visibleToPackages || []),
-        merchantOnly: !!formValue.merchantOnly
+        merchantOnly: !!formValue.merchantOnly,
+        status: status || undefined
       }).subscribe({
         next: () => {
           this.messageService.add({
