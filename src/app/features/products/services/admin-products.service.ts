@@ -35,6 +35,12 @@ export interface AdminProductDto {
   images?: ProductImage[];
   createdAt: string;
   updatedAt: string;
+  basePrice?: string | number | null;
+  nonMemberBasePrice?: string | number | null;
+  pv?: string | number | null;
+  cpv?: string | number | null;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
   [key: string]: unknown;
 }
 
@@ -308,7 +314,28 @@ export class AdminProductsService {
   }
 
   private mapProductDtoToProduct(dto: AdminProductDto): Product {
-    const currentPrice = dto.currentPrice ?? dto.price ?? null;
+    let currentPrice: ProductPrice | null = null;
+    
+    // Check if price info is nested in currentPrice or price objects
+    if (dto.currentPrice || dto.price) {
+      const priceDto = dto.currentPrice ?? dto.price;
+      currentPrice = priceDto ? this.mapPriceDtoToPrice(priceDto) : null;
+    }
+    // Otherwise, check if price fields are at the root level
+    else if (dto.basePrice != null || dto.pv != null || dto.cpv != null) {
+      currentPrice = {
+        id: `${dto.id}-root-price`,
+        productId: dto.id,
+        basePrice: Number(dto.basePrice) || 0,
+        nonMemberBasePrice: dto.nonMemberBasePrice ? Number(dto.nonMemberBasePrice) : null,
+        pv: Number(dto.pv) || 0,
+        cpv: Number(dto.cpv) || 0,
+        effectiveFrom: dto.effectiveFrom || new Date().toISOString(),
+        effectiveTo: dto.effectiveTo || null,
+        createdAt: dto.createdAt
+      };
+    }
+
     return {
       id: dto.id,
       categoryId: dto.categoryId,
@@ -320,7 +347,7 @@ export class AdminProductsService {
       visibleToAll: dto.visibleToAll ?? true,
       visibleToPackages: dto.visibleToPackages ?? [],
       merchantOnly: dto.merchantOnly ?? false,
-      currentPrice: currentPrice ? this.mapPriceDtoToPrice(currentPrice) : null,
+      currentPrice,
       createdAt: new Date(dto.createdAt),
       updatedAt: new Date(dto.updatedAt),
       images: dto.images ?? [],

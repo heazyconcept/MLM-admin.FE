@@ -158,6 +158,29 @@ export class ProductEditComponent implements OnInit {
       merchantOnly: p.merchantOnly,
       status: p.status
     });
+
+    // Prefill price form if current price exists
+    if (p.currentPrice) {
+      const effectiveFromDate = p.currentPrice.effectiveFrom;
+      let effectiveFromFormatted = '';
+      if (effectiveFromDate) {
+        const date = new Date(effectiveFromDate);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        effectiveFromFormatted = `${year}-${month}-${day}T${hours}:${minutes}`;
+      }
+
+      this.priceForm.patchValue({
+        basePrice: p.currentPrice.basePrice,
+        nonMemberBasePrice: p.currentPrice.nonMemberBasePrice,
+        pv: p.currentPrice.pv,
+        cpv: p.currentPrice.cpv,
+        effectiveFrom: effectiveFromFormatted
+      });
+    }
   }
 
   onSave() {

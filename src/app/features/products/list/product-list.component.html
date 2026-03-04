@@ -117,19 +117,32 @@
             {{ row.categoryName }}
           </td>
 
-          <!-- Price -->
-          <td class="px-5 py-4">
-            <div class="flex flex-col">
-              @if (row.currentPrice) {
-                <span class="font-semibold text-slate-900">{{ row.currentPrice.basePrice | currency:'USD' }}</span>
-                <div class="flex gap-2 text-[10px] mt-1">
-                  <span class="bg-blue-50 text-blue-700 px-1 rounded">PV: {{ row.currentPrice.pv }}</span>
-                  <span class="bg-purple-50 text-purple-700 px-1 rounded">CPV: {{ row.currentPrice.cpv }}</span>
-                </div>
-              } @else {
-                <span class="text-xs text-slate-500">No active price</span>
-              }
-            </div>
+          <!-- Base Price -->
+          <td class="px-5 py-4 text-sm font-medium text-slate-900">
+            @if (row.currentPrice?.basePrice) {
+              {{ row.currentPrice.basePrice | currency:'USD' }}
+            } @else {
+              <span class="text-slate-500">0</span>
+            }
+          </td>
+
+          <!-- Non-member Price -->
+          <td class="px-5 py-4 text-sm font-medium text-slate-900">
+            @if (row.currentPrice?.nonMemberBasePrice) {
+              {{ row.currentPrice.nonMemberBasePrice | currency:'USD' }}
+            } @else {
+              <span class="text-slate-500">0</span>
+            }
+          </td>
+
+          <!-- PV -->
+          <td class="px-5 py-4 text-sm">
+            <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium">{{ row.currentPrice?.pv || 0 }}</span>
+          </td>
+
+          <!-- CPV -->
+          <td class="px-5 py-4 text-sm">
+            <span class="bg-purple-50 text-purple-700 px-2 py-1 rounded text-xs font-medium">{{ row.currentPrice?.cpv || 0 }}</span>
           </td>
 
           <!-- Status -->
