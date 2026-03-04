@@ -98,33 +98,35 @@
   <div class="overflow-x-auto">
     <!-- Data Table -->
     <app-data-table
-      [data]="filteredUsers()"
-      [columns]="columns()"
-      [config]="tableConfig()"
-      [actions]="actions()"
+      [value]="filteredUsers()"
+      [headers]="tableHeaders()"
       [loading]="tableLoading()">
 
       <!-- Custom User Template -->
-      <ng-template appDataTableTemplate="fullName" let-row>
-        <div class="flex flex-col">
-          <span class="font-semibold text-gray-900 leading-tight">{{ row.fullName }}</span>
-          <span class="text-xs text-gray-500">&#64;{{ row.username }}</span>
-        </div>
-      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+          <td class="px-5 py-4">
+            <div class="flex flex-col">
+              <span class="font-semibold text-gray-900 leading-tight">{{ row.fullName }}</span>
+              <span class="text-xs text-gray-500">&#64;{{ row.username }}</span>
+            </div>
+          </td>
 
-      <!-- Custom Package Template -->
-      <ng-template appDataTableTemplate="package" let-row>
-        <span 
-          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wide uppercase"
-          [style.background-color]="getPackageColor(row.package) + '15'"
-          [style.color]="getPackageColor(row.package)">
-          {{ row.package }}
-        </span>
-      </ng-template>
+          <!-- Package -->
+          <td class="px-5 py-4">
+            <span 
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wide uppercase"
+              [style.background-color]="getPackageColor(row.package) + '15'"
+              [style.color]="getPackageColor(row.package)">
+              {{ row.package }}
+            </span>
+          </td>
 
-      <!-- Custom Status Template -->
-      <ng-template appDataTableTemplate="status" let-row>
-        <app-status-badge [status]="row.status"></app-status-badge>
+          <!-- Status -->
+          <td class="px-5 py-4">
+            <app-status-badge [status]="row.status"></app-status-badge>
+          </td>
+        </tr>
       </ng-template>
 
     </app-data-table>

@@ -1,16 +1,15 @@
-import { Component, inject, signal, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { EarningsService } from '../services/earnings.service';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableTemplateDirective } from '../../../shared/components/data-table/data-table-template.directive';
 import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
 
 @Component({
   selector: 'app-ranking-stages',
-  imports: [CommonModule, TableModule, ButtonModule, TagModule, DataTableComponent, DataTableTemplateDirective],
+  imports: [CommonModule, TableModule, ButtonModule, TagModule, DataTableComponent],
   templateUrl: './ranking-stages.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -42,6 +41,8 @@ export class RankingStagesComponent implements OnInit {
       // Custom template
     }
   ]);
+
+  tableHeaders = computed(() => this.columns().map(c => c.header));
 
   tableConfig = signal<TableConfig>({
     paginator: false,

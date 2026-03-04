@@ -160,14 +160,43 @@
       </div>
     }
     <app-data-table
-      [data]="filteredMerchants()"
-      [columns]="columns()"
-      [config]="tableConfig()"
-      [actions]="actions()">
+      [value]="filteredMerchants()"
+      [headers]="tableHeaders()">
       
-      <!-- Custom Status Template -->
-      <ng-template appDataTableTemplate="status" let-row>
-        <app-status-badge [status]="row.status"></app-status-badge>
+      <!-- Body Row Template -->
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+          <!-- Merchant ID -->
+          <td class="px-5 py-4 text-sm font-mono text-gray-600">{{ row.id }}</td>
+
+          <!-- Business Name -->
+          <td class="px-5 py-4 font-medium text-gray-900">{{ row.businessName }}</td>
+
+          <!-- Owner -->
+          <td class="px-5 py-4 text-sm text-gray-700">{{ row.ownerName }}</td>
+
+          <!-- Merchant Type -->
+          <td class="px-5 py-4 text-center text-sm text-gray-700">{{ row.type }}</td>
+
+          <!-- Region -->
+          <td class="px-5 py-4 text-sm text-gray-700">
+            @if (!row.region || row.region.length === 0) {
+              N/A
+            } @else if (row.region.length === 1) {
+              {{ row.region[0] }}
+            } @else {
+              {{ row.region[0] }} +{{ row.region.length - 1 }}
+            }
+          </td>
+
+          <!-- Status -->
+          <td class="px-5 py-4 text-center">
+            <app-status-badge [status]="row.status"></app-status-badge>
+          </td>
+
+          <!-- Assigned Products -->
+          <td class="px-5 py-4 text-center text-sm text-gray-700">{{ row.assignedProductIds.length }}</td>
+        </tr>
       </ng-template>
     </app-data-table>
   </div>

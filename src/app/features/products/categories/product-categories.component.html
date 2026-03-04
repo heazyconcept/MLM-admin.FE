@@ -1,0 +1,201 @@
+<div class="p-6 space-y-6">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Product Categories</h1>
+      <p class="text-slate-500 text-sm">Create and manage product categories for the catalog.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <p-button label="Add Category" icon="pi pi-plus" (onClick)="onOpenDrawer()"></p-button>
+    </div>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <div class="flex items-center gap-3">
+    <span class="p-input-icon-left flex-1 relative">
+      <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+      <input
+        pInputText
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Search categories by name or slug..."
+        class="w-full pl-10! text-sm" />
+    </span>
+    <p-select
+      [options]="statusFilterOptions"
+      [(ngModel)]="statusFilter"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All Statuses"
+      styleClass="w-44 text-sm">
+    </p-select>
+    <button
+      pButton
+      icon="pi pi-refresh"
+      severity="secondary"
+      [text]="true"
+      pTooltip="Refresh"
+      tooltipPosition="top"
+      (click)="onRefresh()">
+    </button>
+  </div>
+
+  <!-- Categories Table (full-width) -->
+  <section class="bg-white rounded-xl border border-slate-200">
+    @if (!loading() && filteredCategories().length === 0) {
+      <!-- Empty State -->
+      <div class="flex flex-col items-center justify-center py-20 px-6 text-center">
+        <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+          <i class="pi pi-th-large text-2xl text-slate-400"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-slate-800 mb-1">
+          {{ categories().length === 0 ? 'No categories yet' : 'No matching categories' }}
+        </h3>
+        <p class="text-sm text-slate-500 mb-6 max-w-sm">
+          @if (categories().length === 0) {
+            Categories help organize your product catalog. Create your first one to get started.
+          } @else {
+            Try adjusting your search or filter to find what you're looking for.
+          }
+        </p>
+        @if (categories().length === 0) {
+          <p-button label="Create First Category" icon="pi pi-plus" (onClick)="onOpenDrawer()"></p-button>
+        } @else {
+          <p-button label="Clear Filters" icon="pi pi-filter-slash" severity="secondary" (onClick)="onClearFilters()"></p-button>
+        }
+      </div>
+    } @else {
+      <app-data-table
+        [value]="filteredCategories()"
+        [headers]="categoryHeaders"
+        [loading]="loading()"
+        [rows]="10">
+
+        <ng-template #body let-row>
+          <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+            <!-- Name & Description -->
+            <td class="px-5 py-4">
+              <div class="font-medium text-slate-800">{{ row.name }}</div>
+              <div class="text-xs text-slate-500 mt-0.5">{{ row.description || '—' }}</div>
+            </td>
+
+            <!-- Slug -->
+            <td class="px-5 py-4">
+              <code class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-mono">{{ row.slug }}</code>
+            </td>
+
+            <!-- Status Badge -->
+            <td class="px-5 py-4">
+              <app-status-badge [status]="row.isActive ? 'Active' : 'Suspended'"></app-status-badge>
+            </td>
+
+            <!-- Created -->
+            <td class="px-5 py-4 text-sm text-slate-600">{{ row.createdAt ? (row.createdAt | date:'mediumDate') : '—' }}</td>
+
+            <!-- Updated -->
+            <td class="px-5 py-4 text-sm text-slate-600">{{ row.updatedAt ? (row.updatedAt | date:'mediumDate') : '—' }}</td>
+
+            <!-- Actions -->
+            <td class="px-5 py-4 text-right">
+              <div class="flex items-center justify-end gap-1">
+                <button
+                  pButton
+                  icon="pi pi-pencil"
+                  [text]="true"
+                  severity="secondary"
+                  (click)="onEdit(row)"
+                  pTooltip="Edit Category"
+                  tooltipPosition="top">
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+      </app-data-table>
+    }
+  </section>
+</div>
+
+<!-- Category Form Drawer -->
+<p-drawer
+  [visible]="drawerVisible()"
+  (onHide)="onCloseDrawer()"
+  position="right"
+  [style]="{ width: '480px' }"
+  [modal]="true"
+  [closeOnEscape]="true"
+  [dismissible]="false"
+  [header]="editingCategoryId() ? 'Edit Category' : 'Create Category'">
+
+  <div class="flex flex-col h-full bg-white">
+    <!-- Drawer Subheader -->
+    <div class="px-6 py-3 border-b border-gray-100 bg-gray-50/50">
+      <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">
+        {{ editingCategoryId() ? 'Update category details' : 'Add a new product category' }}
+      </span>
+    </div>
+
+    <!-- Drawer Body -->
+    <div class="flex-1 overflow-y-auto p-6">
+      <form [formGroup]="categoryForm" class="space-y-5">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Name <span class="text-red-500">*</span></label>
+          <input
+            pInputText
+            formControlName="name"
+            (input)="onNameInput()"
+            placeholder="e.g. Health & Wellness"
+            class="w-full text-sm placeholder:text-gray-400" />
+          @if (categoryForm.get('name')?.touched && categoryForm.get('name')?.invalid) {
+            <small class="text-red-500 text-xs">Name is required</small>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Slug <span class="text-red-500">*</span></label>
+          <input
+            pInputText
+            formControlName="slug"
+            placeholder="e.g. health-wellness"
+            class="w-full text-sm placeholder:text-gray-400" />
+          @if (categoryForm.get('slug')?.touched && categoryForm.get('slug')?.invalid) {
+            <small class="text-red-500 text-xs">Slug is required</small>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Description</label>
+          <textarea
+            pTextarea
+            rows="4"
+            formControlName="description"
+            class="w-full resize-none text-sm"
+            placeholder="Optional description">
+          </textarea>
+        </div>
+
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div>
+            <p class="text-sm font-medium text-gray-800">Active Category</p>
+            <p class="text-xs text-gray-500">Inactive categories won't appear in product forms.</p>
+          </div>
+          <p-toggleSwitch formControlName="isActive"></p-toggleSwitch>
+        </div>
+      </form>
+    </div>
+
+    <!-- Drawer Footer -->
+    <div class="px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-end gap-3">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="onCloseDrawer()"></p-button>
+      <p-button
+        [label]="editingCategoryId() ? 'Update Category' : 'Create Category'"
+        icon="pi pi-check"
+        [loading]="isSaving()"
+        (onClick)="onSubmit()">
+      </p-button>
+    </div>
+  </div>
+</p-drawer>
+
+<p-toast position="bottom-right"></p-toast>

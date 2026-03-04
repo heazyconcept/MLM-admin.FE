@@ -2,21 +2,19 @@ import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } 
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { ProductService } from '../../../core/services/product.service';
 import { AdminProductsService } from '../services/admin-products.service';
-import { Product, ProductStatus } from '../../../core/models/product.model';
+import { Product, ProductStatus, PackageCode, ProductPrice, ProductImage } from '../../../core/models/product.model';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
-import { CheckboxModule } from 'primeng/checkbox';
-import { ToggleButtonModule } from 'primeng/togglebutton';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { ProductImagesComponent } from './product-images.component';
 
 @Component({
   selector: 'app-product-edit',
@@ -31,10 +29,10 @@ import { MessageService } from 'primeng/api';
     TextareaModule,
     SelectModule,
     MultiSelectModule,
-    CheckboxModule,
     ToggleSwitchModule,
     TagModule,
-    ToastModule
+    ToastModule,
+    ProductImagesComponent
   ],
   providers: [MessageService],
   templateUrl: './product-edit.component.html',
@@ -45,62 +43,100 @@ export class ProductEditComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
-  private productService = inject(ProductService);
   private adminProducts = inject(AdminProductsService);
   private messageService = inject(MessageService);
 
   productId = signal<string | null>(null);
+  productImages = signal<ProductImage[]>([]);
   isSaving = signal(false);
+  isUpdatingStatus = signal(false);
+  isSettingPrice = signal(false);
   product = computed(() => {
     const id = this.productId();
     const list = this.adminProducts.products();
     return id ? (list.find((p) => p.id === id) ?? null) : null;
   });
   productLoading = signal(true);
+  priceHistory = signal<ProductPrice[]>([]);
+  loadingHistory = signal(false);
 
-  selectedImage = signal<string | null>(null);
+  /** Whether the current price is scheduled (future effectiveFrom).
+   *  A 5-minute buffer avoids false positives from client/server clock drift
+   *  when the backend sets effectiveFrom to "now". */
+  priceIsScheduled = computed(() => {
+    const price = this.product()?.currentPrice;
+    if (!price?.effectiveFrom) return false;
+    const BUFFER_MS = 5 * 60 * 1000; // 5 minutes
+    return new Date(price.effectiveFrom).getTime() > Date.now() + BUFFER_MS;
+  });
+
+  /** Whether the product can be activated right now */
+  canActivate = computed(() => {
+    const p = this.product();
+    if (!p?.currentPrice) return false;
+    return !this.priceIsScheduled();
+  });
 
   categories = this.adminProducts.categories;
-  merchants = this.productService.merchants;
 
   categoryOptions = computed(() => 
-    this.categories().map(c => ({ label: c.name, value: c.name }))
+    this.categories().filter((c) => c.isActive).map(c => ({ label: c.name, value: c.id }))
   );
 
-  eligibilityOptions = [
-    { label: 'Cash', value: 'Cash' },
-    { label: 'Voucher', value: 'Voucher' },
-    { label: 'Autoship', value: 'Autoship' }
+  statusOptions = [
+    { label: 'Draft', value: 'DRAFT' as ProductStatus },
+    { label: 'Active', value: 'ACTIVE' as ProductStatus },
+    { label: 'Inactive', value: 'INACTIVE' as ProductStatus }
+  ];
+
+  packageOptions = [
+    { label: 'Nickel', value: 'NICKEL' as PackageCode },
+    { label: 'Silver', value: 'SILVER' as PackageCode },
+    { label: 'Gold', value: 'GOLD' as PackageCode },
+    { label: 'Platinum', value: 'PLATINUM' as PackageCode },
+    { label: 'Ruby', value: 'RUBY' as PackageCode },
+    { label: 'Diamond', value: 'DIAMOND' as PackageCode }
   ];
 
   productForm = this.fb.group({
     name: ['', [Validators.required]],
     sku: ['', [Validators.required]],
-    category: ['', [Validators.required]],
-    shortDescription: [''],
-    fullDescription: [''],
-    price: [0, [Validators.min(0)]],
-    currency: ['USD'],
-    pv: [0, [Validators.min(0)]],
-    cpv: [0, [Validators.min(0)]],
-    visibility: [true],
-    purchaseEligibility: [[] as string[]],
-    status: ['Draft' as ProductStatus]
+    categoryId: ['', [Validators.required]],
+    description: [''],
+    visibleToAll: [true],
+    visibleToPackages: [[] as PackageCode[]],
+    merchantOnly: [false],
+    status: ['DRAFT' as ProductStatus, [Validators.required]]
+  });
+
+  priceForm = this.fb.group({
+    basePrice: [0, [Validators.required, Validators.min(0.01)]],
+    nonMemberBasePrice: [null as number | null],
+    pv: [0, [Validators.required, Validators.min(0)]],
+    cpv: [0, [Validators.required, Validators.min(0)]],
+    effectiveFrom: ['']
   });
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
+    this.adminProducts.loadCategories().subscribe();
     if (id) {
       this.productId.set(id);
       const p = this.product();
       if (p) {
         this.patchFormFromProduct(p);
+        this.loadPriceHistory(id);
+        this.loadProductImages(id);
         this.productLoading.set(false);
       } else {
         this.adminProducts.loadProducts({ limit: 500, offset: 0 }).subscribe({
           next: () => {
             const found = this.adminProducts.getProductById(id);
-            if (found) this.patchFormFromProduct(found);
+            if (found) {
+              this.patchFormFromProduct(found);
+              this.loadPriceHistory(id);
+              this.loadProductImages(id);
+            }
             this.productLoading.set(false);
           },
           error: () => this.productLoading.set(false)
@@ -115,15 +151,11 @@ export class ProductEditComponent implements OnInit {
     this.productForm.patchValue({
       name: p.name,
       sku: p.sku,
-      category: p.category,
-      shortDescription: p.shortDescription,
-      fullDescription: p.fullDescription,
-      price: p.price,
-      currency: p.currency,
-      pv: p.pv,
-      cpv: p.cpv,
-      visibility: p.visibility,
-      purchaseEligibility: p.purchaseEligibility,
+      categoryId: p.categoryId,
+      description: p.description,
+      visibleToAll: p.visibleToAll,
+      visibleToPackages: p.visibleToPackages,
+      merchantOnly: p.merchantOnly,
       status: p.status
     });
   }
@@ -132,12 +164,44 @@ export class ProductEditComponent implements OnInit {
     if (this.productForm.valid) {
       const id = this.productId();
       if (!id) return;
+      const formValue = this.productForm.value;
+      const status = formValue.status as ProductStatus;
+
+      if (status === 'ACTIVE') {
+        const hasPrice = !!this.product()?.currentPrice;
+        if (!hasPrice) {
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Price Required',
+            detail: 'Set a product price before activating this product.'
+          });
+          return;
+        }
+        if (this.priceIsScheduled()) {
+          const effectiveFrom = this.product()!.currentPrice!.effectiveFrom;
+          const date = new Date(effectiveFrom).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Scheduled Price',
+            detail: `The current price is scheduled for ${date}. The product cannot be activated until that date. Set a price without a future date to activate immediately.`
+          });
+          return;
+        }
+      }
+
       this.isSaving.set(true);
-      const updateData = {
-        ...this.productForm.value,
-        thumbnail: this.selectedImage() || this.product()?.thumbnail
-      } as Partial<Product>;
-      this.adminProducts.updateProduct(id, updateData).subscribe({
+      this.adminProducts.updateProduct(id, {
+        categoryId: formValue.categoryId || undefined,
+        name: formValue.name || undefined,
+        sku: formValue.sku || undefined,
+        description: formValue.description || '',
+        visibleToAll: !!formValue.visibleToAll,
+        visibleToPackages: formValue.visibleToAll ? [] : (formValue.visibleToPackages || []),
+        merchantOnly: !!formValue.merchantOnly,
+        status: status || undefined
+      }).subscribe({
         next: () => {
           this.messageService.add({
             severity: 'success',
@@ -164,43 +228,149 @@ export class ProductEditComponent implements OnInit {
     this.router.navigate(['/admin/products']);
   }
 
-  isMerchantAssigned(merchantId: string): boolean {
-    return this.product()?.assignedMerchants.includes(merchantId) || false;
-  }
+  onApplyStatus(): void {
+    const id = this.productId();
+    if (!id) return;
 
-  toggleMerchant(merchantId: string) {
-    const p = this.product();
-    if (!p) return;
+    const status = this.productForm.get('status')?.value as ProductStatus;
 
-    let updatedMerchants = [...p.assignedMerchants];
-    if (updatedMerchants.includes(merchantId)) {
-      updatedMerchants = updatedMerchants.filter(id => id !== merchantId);
-    } else {
-      updatedMerchants.push(merchantId);
+    if (status === 'ACTIVE') {
+      const hasPrice = !!this.product()?.currentPrice;
+      if (!hasPrice) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Price Required',
+          detail: 'Set a product price before activating this product.'
+        });
+        return;
+      }
+      if (this.priceIsScheduled()) {
+        const effectiveFrom = this.product()!.currentPrice!.effectiveFrom;
+        const date = new Date(effectiveFrom).toLocaleDateString('en-US', {
+          month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Scheduled Price',
+          detail: `The current price is scheduled for ${date}. The product cannot be activated until that date. Set a price without a future date to activate immediately.`
+        });
+        return;
+      }
     }
 
-    this.productService.assignMerchants(p.id, updatedMerchants);
+    this.isUpdatingStatus.set(true);
+    this.adminProducts.updateProductStatus(id, status).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Status Updated',
+          detail: 'Product status updated successfully.'
+        });
+        this.isUpdatingStatus.set(false);
+      },
+      error: (err: any) => {
+        const messages = err?.error?.message;
+        const detail = Array.isArray(messages) ? messages.join('. ') : (messages || 'Could not update product status.');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Status Update Failed',
+          detail
+        });
+        this.isUpdatingStatus.set(false);
+      }
+    });
   }
 
   getStatusSeverity(status: string): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | undefined {
     switch (status) {
-      case 'Active': return 'success';
-      case 'Draft': return 'secondary';
-      case 'Inactive': return 'warn';
-      case 'Archived': return 'danger';
+      case 'ACTIVE': return 'success';
+      case 'DRAFT': return 'secondary';
+      case 'INACTIVE': return 'warn';
       default: return undefined;
     }
   }
 
-  onFileSelect(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.selectedImage.set(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+  onSetPrice(): void {
+    if (this.priceForm.invalid) {
+      this.priceForm.markAllAsTouched();
+      return;
     }
+
+    const id = this.productId();
+    if (!id) return;
+
+    const formValue = this.priceForm.value;
+    const effectiveFromValue = formValue.effectiveFrom?.trim();
+    if (effectiveFromValue) {
+      const effectiveDate = new Date(effectiveFromValue);
+      if (effectiveDate.getTime() < Date.now()) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Invalid Effective Date',
+          detail: 'Effective date cannot be in the past.'
+        });
+        return;
+      }
+    }
+
+    this.isSettingPrice.set(true);
+    this.adminProducts.setProductPrice(id, {
+      basePrice: Number(formValue.basePrice),
+      nonMemberBasePrice: formValue.nonMemberBasePrice == null ? undefined : Number(formValue.nonMemberBasePrice),
+      pv: Number(formValue.pv),
+      cpv: Number(formValue.cpv),
+      effectiveFrom: effectiveFromValue ? new Date(effectiveFromValue).toISOString() : undefined
+    }).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Price Set',
+          detail: 'Product price has been updated.'
+        });
+        this.loadPriceHistory(id);
+        this.isSettingPrice.set(false);
+      },
+      error: (err: any) => {
+        const messages = err?.error?.message;
+        const detail = Array.isArray(messages) ? messages.join('. ') : (messages || 'Could not set product price.');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Price Update Failed',
+          detail
+        });
+        this.isSettingPrice.set(false);
+      }
+    });
+  }
+
+  private loadPriceHistory(productId: string): void {
+    this.loadingHistory.set(true);
+    this.adminProducts.getPriceHistory(productId).subscribe({
+      next: (rows) => {
+        this.priceHistory.set(rows);
+        this.loadingHistory.set(false);
+      },
+      error: () => {
+        this.priceHistory.set([]);
+        this.loadingHistory.set(false);
+      }
+    });
+  }
+
+  /** Load existing images from the product's data. */
+  private loadProductImages(productId: string): void {
+    this.adminProducts.getProductImages(productId).subscribe({
+      next: (imgs) => {
+        if (imgs.length > 0) {
+          this.productImages.set(imgs);
+        } else {
+          // Fallback: use images already present on the product DTO
+          const p = this.product();
+          if (p?.images?.length) {
+            this.productImages.set(p.images);
+          }
+        }
+      }
+    });
   }
 }

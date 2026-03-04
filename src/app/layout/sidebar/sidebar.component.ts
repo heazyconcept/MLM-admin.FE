@@ -65,7 +65,15 @@ export class SidebarComponent {
           ]
         },
         { label: 'Payments', icon: 'pi pi-credit-card', route: '/admin/payments', feature: Feature.Payments },
-        { label: 'Products', icon: 'pi pi-shopping-bag', route: '/admin/products', feature: Feature.Products },
+        {
+          label: 'Products',
+          icon: 'pi pi-shopping-bag',
+          feature: Feature.Products,
+          submenu: [
+            { label: 'Catalog', icon: 'pi pi-list', route: '/admin/products', feature: Feature.Products },
+            { label: 'Categories', icon: 'pi pi-tags', route: '/admin/products/categories', feature: Feature.Products }
+          ]
+        },
         {
           label: 'Orders & Logistics',
           icon: 'pi pi-box',

@@ -16,7 +16,6 @@ import { InputIconModule } from 'primeng/inputicon';
 import { OrderService } from '../../../core/services/order.service';
 import { Order, OrderStatus } from '../../../core/models/order.model';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableTemplateDirective } from '../../../shared/components/data-table/data-table-template.directive';
 import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
 
 @Component({
@@ -32,7 +31,7 @@ import { TableColumn, TableConfig, TableAction } from '../../../shared/component
     IconFieldModule,
     InputIconModule,
     DataTableComponent,
-    DataTableTemplateDirective
+
   ],
   templateUrl: './order-list.component.html',
   styleUrls: ['./order-list.component.css'],
@@ -105,6 +104,8 @@ export class OrderListComponent {
     { field: 'status', header: 'Status' },
     { field: 'createdAt', header: 'Date', width: '120px' }
   ]);
+
+  tableHeaders = computed(() => this.columns().map(c => c.header));
 
   tableConfig = signal<TableConfig>({
     paginator: true,

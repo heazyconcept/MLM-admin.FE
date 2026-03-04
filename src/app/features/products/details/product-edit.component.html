@@ -1,209 +1,307 @@
-<div class="w-full mx-auto p-6 md:p-10 space-y-8">
+<div class="min-h-screen bg-gray-50">
+
   @if (productLoading() && !product()) {
-    <div class="flex items-center justify-center py-16">
-      <i class="pi pi-spin pi-spinner text-3xl text-gray-400"></i>
+    <div class="flex items-center justify-center py-24">
+      <i class="pi pi-spin pi-spinner text-2xl text-gray-300"></i>
     </div>
   } @else if (productId() && !product()) {
-    <div class="bg-amber-50 border border-amber-100 rounded-xl p-6 text-center">
-      <p class="text-amber-800 font-medium">Product not found.</p>
-      <p class="text-sm text-amber-700 mt-1">It may have been removed or you need to open it from the product list.</p>
-      <button pButton label="Back to list" class="p-button-outlined p-button-sm mt-4" (click)="onCancel()"></button>
+    <div class="max-w-lg mx-auto mt-16 p-8 bg-white rounded-xl border border-gray-100 text-center">
+      <p class="text-gray-800 font-medium">Product not found.</p>
+      <p class="text-sm text-gray-500 mt-1">It may have been removed or you need to open it from the product list.</p>
+      <button pButton label="Back to list" class="p-button-outlined p-button-sm mt-5" (click)="onCancel()"></button>
     </div>
   } @else {
-  
-  <!-- Header: Clean & Non-sticky -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-    <div class="flex flex-col gap-1">
+
+  <!-- Page Header -->
+  <div class="bg-white border-b border-gray-100 px-8 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <button (click)="onCancel()" class="group flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-          <i class="pi pi-arrow-left text-lg"></i>
+        <button
+          (click)="onCancel()"
+          class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+          <i class="pi pi-arrow-left"></i>
         </button>
-        <h1 class="text-xl font-semibold text-gray-900 tracking-tight">{{ product()?.name || 'Edit Product' }}</h1>
-        <p-tag [value]="productForm.get('status')?.value || 'Draft'" [severity]="getStatusSeverity(productForm.get('status')?.value || '')" class="ml-1"></p-tag>
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h1 class="text-lg font-semibold text-gray-900">{{ product()?.name || 'Edit Product' }}</h1>
+            <p-tag
+              [value]="productForm.get('status')?.value || 'DRAFT'"
+              [severity]="getStatusSeverity(productForm.get('status')?.value || '')">
+            </p-tag>
+          </div>
+          <p class="text-xs text-gray-400 mt-0.5">Manage product details, pricing, and visibility.</p>
+        </div>
       </div>
-      <p class="text-sm text-gray-500 pl-11">Manage product details, pricing, and availability.</p>
-    </div>
-    
-    <div class="flex items-center gap-3 pl-11 md:pl-0">
-      <button 
-        pButton 
-        label="Discard" 
-        class="p-button-text p-button-secondary text-sm font-medium px-4 h-9 text-gray-600" 
-        (click)="onCancel()">
-      </button>
-      <button 
-        pButton 
-        label="Save Changes" 
-        [loading]="isSaving()"
-        class="p-button-primary text-sm font-medium px-6 h-9 shadow-sm" 
-        (click)="onSave()">
-      </button>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-    <!-- Left Column: Main Form -->
-    <div class="lg:col-span-2 space-y-8">
-      <form [formGroup]="productForm" class="space-y-8">
-        
+  <!-- Body -->
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8 lg:py-10">
+    <div class="layout-grid">
+
+      <!-- Main Column -->
+      <div class="flex-1 min-w-0 space-y-6 lg:space-y-7">
+
         <!-- Basic Information -->
-        <section class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-          <h2 class="text-base font-semibold text-gray-900 mb-5">Basic Information</h2>
-          <div class="space-y-5">
+        <section class="section-card">
+          <div class="section-header">
+            <h2 class="text-sm font-semibold text-gray-900">Basic information</h2>
+          </div>
+          <form [formGroup]="productForm" class="space-y-5">
             <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Product Name <span class="text-red-500">*</span></label>
-              <input pInputText formControlName="name" class="w-full text-sm" placeholder="e.g. Ultra Vitamin C Complex" />
+              <label class="text-sm text-gray-600">Product name <span class="text-red-400">*</span></label>
+              <input pInputText formControlName="name" class="w-full" placeholder="e.g. Ultra Vitamin C Complex" />
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="grid grid-cols-2 gap-5">
               <div class="flex flex-col gap-1.5">
-                <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Category <span class="text-red-500">*</span></label>
-                <p-select [options]="categoryOptions()" formControlName="category" optionLabel="label" optionValue="value" styleClass="w-full text-sm" placeholder="Select category"></p-select>
+                <label class="text-sm text-gray-600">Category <span class="text-red-400">*</span></label>
+                <p-select
+                  [options]="categoryOptions()"
+                  formControlName="categoryId"
+                  optionLabel="label"
+                  optionValue="value"
+                  styleClass="w-full"
+                  placeholder="Select category">
+                </p-select>
               </div>
               <div class="flex flex-col gap-1.5">
-                <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">SKU <span class="text-red-500">*</span></label>
-                <input pInputText formControlName="sku" class="w-full text-sm" placeholder="e.g. VIT-C-1000" />
+                <label class="text-sm text-gray-600">SKU <span class="text-red-400">*</span></label>
+                <input pInputText formControlName="sku" class="w-full" placeholder="e.g. VIT-C-1000" />
               </div>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Short Description</label>
-              <input pInputText formControlName="shortDescription" class="w-full text-sm" placeholder="Brief summary for listings" />
+              <label class="text-sm text-gray-600">Description</label>
+              <textarea pTextarea formControlName="description" rows="4" class="w-full resize-none" placeholder="Describe this product..."></textarea>
             </div>
+          </form>
+        </section>
 
+        <!-- Pricing -->
+        <section class="section-card">
+          <div class="section-header">
+            <h2 class="text-sm font-semibold text-gray-900 mb-1">Pricing</h2>
+            <p class="text-xs text-gray-400">Setting a new price will replace the current active price.</p>
+          </div>
+          <div [formGroup]="priceForm" class="space-y-5">
+            <div class="grid grid-cols-2 gap-5">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm text-gray-600">Base price</label>
+                <p-inputNumber formControlName="basePrice" mode="decimal" [min]="0" styleClass="w-full"></p-inputNumber>
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm text-gray-600">Non-member base price</label>
+                <p-inputNumber formControlName="nonMemberBasePrice" mode="decimal" [min]="0" styleClass="w-full"></p-inputNumber>
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm text-gray-600">PV</label>
+                <p-inputNumber formControlName="pv" mode="decimal" [min]="0" styleClass="w-full"></p-inputNumber>
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm text-gray-600">CPV</label>
+                <p-inputNumber formControlName="cpv" mode="decimal" [min]="0" styleClass="w-full"></p-inputNumber>
+              </div>
+            </div>
             <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Full Description</label>
-              <textarea pTextarea formControlName="fullDescription" rows="5" class="w-full text-sm resize-none" placeholder="Detailed product description..."></textarea>
+              <label class="text-sm text-gray-600">Effective from <span class="text-gray-400">(optional)</span></label>
+              <input pInputText type="datetime-local" formControlName="effectiveFrom" class="w-full text-sm" />
+              <p class="text-xs text-gray-400">Leave empty to activate immediately. A future date schedules the price — the product cannot be set to Active until then.</p>
+            </div>
+            <div>
+              <button pButton label="Set price" [loading]="isSettingPrice()" class="p-button-outlined p-button-sm" (click)="onSetPrice()"></button>
             </div>
           </div>
         </section>
 
-        <hr class="border-gray-100">
-
-        <!-- Pricing & Points -->
-        <section class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-          <h2 class="text-base font-semibold text-gray-900 mb-5">Pricing & Points</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-gray-600">Base Price</label>
-              <p-inputNumber formControlName="price" mode="currency" [currency]="productForm.get('currency')?.value || 'USD'" locale="en-US" styleClass="w-full text-sm" inputStyleClass="w-full text-sm"></p-inputNumber>
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-gray-600">Currency</label>
-              <p-select [options]="[{label: 'USD', value: 'USD'}, {label: 'NGN', value: 'NGN'}]" formControlName="currency" optionLabel="label" optionValue="value" styleClass="w-full text-sm"></p-select>
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-gray-600">PV Value</label>
-              <p-inputNumber formControlName="pv" styleClass="w-full text-sm" inputStyleClass="w-full text-sm"></p-inputNumber>
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-gray-600">CPV Value</label>
-              <p-inputNumber formControlName="cpv" styleClass="w-full text-sm" inputStyleClass="w-full text-sm"></p-inputNumber>
-            </div>
+        <!-- Visibility -->
+        <section class="section-card">
+          <div class="section-header">
+            <h2 class="text-sm font-semibold text-gray-900">Visibility</h2>
           </div>
-        </section>
-
-        <hr class="border-gray-100">
-
-        <!-- Availability -->
-        <section class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-          <h2 class="text-base font-semibold text-gray-900 mb-5">Availability</h2>
-          <div class="space-y-6">
-             <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+          <form [formGroup]="productForm" class="space-y-4">
+            <div class="flex items-center justify-between py-3 border-b border-gray-100">
               <div>
-                <p class="text-sm font-semibold text-gray-900">Catalog Visibility</p>
-                <p class="text-xs text-gray-500">Show this product in the public catalog.</p>
+                <p class="text-sm text-gray-800">Visible to all packages</p>
+                <p class="text-xs text-gray-400 mt-0.5">Turn off to restrict to selected packages only.</p>
               </div>
-              <p-toggleSwitch formControlName="visibility"></p-toggleSwitch>
+              <p-toggleSwitch formControlName="visibleToAll"></p-toggleSwitch>
             </div>
 
-            <div class="flex flex-col gap-2">
-              <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Purchase Eligibility</label>
-              <p-multiSelect [options]="eligibilityOptions" formControlName="purchaseEligibility" optionLabel="label" optionValue="value" display="chip" placeholder="Select eligibility" styleClass="w-full text-sm"></p-multiSelect>
+            @if (!productForm.get('visibleToAll')?.value) {
+              <div class="flex flex-col gap-1.5 pt-1">
+                <label class="text-sm text-gray-600">Visible packages</label>
+                <p-multiSelect
+                  [options]="packageOptions"
+                  formControlName="visibleToPackages"
+                  optionLabel="label"
+                  optionValue="value"
+                  display="chip"
+                  placeholder="Select packages"
+                  styleClass="w-full">
+                </p-multiSelect>
+              </div>
+            }
+
+            <div class="flex items-center justify-between py-3">
+              <div>
+                <p class="text-sm text-gray-800">Merchant only</p>
+                <p class="text-xs text-gray-400 mt-0.5">Restricts availability to merchant channels.</p>
+              </div>
+              <p-toggleSwitch formControlName="merchantOnly"></p-toggleSwitch>
             </div>
-          </div>
+          </form>
         </section>
-      </form>
-    </div>
 
-    <!-- Right Column: Sidebar -->
-    <div class="space-y-8">
-      
-      <!-- Status -->
-      <section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Status</h3>
-        <p-select 
-          [options]="[
-            {label: 'Draft', value: 'Draft'}, 
-            {label: 'Active', value: 'Active'}, 
-            {label: 'Inactive', value: 'Inactive'}, 
-            {label: 'Archived', value: 'Archived'}
-          ]" 
-          [ngModel]="productForm.get('status')?.value"
-          (ngModelChange)="productForm.get('status')?.setValue($event)"
-          optionLabel="label" 
-          optionValue="value" 
-          styleClass="w-full text-sm">
-        </p-select>
-      </section>
+        <!-- Status -->
+        <section class="section-card">
+          <div class="section-header">
+            <h2 class="text-sm font-semibold text-gray-900 mb-1">Status</h2>
+            <p class="text-xs text-gray-400">Controls whether this product is publicly available.</p>
+          </div>
+          <form [formGroup]="productForm" class="space-y-3">
+            <p-select
+              [options]="statusOptions"
+              formControlName="status"
+              optionLabel="label"
+              optionValue="value"
+              styleClass="w-64">
+            </p-select>
 
-      <!-- Media -->
-      <section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Product Image</h3>
-        <input type="file" #fileInput hidden accept="image/*" (change)="onFileSelect($event)">
-        <div (click)="fileInput.click()" class="aspect-square bg-gray-50 rounded-lg border border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 gap-2 cursor-pointer hover:bg-gray-100 hover:border-gray-300 transition-all overflow-hidden relative group">
-          @if (selectedImage() || product()?.thumbnail) {
-            <img [src]="selectedImage() || product()?.thumbnail" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-               <span class="text-white text-xs font-medium">Change Image</span>
-            </div>
-          } @else {
-            <div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center">
-              <i class="pi pi-image text-gray-400"></i>
-            </div>
-            <span class="text-xs font-medium text-gray-500">Upload Image</span>
-          }
-        </div>
-      </section>
-
-      <!-- Merchants -->
-      <section class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Merchants</h3>
-        <div class="space-y-1 max-h-60 overflow-y-auto">
-          @for (merchant of merchants(); track merchant.id) {
-            <div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors">
-              <div class="flex flex-col">
-                <span class="text-sm font-medium text-gray-700">{{ merchant.name }}</span>
-                @if (merchant.isDefaultPickup) {
-                  <span class="text-[9px] text-green-600 font-bold uppercase tracking-wide">Default</span>
-                }
+            @if (productForm.get('status')?.value === 'ACTIVE' && !canActivate()) {
+              <div class="flex items-start gap-2.5 p-3.5 bg-amber-50 border border-amber-100 rounded-lg w-fit">
+                <i class="pi pi-exclamation-triangle text-amber-500 mt-0.5 text-sm"></i>
+                <div class="text-xs text-amber-800">
+                  @if (!product()?.currentPrice) {
+                    <p class="font-medium">Price required</p>
+                    <p class="mt-0.5 text-amber-700">Set a price above before activating this product.</p>
+                  } @else if (priceIsScheduled()) {
+                    <p class="font-medium">Price is scheduled</p>
+                    <p class="mt-0.5 text-amber-700">Activates on {{ product()?.currentPrice?.effectiveFrom | date:'medium' }}. To activate now, set a price without an effective date.</p>
+                  }
+                </div>
               </div>
-              <p-checkbox 
-                [ngModel]="isMerchantAssigned(merchant.id)" 
-                (ngModelChange)="toggleMerchant(merchant.id)"
-                [binary]="true">
-              </p-checkbox>
-            </div>
-          }
-        </div>
-      </section>
+            }
+          </form>
+        </section>
 
-       <!-- Meta -->
-      <div class="px-5 py-4 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
-        <div class="flex justify-between text-[10px]">
-          <span class="text-gray-400 font-medium uppercase">Created</span>
-          <span class="font-mono text-gray-600">{{ product()?.createdAt | date:'mediumDate' }}</span>
-        </div>
-        <div class="flex justify-between text-[10px]">
-          <span class="text-gray-400 font-medium uppercase">Updated</span>
-          <span class="font-mono text-gray-600">{{ product()?.updatedAt | date:'mediumDate' }}</span>
-        </div>
-        <div class="flex justify-between text-[10px]">
-          <span class="text-gray-400 font-medium uppercase">By</span>
-          <span class="font-mono text-gray-600">{{ product()?.createdBy }}</span>
-        </div>
+        <!-- Product Images -->
+        @if (productId()) {
+          <section class="section-card">
+            <div class="section-header">
+              <h2 class="text-sm font-semibold text-gray-900">Images</h2>
+            </div>
+            <app-product-images [productId]="productId()!" [initialImages]="productImages()"></app-product-images>
+          </section>
+        }
+
+        <div class="pb-10"></div>
       </div>
 
+      <!-- Sticky Sidebar -->
+      <div class="w-full lg:w-56 xl:w-60 shrink-0 sticky top-6 space-y-4">
+
+        <!-- Actions -->
+        <div class="sidebar-card space-y-2">
+          <button
+            pButton
+            label="Save changes"
+            [loading]="isSaving()"
+            class="w-full p-button-primary"
+            (click)="onSave()">
+          </button>
+          <button
+            pButton
+            label="Discard"
+            class="w-full p-button-text p-button-secondary text-gray-500"
+            (click)="onCancel()">
+          </button>
+        </div>
+
+        <!-- Current Price -->
+        <div class="sidebar-card">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-gray-400">Current price</p>
+            @if (product()?.currentPrice) {
+              @if (priceIsScheduled()) {
+                <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>Scheduled
+                </span>
+              } @else {
+                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Active
+                </span>
+              }
+            }
+          </div>
+
+          @if (product()?.currentPrice) {
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Base</span>
+                <span class="font-medium text-gray-900">{{ product()?.currentPrice?.basePrice | number:'1.2-2' }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">PV</span>
+                <span class="text-gray-700">{{ product()?.currentPrice?.pv }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">CPV</span>
+                <span class="text-gray-700">{{ product()?.currentPrice?.cpv }}</span>
+              </div>
+              @if (priceIsScheduled()) {
+                <p class="text-xs text-amber-600 pt-1">
+                  <i class="pi pi-clock mr-1"></i>Activates {{ product()?.currentPrice?.effectiveFrom | date:'mediumDate' }}
+                </p>
+              }
+            </div>
+          } @else {
+            <p class="text-sm text-gray-400">No price set yet.</p>
+          }
+        </div>
+
+        <!-- Price History -->
+        <div class="sidebar-card">
+          <p class="text-xs font-medium text-gray-400 mb-3">Price history</p>
+          @if (loadingHistory()) {
+            <p class="text-xs text-gray-400">Loading...</p>
+          } @else if (!priceHistory().length) {
+            <p class="text-sm text-gray-400">No history yet.</p>
+          } @else {
+            <div class="space-y-2.5">
+              @for (entry of priceHistory(); track entry.id) {
+                <div class="py-2 border-b border-gray-100 last:border-0">
+                  <div class="flex justify-between text-sm">
+                    <span class="font-medium text-gray-800">{{ entry.basePrice | number:'1.2-2' }}</span>
+                    <span class="text-gray-400 text-xs">{{ entry.effectiveFrom | date:'mediumDate' }}</span>
+                  </div>
+                  <div class="text-xs text-gray-400 mt-0.5">PV {{ entry.pv }} · CPV {{ entry.cpv }}</div>
+                  @if (!entry.effectiveTo) {
+                    <span class="text-xs text-emerald-600">Current</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Metadata -->
+        <div class="sidebar-card space-y-2">
+          <div class="flex justify-between">
+            <span class="text-xs text-gray-400">Created</span>
+            <span class="text-xs text-gray-600">{{ product()?.createdAt | date:'mediumDate' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-xs text-gray-400">Updated</span>
+            <span class="text-xs text-gray-600">{{ product()?.updatedAt | date:'mediumDate' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-xs text-gray-400">By</span>
+            <span class="text-xs text-gray-600">{{ product()?.createdBy || 'System' }}</span>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
   }

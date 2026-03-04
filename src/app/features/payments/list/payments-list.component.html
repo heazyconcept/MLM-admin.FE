@@ -121,24 +121,27 @@
 
   <!-- Table Section -->
   <app-data-table
-    [data]="filteredPayments()"
-    [columns]="columns()"
-    [config]="tableConfig()"
-    [actions]="actions()"
+    [value]="filteredPayments()"
+    [headers]="tableHeaders()"
     [loading]="tableLoading()">
     
-    <!-- Custom Purpose Template -->
-    <ng-template appDataTableTemplate="purpose" let-row>
-      <span 
-        class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
-        [class]="getPurposeClass(row.purpose)">
-        {{ row.purpose }}
-      </span>
-    </ng-template>
+    <!-- Row Template -->
+    <ng-template pTemplate="body" let-row>
+      <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+        <!-- Purpose -->
+        <td class="px-5 py-4">
+          <span 
+            class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
+            [class]="getPurposeClass(row.purpose)">
+            {{ row.purpose }}
+          </span>
+        </td>
 
-    <!-- Custom Status Template -->
-    <ng-template appDataTableTemplate="status" let-row>
-      <app-status-badge [status]="row.status"></app-status-badge>
+        <!-- Status -->
+        <td class="px-5 py-4">
+          <app-status-badge [status]="row.status"></app-status-badge>
+        </td>
+      </tr>
     </ng-template>
   </app-data-table>
 

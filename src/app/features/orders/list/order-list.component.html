@@ -51,40 +51,43 @@
   <!-- Orders Table -->
   <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
     <app-data-table
-      [data]="filteredOrders()"
-      [columns]="columns()"
-      [config]="tableConfig()"
-      [actions]="actions()">
+      [value]="filteredOrders()"
+      [headers]="tableHeaders()">
 
-      <!-- User Column Template -->
-      <ng-template appDataTableTemplate="user" let-row>
-        <div class="flex flex-col">
-          <span class="font-medium text-slate-800">{{ row.user.name }}</span>
-          <span class="text-xs text-slate-500">{{ row.user.email }}</span>
-        </div>
-      </ng-template>
+      <!-- Row Template -->
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+          <!-- User Column -->
+          <td class="px-5 py-4">
+            <div class="flex flex-col">
+              <span class="font-medium text-slate-800">{{ row.user.name }}</span>
+              <span class="text-xs text-slate-500">{{ row.user.email }}</span>
+            </div>
+          </td>
 
-      <!-- Total Amount Template -->
-      <ng-template appDataTableTemplate="totalAmount" let-row>
-        <span class="font-semibold text-slate-900">{{ row.totalAmount | currency:'NGN':'symbol-narrow' }}</span>
-      </ng-template>
+          <!-- Total Amount -->
+          <td class="px-5 py-4">
+            <span class="font-semibold text-slate-900">{{ row.totalAmount | currency:'NGN':'symbol-narrow' }}</span>
+          </td>
 
-      <!-- Status Template -->
-      <ng-template appDataTableTemplate="status" let-row>
-         <p-tag [value]="row.status" [severity]="getStatusSeverity(row.status)"></p-tag>
-      </ng-template>
+          <!-- Status -->
+          <td class="px-5 py-4">
+             <p-tag [value]="row.status" [severity]="getStatusSeverity(row.status)"></p-tag>
+          </td>
 
-      <!-- Fulfilment Template -->
-      <ng-template appDataTableTemplate="fulfilmentType" let-row>
-        <div class="flex items-center gap-2">
-          <i class="pi" [class.pi-car]="row.fulfilmentType === 'Delivery'" [class.pi-building]="row.fulfilmentType === 'Pickup'"></i>
-          <span class="text-sm text-slate-700">{{ row.fulfilmentType }}</span>
-        </div>
-      </ng-template>
-        
-      <!-- Date Template -->
-      <ng-template appDataTableTemplate="createdAt" let-row>
-         <span class="text-sm text-slate-600">{{ row.createdAt | date:'mediumDate' }}</span>
+          <!-- Fulfilment Type -->
+          <td class="px-5 py-4">
+            <div class="flex items-center gap-2">
+              <i class="pi" [class.pi-car]="row.fulfilmentType === 'Delivery'" [class.pi-building]="row.fulfilmentType === 'Pickup'"></i>
+              <span class="text-sm text-slate-700">{{ row.fulfilmentType }}</span>
+            </div>
+          </td>
+          
+          <!-- Date -->
+          <td class="px-5 py-4">
+             <span class="text-sm text-slate-600">{{ row.createdAt | date:'mediumDate' }}</span>
+          </td>
+        </tr>
       </ng-template>
 
     </app-data-table>

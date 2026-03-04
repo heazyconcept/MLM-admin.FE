@@ -1,8 +1,7 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ProductService } from '../../../core/services/product.service';
 import { AdminProductsService } from '../services/admin-products.service';
-import { Product } from '../../../core/models/product.model';
+import { Product, ProductStatus } from '../../../core/models/product.model';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -15,10 +14,10 @@ import { Router } from '@angular/router';
 import { ProductDrawerComponent } from '../modals/product-drawer.component';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableTemplateDirective } from '../../../shared/components/data-table/data-table-template.directive';
-import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
+import { TableConfig } from '../../../shared/components/data-table/data-table.types';
 
 @Component({
   selector: 'app-product-list',
@@ -34,9 +33,8 @@ import { TableColumn, TableConfig, TableAction } from '../../../shared/component
     FormsModule,
     ProductDrawerComponent,
     ToastModule,
-    ToastModule,
+    TooltipModule,
     DataTableComponent,
-    DataTableTemplateDirective,
     ConfirmDialogModule
   ],
   providers: [MessageService, ConfirmationService],
@@ -45,7 +43,6 @@ import { TableColumn, TableConfig, TableAction } from '../../../shared/component
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductListComponent implements OnInit {
-  private productService = inject(ProductService);
   private adminProducts = inject(AdminProductsService);
   private router = inject(Router);
   private messageService = inject(MessageService);
@@ -60,20 +57,19 @@ export class ProductListComponent implements OnInit {
   
   searchQuery = signal('');
   selectedCategory = signal<string | null>(null);
-  selectedStatus = signal<string | null>(null);
+  selectedStatus = signal<ProductStatus | null>(null);
   showDrawer = signal(false);
 
   statusOptions = [
     { label: 'All Statuses', value: null },
-    { label: 'Draft', value: 'Draft' },
-    { label: 'Active', value: 'Active' },
-    { label: 'Inactive', value: 'Inactive' },
-    { label: 'Archived', value: 'Archived' }
+    { label: 'Draft', value: 'DRAFT' as ProductStatus },
+    { label: 'Active', value: 'ACTIVE' as ProductStatus },
+    { label: 'Inactive', value: 'INACTIVE' as ProductStatus }
   ];
 
   categoryOptions = computed(() => [
     { label: 'All Categories', value: null },
-    ...this.categories().map(c => ({ label: c.name, value: c.name }))
+    ...this.categories().map(c => ({ label: c.name, value: c.id }))
   ]);
 
   filteredProducts = computed(() => {
@@ -90,7 +86,7 @@ export class ProductListComponent implements OnInit {
     }
 
     if (cat) {
-      list = list.filter(p => p.category === cat);
+      list = list.filter(p => p.categoryId === cat);
     }
 
     if (status) {
@@ -110,43 +106,6 @@ export class ProductListComponent implements OnInit {
     this.adminProducts.loadProducts({ limit: 100, offset: 0 }).subscribe();
   }
 
-  // Table configurations
-  columns = signal<TableColumn<Product>[]>([
-    { 
-      field: 'thumbnail', 
-      header: 'Image', 
-      width: '80px', 
-      align: 'center' 
-    },
-    { 
-      field: 'name', 
-      header: 'Product Info'
-    },
-    { 
-      field: 'category', 
-      header: 'Category', 
-      width: '150px',
-      class: 'text-slate-600'
-    },
-    { 
-      field: 'price', 
-      header: 'Price / PV', 
-      width: '150px'
-    },
-    { 
-      field: 'status', 
-      header: 'Status', 
-      width: '120px', 
-      align: 'center'
-    },
-    { 
-      field: 'assignedMerchants', 
-      header: 'Merchants', 
-      width: '100px', 
-      align: 'center'
-    }
-  ]);
-
   tableConfig = signal<TableConfig>({
     paginator: true,
     rows: 10,
@@ -158,29 +117,17 @@ export class ProductListComponent implements OnInit {
     size: 'small'
   });
 
-  actions = signal<TableAction<Product>[]>([
-    {
-      icon: 'pi pi-eye',
-      tooltip: 'View Details',
-      command: (product) => this.onViewProduct(product.id),
-      severity: 'secondary'
-    },
-    {
-      icon: 'pi pi-pencil',
-      tooltip: 'Edit Product',
-      command: (product) => this.onEditProduct(product.id),
-      severity: 'success'
-    },
-    {
-      icon: 'pi pi-trash',
-      tooltip: 'Delete Product',
-      command: (product) => this.onDeleteProduct(product),
-      severity: 'danger'
-    }
-  ]);
+  tableHeaders = signal<string[]>(['Image', 'Product Info', 'Category', 'Price / PV', 'Status', 'Visibility', 'Actions']);
+
+  tableRows = signal(10);
+  tableRowsPerPageOptions = signal([10, 25, 50]);
 
   onAddProduct() {
     this.showDrawer.set(true);
+  }
+
+  onManageCategories() {
+    this.router.navigate(['/admin/products/categories']);
   }
 
   onEditProduct(id: string) {
@@ -194,20 +141,20 @@ export class ProductListComponent implements OnInit {
 
   onDeleteProduct(product: Product) {
     this.confirmationService.confirm({
-      message: `Archive "${product.name}"? (Product will be marked Archived; API does not support hard delete.)`,
-      header: 'Archive Product',
+      message: `Set "${product.name}" to inactive?`,
+      header: 'Deactivate Product',
       icon: 'pi pi-exclamation-triangle',
       acceptButtonStyleClass: 'p-button-danger p-button-text',
       rejectButtonStyleClass: 'p-button-text p-button-text',
       acceptIcon: 'none',
       rejectIcon: 'none',
       accept: () => {
-        this.adminProducts.updateProductStatus(product.id, 'Archived').subscribe({
+        this.adminProducts.updateProductStatus(product.id, 'INACTIVE').subscribe({
           next: () => {
             this.messageService.add({
               severity: 'success',
-              summary: 'Archived',
-              detail: 'Product archived successfully'
+              summary: 'Updated',
+              detail: 'Product set to inactive successfully'
             });
             this.adminProducts.loadProducts({ limit: 100, offset: 0 }).subscribe();
           },
@@ -215,7 +162,7 @@ export class ProductListComponent implements OnInit {
             this.messageService.add({
               severity: 'error',
               summary: 'Failed',
-              detail: 'Could not archive product.'
+              detail: 'Could not update product status.'
             });
           }
         });
@@ -225,10 +172,9 @@ export class ProductListComponent implements OnInit {
 
   getStatusSeverity(status: string): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | undefined {
     switch (status) {
-      case 'Active': return 'success';
-      case 'Draft': return 'secondary';
-      case 'Inactive': return 'warn';
-      case 'Archived': return 'danger';
+      case 'ACTIVE': return 'success';
+      case 'DRAFT': return 'secondary';
+      case 'INACTIVE': return 'warn';
       default: return undefined;
     }
   }

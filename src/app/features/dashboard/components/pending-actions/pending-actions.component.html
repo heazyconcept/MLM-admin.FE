@@ -50,13 +50,16 @@
     </div>
 
     <app-data-table
-      [data]="modalItems()"
-      [columns]="columns()"
-      [config]="tableConfig()">
+      [value]="modalItems()"
+      [headers]="tableHeaders()">
       
-      <!-- Custom Status Template -->
-      <ng-template appDataTableTemplate="status" let-row>
-        <p-tag [value]="row.status" [severity]="getStatusSeverity(row.status)" [rounded]="true"></p-tag>
+      <!-- Row Template -->
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+          <td class="px-5 py-4">
+            <p-tag [value]="row.status" [severity]="getStatusSeverity(row.status)" [rounded]="true"></p-tag>
+          </td>
+        </tr>
       </ng-template>
 
     </app-data-table>

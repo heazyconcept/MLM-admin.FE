@@ -6,7 +6,6 @@ import { PermissionService } from '../../../core/services/permission.service';
 import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableTemplateDirective } from '../../../shared/components/data-table/data-table-template.directive';
 import { TableColumn, TableConfig } from '../../../shared/components/data-table/data-table.types';
 import { FundsAdjustmentModalComponent } from '../modals/funds-adjustment-modal.component';
 import { WalletActionModalComponent } from '../modals/wallet-action-modal.component';
@@ -17,7 +16,7 @@ import { ToastModule } from 'primeng/toast';
 
 @Component({
   selector: 'app-wallet-details',
-  imports: [CommonModule, RouterModule, InfoBannerComponent, DataTableComponent, DataTableTemplateDirective, FundsAdjustmentModalComponent, WalletActionModalComponent, ButtonModule, TagModule, ToastModule],
+  imports: [CommonModule, RouterModule, InfoBannerComponent, DataTableComponent, FundsAdjustmentModalComponent, WalletActionModalComponent, ButtonModule, TagModule, ToastModule],
   providers: [MessageService],
   templateUrl: './wallet-details.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -74,6 +73,8 @@ export class WalletDetailsComponent {
       })
     }
   ]);
+
+  tableHeaders = computed(() => this.columns().map(c => c.header));
 
   // Modal state
   showAdjustmentModal = signal(false);

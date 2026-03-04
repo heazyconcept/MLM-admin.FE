@@ -1,14 +1,17 @@
-import { Component, inject, signal, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { InputNumberModule } from 'primeng/inputnumber';
+import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { AdminProductsService } from '../services/admin-products.service';
 import { MessageService } from 'primeng/api';
+import { PackageCode, ProductStatus } from '../../../core/models/product.model';
 
 @Component({
   selector: 'app-product-drawer',
@@ -17,8 +20,10 @@ import { MessageService } from 'primeng/api';
     DrawerModule,
     ButtonModule,
     InputTextModule,
-    InputNumberModule,
+    TextareaModule,
     SelectModule,
+    MultiSelectModule,
+    ToggleSwitchModule,
     FormsModule,
     ReactiveFormsModule
   ],
@@ -38,32 +43,33 @@ export class ProductDrawerComponent {
 
   categories = this.adminProducts.categories;
   categoryOptions = computed(() => 
-    this.categories().map(c => ({ label: c.name, value: c.name }))
+    this.categories().filter((c) => c.isActive).map(c => ({ label: c.name, value: c.id }))
   );
+
+  packageOptions = [
+    { label: 'Nickel', value: 'NICKEL' as PackageCode },
+    { label: 'Silver', value: 'SILVER' as PackageCode },
+    { label: 'Gold', value: 'GOLD' as PackageCode },
+    { label: 'Platinum', value: 'PLATINUM' as PackageCode },
+    { label: 'Ruby', value: 'RUBY' as PackageCode },
+    { label: 'Diamond', value: 'DIAMOND' as PackageCode }
+  ];
+
+  statusOptions = [
+    { label: 'Draft', value: 'DRAFT' as ProductStatus },
+    { label: 'Inactive', value: 'INACTIVE' as ProductStatus }
+  ];
 
   productForm = this.fb.group({
     name: ['', [Validators.required]],
-    category: ['', [Validators.required]],
-    price: [0, [Validators.min(0)]],
-    currency: ['USD'],
-    pv: [0, [Validators.min(0)]],
-    cpv: [0, [Validators.min(0)]],
-    sku: ['']
+    categoryId: ['', [Validators.required]],
+    description: [''],
+    sku: ['', [Validators.required]],
+    status: ['DRAFT' as ProductStatus, [Validators.required]],
+    visibleToAll: [true],
+    visibleToPackages: [[] as PackageCode[]],
+    merchantOnly: [false]
   });
-
-  selectedImage = signal<string | null>(null);
-
-  onFileSelect(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.selectedImage.set(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  }
 
   onHide() {
     this.visibleChange.emit(false);
@@ -72,17 +78,16 @@ export class ProductDrawerComponent {
   onSave() {
     if (this.productForm.valid) {
       const formValue = this.productForm.value;
+      const visibleToAll = !!formValue.visibleToAll;
       this.adminProducts.createProduct({
         name: formValue.name!,
-        category: formValue.category!,
-        price: formValue.price!,
-        currency: formValue.currency as 'USD' | 'NGN',
-        pv: formValue.pv!,
-        cpv: formValue.cpv!,
-        sku: formValue.sku || `PROD-${Date.now()}`,
-        status: 'Active',
-        images: this.selectedImage() ? [this.selectedImage()!] : [],
-        thumbnail: this.selectedImage() || ''
+        categoryId: formValue.categoryId!,
+        description: formValue.description || '',
+        sku: formValue.sku!,
+        status: formValue.status || 'DRAFT',
+        visibleToAll,
+        visibleToPackages: visibleToAll ? [] : (formValue.visibleToPackages || []),
+        merchantOnly: !!formValue.merchantOnly
       }).subscribe({
         next: () => {
           this.messageService.add({
@@ -92,12 +97,11 @@ export class ProductDrawerComponent {
           });
           this.saved.emit();
           this.productForm.reset({
-            price: 0,
-            currency: 'USD',
-            pv: 0,
-            cpv: 0
+            status: 'DRAFT',
+            visibleToAll: true,
+            visibleToPackages: [],
+            merchantOnly: false
           });
-          this.selectedImage.set(null);
           this.onHide();
           this.router.navigate(['/admin/products']);
         },
