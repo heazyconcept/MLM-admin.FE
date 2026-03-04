@@ -172,6 +172,7 @@ export class AdminProductsService {
     body: {
       categoryId?: string;
       name?: string;
+      sku?: string;
       description?: string;
       status?: ProductStatus;
       visibleToAll?: boolean;
