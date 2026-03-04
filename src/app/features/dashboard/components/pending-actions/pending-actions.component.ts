@@ -6,7 +6,6 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { DataTableTemplateDirective } from '../../../../shared/components/data-table/data-table-template.directive';
 import { TableColumn, TableConfig } from '../../../../shared/components/data-table/data-table.types';
 
 export interface PendingAction {
@@ -30,7 +29,7 @@ export interface PendingItem {
 
 @Component({
   selector: 'app-pending-actions',
-  imports: [CommonModule, RouterModule, DialogModule, TableModule, TagModule, ButtonModule, DataTableComponent, DataTableTemplateDirective],
+  imports: [CommonModule, RouterModule, DialogModule, TableModule, TagModule, ButtonModule, DataTableComponent],
   templateUrl: './pending-actions.component.html',
   styleUrls: ['./pending-actions.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

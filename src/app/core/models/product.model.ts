@@ -1,34 +1,58 @@
-export type ProductStatus = 'Draft' | 'Active' | 'Inactive' | 'Archived';
-export type PurchaseEligibility = 'Cash' | 'Voucher' | 'Autoship';
+export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'INACTIVE';
+export type PackageCode = 'NICKEL' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'RUBY' | 'DIAMOND';
 export type Currency = 'USD' | 'NGN';
+
+export interface ProductPrice {
+  id: string;
+  productId: string;
+  basePrice: number;
+  nonMemberBasePrice?: number | null;
+  pv: number;
+  cpv: number;
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+  createdAt: string;
+}
+
+export interface ProductImage {
+  id: string;
+  productId: string;
+  url: string;
+  altText?: string | null;
+  position: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface Product {
   id: string;
+  categoryId: string;
+  categoryName: string;
   name: string;
+  description: string;
   sku: string;
-  category: string;
-  shortDescription: string;
-  fullDescription: string;
-  price: number;
-  currency: Currency;
-  pv: number;
-  cpv: number;
-  images: string[];
-  thumbnail: string;
   status: ProductStatus;
-  visibility: boolean;
-  purchaseEligibility: PurchaseEligibility[];
-  packageRestrictions: string[];
-  assignedMerchants: string[]; // Merchant IDs
+  visibleToAll: boolean;
+  visibleToPackages: PackageCode[];
+  merchantOnly: boolean;
+  currentPrice: ProductPrice | null;
   createdAt: Date;
   updatedAt: Date;
-  createdBy: string;
+
+  images?: ProductImage[];
+  thumbnail?: string;
+  assignedMerchants?: string[];
+  createdBy?: string;
 }
 
 export interface Category {
   id: string;
   name: string;
+  slug: string;
   description?: string;
+  isActive: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Merchant {

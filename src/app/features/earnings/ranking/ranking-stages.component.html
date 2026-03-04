@@ -6,54 +6,55 @@
          </div>
       </div>
       
-      <app-data-table
-        [data]="ranks()"
-        [columns]="columns()"
-        [config]="tableConfig()"
-        [actions]="actions()">
+      <app-data-table>
 
         <!-- Level Template -->
-        <ng-template appDataTableTemplate="level" let-row>
-          <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 font-bold text-sm mx-auto">
-            {{ row.level }}
-          </span>
-        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+            <!-- Level -->
+            <td class="px-5 py-4">
+              <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 font-bold text-sm mx-auto">
+                {{ row.level }}
+              </span>
+            </td>
 
-        <!-- Rank Name Template -->
-        <ng-template appDataTableTemplate="name" let-row>
-          <span class="font-bold text-gray-900">{{ row.name }}</span>
-        </ng-template>
+            <!-- Rank Name -->
+            <td class="px-5 py-4">
+              <span class="font-bold text-gray-900">{{ row.name }}</span>
+            </td>
 
-        <!-- Requirements Template -->
-        <ng-template appDataTableTemplate="requirements" let-row>
-          <div class="space-y-1 text-sm">
-            <div class="flex items-center gap-2">
-               <span class="w-20 text-gray-500 text-xs uppercase font-bold">Personal</span>
-               <span class="font-medium text-gray-900">{{ row.requirements.personalSales | currency }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-               <span class="w-20 text-gray-500 text-xs uppercase font-bold">Team</span>
-               <span class="font-medium text-gray-900">{{ row.requirements.teamSales | currency }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-               <span class="w-20 text-gray-500 text-xs uppercase font-bold">Directs</span>
-               <span class="font-medium text-gray-900">{{ row.requirements.directReferrals }} Users</span>
-            </div>
-          </div>
-        </ng-template>
+            <!-- Requirements -->
+            <td class="px-5 py-4">
+              <div class="space-y-1 text-sm">
+                <div class="flex items-center gap-2">
+                   <span class="w-20 text-gray-500 text-xs uppercase font-bold">Personal</span>
+                   <span class="font-medium text-gray-900">{{ row.requirements.personalSales | currency }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                   <span class="w-20 text-gray-500 text-xs uppercase font-bold">Team</span>
+                   <span class="font-medium text-gray-900">{{ row.requirements.teamSales | currency }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                   <span class="w-20 text-gray-500 text-xs uppercase font-bold">Directs</span>
+                   <span class="font-medium text-gray-900">{{ row.requirements.directReferrals }} Users</span>
+                </div>
+              </div>
+            </td>
 
-        <!-- Benefits Template -->
-        <ng-template appDataTableTemplate="benefits" let-row>
-          <div class="space-y-1 text-sm">
-            <div class="flex items-center gap-2">
-               <span class="w-16 text-gray-500 text-xs uppercase font-bold">Bonus</span>
-               <span class="font-medium text-mlm-success">{{ row.benefits.bonus | currency }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-               <span class="w-16 text-gray-500 text-xs uppercase font-bold">Cap</span>
-               <span class="font-medium text-gray-900">{{ row.benefits.capLimit | currency }}</span>
-            </div>
-          </div>
+            <!-- Benefits -->
+            <td class="px-5 py-4">
+              <div class="space-y-1 text-sm">
+                <div class="flex items-center gap-2">
+                   <span class="w-16 text-gray-500 text-xs uppercase font-bold">Bonus</span>
+                   <span class="font-medium text-mlm-success">{{ row.benefits.bonus | currency }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                   <span class="w-16 text-gray-500 text-xs uppercase font-bold">Cap</span>
+                   <span class="font-medium text-gray-900">{{ row.benefits.capLimit | currency }}</span>
+                </div>
+              </div>
+            </td>
+          </tr>
         </ng-template>
 
       </app-data-table>

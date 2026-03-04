@@ -106,12 +106,7 @@
 
       <!-- Data table -->
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <app-data-table
-          [data]="filteredReports()"
-          [columns]="reportColumns()"
-          [config]="tableConfig"
-          emptyMessage="No report data"
-          emptyIcon="pi pi-file">
+        <app-data-table>
         </app-data-table>
       </div>
     </div>

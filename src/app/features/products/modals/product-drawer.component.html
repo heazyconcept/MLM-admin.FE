@@ -8,30 +8,14 @@
   [dismissible]="false"
   header="Create Product">
 
-  <!-- Custom Header -->
-  <!-- <ng-template pTemplate="header">
-    <div class="flex items-center justify-between w-full">
-      <h2 class="text-lg font-semibold text-gray-900">Create Product</h2>
-    </div>
-  </ng-template> -->
-
   <div class="flex flex-col h-full bg-white">
-    <!-- Status Banner (Subtle) -->
-    <div class="px-6 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-      <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">New Product Entry</span>
-      <div class="flex items-center gap-2">
-        <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Status</span>
-        <span class="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wide">Active</span>
-      </div>
+    <div class="px-6 py-3 border-b border-gray-100 bg-gray-50/50">
+      <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Create product in admin catalog</span>
     </div>
 
-    <!-- Body -->
     <div class="flex-1 overflow-y-auto p-6 space-y-8">
       <form [formGroup]="productForm">
-        
-        <!-- Basic Info Section -->
         <div class="space-y-5">
-           <!-- Name -->
            <div class="flex flex-col gap-1.5">
             <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Product Name <span class="text-red-500">*</span></label>
             <input 
@@ -44,125 +28,103 @@
             }
           </div>
 
-          <!-- Category -->
           <div class="flex flex-col gap-1.5">
             <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Category <span class="text-red-500">*</span></label>
             <p-select 
               [options]="categoryOptions()" 
-              formControlName="category" 
+              formControlName="categoryId" 
               optionLabel="label" 
               optionValue="value"
               placeholder="Select Category"
               styleClass="w-full text-sm"
               appendTo="body">
             </p-select>
-            @if (productForm.get('category')?.touched && productForm.get('category')?.invalid) {
+            @if (productForm.get('categoryId')?.touched && productForm.get('categoryId')?.invalid) {
               <small class="text-red-500 text-xs">Category is required</small>
             }
           </div>
 
-          <!-- SKU -->
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">SKU <span class="text-gray-400 font-normal normal-case">(Optional)</span></label>
+            <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">SKU <span class="text-red-500">*</span></label>
             <input 
               pInputText 
               formControlName="sku" 
-              placeholder="Auto-generated if empty" 
+              placeholder="e.g. VIT-C-1000" 
               class="w-full text-sm placeholder:text-gray-400" />
+            @if (productForm.get('sku')?.touched && productForm.get('sku')?.invalid) {
+              <small class="text-red-500 text-xs">SKU is required</small>
+            }
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Description</label>
+            <textarea
+              pTextarea
+              formControlName="description"
+              rows="4"
+              placeholder="Optional product description"
+              class="w-full text-sm resize-none">
+            </textarea>
           </div>
         </div>
 
-        <!-- Separator -->
         <hr class="border-gray-100 my-6">
 
-        <!-- Pricing Section -->
         <div class="space-y-4">
-          <h3 class="text-sm font-semibold text-gray-900">Pricing & Points</h3>
-          
-          <div class="grid grid-cols-2 gap-5">
+          <h3 class="text-sm font-semibold text-gray-900">Visibility & Status</h3>
+
+          <div class="grid grid-cols-1 gap-5">
             <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-gray-600">Base Price</label>
-              <p-inputNumber 
-                formControlName="price" 
-                mode="currency" 
-                currency="USD" 
-                locale="en-US" 
-                styleClass="w-full text-sm"
-                inputStyleClass="w-full text-sm">
-              </p-inputNumber>
-            </div>
-            
-            <div class="flex flex-col gap-1.5">
-               <label class="text-xs font-medium text-gray-600">Currency</label>
-               <p-select 
-                [options]="[{label: 'USD', value: 'USD'}, {label: 'NGN', value: 'NGN'}]" 
-                formControlName="currency" 
-                optionLabel="label" 
+              <label class="text-xs font-medium text-gray-600">Status</label>
+              <p-select
+                [options]="statusOptions"
+                formControlName="status"
+                optionLabel="label"
                 optionValue="value"
+                appendTo="body"
                 styleClass="w-full text-sm"
-                appendTo="body">
-              </p-select>
+              ></p-select>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-gray-600">PV Value</label>
-              <p-inputNumber 
-                formControlName="pv" 
-                styleClass="w-full text-sm"
-                inputStyleClass="w-full text-sm">
-              </p-inputNumber>
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div>
+                  <p class="text-sm font-medium text-gray-800">Visible to all packages</p>
+                  <p class="text-xs text-gray-500">Turn off to choose package restrictions.</p>
+                </div>
+                <p-toggleSwitch formControlName="visibleToAll"></p-toggleSwitch>
+              </div>
             </div>
 
-            <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-gray-600">CPV Value</label>
-              <p-inputNumber 
-                formControlName="cpv" 
-                styleClass="w-full text-sm"
-                inputStyleClass="w-full text-sm">
-              </p-inputNumber>
+            @if (!productForm.get('visibleToAll')?.value) {
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-gray-600">Visible Packages</label>
+                <p-multiSelect
+                  [options]="packageOptions"
+                  formControlName="visibleToPackages"
+                  optionLabel="label"
+                  optionValue="value"
+                  display="chip"
+                  placeholder="Select package(s)"
+                  appendTo="body"
+                  styleClass="w-full text-sm"
+                ></p-multiSelect>
+              </div>
+            }
+
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div>
+                <p class="text-sm font-medium text-gray-800">Merchant only</p>
+                <p class="text-xs text-gray-500">Restrict product to merchant channels.</p>
+              </div>
+              <p-toggleSwitch formControlName="merchantOnly"></p-toggleSwitch>
             </div>
           </div>
-        </div>
-
-        <!-- Separator -->
-        <hr class="border-gray-100 my-6">
-
-        <!-- Media Section -->
-        <div class="space-y-4">
-           <div class="flex items-center justify-between">
-             <h3 class="text-sm font-semibold text-gray-900">Product Image</h3>
-             @if (selectedImage()) {
-               <button type="button" (click)="selectedImage.set(null); fileInput.value = ''" class="text-xs text-red-500 hover:text-red-700 font-medium">Remove</button>
-             }
-           </div>
-           
-           <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFileSelect($event)">
-
-           <div 
-             (click)="fileInput.click()"
-             class="border border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all group relative overflow-hidden h-40">
-             
-             @if (selectedImage()) {
-               <img [src]="selectedImage()" class="absolute inset-0 w-full h-full object-cover">
-               <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                 <span class="text-white text-xs font-medium">Change Image</span>
-               </div>
-             } @else {
-               <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:shadow-sm transition-all">
-                 <i class="pi pi-image text-lg"></i>
-               </div>
-               <div class="text-center">
-                 <p class="text-xs font-medium text-gray-700">Click to upload image</p>
-                 <p class="text-[10px] text-gray-400 mt-0.5">SVG, PNG, JPG or GIF (max. 2MB)</p>
-               </div>
-             }
-           </div>
         </div>
 
       </form>
     </div>
 
-    <!-- Footer -->
     <div class="p-5 border-t border-gray-100 bg-white flex items-center justify-end gap-3 z-10">
       <button 
         pButton 

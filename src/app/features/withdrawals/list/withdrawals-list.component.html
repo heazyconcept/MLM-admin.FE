@@ -115,14 +115,10 @@
   <!-- Data Table -->
   <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
     <app-data-table
-      [data]="filteredWithdrawals()"
-      [columns]="columns()"
-      [config]="tableConfig()"
-      [actions]="actions()"
       [loading]="tableLoading()">
       
       <!-- Custom Status Template -->
-      <ng-template appDataTableTemplate="status" let-row>
+      <ng-template pTemplate="body" let-row>
         <app-status-badge [status]="row.status"></app-status-badge>
       </ng-template>
     </app-data-table>

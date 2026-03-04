@@ -1,0 +1,44 @@
+@reference "../../../../styles.css";
+
+:host {
+  display: block;
+}
+
+:host ::ng-deep {
+  .p-drawer {
+    @apply border-none shadow-xl;
+    width: 480px !important;
+
+    .p-drawer-header {
+      @apply hidden;
+    }
+
+    .p-drawer-content {
+      @apply p-0 overflow-hidden;
+    }
+  }
+
+  .p-inputtext, .p-textarea {
+    @apply border-gray-300 rounded-lg transition-shadow text-gray-900;
+
+    &:enabled:focus {
+      @apply border-gray-900 ring-1 ring-gray-900 shadow-none;
+    }
+
+    &:enabled:hover {
+      @apply border-gray-400;
+    }
+
+    &::placeholder {
+      @apply text-gray-400;
+    }
+  }
+
+  .p-select {
+    @apply border-gray-300 rounded-lg transition-shadow;
+
+    &.p-focus {
+      @apply border-gray-900 ring-1 ring-gray-900 shadow-none;
+    }
+  }
+}

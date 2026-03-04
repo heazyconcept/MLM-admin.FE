@@ -1,5 +1,25 @@
 @reference "../../../../styles.css";
 
+:host {
+  @apply block;
+}
+
+.layout-grid {
+  @apply flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_240px] lg:gap-6 items-start;
+}
+
+.section-card {
+  @apply bg-white border border-gray-200 rounded-xl p-5 lg:p-6 shadow-sm;
+}
+
+.section-header {
+  @apply mb-5 pb-3 border-b border-gray-100;
+}
+
+.sidebar-card {
+  @apply bg-white border border-gray-200 rounded-xl p-4 shadow-sm;
+}
+
 :host ::ng-deep {
   /* Input Styles - Consistent with Drawer */
   .p-inputtext, .p-inputnumber-input, .p-textarea, .p-select, .p-multiselect {

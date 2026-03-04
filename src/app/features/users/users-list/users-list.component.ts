@@ -10,7 +10,6 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { MessageService, MenuItem } from 'primeng/api';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableTemplateDirective } from '../../../shared/components/data-table/data-table-template.directive';
 import { TableAction, TableColumn, TableConfig } from '../../../shared/components/data-table/data-table.types';
 
 import { TooltipModule } from 'primeng/tooltip';
@@ -52,7 +51,7 @@ interface ActionConfig {
     ConfirmationModalComponent,
     ConfirmationModalComponent,
     DataTableComponent,
-    DataTableTemplateDirective
+
   ],
   providers: [MessageService],
   templateUrl: './users-list.component.html',

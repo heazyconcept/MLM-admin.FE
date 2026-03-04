@@ -120,36 +120,36 @@
        </div>
        
        <app-data-table
-         [data]="ledger()"
-         [columns]="columns()"
-         [loading]="loading()"
-         [config]="tableConfig()"
-         [emptyMessage]="'No transactions found'"
-         [emptyIcon]="'pi pi-inbox'">
+         [loading]="loading()">
 
-         <!-- Custom details cell template -->
-         <ng-template appDataTableTemplate="id" let-entry>
-           <div class="flex flex-col gap-1 py-1">
-             <span class="font-mono text-[10px] text-gray-400">{{ entry.id }}</span>
-             <span class="inline-flex w-fit items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
-                  [class.bg-green-50]="entry.type === 'Credit'"
-                  [class.border-green-100]="entry.type === 'Credit'"
-                  [class.text-green-700]="entry.type === 'Credit'"
-                  [class.bg-red-50]="entry.type === 'Debit'"
-                  [class.border-red-100]="entry.type === 'Debit'"
-                  [class.text-red-700]="entry.type === 'Debit'">
-               {{ entry.type }}
-            </span>
-           </div>
-         </ng-template>
+         <!-- Row Template -->
+         <ng-template pTemplate="body" let-entry>
+           <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+             <!-- ID & Type -->
+             <td class="px-5 py-4">
+               <div class="flex flex-col gap-1 py-1">
+                 <span class="font-mono text-[10px] text-gray-400">{{ entry.id }}</span>
+                 <span class="inline-flex w-fit items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
+                      [class.bg-green-50]="entry.type === 'Credit'"
+                      [class.border-green-100]="entry.type === 'Credit'"
+                      [class.text-green-700]="entry.type === 'Credit'"
+                      [class.bg-red-50]="entry.type === 'Debit'"
+                      [class.border-red-100]="entry.type === 'Debit'"
+                      [class.text-red-700]="entry.type === 'Debit'">
+                   {{ entry.type }}
+                </span>
+               </div>
+             </td>
 
-         <!-- Custom amount cell template -->
-         <ng-template appDataTableTemplate="amount" let-entry>
-           <span class="font-bold font-mono text-sm" 
-             [class.text-green-600]="entry.type === 'Credit'"
-             [class.text-red-600]="entry.type === 'Debit'">
-             {{ entry.type === 'Credit' ? '+' : '-' }}{{ entry.amount | currency:w.currency }}
-          </span>
+             <!-- Amount -->
+             <td class="px-5 py-4">
+               <span class="font-bold font-mono text-sm" 
+                 [class.text-green-600]="entry.type === 'Credit'"
+                 [class.text-red-600]="entry.type === 'Debit'">
+                 {{ entry.type === 'Credit' ? '+' : '-' }}{{ entry.amount | currency:w.currency }}
+              </span>
+             </td>
+           </tr>
          </ng-template>
        </app-data-table>
     </div>

@@ -159,14 +159,10 @@
         <i class="pi pi-spin pi-spinner text-2xl text-gray-500"></i>
       </div>
     }
-    <app-data-table
-      [data]="filteredMerchants()"
-      [columns]="columns()"
-      [config]="tableConfig()"
-      [actions]="actions()">
+    <app-data-table>
       
       <!-- Custom Status Template -->
-      <ng-template appDataTableTemplate="status" let-row>
+      <ng-template pTemplate="body" let-row>
         <app-status-badge [status]="row.status"></app-status-badge>
       </ng-template>
     </app-data-table>

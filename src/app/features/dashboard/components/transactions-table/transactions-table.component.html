@@ -9,31 +9,32 @@
   </div>
 
   <!-- Table -->
-  <app-data-table
-    [data]="transactions()"
-    [columns]="columns()"
-    [config]="tableConfig()"
-    [actions]="actions()">
+  <app-data-table>
     
     <!-- Custom Activity Template -->
-    <ng-template appDataTableTemplate="activity" let-row>
-      <div class="flex items-center gap-3">
-        <div 
-          class="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-          [style.background-color]="row.iconBg">
-          {{ row.icon }}
-        </div>
-        <span class="font-medium text-mlm-text">{{ row.activity }}</span>
-      </div>
-    </ng-template>
+    <ng-template pTemplate="body" let-row>
+      <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+        <!-- Activity -->
+        <td class="px-5 py-4">
+          <div class="flex items-center gap-3">
+            <div 
+              class="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
+              [style.background-color]="row.iconBg">
+              {{ row.icon }}
+            </div>
+            <span class="font-medium text-mlm-text">{{ row.activity }}</span>
+          </div>
+        </td>
 
-    <!-- Custom Status Template -->
-    <ng-template appDataTableTemplate="status" let-row>
-      <p-tag 
-        [value]="row.status" 
-        [severity]="getStatusSeverity(row.status)"
-        [rounded]="true">
-      </p-tag>
+        <!-- Status -->
+        <td class="px-5 py-4">
+          <p-tag 
+            [value]="row.status" 
+            [severity]="getStatusSeverity(row.status)"
+            [rounded]="true">
+          </p-tag>
+        </td>
+      </tr>
     </ng-template>
     
   </app-data-table>

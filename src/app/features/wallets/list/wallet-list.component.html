@@ -31,41 +31,65 @@
     <!-- Data Table Card -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <app-data-table
-        #dt
-        [data]="wallets()"
-        [columns]="columns()"
-        [actions]="actions()"
-        [loading]="loading()"
-        [config]="tableConfig()"
-        [emptyMessage]="'No wallets found'"
-        [emptyIcon]="'pi pi-wallet'">
+        [value]="filteredWallets()"
+        [headers]="tableHeaders"
+        [rows]="tableRows"
+        [rowsPerPageOptions]="tableRowsPerPageOptions"
+        [loading]="loading()">
 
-        <!-- Custom user cell template -->
-        <ng-template appDataTableTemplate="userName" let-wallet>
-          <div class="flex flex-col py-1">
-            <span class="font-semibold text-gray-900 leading-tight">{{ wallet.userName }}</span>
-            <span class="text-xs text-gray-500 mt-0.5">{{ wallet.userId }}</span>
-          </div>
+        <ng-template pTemplate="body" let-wallet>
+          <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+            <!-- Wallet ID -->
+            <td class="px-5 py-4 text-sm font-mono text-gray-600">
+              {{ wallet.id }}
+            </td>
+
+            <!-- User -->
+            <td class="px-5 py-4">
+              <div class="flex flex-col py-1">
+                <span class="font-semibold text-gray-900 leading-tight">{{ wallet.userName }}</span>
+                <span class="text-xs text-gray-500 mt-0.5">{{ wallet.userId }}</span>
+              </div>
+            </td>
+
+            <!-- Type -->
+            <td class="px-5 py-4 text-center">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-gray-100 text-gray-700 border border-gray-200">
+                {{ wallet.type }}
+              </span>
+            </td>
+
+            <!-- Balance -->
+            <td class="px-5 py-4">
+              <span class="font-bold text-gray-900 text-base">
+                {{ wallet.balance | currency:wallet.currency:'symbol-narrow' }}
+              </span>
+            </td>
+
+            <!-- Status -->
+            <td class="px-5 py-4 text-center">
+              <p-tag [value]="wallet.status" [severity]="getStatusSeverity(wallet.status)"></p-tag>
+            </td>
+
+            <!-- Last Updated -->
+            <td class="px-5 py-4 text-center text-sm text-gray-600">
+              {{ wallet.lastUpdated | date:'mediumDate' }}
+            </td>
+
+            <!-- Actions -->
+            <td class="px-5 py-4 text-center">
+              <button 
+                pButton 
+                icon="pi pi-eye" 
+                class="p-button-text p-button-sm text-gray-500 hover:text-gray-900"
+                (click)="router.navigate(['/admin/wallets', wallet.id])"
+                pTooltip="View Details"
+                tooltipPosition="top">
+              </button>
+            </td>
+          </tr>
         </ng-template>
 
-        <!-- Custom type cell template -->
-        <ng-template appDataTableTemplate="type" let-wallet>
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-gray-100 text-gray-700 border border-gray-200">
-            {{ wallet.type }}
-          </span>
-        </ng-template>
-
-        <!-- Custom balance cell template -->
-        <ng-template appDataTableTemplate="balance" let-wallet>
-          <span class="font-bold text-gray-900 text-base">
-            {{ wallet.balance | currency:wallet.currency:'symbol-narrow' }}
-          </span>
-        </ng-template>
-
-        <!-- Custom status cell template -->
-        <ng-template appDataTableTemplate="status" let-wallet>
-          <p-tag [value]="wallet.status" [severity]="getStatusSeverity(wallet.status)"></p-tag>
-        </ng-template>
       </app-data-table>
     </div>
   </div>

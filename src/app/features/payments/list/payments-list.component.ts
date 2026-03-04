@@ -4,7 +4,6 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { PaymentService, Payment, PaymentStatus, PaymentPurpose } from '../services/payment.service';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { DataTableTemplateDirective } from '../../../shared/components/data-table/data-table-template.directive';
 import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ButtonModule } from 'primeng/button';
@@ -19,7 +18,7 @@ import { AdminFundingModalComponent, AdminFundingPayload } from '../modals/admin
     RouterModule,
     ReactiveFormsModule,
     DataTableComponent,
-    DataTableTemplateDirective,
+
     StatusBadgeComponent,
     ButtonModule,
     ToastModule,

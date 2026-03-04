@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { DataTableTemplateDirective } from '../../../../shared/components/data-table/data-table-template.directive';
 import { TableColumn, TableConfig, TableAction } from '../../../../shared/components/data-table/data-table.types';
 
 export interface Transaction {
@@ -18,7 +17,7 @@ export interface Transaction {
 
 @Component({
   selector: 'app-transactions-table',
-  imports: [CommonModule, TableModule, TagModule, DataTableComponent, DataTableTemplateDirective],
+  imports: [CommonModule, TableModule, TagModule, DataTableComponent],
   templateUrl: './transactions-table.component.html',
   styleUrls: ['./transactions-table.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
