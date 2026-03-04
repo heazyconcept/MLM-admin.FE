@@ -50,7 +50,9 @@
 
   <!-- Orders Table -->
   <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-    <app-data-table>
+    <app-data-table
+      [value]="filteredOrders()"
+      [headers]="tableHeaders()">
 
       <!-- Row Template -->
       <ng-template pTemplate="body" let-row>

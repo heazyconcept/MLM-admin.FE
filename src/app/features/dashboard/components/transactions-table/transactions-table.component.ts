@@ -1,4 +1,4 @@
-import { Component, input as inputFn, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, input as inputFn, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -47,6 +47,8 @@ export class TransactionsTableComponent {
       // Custom template for p-tag
     }
   ]);
+
+  tableHeaders = computed(() => this.columns().map(c => c.header));
 
   tableConfig = signal<TableConfig>({
     paginator: false,

@@ -104,6 +104,8 @@ export class PaymentsListComponent implements OnInit {
   });
 
   columns = signal<TableColumn<Payment>[]>([]);
+
+  tableHeaders = computed(() => this.columns().map(c => c.header));
   
   tableConfig = signal<TableConfig>({
     paginator: true,

@@ -121,6 +121,8 @@
 
   <!-- Table Section -->
   <app-data-table
+    [value]="filteredPayments()"
+    [headers]="tableHeaders()"
     [loading]="tableLoading()">
     
     <!-- Row Template -->

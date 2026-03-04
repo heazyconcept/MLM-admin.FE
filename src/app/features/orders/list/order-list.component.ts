@@ -105,6 +105,8 @@ export class OrderListComponent {
     { field: 'createdAt', header: 'Date', width: '120px' }
   ]);
 
+  tableHeaders = computed(() => this.columns().map(c => c.header));
+
   tableConfig = signal<TableConfig>({
     paginator: true,
     rows: 10,

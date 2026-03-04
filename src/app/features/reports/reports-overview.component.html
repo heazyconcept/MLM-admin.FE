@@ -106,7 +106,9 @@
 
       <!-- Data table -->
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <app-data-table>
+        <app-data-table
+          [value]="filteredReports()"
+          [headers]="tableHeaders()">
         </app-data-table>
       </div>
     </div>

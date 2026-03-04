@@ -159,7 +159,9 @@
         <i class="pi pi-spin pi-spinner text-2xl text-gray-500"></i>
       </div>
     }
-    <app-data-table>
+    <app-data-table
+      [value]="filteredMerchants()"
+      [headers]="tableHeaders()">
       
       <!-- Custom Status Template -->
       <ng-template pTemplate="body" let-row>
