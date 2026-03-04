@@ -152,7 +152,9 @@ export class MerchantService {
   }
 
   rejectMerchant(id: string, reason: string): Observable<{ message: string }> {
-    return this.api.post<{ message: string }>(`admin/merchants/${id}/reject`, { reason });
+    return this.api.post<{ message: string }>(`admin/merchants/${id}/reject`, { reason }).pipe(
+      tap(() => this.updateLocalStatus(id, 'SUSPENDED'))
+    );
   }
 
   suspendMerchant(id: string, reason?: string): Observable<{ message: string }> {

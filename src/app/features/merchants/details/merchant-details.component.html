@@ -73,7 +73,8 @@
         <label class="block text-sm font-medium text-gray-700 mb-2">Product ID</label>
         <input
           type="text"
-          [(ngModel)]="selectedProductId"
+          [ngModel]="selectedProductId()"
+          (ngModelChange)="selectedProductId.set($event)"
           placeholder="Enter product UUID"
           class="w-full h-10 px-4 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10">
       </div>
