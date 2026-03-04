@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -41,6 +41,8 @@ export class RankingStagesComponent implements OnInit {
       // Custom template
     }
   ]);
+
+  tableHeaders = computed(() => this.columns().map(c => c.header));
 
   tableConfig = signal<TableConfig>({
     paginator: false,

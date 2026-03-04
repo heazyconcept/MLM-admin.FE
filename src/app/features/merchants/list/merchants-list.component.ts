@@ -90,6 +90,8 @@ export class MerchantsListComponent implements OnInit {
   }));
 
   columns = signal<TableColumn<Merchant>[]>([]);
+
+  tableHeaders = computed(() => this.columns().map(c => c.header));
   
   tableConfig = signal<TableConfig>({
     paginator: true,

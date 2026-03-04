@@ -9,7 +9,9 @@
   </div>
 
   <!-- Table -->
-  <app-data-table>
+  <app-data-table
+    [value]="transactions()"
+    [headers]="tableHeaders()">
     
     <!-- Custom Activity Template -->
     <ng-template pTemplate="body" let-row>

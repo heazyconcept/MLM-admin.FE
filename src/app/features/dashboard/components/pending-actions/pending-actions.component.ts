@@ -50,6 +50,8 @@ export class PendingActionsComponent {
     { field: 'status', header: 'Status' }
   ]);
 
+  tableHeaders = computed(() => this.columns().map(c => c.header));
+
   tableConfig = signal<TableConfig>({
     paginator: false,
     showGridlines: false,

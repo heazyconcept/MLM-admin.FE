@@ -89,6 +89,8 @@ export class WithdrawalsListComponent implements OnInit {
   });
 
   columns = signal<TableColumn<WithdrawalRequest>[]>([]);
+
+  tableHeaders = computed(() => this.columns().map(c => c.header));
   
   tableConfig = signal<TableConfig>({
     paginator: true,

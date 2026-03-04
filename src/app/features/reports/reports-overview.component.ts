@@ -117,6 +117,8 @@ export class ReportsOverviewComponent {
     },
   ]);
 
+  tableHeaders = computed(() => this.reportColumns().map(c => c.header));
+
   tableConfig: TableConfig = {
     paginator: true,
     rows: 10,

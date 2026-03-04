@@ -74,6 +74,8 @@ export class WalletDetailsComponent {
     }
   ]);
 
+  tableHeaders = computed(() => this.columns().map(c => c.header));
+
   // Modal state
   showAdjustmentModal = signal(false);
   showActionModal = signal(false);

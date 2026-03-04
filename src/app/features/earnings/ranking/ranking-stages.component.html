@@ -6,7 +6,9 @@
          </div>
       </div>
       
-      <app-data-table>
+      <app-data-table
+        [value]="ranks()"
+        [headers]="tableHeaders()">
 
         <!-- Level Template -->
         <ng-template pTemplate="body" let-row>
