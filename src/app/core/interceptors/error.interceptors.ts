@@ -15,9 +15,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         errorMessage = `Error: ${error.error.message}`;
       } else {
         // Server-side error
+        // Skip 401 errors - auth interceptor handles token refresh and retry
+        // Only authInterceptor should show logout modal on terminal 401
         if (error.status === 401) {
-          errorMessage = 'Unauthorized access. Please login again.';
-          // Optionally redirect to login
+          return throwError(() => error);
         } else if (error.status === 403) {
           errorMessage = 'You do not have permission to perform this action.';
         } else if (error.status === 404) {

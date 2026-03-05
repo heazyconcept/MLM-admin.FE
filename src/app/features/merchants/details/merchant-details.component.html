@@ -23,14 +23,28 @@
     </app-confirmation-modal>
 
     <app-confirmation-modal
-      [visible]="showSuspendModal()"
-      title="Suspend Merchant"
-      message="This merchant will be temporarily suspended and unable to fulfill orders. Please provide a reason for suspension."
-      confirmLabel="Suspend"
+      [visible]="showRejectModal()"
+      title="Reject Merchant"
+      message="This merchant application will be rejected. Please provide a reason (minimum 5 characters)."
+      confirmLabel="Reject"
       cancelLabel="Cancel"
+      confirmClass="p-button-danger"
       [showReasonField]="true"
       [reasonRequired]="true"
-      reasonPlaceholder="Enter reason for suspension..."
+      reasonPlaceholder="Enter reason for rejection..."
+      (confirm)="handleRejectConfirm($event)"
+      (cancel)="handleModalCancel('reject')">
+    </app-confirmation-modal>
+
+    <app-confirmation-modal
+      [visible]="showSuspendModal()"
+      title="Suspend Merchant"
+      message="This merchant will be temporarily suspended and unable to fulfill orders. You may provide a reason."
+      confirmLabel="Suspend"
+      cancelLabel="Cancel"
+      confirmClass="p-button-danger"
+      [showReasonField]="true"
+      reasonPlaceholder="Enter reason for suspension (optional)..."
       (confirm)="handleSuspendConfirm($event)"
       (cancel)="handleModalCancel('suspend')">
     </app-confirmation-modal>
@@ -43,6 +57,120 @@
       cancelLabel="Cancel"
       (confirm)="handleReactivateConfirm($event)"
       (cancel)="handleModalCancel('reactivate')">
+    </app-confirmation-modal>
+
+    <!-- Beautiful Unique Assign Product Modal -->
+    <p-dialog
+      [visible]="showAssignProductModal()"
+      [modal]="true"
+      [style]="{width: '480px'}"
+      [draggable]="false"
+      [resizable]="false"
+      [closable]="false"
+      [showHeader]="false"
+      (onHide)="handleModalCancel('assignProduct')">
+
+      <div class="relative bg-white rounded-xl">
+        <!-- Close button -->
+        <button
+          type="button"
+          (click)="handleModalCancel('assignProduct')"
+          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">
+          <i class="pi pi-times"></i>
+        </button>
+
+        <!-- Header -->
+        <div class="px-6 pt-6 pb-4 border-b border-gray-100">
+          <div class="flex items-center gap-3">
+            
+            <div>
+              <h3 class="text-xl font-semibold text-gray-900">Assign Product</h3>
+              <p class="text-sm text-gray-500 mt-0.5">Select an active product to assign</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="px-6 py-6 pb-8">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Available Products</label>
+
+          @if (loadingProducts()) {
+            <!-- Loading state -->
+            <div class="relative w-full">
+              <div class="w-full h-[42px] px-4 rounded-lg border border-gray-200 bg-gray-50/50 flex items-center justify-between text-sm text-gray-400">
+                <span class="flex items-center gap-2">
+                  <i class="pi pi-spin pi-spinner text-indigo-500"></i>
+                  Loading products catalog...
+                </span>
+                <i class="pi pi-chevron-down text-xs text-gray-300"></i>
+              </div>
+            </div>
+          } @else if (availableProducts().length === 0) {
+            <!-- Empty state -->
+            <div class="w-full h-[42px] px-4 rounded-lg border border-red-200 bg-red-50 flex items-center text-sm text-red-600">
+              <i class="pi pi-exclamation-circle mr-2"></i>
+              No unassigned active products found
+            </div>
+          } @else {
+            <!-- Select Dropdown -->
+            <div class="relative group">
+              <select
+                [value]="selectedProduct()?.id ?? ''"
+                (change)="onAssignProductSelectionChange($event)"
+                class="w-full h-[42px] pl-4 pr-10 rounded-lg border border-gray-300 text-sm text-gray-900 bg-white hover:border-indigo-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 appearance-none transition-all shadow-sm cursor-pointer">
+                <option value="" disabled selected>-- Choose a product --</option>
+                @for (product of availableProducts(); track product.id) {
+                  <option [value]="product.id">
+                    {{ product.name }} ({{ product.sku }})
+                  </option>
+                }
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500 group-hover:text-indigo-500 transition-colors">
+                <i class="pi pi-chevron-down text-xs"></i>
+              </div>
+            </div>
+          }
+
+          <div class="mt-4 bg-blue-50/50 border border-blue-100 rounded-lg p-3 flex gap-2">
+            <i class="pi pi-info-circle text-blue-500 mt-0.5 text-sm"></i>
+            <p class="text-xs text-blue-700 leading-relaxed">
+              Assigned products will immediately be available for this merchant to fulfill. Ensure the merchant covers the delivery areas required.
+            </p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 rounded-b-xl">
+          <button
+            pButton
+            label="Cancel"
+            class="p-button-text p-button-secondary font-medium"
+            (click)="handleModalCancel('assignProduct')">
+          </button>
+          <button
+            pButton
+            label="Assign to Merchant"
+            [icon]="assignProductLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+            class="p-button-primary font-medium"
+            [disabled]="!selectedProduct() || assignProductLoading()"
+            [loading]="assignProductLoading()"
+            (click)="handleAssignProductConfirm({confirmed: true})">
+          </button>
+        </div>
+      </div>
+    </p-dialog>
+
+    <!-- Remove Product Modal -->
+    <app-confirmation-modal
+      [visible]="showRemoveProductModal()"
+      title="Remove Product"
+      [message]="'Are you sure you want to remove ' + (productToRemove()?.name ?? 'this product') + ' from this merchant?'"
+      confirmLabel="Remove Product"
+      confirmClass="p-button-danger"
+      cancelLabel="Cancel"
+      [loading]="removeProductLoading()"
+      (confirm)="handleRemoveProductConfirm($event)"
+      (cancel)="handleModalCancel('removeProduct')">
     </app-confirmation-modal>
 
     <!-- ================= HEADER ================= -->
@@ -65,9 +193,6 @@
               <h4 class="font-semibold text-red-900 mb-1">Merchant Suspended</h4>
               <p class="text-sm text-red-700">
                 This merchant is currently suspended and cannot fulfill orders.
-                @if (m.suspendedReason) {
-                  <br><span class="font-medium">Reason:</span> {{ m.suspendedReason }}
-                }
               </p>
             </div>
           </div>
@@ -77,32 +202,46 @@
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 class="text-2xl font-semibold text-gray-900">
-            {{ m.businessName }} <span class="text-gray-400">#{{ m.id }}</span>
+            {{ getDisplayName(m) }}
+            <span class="text-gray-400 text-base font-mono">#{{ m.id | slice:0:8 }}</span>
           </h1>
           <p class="text-sm text-gray-500">
-            Registered {{ formatDate(m.registrationDate) }}
+            Registered {{ formatDate(m.createdAt) }}
           </p>
         </div>
 
         <div class="flex items-center gap-3">
-          <app-status-badge [status]="m.status"></app-status-badge>
+          <app-status-badge [status]="getDisplayStatus(m.status)"></app-status-badge>
 
           @if (canApproveMerchant() && canApprove()) {
             <button
               pButton
-              label="Approve"
-              icon="pi pi-check"
+              [label]="approveLoading() ? 'Approving...' : 'Approve'"
+              [icon]="approveLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
               class="p-button-success"
+              [disabled]="approveLoading()"
               (click)="onApprove()">
+            </button>
+          }
+
+          @if (canApproveMerchant() && canReject()) {
+            <button
+              pButton
+              [label]="rejectLoading() ? 'Rejecting...' : 'Reject'"
+              [icon]="rejectLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-times'"
+              class="p-button-outlined p-button-danger"
+              [disabled]="rejectLoading()"
+              (click)="onReject()">
             </button>
           }
 
           @if (canApproveMerchant() && canSuspend()) {
             <button
               pButton
-              label="Suspend"
-              icon="pi pi-ban"
+              [label]="suspendLoading() ? 'Suspending...' : 'Suspend'"
+              [icon]="suspendLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-ban'"
               class="p-button-outlined p-button-danger"
+              [disabled]="suspendLoading()"
               (click)="onSuspend()">
             </button>
           }
@@ -110,30 +249,11 @@
           @if (canApproveMerchant() && canReactivate()) {
             <button
               pButton
-              label="Reactivate"
-              icon="pi pi-check-circle"
+              [label]="reactivateLoading() ? 'Reactivating...' : 'Reactivate'"
+              [icon]="reactivateLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-check-circle'"
               class="p-button-success"
+              [disabled]="reactivateLoading()"
               (click)="onReactivate()">
-            </button>
-          }
-
-          @if (canApproveMerchant()) {
-            <button
-              pButton
-              label="Change Type"
-              icon="pi pi-refresh"
-              class="p-button-outlined"
-              (click)="onChangeType()">
-            </button>
-          }
-
-          @if (canAssignMerchant()) {
-            <button
-              pButton
-              label="Assign Regions"
-              icon="pi pi-map"
-              class="p-button-outlined"
-              (click)="onAssignRegions()">
             </button>
           }
         </div>
@@ -152,42 +272,34 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Business Name</p>
-              <p class="font-medium text-gray-900">{{ m.businessName }}</p>
-            </div>
-
-            <div>
               <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Merchant ID</p>
-              <p class="font-mono font-medium text-gray-900">{{ m.id }}</p>
+              <p class="font-mono font-medium text-gray-900 text-sm">{{ m.id }}</p>
             </div>
 
             <div>
               <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Merchant Type</p>
               <div class="flex items-center gap-2">
                 <i [class]="getTypeIcon(m.type) + ' text-mlm-primary'"></i>
-                <p class="font-medium text-gray-900">{{ m.type }}</p>
+                <p class="font-medium text-gray-900">{{ getDisplayType(m.type) }}</p>
               </div>
             </div>
 
             <div>
               <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Status</p>
-              <app-status-badge [status]="m.status"></app-status-badge>
-            </div>
-
-            <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Email</p>
-              <p class="font-medium text-gray-900">{{ m.email }}</p>
-            </div>
-
-            <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Phone</p>
-              <p class="font-medium text-gray-900">{{ m.phone }}</p>
+              <app-status-badge [status]="getDisplayStatus(m.status)"></app-status-badge>
             </div>
 
             <div>
               <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Registration Date</p>
-              <p class="font-medium text-gray-900">{{ formatDate(m.registrationDate) }}</p>
+              <p class="font-medium text-gray-900">{{ formatDate(m.createdAt) }}</p>
             </div>
+
+            @if (m.updatedAt) {
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Last Updated</p>
+                <p class="font-medium text-gray-900">{{ formatDate(m.updatedAt) }}</p>
+              </div>
+            }
           </div>
         </div>
 
@@ -198,85 +310,165 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Owner Name</p>
-              <p class="font-medium text-gray-900">{{ m.ownerName }}</p>
+              <p class="font-medium text-gray-900">{{ getDisplayName(m) }}</p>
             </div>
 
             <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Owner ID</p>
-              <p class="font-mono font-medium text-gray-900">{{ m.ownerId }}</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">User ID</p>
+              <p class="font-mono font-medium text-gray-900 text-sm">{{ m.userId }}</p>
+            </div>
+
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Email</p>
+              <p class="font-medium text-gray-900">{{ m.user.email }}</p>
             </div>
           </div>
         </div>
 
-        <!-- Coverage Regions -->
+        <!-- Service Areas -->
         <div class="bg-white border border-gray-200 rounded-xl p-8">
-          <h2 class="text-lg font-semibold text-gray-900 mb-6">Coverage Regions</h2>
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Service Areas</h2>
 
-          @if (m.region.length > 0) {
+          @if (m.serviceAreas && m.serviceAreas.length > 0) {
             <div class="flex flex-wrap gap-2">
-              @for (region of m.region; track region) {
+              @for (area of m.serviceAreas; track area) {
                 <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
                   <i class="pi pi-map-marker mr-2"></i>
-                  {{ region }}
+                  {{ area }}
                 </span>
               }
             </div>
           } @else {
-            <p class="text-gray-500 text-sm">No regions assigned</p>
+            <p class="text-gray-500 text-sm">No service areas assigned</p>
           }
         </div>
 
         <!-- Assigned Products -->
         <div class="bg-white border border-gray-200 rounded-xl p-8">
-          <h2 class="text-lg font-semibold text-gray-900 mb-6">Assigned Products</h2>
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-gray-900">Assigned Products</h2>
+            <div class="flex items-center gap-3">
+              <span class="inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                {{ m.products.length }}
+              </span>
+              @if (canApproveMerchant() && m.status === 'ACTIVE') {
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                  (click)="onAssignProduct()">
+                  <i class="pi pi-plus text-xs"></i>
+                  <span>Assign Product</span>
+                </button>
+              }
+            </div>
+          </div>
 
-          @if (m.assignedProductIds.length > 0) {
-            <div class="flex flex-wrap gap-2">
-              @for (productId of m.assignedProductIds; track productId) {
-                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
-                  {{ productId }}
-                </span>
+          @if (m.products && m.products.length > 0) {
+            <div class="space-y-3">
+              @for (product of m.products; track product.id) {
+                <div class="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
+                      <i class="pi pi-box text-indigo-500"></i>
+                    </div>
+                    <div>
+                      <p class="font-medium text-gray-900 text-sm">{{ product.productName ?? product.productId }}</p>
+                      <p class="text-xs text-gray-400 font-mono">{{ product.productId }}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    @if (product.isActive) {
+                      <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                        Active
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                        Inactive
+                      </span>
+                    }
+                    @if (canApproveMerchant()) {
+                      <button
+                        pButton
+                        icon="pi pi-times"
+                        class="p-button-text p-button-sm p-button-danger"
+                        pTooltip="Remove Product"
+                        (click)="onRemoveProduct(product.productId, product.productName ?? product.productId)">
+                      </button>
+                    }
+                  </div>
+                </div>
               }
             </div>
           } @else {
-            <p class="text-gray-500 text-sm">No products assigned</p>
+            <div class="text-center py-8">
+              <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                <i class="pi pi-box text-gray-400 text-xl"></i>
+              </div>
+              <p class="text-gray-500 text-sm mb-3">No products assigned</p>
+              @if (canApproveMerchant() && m.status === 'ACTIVE') {
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                  (click)="onAssignProduct()">
+                  <i class="pi pi-plus text-xs"></i>
+                  <span>Assign Product</span>
+                </button>
+              }
+            </div>
           }
         </div>
-
-        <!-- Performance Summary -->
-        @if (performance()) {
-          <app-performance-card
-            [ordersFulfilled]="performance()!.ordersFulfilled"
-            [deliverySuccessRate]="performance()!.deliverySuccessRate"
-            [earnings]="performance()!.earnings"
-            [customerRating]="performance()!.customerRating ?? null">
-          </app-performance-card>
-        }
-
       </div>
 
-      <!-- ===== SIDEBAR COLUMN ===== -->
       <div class="lg:col-span-4 space-y-8">
 
-        <!-- Status History -->
+        <!-- Quick Info Card -->
         <div class="bg-white border border-gray-200 rounded-xl p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-6">Status History</h3>
+          <h3 class="text-lg font-semibold text-gray-900 mb-6">Quick Info</h3>
 
           <div class="space-y-4">
-            @for (entry of m.statusHistory; track $index) {
-              <div class="border-l-2 border-gray-200 pl-4">
-                <div class="flex items-start justify-between mb-1">
-                  <app-status-badge [status]="entry.status"></app-status-badge>
-                  <span class="text-xs text-gray-400">
-                    {{ formatDate(entry.date) }}
-                  </span>
-                </div>
-                @if (entry.reason) {
-                  <p class="text-sm text-gray-600 mt-2">{{ entry.reason }}</p>
-                }
-                @if (entry.changedBy) {
-                  <p class="text-xs text-gray-400 mt-1">By: {{ entry.changedBy }}</p>
-                }
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-500">Status</span>
+              <app-status-badge [status]="getDisplayStatus(m.status)"></app-status-badge>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-500">Type</span>
+              <span class="text-sm font-medium text-gray-900">{{ getDisplayType(m.type) }}</span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-500">Service Areas</span>
+              <span class="text-sm font-medium text-gray-900">{{ m.serviceAreas.length }}</span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-500">Products</span>
+              <span class="text-sm font-medium text-gray-900">{{ m.products.length }}</span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-500">Email</span>
+              <span class="text-sm font-medium text-gray-900 truncate max-w-[180px]">{{ m.user.email }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timestamps -->
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-6">Timeline</h3>
+
+          <div class="space-y-4">
+            <div class="border-l-2 border-gray-200 pl-4">
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Created</p>
+              <p class="text-sm font-medium text-gray-900">{{ formatDate(m.createdAt) }}</p>
+            </div>
+
+            @if (m.updatedAt && m.updatedAt !== m.createdAt) {
+              <div class="border-l-2 border-blue-200 pl-4">
+                <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Last Updated</p>
+                <p class="text-sm font-medium text-gray-900">{{ formatDate(m.updatedAt) }}</p>
               </div>
             }
           </div>
@@ -286,46 +478,126 @@
 
     </div>
 
-    <!-- Change Type Modal -->
-    <app-confirmation-modal
-      [visible]="showChangeTypeModal()"
-      title="Change Merchant Type"
-      [message]="'Current type: ' + m.type"
-      confirmLabel="Update Type"
-      cancelLabel="Cancel"
-      (confirm)="handleChangeTypeConfirm($event)"
-      (cancel)="handleModalCancel('changeType')">
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Select New Type</label>
-        <select
-          [(ngModel)]="selectedType"
-          class="w-full h-10 px-4 rounded-lg border border-gray-300 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900/10">
-          @for (option of typeOptions; track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </select>
-      </div>
-    </app-confirmation-modal>
+  </div>
+} @else if (loading()) {
+  <!-- Skeleton Loader -->
+  <div class="min-h-screen bg-gray-50 px-8 py-6 animate-pulse">
 
-    <!-- Assign Regions Modal -->
-    <app-confirmation-modal
-      [visible]="showAssignRegionsModal()"
-      title="Assign Regions"
-      message="Select the regions this merchant can operate in."
-      confirmLabel="Update Regions"
-      cancelLabel="Cancel"
-      (confirm)="handleAssignRegionsConfirm($event)"
-      (cancel)="handleModalCancel('assignRegions')">
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Select Regions</label>
-        <app-region-selector
-          [regions]="availableRegions()"
-          [selected]="selectedRegions()"
-          (selectedChange)="onRegionsChange($event)">
-        </app-region-selector>
+    <!-- Header skeleton -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-8 h-8 rounded-md bg-gray-200"></div>
+        <div class="w-32 h-4 rounded bg-gray-200"></div>
       </div>
-    </app-confirmation-modal>
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <div class="w-64 h-7 rounded bg-gray-200 mb-2"></div>
+          <div class="w-40 h-4 rounded bg-gray-200"></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-20 h-8 rounded-full bg-gray-200"></div>
+          <div class="w-24 h-10 rounded-lg bg-gray-200"></div>
+        </div>
+      </div>
+    </div>
 
+    <!-- Content grid skeleton -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+      <!-- Main column -->
+      <div class="lg:col-span-8 space-y-8">
+
+        <!-- Merchant Profile skeleton -->
+        <div class="bg-white border border-gray-200 rounded-xl p-8">
+          <div class="w-40 h-5 rounded bg-gray-200 mb-6"></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            @for (i of [1,2,3,4,5]; track i) {
+              <div>
+                <div class="w-24 h-3 rounded bg-gray-100 mb-3"></div>
+                <div class="w-44 h-5 rounded bg-gray-200"></div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Owner Details skeleton -->
+        <div class="bg-white border border-gray-200 rounded-xl p-8">
+          <div class="w-32 h-5 rounded bg-gray-200 mb-6"></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            @for (i of [1,2,3]; track i) {
+              <div>
+                <div class="w-20 h-3 rounded bg-gray-100 mb-3"></div>
+                <div class="w-48 h-5 rounded bg-gray-200"></div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Service Areas skeleton -->
+        <div class="bg-white border border-gray-200 rounded-xl p-8">
+          <div class="w-28 h-5 rounded bg-gray-200 mb-6"></div>
+          <div class="flex flex-wrap gap-2">
+            @for (i of [1,2,3]; track i) {
+              <div class="w-24 h-8 rounded-full bg-gray-200"></div>
+            }
+          </div>
+        </div>
+
+        <!-- Products skeleton -->
+        <div class="bg-white border border-gray-200 rounded-xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div class="w-36 h-5 rounded bg-gray-200"></div>
+            <div class="w-7 h-7 rounded-full bg-gray-200"></div>
+          </div>
+          <div class="space-y-3">
+            @for (i of [1,2]; track i) {
+              <div class="flex items-center justify-between p-4 rounded-lg border border-gray-100">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-gray-200"></div>
+                  <div>
+                    <div class="w-36 h-4 rounded bg-gray-200 mb-2"></div>
+                    <div class="w-48 h-3 rounded bg-gray-100"></div>
+                  </div>
+                </div>
+                <div class="w-16 h-6 rounded-full bg-gray-200"></div>
+              </div>
+            }
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar column -->
+      <div class="lg:col-span-4 space-y-8">
+
+        <!-- Quick Info skeleton -->
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+          <div class="w-24 h-5 rounded bg-gray-200 mb-6"></div>
+          <div class="space-y-4">
+            @for (i of [1,2,3,4,5]; track i) {
+              <div class="flex items-center justify-between">
+                <div class="w-20 h-4 rounded bg-gray-100"></div>
+                <div class="w-24 h-4 rounded bg-gray-200"></div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Timeline skeleton -->
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+          <div class="w-20 h-5 rounded bg-gray-200 mb-6"></div>
+          <div class="space-y-4">
+            @for (i of [1,2]; track i) {
+              <div class="border-l-2 border-gray-200 pl-4">
+                <div class="w-16 h-3 rounded bg-gray-100 mb-2"></div>
+                <div class="w-40 h-4 rounded bg-gray-200"></div>
+              </div>
+            }
+          </div>
+        </div>
+
+      </div>
+    </div>
   </div>
 } @else {
   <div class="min-h-screen bg-gray-50 px-8 py-6">

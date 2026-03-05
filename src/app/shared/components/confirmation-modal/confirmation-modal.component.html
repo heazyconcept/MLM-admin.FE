@@ -28,6 +28,8 @@
         }
       </div>
     }
+
+    <ng-content></ng-content>
   </div>
 
   <ng-template #footer>
@@ -36,13 +38,15 @@
         pButton 
         [label]="cancelLabel()" 
         class="p-button-text p-button-secondary"
+        [disabled]="loading()"
         (click)="onCancel()">
       </button>
       <button 
         pButton 
         [label]="confirmLabel()"
         [class]="confirmClass()"
-        [disabled]="showReasonField() && reasonRequired() && !(reasonControl.value || '').trim()"
+        [icon]="loading() ? 'pi pi-spin pi-spinner' : ''"
+        [disabled]="confirmDisabled() || loading() || (showReasonField() && reasonRequired() && !(reasonControl.value || '').trim())"
         (click)="onConfirm()">
       </button>
     </div>

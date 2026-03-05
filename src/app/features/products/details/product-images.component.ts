@@ -62,81 +62,85 @@ const MAX_IMAGES = 10;
 
       <!-- Image grid -->
       @if (images().length > 0) {
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           @for (img of images(); track img.id; let i = $index) {
-            <div
-              class="group relative aspect-square rounded-lg border-2 overflow-hidden bg-gray-50 transition-all"
-              [class.border-blue-500]="dragOverIndex() === i"
-              [class.border-gray-200]="dragOverIndex() !== i"
-              [class.opacity-50]="draggedIndex() === i"
-              draggable="true"
-              (dragstart)="onDragStart(i)"
-              (dragover)="onDragOver($event, i)"
-              (dragleave)="onDragLeave()"
-              (drop)="onDrop($event, i)"
-              (dragend)="onDragEnd()">
+            <div class="flex flex-col">
+              <div
+                class="group relative aspect-square rounded-lg border-2 overflow-hidden bg-gray-50 transition-all"
+                [class.border-blue-500]="dragOverIndex() === i"
+                [class.border-gray-200]="dragOverIndex() !== i"
+                [class.opacity-50]="draggedIndex() === i"
+                draggable="true"
+                (dragstart)="onDragStart(i)"
+                (dragover)="onDragOver($event, i)"
+                (dragleave)="onDragLeave()"
+                (drop)="onDrop($event, i)"
+                (dragend)="onDragEnd()">
 
-              <img
-                [src]="img.url"
-                [alt]="img.altText || 'Product image'"
-                class="w-full h-full object-cover" />
+                <img
+                  [src]="img.url"
+                  [alt]="img.altText || 'Product image'"
+                  class="w-full h-full object-cover" />
 
-              <!-- Position badge -->
-              <div class="absolute top-1.5 left-1.5 bg-black/60 text-white text-[10px] font-bold rounded px-1.5 py-0.5">
-                {{ i + 1 }}
+                <!-- Position badge -->
+                <div class="absolute top-1.5 left-1.5 bg-black/60 text-white text-[10px] font-bold rounded px-1.5 py-0.5">
+                  {{ i + 1 }}
+                </div>
+
+                <!-- Hover overlay with actions -->
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                  <!-- Move left -->
+                  @if (i > 0) {
+                    <button
+                      pButton
+                      icon="pi pi-arrow-left"
+                      [rounded]="true"
+                      [text]="true"
+                      severity="contrast"
+                      class="!w-8 !h-8"
+                      pTooltip="Move left"
+                      tooltipPosition="top"
+                      (click)="onMoveImage(i, i - 1)">
+                    </button>
+                  }
+                  <!-- Move right -->
+                  @if (i < images().length - 1) {
+                    <button
+                      pButton
+                      icon="pi pi-arrow-right"
+                      [rounded]="true"
+                      [text]="true"
+                      severity="contrast"
+                      class="!w-8 !h-8"
+                      pTooltip="Move right"
+                      tooltipPosition="top"
+                      (click)="onMoveImage(i, i + 1)">
+                    </button>
+                  }
+                  <!-- Delete -->
+                  <button
+                    pButton
+                    icon="pi pi-trash"
+                    [rounded]="true"
+                    [text]="true"
+                    severity="danger"
+                    class="!w-8 !h-8"
+                    pTooltip="Delete"
+                    tooltipPosition="top"
+                    [loading]="deletingId() === img.id"
+                    (click)="onDelete(img)">
+                  </button>
+                </div>
               </div>
 
-              <!-- Primary badge -->
+              <!-- Primary badge below image -->
               @if (i === 0) {
-                <div class="absolute top-1.5 right-1.5 bg-emerald-500 text-white text-[10px] font-bold rounded px-1.5 py-0.5 uppercase">
-                  Primary
+                <div class="mt-1.5 flex justify-center">
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold border border-amber-200">
+                    <i class="pi pi-star-fill text-[8px]"></i>Primary
+                  </span>
                 </div>
               }
-
-              <!-- Hover overlay with actions -->
-              <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                <!-- Move left -->
-                @if (i > 0) {
-                  <button
-                    pButton
-                    icon="pi pi-arrow-left"
-                    [rounded]="true"
-                    [text]="true"
-                    severity="contrast"
-                    class="!w-8 !h-8"
-                    pTooltip="Move left"
-                    tooltipPosition="top"
-                    (click)="onMoveImage(i, i - 1)">
-                  </button>
-                }
-                <!-- Move right -->
-                @if (i < images().length - 1) {
-                  <button
-                    pButton
-                    icon="pi pi-arrow-right"
-                    [rounded]="true"
-                    [text]="true"
-                    severity="contrast"
-                    class="!w-8 !h-8"
-                    pTooltip="Move right"
-                    tooltipPosition="top"
-                    (click)="onMoveImage(i, i + 1)">
-                  </button>
-                }
-                <!-- Delete -->
-                <button
-                  pButton
-                  icon="pi pi-trash"
-                  [rounded]="true"
-                  [text]="true"
-                  severity="danger"
-                  class="!w-8 !h-8"
-                  pTooltip="Delete"
-                  tooltipPosition="top"
-                  [loading]="deletingId() === img.id"
-                  (click)="onDelete(img)">
-                </button>
-              </div>
             </div>
           }
         </div>

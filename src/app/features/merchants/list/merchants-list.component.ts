@@ -1,22 +1,14 @@
-import { Component, inject, computed, signal, ChangeDetectionStrategy, OnInit, ViewChild, TemplateRef, DestroyRef } from '@angular/core';
+import { Component, inject, computed, signal, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { MerchantService, Merchant, MerchantStatus, MerchantType, AdminMerchantFilters } from '../services/merchant.service';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
-import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-interface StatusOption {
-  label: string;
-  value: string;
-}
-
-interface TypeOption {
+interface FilterOption {
   label: string;
   value: string;
 }
@@ -27,11 +19,8 @@ interface TypeOption {
     CommonModule,
     RouterModule,
     DataTableComponent,
-
     StatusBadgeComponent,
-    SelectModule,
     ButtonModule,
-    InputTextModule,
     ReactiveFormsModule
   ],
   templateUrl: './merchants-list.component.html',
@@ -43,8 +32,6 @@ export class MerchantsListComponent implements OnInit {
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
 
-  @ViewChild('status', { static: true }) statusTemplate!: TemplateRef<unknown>;
-
   merchants = this.merchantService.merchants;
   loading = this.merchantService.loading;
   loadingError = this.merchantService.loadingError;
@@ -54,28 +41,31 @@ export class MerchantsListComponent implements OnInit {
   selectedTypeControl = new FormControl<string>('all');
   searchQuery = signal<string>('');
 
-  statusOptions: StatusOption[] = [
+  statusOptions: FilterOption[] = [
     { label: 'All Statuses', value: 'all' },
-    { label: 'Pending', value: 'Pending' },
-    { label: 'Approved', value: 'Approved' },
-    { label: 'Suspended', value: 'Suspended' }
+    { label: 'Pending', value: 'PENDING' },
+    { label: 'Active', value: 'ACTIVE' },
+    { label: 'Suspended', value: 'SUSPENDED' }
   ];
 
-  typeOptions: TypeOption[] = [
+  typeOptions: FilterOption[] = [
     { label: 'All Types', value: 'all' },
-    { label: 'Regional', value: 'Regional' },
-    { label: 'National', value: 'National' },
-    { label: 'Global', value: 'Global' }
+    { label: 'Pickup Point', value: 'PICKUP_POINT' },
+    { label: 'Delivery Partner', value: 'DELIVERY_PARTNER' }
   ];
 
-  /** Client-side search only; status/type filter is done by API. */
+  tableHeaders = signal<string[]>([
+    'Merchant ID', 'Owner', 'Email', 'Type', 'Service Areas', 'Products', 'Status', 'Actions'
+  ]);
+
+  /** Client-side search filter applied on top of API-filtered list */
   filteredMerchants = computed(() => {
     let merchants = this.merchantService.merchants();
     const query = this.searchQuery().toLowerCase();
     if (query) {
       merchants = merchants.filter((m: Merchant) =>
-        m.businessName.toLowerCase().includes(query) ||
-        m.ownerName.toLowerCase().includes(query) ||
+        this.merchantService.getMerchantDisplayName(m).toLowerCase().includes(query) ||
+        m.user?.email?.toLowerCase().includes(query) ||
         m.id.toLowerCase().includes(query)
       );
     }
@@ -85,44 +75,20 @@ export class MerchantsListComponent implements OnInit {
   stats = computed(() => ({
     total: this.merchantService.listTotal(),
     pending: this.merchantService.pendingCount(),
-    approved: this.merchantService.approvedCount(),
+    active: this.merchantService.activeCount(),
     suspended: this.merchantService.suspendedCount()
   }));
-
-  columns = signal<TableColumn<Merchant>[]>([]);
-
-  tableHeaders = computed(() => this.columns().map(c => c.header));
-  
-  tableConfig = signal<TableConfig>({
-    paginator: true,
-    rows: 10,
-    globalFilter: false,
-    showGridlines: false,
-    hoverable: true,
-    size: 'normal'
-  });
-
-  actions = signal<TableAction<Merchant>[]>([
-    {
-      icon: 'pi pi-eye',
-      tooltip: 'View Details',
-      severity: 'secondary',
-      command: (merchant) => this.viewDetails(merchant)
-    }
-  ]);
 
   private buildFilters(): AdminMerchantFilters {
     const status = this.selectedStatusControl.value;
     const type = this.selectedTypeControl.value;
     const filters: AdminMerchantFilters = { limit: 500, offset: 0 };
     if (status && status !== 'all') {
-      filters.status = status === 'Pending' ? 'PENDING' : status === 'Approved' ? 'ACTIVE' : 'SUSPENDED';
+      filters.status = status as MerchantStatus;
     }
     if (type && type !== 'all') {
-      filters.type = type.toUpperCase() as 'REGIONAL' | 'NATIONAL' | 'GLOBAL';
+      filters.type = type as MerchantType;
     }
-    const search = this.searchQuery();
-    if (search?.trim()) filters.search = search.trim();
     return filters;
   }
 
@@ -131,73 +97,20 @@ export class MerchantsListComponent implements OnInit {
   }
 
   ngOnInit() {
-    const defaultFilter = this.route.snapshot.data['defaultFilter'];
     const statusParam = this.route.snapshot.queryParamMap.get('status');
     if (statusParam) {
       this.selectedStatusControl.setValue(statusParam);
-    } else if (defaultFilter) {
-      this.selectedStatusControl.setValue(defaultFilter);
     }
 
     this.loadMerchants();
 
-    this.selectedStatusControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.loadMerchants());
-    this.selectedTypeControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.loadMerchants());
+    this.selectedStatusControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadMerchants());
 
-    this.columns.set([
-      {
-        field: 'id',
-        header: 'Merchant ID',
-        width: '120px',
-        sortable: true
-      },
-      {
-        field: 'businessName',
-        header: 'Business Name',
-        sortable: true
-      },
-      {
-        field: 'ownerName',
-        header: 'Owner',
-        width: '180px',
-        sortable: true
-      },
-      {
-        field: 'type',
-        header: 'Merchant Type',
-        width: '130px',
-        sortable: true,
-        align: 'center'
-      },
-      {
-        field: 'region',
-        header: 'Region',
-        width: '200px',
-        formatter: (value: unknown) => {
-          const regions = value as string[];
-          if (!regions || regions.length === 0) return 'N/A';
-          if (regions.length === 1) return regions[0];
-          return `${regions[0]} +${regions.length - 1}`;
-        }
-      },
-      {
-        field: 'status',
-        header: 'Status',
-        width: '120px',
-        align: 'center',
-        template: this.statusTemplate
-      },
-      {
-        field: 'assignedProductIds',
-        header: 'Assigned Products',
-        width: '150px',
-        align: 'center',
-        formatter: (value: unknown) => {
-          const products = value as string[];
-          return products.length.toString();
-        }
-      }
-    ]);
+    this.selectedTypeControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadMerchants());
   }
 
   viewDetails(merchant: Merchant) {
@@ -213,12 +126,21 @@ export class MerchantsListComponent implements OnInit {
     console.log('Export merchants');
   }
 
-  getStatusSeverity(status: MerchantStatus): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
-    switch (status) {
-      case 'Approved': return 'success';
-      case 'Pending': return 'warn';
-      case 'Suspended': return 'danger';
-      default: return 'info';
-    }
+  getDisplayName(merchant: Merchant): string {
+    return this.merchantService.getMerchantDisplayName(merchant);
+  }
+
+  getDisplayStatus(status: MerchantStatus): 'Pending' | 'Active' | 'Suspended' {
+    return this.merchantService.getDisplayStatus(status);
+  }
+
+  getDisplayType(type: MerchantType): string {
+    return this.merchantService.getDisplayType(type);
+  }
+
+  formatServiceAreas(areas: string[]): string {
+    if (!areas || areas.length === 0) return 'N/A';
+    if (areas.length === 1) return areas[0];
+    return `${areas[0]} +${areas.length - 1}`;
   }
 }
