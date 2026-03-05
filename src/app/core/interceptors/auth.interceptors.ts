@@ -10,6 +10,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // Get token from local storage or auth service
   const token = localStorage.getItem('token');
 
+  // Determine if this request is itself a refresh-token call to avoid recursive refresh
+  const isRefreshRequest = req.url.endsWith('auth/refresh');
+
   if (token) {
     const cloned = req.clone({
       setHeaders: {
@@ -18,8 +21,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     });
     return next(cloned).pipe(
       catchError((error: HttpErrorResponse) => {
-        // If 401 Unauthorized, try to refresh the token
-        if (error.status === 401) {
+        // If 401 Unauthorized, try to refresh the token — but never for the refresh endpoint itself
+        if (error.status === 401 && !isRefreshRequest) {
           const refreshToken = localStorage.getItem('refreshToken');
           if (refreshToken) {
             return authService.refreshAccessToken().pipe(
