@@ -24,6 +24,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           if (refreshToken) {
             return authService.refreshAccessToken().pipe(
               take(1),
+              catchError(() => {
+                // If refresh itself fails, logout the user and show error modal
+                authService.logout();
+                modalService.open('error', 'Session Expired', 'Your session has expired. Please login again.');
+                return throwError(() => new Error('Session expired'));
+              }),
               switchMap((response) => {
                 // Retry the original request with the new token
                 const newToken = response.accessToken;
@@ -33,12 +39,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                   }
                 });
                 return next(retryReq);
-              }),
-              catchError(() => {
-                // If refresh fails, logout the user and show error modal
-                authService.logout();
-                modalService.open('error', 'Session Expired', 'Your session has expired. Please login again.');
-                return throwError(() => new Error('Session expired'));
               })
             );
           }
