@@ -1,10 +1,12 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
+import { ModalService } from '../services/modal.service';
 import { catchError, switchMap, take, throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
+  const modalService = inject(ModalService);
   // Get token from local storage or auth service
   const token = localStorage.getItem('token');
 
@@ -33,9 +35,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                 return next(retryReq);
               }),
               catchError(() => {
-                // If refresh fails, logout the user
+                // If refresh fails, logout the user and show error modal
                 authService.logout();
-                return throwError(() => new Error('Session expired. Please login again.'));
+                modalService.open('error', 'Session Expired', 'Your session has expired. Please login again.');
+                return throwError(() => new Error('Session expired'));
               })
             );
           }

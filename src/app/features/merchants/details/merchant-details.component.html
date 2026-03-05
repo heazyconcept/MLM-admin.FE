@@ -59,26 +59,106 @@
       (cancel)="handleModalCancel('reactivate')">
     </app-confirmation-modal>
 
-    <!-- Assign Product Modal -->
-    <app-confirmation-modal
+    <!-- Beautiful Unique Assign Product Modal -->
+    <p-dialog
       [visible]="showAssignProductModal()"
-      title="Assign Product"
-      message="Enter the Product ID to assign to this merchant. The merchant must be ACTIVE and the product must be ACTIVE."
-      confirmLabel="Assign Product"
-      cancelLabel="Cancel"
-      [showReasonField]="false"
-      (confirm)="handleAssignProductConfirm($event)"
-      (cancel)="handleModalCancel('assignProduct')">
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Product ID</label>
-        <input
-          type="text"
-          [ngModel]="selectedProductId()"
-          (ngModelChange)="selectedProductId.set($event)"
-          placeholder="Enter product UUID"
-          class="w-full h-10 px-4 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+      [modal]="true"
+      [style]="{width: '480px'}"
+      [draggable]="false"
+      [resizable]="false"
+      [closable]="false"
+      [showHeader]="false"
+      (onHide)="handleModalCancel('assignProduct')">
+
+      <div class="relative bg-white rounded-xl">
+        <!-- Close button -->
+        <button
+          type="button"
+          (click)="handleModalCancel('assignProduct')"
+          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">
+          <i class="pi pi-times"></i>
+        </button>
+
+        <!-- Header -->
+        <div class="px-6 pt-6 pb-4 border-b border-gray-100">
+          <div class="flex items-center gap-3">
+            
+            <div>
+              <h3 class="text-xl font-semibold text-gray-900">Assign Product</h3>
+              <p class="text-sm text-gray-500 mt-0.5">Select an active product to assign</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="px-6 py-6 pb-8">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Available Products</label>
+
+          @if (loadingProducts()) {
+            <!-- Loading state -->
+            <div class="relative w-full">
+              <div class="w-full h-[42px] px-4 rounded-lg border border-gray-200 bg-gray-50/50 flex items-center justify-between text-sm text-gray-400">
+                <span class="flex items-center gap-2">
+                  <i class="pi pi-spin pi-spinner text-indigo-500"></i>
+                  Loading products catalog...
+                </span>
+                <i class="pi pi-chevron-down text-xs text-gray-300"></i>
+              </div>
+            </div>
+          } @else if (availableProducts().length === 0) {
+            <!-- Empty state -->
+            <div class="w-full h-[42px] px-4 rounded-lg border border-red-200 bg-red-50 flex items-center text-sm text-red-600">
+              <i class="pi pi-exclamation-circle mr-2"></i>
+              No unassigned active products found
+            </div>
+          } @else {
+            <!-- Select Dropdown -->
+            <div class="relative group">
+              <select
+                [value]="selectedProduct()?.id ?? ''"
+                (change)="onAssignProductSelectionChange($event)"
+                class="w-full h-[42px] pl-4 pr-10 rounded-lg border border-gray-300 text-sm text-gray-900 bg-white hover:border-indigo-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 appearance-none transition-all shadow-sm cursor-pointer">
+                <option value="" disabled selected>-- Choose a product --</option>
+                @for (product of availableProducts(); track product.id) {
+                  <option [value]="product.id">
+                    {{ product.name }} ({{ product.sku }})
+                  </option>
+                }
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500 group-hover:text-indigo-500 transition-colors">
+                <i class="pi pi-chevron-down text-xs"></i>
+              </div>
+            </div>
+          }
+
+          <div class="mt-4 bg-blue-50/50 border border-blue-100 rounded-lg p-3 flex gap-2">
+            <i class="pi pi-info-circle text-blue-500 mt-0.5 text-sm"></i>
+            <p class="text-xs text-blue-700 leading-relaxed">
+              Assigned products will immediately be available for this merchant to fulfill. Ensure the merchant covers the delivery areas required.
+            </p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 rounded-b-xl">
+          <button
+            pButton
+            label="Cancel"
+            class="p-button-text p-button-secondary font-medium"
+            (click)="handleModalCancel('assignProduct')">
+          </button>
+          <button
+            pButton
+            label="Assign to Merchant"
+            [icon]="assignProductLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+            class="p-button-primary font-medium"
+            [disabled]="!selectedProduct() || assignProductLoading()"
+            [loading]="assignProductLoading()"
+            (click)="handleAssignProductConfirm({confirmed: true})">
+          </button>
+        </div>
       </div>
-    </app-confirmation-modal>
+    </p-dialog>
 
     <!-- Remove Product Modal -->
     <app-confirmation-modal
@@ -88,6 +168,7 @@
       confirmLabel="Remove Product"
       confirmClass="p-button-danger"
       cancelLabel="Cancel"
+      [loading]="removeProductLoading()"
       (confirm)="handleRemoveProductConfirm($event)"
       (cancel)="handleModalCancel('removeProduct')">
     </app-confirmation-modal>

@@ -79,28 +79,6 @@ export class MerchantsListComponent implements OnInit {
     suspended: this.merchantService.suspendedCount()
   }));
 
-  columns = signal<TableColumn<Merchant>[]>([]);
-
-  tableHeaders = computed(() => this.columns().map(c => c.header));
-  
-  tableConfig = signal<TableConfig>({
-    paginator: true,
-    rows: 10,
-    globalFilter: false,
-    showGridlines: false,
-    hoverable: true,
-    size: 'normal'
-  });
-
-  actions = signal<TableAction<Merchant>[]>([
-    {
-      icon: 'pi pi-eye',
-      tooltip: 'View Details',
-      severity: 'secondary',
-      command: (merchant) => this.viewDetails(merchant)
-    }
-  ]);
-
   private buildFilters(): AdminMerchantFilters {
     const status = this.selectedStatusControl.value;
     const type = this.selectedTypeControl.value;

@@ -28,6 +28,8 @@ export class ConfirmationModalComponent {
   showReasonField = input<boolean>(false);
   reasonRequired = input<boolean>(false);
   reasonPlaceholder = input<string>('Enter reason...');
+  confirmDisabled = input<boolean>(false);
+  loading = input<boolean>(false);
 
   visibleChange = output<boolean>();
   confirm = output<ConfirmationResult>();
@@ -40,7 +42,9 @@ export class ConfirmationModalComponent {
       return;
     }
     this.confirm.emit({ confirmed: true, reason: this.reasonControl.value || '' });
-    this.close();
+    if (!this.loading()) {
+      this.close();
+    }
   }
 
   onCancel(): void {

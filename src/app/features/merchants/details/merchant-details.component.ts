@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MerchantService, Merchant, MerchantStatus } from '../services/merchant.service';
+import { AdminProductsService } from '../../products/services/admin-products.service';
+import { Product } from '../../../core/models/product.model';
 import { PermissionService } from '../../../core/services/permission.service';
 import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
@@ -11,6 +13,7 @@ import { ConfirmationModalComponent } from '../../../shared/components/confirmat
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
+import { DialogModule } from 'primeng/dialog';
 import { MessageService } from 'primeng/api';
 
 @Component({
@@ -24,7 +27,8 @@ import { MessageService } from 'primeng/api';
     ConfirmationModalComponent,
     ButtonModule,
     ToastModule,
-    TooltipModule
+    TooltipModule,
+    DialogModule
   ],
   templateUrl: './merchant-details.component.html',
   providers: [MessageService],
@@ -32,6 +36,7 @@ import { MessageService } from 'primeng/api';
 })
 export class MerchantDetailsComponent implements OnInit {
   private merchantService = inject(MerchantService);
+    private productService = inject(AdminProductsService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private messageService = inject(MessageService);
@@ -62,7 +67,14 @@ export class MerchantDetailsComponent implements OnInit {
   removeProductLoading = signal(false);
 
   // Product management state
-  selectedProductId = signal<string>('');
+  selectedProduct = signal<Product | null>(null);
+  availableProducts = computed(() => {
+    const allProducts = this.productService.products();
+    const assignedIds = new Set(this.merchant()?.products.map(p => p.productId) ?? []);
+    // Filter to show only ACTIVE products not already assigned
+    return allProducts.filter(p => p.status === 'ACTIVE' && !assignedIds.has(p.id));
+  });
+  loadingProducts = this.productService.loadingProducts;
   productToRemove = signal<{ id: string; name: string } | null>(null);
 
   // Computed
@@ -73,6 +85,9 @@ export class MerchantDetailsComponent implements OnInit {
   isSuspended = computed(() => this.merchant()?.status === 'SUSPENDED');
 
   ngOnInit() {
+      // Load active products for assignment
+      this.productService.loadProducts({ status: 'ACTIVE', limit: 500 }).subscribe();
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loading.set(true);
@@ -108,12 +123,18 @@ export class MerchantDetailsComponent implements OnInit {
   onSuspend() { this.showSuspendModal.set(true); }
   onReactivate() { this.showReactivateModal.set(true); }
   onAssignProduct() { 
-    this.selectedProductId.set('');
+    this.selectedProduct.set(null);
     this.showAssignProductModal.set(true); 
   }
   onRemoveProduct(productId: string, productName: string) {
     this.productToRemove.set({ id: productId, name: productName });
     this.showRemoveProductModal.set(true);
+  }
+
+  onAssignProductSelectionChange(event: Event): void {
+    const productId = (event.target as HTMLSelectElement).value;
+    const product = this.availableProducts().find(p => p.id === productId) ?? null;
+    this.selectedProduct.set(product);
   }
 
   // Confirmation handlers
@@ -204,12 +225,13 @@ export class MerchantDetailsComponent implements OnInit {
   handleAssignProductConfirm(event: { confirmed: boolean; reason?: string }) {
     if (event.confirmed) {
       const merchantId = this.merchant()?.id;
-      const productId = this.selectedProductId();
+      const productId = this.selectedProduct()?.id;
       if (merchantId && productId) {
         this.assignProductLoading.set(true);
         this.merchantService.assignProduct(merchantId, productId).subscribe({
           next: () => {
             this.assignProductLoading.set(false);
+            this.showAssignProductModal.set(false);
             this.refreshMerchant(merchantId);
             this.messageService.add({ severity: 'success', summary: 'Product Assigned', detail: 'Product has been assigned to merchant' });
           },
@@ -218,9 +240,12 @@ export class MerchantDetailsComponent implements OnInit {
             this.messageService.add({ severity: 'error', summary: 'Error', detail: err?.error?.message ?? 'Failed to assign product' });
           }
         });
+      } else {
+        this.showAssignProductModal.set(false);
       }
+    } else {
+      this.showAssignProductModal.set(false);
     }
-    this.showAssignProductModal.set(false);
   }
 
   handleRemoveProductConfirm(event: { confirmed: boolean; reason?: string }) {
@@ -232,6 +257,8 @@ export class MerchantDetailsComponent implements OnInit {
         this.merchantService.removeProduct(merchantId, product.id).subscribe({
           next: () => {
             this.removeProductLoading.set(false);
+            this.showRemoveProductModal.set(false);
+            this.productToRemove.set(null);
             this.refreshMerchant(merchantId);
             this.messageService.add({ severity: 'success', summary: 'Product Removed', detail: 'Product has been removed from merchant' });
           },
@@ -241,9 +268,10 @@ export class MerchantDetailsComponent implements OnInit {
           }
         });
       }
+    } else {
+      this.showRemoveProductModal.set(false);
+      this.productToRemove.set(null);
     }
-    this.showRemoveProductModal.set(false);
-    this.productToRemove.set(null);
   }
 
   handleModalCancel(modalName: 'approve' | 'reject' | 'suspend' | 'reactivate' | 'assignProduct' | 'removeProduct') {
