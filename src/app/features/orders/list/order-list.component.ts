@@ -1,7 +1,8 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 // PrimeNG
 import { TableModule } from 'primeng/table';
@@ -11,12 +12,12 @@ import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { DatePickerModule } from 'primeng/datepicker';
 
 // App
-import { OrderService } from '../../../core/services/order.service';
-import { Order, OrderStatus } from '../../../core/models/order.model';
+import { AdminOrdersService } from '../services/admin-orders.service';
+import { Order, OrderStatus, FulfilmentMode, CustomerType, AdminOrderFilters } from '../../../core/models/order.model';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
 
 @Component({
   selector: 'app-order-list',
@@ -30,111 +31,166 @@ import { TableColumn, TableConfig, TableAction } from '../../../shared/component
     TagModule,
     IconFieldModule,
     InputIconModule,
+    DatePickerModule,
     DataTableComponent,
-
   ],
   templateUrl: './order-list.component.html',
   styleUrls: ['./order-list.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrderListComponent {
-  private orderService = inject(OrderService);
+export class OrderListComponent implements OnInit {
+  private ordersService = inject(AdminOrdersService);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
-  // State
-  orders = this.orderService.orders;
-  
-  searchQueryControl = new FormControl('');
-  selectedStatusControl = new FormControl<OrderStatus | null>(null);
-  selectedFulfilmentControl = new FormControl<string | null>(null);
+  // State from service
+  orders = this.ordersService.orders;
+  loading = this.ordersService.loading;
+  loadError = this.ordersService.error;
+  listTotal = this.ordersService.listTotal;
+
+  // Filter controls
+  searchQuery = signal('');
+  selectedStatusControl = new FormControl<string>('all');
+  selectedFulfilmentControl = new FormControl<string>('all');
+  selectedCustomerTypeControl = new FormControl<string>('all');
+  fromDateControl = new FormControl<Date | null>(null);
+  toDateControl = new FormControl<Date | null>(null);
 
   // Options
   statusOptions = [
-    { label: 'All Statuses', value: null },
-    { label: 'Pending', value: 'Pending' },
-    { label: 'Processing', value: 'Processing' },
-    { label: 'Ready', value: 'Ready' },
-    { label: 'Completed', value: 'Completed' },
-    { label: 'Cancelled', value: 'Cancelled' },
-    { label: 'Delayed', value: 'Delayed' },
-    { label: 'Failed', value: 'Failed' }
+    { label: 'All Statuses', value: 'all' },
+    { label: 'Pending', value: 'PENDING' },
+    { label: 'Created', value: 'CREATED' },
+    { label: 'Paid', value: 'PAID' },
+    { label: 'Assigned to Merchant', value: 'ASSIGNED_TO_MERCHANT' },
+    { label: 'Ready for Pickup', value: 'READY_FOR_PICKUP' },
+    { label: 'Delivery Requested', value: 'OFFLINE_DELIVERY_REQUESTED' },
+    { label: 'Fulfilled', value: 'FULFILLED' },
+    { label: 'Delivered', value: 'DELIVERED' },
   ];
 
   fulfilmentOptions = [
-    { label: 'All Types', value: null },
-    { label: 'Pickup', value: 'Pickup' },
-    { label: 'Delivery', value: 'Delivery' }
+    { label: 'All Types', value: 'all' },
+    { label: 'Pickup', value: 'PICKUP' },
+    { label: 'Offline Delivery', value: 'OFFLINE_DELIVERY' },
   ];
 
-  // Filtering
+  customerTypeOptions = [
+    { label: 'All Customers', value: 'all' },
+    { label: 'Member', value: 'MEMBER' },
+    { label: 'Non-member', value: 'NON_MEMBER' },
+  ];
+
+  // Client-side search filter on top of API results
   filteredOrders = computed(() => {
     let list = this.orders();
-    const search = (this.searchQueryControl.value || '').toLowerCase();
-    const status = this.selectedStatusControl.value;
-    const fulfilment = this.selectedFulfilmentControl.value;
-
-    // Search
+    const search = this.searchQuery().toLowerCase();
     if (search) {
-      list = list.filter(o => 
-        o.id.toLowerCase().includes(search) ||
-        o.user.name.toLowerCase().includes(search) ||
-        o.items.some(i => i.name.toLowerCase().includes(search))
+      list = list.filter(
+        (o) =>
+          o.id.toLowerCase().includes(search) ||
+          this.ordersService.getOrderCustomerName(o).toLowerCase().includes(search) ||
+          this.ordersService.getOrderCustomerEmail(o).toLowerCase().includes(search) ||
+          o.items.some((i) => i.productName.toLowerCase().includes(search))
       );
     }
-
-    // Status Filter
-    if (status) {
-      list = list.filter(o => o.status === status);
-    }
-
-    // Fulfilment Filter
-    if (fulfilment) {
-      list = list.filter(o => o.fulfilmentType === fulfilment);
-    }
-
     return list;
   });
 
-  // Table Configuration
-  columns = signal<TableColumn<Order>[]>([
-    { field: 'id', header: 'Order ID', width: '120px', class: 'font-mono text-xs' },
-    { field: 'user', header: 'Customer' },
-    { field: 'totalAmount', header: 'Amount' },
-    { field: 'fulfilmentType', header: 'Fulfilment' },
-    { field: 'status', header: 'Status' },
-    { field: 'createdAt', header: 'Date', width: '120px' }
+  // Table config
+  tableHeaders = signal<string[]>([
+    'Customer',
+    'Amount',
+    'Fulfilment',
+    'Customer Type',
+    'Status',
+    'Date',
+    'Actions',
   ]);
 
-  tableHeaders = computed(() => this.columns().map(c => c.header));
+  ngOnInit(): void {
+    this.loadOrders();
 
-  tableConfig = signal<TableConfig>({
-    paginator: true,
-    rows: 10,
-    showCurrentPageReport: true,
-    rowsPerPageOptions: [10, 20, 50],
-    size: 'small',
-    hoverable: true
-  });
+    // Re-fetch when filters change
+    this.selectedStatusControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadOrders());
 
-  actions = signal<TableAction<Order>[]>([
-    {
-      icon: 'pi pi-eye',
-      tooltip: 'View Details',
-      severity: 'secondary',
-      command: (order) => this.router.navigate(['/admin/orders', order.id])
-    }
-  ]);
+    this.selectedFulfilmentControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadOrders());
 
-  getStatusSeverity(status: string): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | undefined {
-    switch (status) {
-      case 'Completed': return 'success';
-      case 'Ready': return 'info';
-      case 'Processing': return 'info'; // or undefined
-      case 'Pending': return 'secondary';
-      case 'Delayed': return 'warn';
-      case 'Failed':
-      case 'Cancelled': return 'danger';
-      default: return 'secondary';
-    }
+    this.selectedCustomerTypeControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadOrders());
+  }
+
+  loadOrders(): void {
+    const filters = this.buildFilters();
+    this.ordersService.loadOrders(filters).subscribe();
+  }
+
+  onDateFilter(): void {
+    this.loadOrders();
+  }
+
+  onSearch(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.searchQuery.set(value);
+  }
+
+  onRefresh(): void {
+    this.loadOrders();
+  }
+
+  viewOrder(order: Order): void {
+    this.router.navigate(['/admin/orders', order.id]);
+  }
+
+  // Delegate display helpers to the service
+  getStatusLabel(status: OrderStatus): string {
+    return this.ordersService.getStatusLabel(status);
+  }
+
+  getStatusSeverity(status: OrderStatus) {
+    return this.ordersService.getStatusSeverity(status);
+  }
+
+  getFulfilmentLabel(mode: FulfilmentMode): string {
+    return this.ordersService.getFulfilmentLabel(mode);
+  }
+
+  getCustomerTypeLabel(type: CustomerType): string {
+    return this.ordersService.getCustomerTypeLabel(type);
+  }
+
+  getOrderCustomerName(order: Order): string {
+    return this.ordersService.getOrderCustomerName(order);
+  }
+
+  getOrderCustomerEmail(order: Order): string {
+    return this.ordersService.getOrderCustomerEmail(order);
+  }
+
+  private buildFilters(): AdminOrderFilters {
+    const filters: AdminOrderFilters = { limit: 100, offset: 0 };
+
+    const status = this.selectedStatusControl.value;
+    if (status && status !== 'all') filters.status = status as OrderStatus;
+
+    const fulfilment = this.selectedFulfilmentControl.value;
+    if (fulfilment && fulfilment !== 'all') filters.fulfilmentMode = fulfilment as FulfilmentMode;
+
+    const customerType = this.selectedCustomerTypeControl.value;
+    if (customerType && customerType !== 'all') filters.customerType = customerType as CustomerType;
+
+    const from = this.fromDateControl.value;
+    if (from) filters.fromDate = from.toISOString();
+
+    const to = this.toDateControl.value;
+    if (to) filters.toDate = to.toISOString();
+
+    return filters;
   }
 }

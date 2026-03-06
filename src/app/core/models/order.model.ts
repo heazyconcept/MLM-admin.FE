@@ -1,69 +1,107 @@
+// ── API-aligned types ────────────────────────────────────────
 
-export type OrderStatus = 'Pending' | 'Processing' | 'Ready' | 'Completed' | 'Cancelled' | 'Delayed' | 'Failed';
-export type FulfilmentType = 'Pickup' | 'Delivery';
+export type OrderStatus =
+  | 'PENDING'
+  | 'CREATED'
+  | 'PAID'
+  | 'ASSIGNED_TO_MERCHANT'
+  | 'READY_FOR_PICKUP'
+  | 'OFFLINE_DELIVERY_REQUESTED'
+  | 'FULFILLED'
+  | 'DELIVERED';
+
+export type FulfilmentMode = 'PICKUP' | 'OFFLINE_DELIVERY';
+
+export type CustomerType = 'MEMBER' | 'NON_MEMBER';
+
+export type MerchantRoute = 'CLOSEST' | 'OTHER';
 
 export interface OrderUser {
   id: string;
-  name: string;
   email: string;
-  phone: string;
-}
-
-export interface OrderMerchant {
-  id: string;
-  name: string;
-  address?: string; // For Pickup
-  phone?: string;
+  referralCode?: string;
+  firstName?: string;
+  lastName?: string;
+  [key: string]: unknown;
 }
 
 export interface OrderItem {
   id: string;
-  name: string;
-  sku: string;
-  price: number;
+  productId: string;
+  productName: string;
   quantity: number;
-  thumbnail: string;
+  unitPrice: number;
+  pv: number;
+  cpv: number;
+  lineTotal: number;
 }
 
-export interface DeliveryDetails {
-  address: string;
-  city: string;
-  state: string;
-  zipCode?: string;
-  logisticsPartner?: string;
-  trackingNumber?: string;
-  estimatedDelivery?: Date;
-}
-
-export interface LogisticsTimelineEvent {
-  status: OrderStatus;
-  date: Date;
-  note?: string;
-  by: string; // User or System
+export interface OrderPayment {
+  id: string;
+  status: string;
+  [key: string]: unknown;
 }
 
 export interface Order {
   id: string;
-  user: OrderUser;
-  merchant?: OrderMerchant; // For Pickup or if source is relevant
-  items: OrderItem[];
-  totalAmount: number;
-  logisticsCost: number;
-  fulfilmentType: FulfilmentType;
-  deliveryDetails?: DeliveryDetails;
   status: OrderStatus;
-  createdAt: Date;
-  updatedAt: Date;
-  timeline: LogisticsTimelineEvent[];
-  internalNotes?: string;
-  isFlagged?: boolean;
+  totalAmount: number;
+  baseAmount: number;
+  currency: string;
+  paymentMethod: string;
+  fulfilmentMode: FulfilmentMode;
+  customerType: CustomerType;
+  guestFullName?: string | null;
+  guestEmail?: string | null;
+  guestPhone?: string | null;
+  guestCity?: string | null;
+  guestCountry?: string | null;
+  merchantRoute: MerchantRoute | null;
+  selectedMerchantId: string | null;
+  assignedMerchantId?: string | null;
+  deliveryAddress: string | null;
+  deliveryDisclaimerAccepted: boolean;
+  sentAt: string | null;
+  sentBy: string | null;
+  receivedAt: string | null;
+  items: OrderItem[];
+  createdAt: string;
+  user: OrderUser | null;
+  payment?: OrderPayment | null;
 }
+
+// ── Query params for GET /admin/orders ────────────────────────
+
+export interface AdminOrderFilters {
+  userId?: string;
+  status?: OrderStatus;
+  fulfilmentMode?: FulfilmentMode;
+  selectedMerchantId?: string;
+  customerType?: CustomerType;
+  merchantRoute?: MerchantRoute;
+  productId?: string;
+  fromDate?: string;
+  toDate?: string;
+  limit?: number;
+  offset?: number;
+}
+
+// ── API response for order list ────────────────────────────────
+
+export interface AdminOrdersListResponse {
+  orders: Order[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// ── Logistics (kept for logistics module) ─────────────────────
 
 export interface LogisticsRule {
   id: string;
   name: string;
   type: 'Region' | 'Weight' | 'Flat';
   cost: number;
-  condition?: string; // e.g. "Lagos", "> 10kg"
+  condition?: string;
   isActive: boolean;
 }

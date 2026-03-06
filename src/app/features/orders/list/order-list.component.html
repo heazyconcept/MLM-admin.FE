@@ -3,9 +3,9 @@
   <div class="flex justify-between items-center">
     <div>
       <h1 class="text-2xl font-bold text-slate-800">Order Management</h1>
-      <p class="text-slate-500 text-sm">Monitor orders, tracking, and fulfilment.</p>
+      <p class="text-slate-500 text-sm">Monitor orders, fulfilment, and merchant assignment.</p>
     </div>
-    <!-- (Optional) Manual Order Creation or Export Button can go here -->
+    <p-button label="Refresh" icon="pi pi-refresh" severity="secondary" (onClick)="onRefresh()"></p-button>
   </div>
 
   <!-- Filters -->
@@ -14,20 +14,22 @@
     <div class="col-span-1 md:col-span-2">
       <p-iconfield iconPosition="left">
         <p-inputicon class="pi pi-search"></p-inputicon>
-        <input 
-          type="text" 
-          pInputText 
-          placeholder="Search by Order ID, User, or Item..." 
+        <input
+          type="text"
+          pInputText
+          placeholder="Search by Order ID, customer, or product..."
           class="w-full"
-          [formControl]="searchQueryControl" />
+          (input)="onSearch($event)" />
       </p-iconfield>
     </div>
 
     <!-- Status Filter -->
     <div>
-      <p-select 
-        [options]="statusOptions" 
+      <p-select
+        [options]="statusOptions"
         [formControl]="selectedStatusControl"
+        optionLabel="label"
+        optionValue="value"
         placeholder="All Statuses"
         class="w-full"
         styleClass="w-full"
@@ -37,59 +39,154 @@
 
     <!-- Fulfilment Filter -->
     <div>
-       <p-select 
-        [options]="fulfilmentOptions" 
+      <p-select
+        [options]="fulfilmentOptions"
         [formControl]="selectedFulfilmentControl"
+        optionLabel="label"
+        optionValue="value"
         placeholder="All Types"
         class="w-full"
         styleClass="w-full"
         appendTo="body">
       </p-select>
     </div>
+
+    <!-- Customer Type Filter -->
+    <div>
+      <p-select
+        [options]="customerTypeOptions"
+        [formControl]="selectedCustomerTypeControl"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All Customers"
+        class="w-full"
+        styleClass="w-full"
+        appendTo="body">
+      </p-select>
+    </div>
+
+    <!-- Date Range -->
+    <div>
+      <p-datepicker
+        [formControl]="fromDateControl"
+        placeholder="From Date"
+        dateFormat="yy-mm-dd"
+        [showIcon]="true"
+        styleClass="w-full"
+        (onSelect)="onDateFilter()"
+        (onClear)="onDateFilter()">
+      </p-datepicker>
+    </div>
+    <div>
+      <p-datepicker
+        [formControl]="toDateControl"
+        placeholder="To Date"
+        dateFormat="yy-mm-dd"
+        [showIcon]="true"
+        styleClass="w-full"
+        (onSelect)="onDateFilter()"
+        (onClear)="onDateFilter()">
+      </p-datepicker>
+    </div>
   </div>
+
+  <!-- Error Banner -->
+  @if (loadError()) {
+    <div class="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center justify-between">
+      <p class="text-sm text-red-700">{{ loadError() }}</p>
+      <button pButton label="Retry" icon="pi pi-refresh" class="p-button-sm p-button-outlined" (click)="onRefresh()"></button>
+    </div>
+  }
 
   <!-- Orders Table -->
   <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-    <app-data-table
-      [value]="filteredOrders()"
-      [headers]="tableHeaders()">
+    @if (loading()) {
+      <div class="p-8 animate-pulse space-y-4">
+        @for (i of [1,2,3,4,5]; track i) {
+          <div class="flex gap-4 items-center">
+            <div class="flex-1 h-4 rounded bg-slate-200"></div>
+            <div class="h-4 w-24 rounded bg-slate-200"></div>
+            <div class="h-4 w-16 rounded bg-slate-200"></div>
+          </div>
+        }
+      </div>
+    } @else {
+      <app-data-table
+        [value]="filteredOrders()"
+        [headers]="tableHeaders()"
+        [loading]="loading()">
 
-      <!-- Row Template -->
-      <ng-template pTemplate="body" let-row>
-        <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
-          <!-- User Column -->
-          <td class="px-5 py-4">
-            <div class="flex flex-col">
-              <span class="font-medium text-slate-800">{{ row.user.name }}</span>
-              <span class="text-xs text-slate-500">{{ row.user.email }}</span>
-            </div>
-          </td>
+        <!-- Row Template -->
+        <ng-template pTemplate="body" let-row>
+          <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition cursor-pointer" (click)="viewOrder(row)">
+            <!-- Customer Column -->
+            <td class="px-5 py-4">
+              <div class="flex flex-col">
+                <span class="font-medium text-slate-800">{{ getOrderCustomerName(row) }}</span>
+                <span class="text-xs text-slate-500">{{ getOrderCustomerEmail(row) }}</span>
+                @if (row.user?.referralCode) {
+                  <span class="text-xs text-blue-500 font-mono">{{ row.user.referralCode }}</span>
+                }
+              </div>
+            </td>
 
-          <!-- Total Amount -->
-          <td class="px-5 py-4">
-            <span class="font-semibold text-slate-900">{{ row.totalAmount | currency:'NGN':'symbol-narrow' }}</span>
-          </td>
+            <!-- Total Amount -->
+            <td class="px-5 py-4">
+              <div class="flex flex-col">
+                <span class="font-semibold text-slate-900">{{ row.totalAmount | currency:row.currency:'symbol-narrow' }}</span>
+                <span class="text-xs text-slate-500">Base: {{ row.baseAmount | currency:row.currency:'symbol-narrow' }}</span>
+              </div>
+            </td>
 
-          <!-- Status -->
-          <td class="px-5 py-4">
-             <p-tag [value]="row.status" [severity]="getStatusSeverity(row.status)"></p-tag>
-          </td>
+            <!-- Fulfilment -->
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-2">
+                <i class="pi" [class.pi-car]="row.fulfilmentMode === 'OFFLINE_DELIVERY'" [class.pi-building]="row.fulfilmentMode === 'PICKUP'"></i>
+                <span class="text-sm text-slate-700">{{ getFulfilmentLabel(row.fulfilmentMode) }}</span>
+              </div>
+            </td>
 
-          <!-- Fulfilment Type -->
-          <td class="px-5 py-4">
-            <div class="flex items-center gap-2">
-              <i class="pi" [class.pi-car]="row.fulfilmentType === 'Delivery'" [class.pi-building]="row.fulfilmentType === 'Pickup'"></i>
-              <span class="text-sm text-slate-700">{{ row.fulfilmentType }}</span>
-            </div>
-          </td>
-          
-          <!-- Date -->
-          <td class="px-5 py-4">
-             <span class="text-sm text-slate-600">{{ row.createdAt | date:'mediumDate' }}</span>
-          </td>
-        </tr>
-      </ng-template>
+            <!-- Customer Type -->
+            <td class="px-5 py-4">
+              <span class="text-xs font-medium px-2 py-1 rounded"
+                [class.bg-emerald-50]="row.customerType === 'MEMBER'"
+                [class.text-emerald-700]="row.customerType === 'MEMBER'"
+                [class.bg-amber-50]="row.customerType === 'NON_MEMBER'"
+                [class.text-amber-700]="row.customerType === 'NON_MEMBER'">
+                {{ getCustomerTypeLabel(row.customerType) }}
+              </span>
+            </td>
 
-    </app-data-table>
+            <!-- Status -->
+            <td class="px-5 py-4">
+              <p-tag [value]="getStatusLabel(row.status)" [severity]="getStatusSeverity(row.status)"></p-tag>
+            </td>
+
+            <!-- Date -->
+            <td class="px-5 py-4">
+              <span class="text-sm text-slate-600">{{ row.createdAt | date:'mediumDate' }}</span>
+            </td>
+
+            <!-- Actions -->
+            <td class="px-5 py-4">
+              <button
+                pButton
+                icon="pi pi-eye"
+                class="p-button-text p-button-sm p-button-rounded text-gray-500 hover:text-gray-900"
+                (click)="viewOrder(row); $event.stopPropagation()">
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+
+      </app-data-table>
+
+      @if (!loading() && filteredOrders().length === 0 && !loadError()) {
+        <div class="flex flex-col items-center justify-center py-16 text-slate-400">
+          <i class="pi pi-inbox text-4xl mb-3"></i>
+          <p class="text-sm">No orders found</p>
+        </div>
+      }
+    }
   </div>
 </div>
