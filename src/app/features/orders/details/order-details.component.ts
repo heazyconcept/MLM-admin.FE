@@ -85,6 +85,7 @@ export class OrderDetailsComponent implements OnInit {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const id = params.get('id');
       if (id) {
+        this.selectedMerchantId.set(null);
         this.ordersService.loadOrder(id).subscribe();
         // Load active merchants for the assign-merchant picker
         this.merchantService.loadMerchants({ status: 'ACTIVE', limit: 500 }).subscribe();
