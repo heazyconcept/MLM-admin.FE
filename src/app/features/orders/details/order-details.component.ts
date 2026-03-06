@@ -1,19 +1,21 @@
-import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 // PrimeNG
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
-import { SplitButtonModule } from 'primeng/splitbutton';
-import { TimelineModule } from 'primeng/timeline';
-import { MenuItem } from 'primeng/api';
+import { SelectModule } from 'primeng/select';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
 // App
-import { OrderService } from '../../../core/services/order.service';
+import { AdminOrdersService } from '../services/admin-orders.service';
+import { MerchantService, Merchant } from '../../merchants/services/merchant.service';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
-import { OrderStatus } from '../../../core/models/order.model';
+import { Order, OrderStatus, FulfilmentMode, CustomerType } from '../../../core/models/order.model';
 import { PermissionService } from '../../../core/services/permission.service';
 import { Feature, Action } from '../../../core/models/admin-permission.model';
 
@@ -25,91 +27,148 @@ import { Feature, Action } from '../../../core/models/admin-permission.model';
     InfoBannerComponent,
     ButtonModule,
     TagModule,
-    SplitButtonModule,
-    TimelineModule
+    SelectModule,
+    ToastModule,
   ],
+  providers: [MessageService],
   templateUrl: './order-details.component.html',
   styleUrls: ['./order-details.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrderDetailsComponent {
+export class OrderDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private location = inject(Location);
-  private orderService = inject(OrderService);
+  private ordersService = inject(AdminOrdersService);
+  private merchantService = inject(MerchantService);
+  private messageService = inject(MessageService);
+  private destroyRef = inject(DestroyRef);
   protected permission = inject(PermissionService);
 
-  canUpdateOrderStatus = computed(
+  // Permission checks
+  canAssignMerchant = computed(
     () => this.permission.canEdit(Feature.OrdersLogistics) && this.permission.canPerform(Action.UpdateOrderStatus)
   );
   isViewOnly = computed(() => !this.permission.canEdit(Feature.OrdersLogistics));
 
-  orderId = signal<string>('');
-  
-  // Order Data
-  // Note: In real app, we might trigger a fetch. Here we rely on the service selector.
-  // We need to set orderId from route params first.
-  
-  constructor() {
-    this.route.paramMap.subscribe(params => {
+  // State
+  order = this.ordersService.selectedOrder;
+  loadingDetail = this.ordersService.loadingDetail;
+  loadError = this.ordersService.error;
+  assigning = this.ordersService.assigning;
+
+  // Merchant picker state
+  merchants = this.merchantService.merchants;
+  loadingMerchants = this.merchantService.loading;
+  selectedMerchantId = signal<string | null>(null);
+
+  merchantOptions = computed(() =>
+    this.merchants()
+      .filter((m) => m.status === 'ACTIVE')
+      .map((m) => ({
+        label: this.merchantService.getMerchantDisplayName(m) + ` (${m.user.email})`,
+        value: m.id,
+      }))
+  );
+
+  // Can assign? Only OFFLINE_DELIVERY + (PAID or ASSIGNED_TO_MERCHANT)
+  canShowAssign = computed(() => {
+    const o = this.order();
+    if (!o) return false;
+    return (
+      o.fulfilmentMode === 'OFFLINE_DELIVERY' &&
+      (o.status === 'PAID' || o.status === 'ASSIGNED_TO_MERCHANT') &&
+      this.canAssignMerchant()
+    );
+  });
+
+  ngOnInit(): void {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const id = params.get('id');
       if (id) {
-        this.orderId.set(id);
+        this.selectedMerchantId.set(null);
+        this.ordersService.loadOrder(id).subscribe();
+        // Load active merchants for the assign-merchant picker
+        this.merchantService.loadMerchants({ status: 'ACTIVE', limit: 500 }).subscribe();
       }
     });
   }
 
-  // Computed Order
-  // Accessing the computed signal from service dynamically based on local orderId
-  // Since getOrder returns a computed, we effectively have a computed of a computed
-  order = computed(() => {
-    const id = this.orderId();
-    if (!id) return null;
-    return this.orderService.getOrder(id)();
-  });
-
-  // Action Menu Items
-  statusMenuItems: MenuItem[] = [
-    { label: 'Mark as Processing', command: () => this.updateStatus('Processing') },
-    { label: 'Mark as Ready', command: () => this.updateStatus('Ready') },
-    { label: 'Mark as Completed', command: () => this.updateStatus('Completed') },
-    { separator: true },
-    { label: 'Mark as Delayed', icon: 'pi pi-exclamation-triangle', command: () => this.updateStatus('Delayed') },
-    { label: 'Cancel Order', icon: 'pi pi-times', styleClass: 'text-red-600', command: () => this.updateStatus('Cancelled') },
-  ];
-
-  goBack() {
+  goBack(): void {
     this.location.back();
   }
 
-  updateStatus(status: OrderStatus) {
-    if (this.orderId()) {
-      this.orderService.updateOrderStatus(this.orderId(), status);
-    }
-  }
-
-  flagOrder() {
-    const current = this.order();
-    if (current) {
-      this.orderService.flagOrder(current.id, !current.isFlagged);
-    }
-  }
-
-  getSubtotal() {
+  onAssignMerchant(): void {
     const order = this.order();
-    if (!order) return 0;
-    return order.totalAmount - order.logisticsCost;
+    const merchantId = this.selectedMerchantId();
+    if (!order || !merchantId) return;
+
+    this.ordersService.assignMerchant(order.id, merchantId).subscribe((res) => {
+      if (res) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Merchant Assigned',
+          detail: res.message || 'Merchant assigned to order successfully.',
+        });
+        // Refresh order details
+        this.ordersService.loadOrder(order.id).subscribe();
+        this.selectedMerchantId.set(null);
+      } else {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Assignment Failed',
+          detail: this.ordersService.error() || 'Failed to assign merchant.',
+        });
+      }
+    });
   }
 
-  getStatusSeverity(status: string): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | undefined {
-    switch (status) {
-      case 'Completed': return 'success';
-      case 'Ready': return 'info';
-      case 'Processing': return 'info';
-      case 'Pending': return 'secondary';
-      case 'Delayed': return 'warn';
-      case 'Failed':
-      case 'Cancelled': return 'danger';
-      default: return 'secondary';
+  onRetry(): void {
+    const order = this.order();
+    if (order) {
+      this.ordersService.loadOrder(order.id).subscribe();
     }
+  }
+
+  // ── Display helpers ────────────────────────────────────────
+
+  getStatusLabel(status: OrderStatus): string {
+    return this.ordersService.getStatusLabel(status);
+  }
+
+  getStatusSeverity(status: OrderStatus) {
+    return this.ordersService.getStatusSeverity(status);
+  }
+
+  getFulfilmentLabel(mode: FulfilmentMode): string {
+    return this.ordersService.getFulfilmentLabel(mode);
+  }
+
+  getCustomerTypeLabel(type: CustomerType): string {
+    return this.ordersService.getCustomerTypeLabel(type);
+  }
+
+  getUserDisplayName(user: { email: string; firstName?: string; lastName?: string } | null | undefined): string {
+    return this.ordersService.getUserDisplayName(user);
+  }
+
+  getOrderCustomerName(order: Order): string {
+    return this.ordersService.getOrderCustomerName(order);
+  }
+
+  getOrderCustomerEmail(order: Order): string {
+    return this.ordersService.getOrderCustomerEmail(order);
+  }
+
+  getItemsTotal(): number {
+    const o = this.order();
+    if (!o) return 0;
+    return o.items.reduce((sum, item) => sum + item.lineTotal, 0);
+  }
+
+  getAssignedMerchantName(): string {
+    const o = this.order();
+    if (!o?.assignedMerchantId) return 'Not assigned';
+    const merchant = this.merchants().find((m) => m.id === o.assignedMerchantId);
+    return merchant ? this.merchantService.getMerchantDisplayName(merchant) : o.assignedMerchantId;
   }
 }
