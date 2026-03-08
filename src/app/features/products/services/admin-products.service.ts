@@ -187,6 +187,7 @@ export class AdminProductsService {
     }
   ): Observable<Product> {
     const dto = this.mapProductToDto(body);
+    delete dto['sku'];
     return this.api.put<AdminProductDto>(`admin/products/${encodeURIComponent(id)}`, dto).pipe(
       map((p) => this.mapProductDtoToProduct(p)),
       tap((updated) => {
