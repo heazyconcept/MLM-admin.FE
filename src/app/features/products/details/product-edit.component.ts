@@ -218,7 +218,6 @@ export class ProductEditComponent implements OnInit {
       this.adminProducts.updateProduct(id, {
         categoryId: formValue.categoryId || undefined,
         name: formValue.name || undefined,
-        sku: formValue.sku || undefined,
         description: formValue.description || '',
         visibleToAll: !!formValue.visibleToAll,
         visibleToPackages: formValue.visibleToAll ? [] : (formValue.visibleToPackages || []),
