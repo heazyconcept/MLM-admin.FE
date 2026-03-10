@@ -145,6 +145,13 @@
             <span class="bg-purple-50 text-purple-700 px-2 py-1 rounded text-xs font-medium">{{ row.currentPrice?.cpv || 0 }}</span>
           </td>
 
+          <!-- Admin Pool -->
+          <td class="px-5 py-4 text-sm text-center">
+            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+              {{ row.adminPoolQuantity ?? 0 }}
+            </span>
+          </td>
+
           <!-- Status -->
           <td class="px-5 py-4 text-center">
             <p-tag 

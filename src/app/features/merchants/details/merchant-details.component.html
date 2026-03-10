@@ -2,14 +2,7 @@
   <div class="min-h-screen bg-gray-50 px-8 py-6">
     <p-toast></p-toast>
 
-    @if (isViewOnly()) {
-      <div class="mb-6">
-        <app-info-banner
-          message="You have view-only access. Contact an administrator for changes."
-          type="info">
-        </app-info-banner>
-      </div>
-    }
+
 
     <!-- Confirmation Modals -->
     <app-confirmation-modal
@@ -57,6 +50,16 @@
       cancelLabel="Cancel"
       (confirm)="handleReactivateConfirm($event)"
       (cancel)="handleModalCancel('reactivate')">
+    </app-confirmation-modal>
+
+    <app-confirmation-modal
+      [visible]="showRefillModal()"
+      title="Refill Merchant Stock"
+      message="This will create new onboarding allocations for this ACTIVE merchant based on merchant category config."
+      confirmLabel="Refill"
+      cancelLabel="Cancel"
+      (confirm)="handleRefillConfirm($event)"
+      (cancel)="handleModalCancel('refill')">
     </app-confirmation-modal>
 
     <!-- Beautiful Unique Assign Product Modal -->
@@ -199,6 +202,30 @@
         </div>
       }
 
+      @if (canPrecheckPool() && hasPoolShortage()) {
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+          <div class="flex items-start gap-3">
+            <i class="pi pi-exclamation-triangle text-amber-600 text-lg mt-0.5"></i>
+            <div class="w-full">
+              <h4 class="font-semibold text-amber-900 mb-2">Insufficient Admin Pool Stock</h4>
+              <p class="text-sm text-amber-800 mb-3">
+                Approve and refill actions are blocked until required onboarding pool stock is available.
+              </p>
+              <div class="space-y-1.5">
+                @for (row of poolShortages(); track row.productId) {
+                  <p class="text-xs text-amber-900">
+                    <span class="font-medium">{{ row.productName }}</span>
+                    · Required: {{ row.required }}
+                    · Available: {{ row.available }}
+                    · Short by: {{ row.shortBy }}
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 class="text-2xl font-semibold text-gray-900">
@@ -219,7 +246,7 @@
               [label]="approveLoading() ? 'Approving...' : 'Approve'"
               [icon]="approveLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
               class="p-button-success"
-              [disabled]="approveLoading()"
+              [disabled]="approveLoading() || isPoolBlockingApprove()"
               (click)="onApprove()">
             </button>
           }
@@ -254,6 +281,17 @@
               class="p-button-success"
               [disabled]="reactivateLoading()"
               (click)="onReactivate()">
+            </button>
+          }
+
+          @if (canApproveMerchant() && canRefill()) {
+            <button
+              pButton
+              [label]="refillLoading() ? 'Refilling...' : 'Refill'"
+              [icon]="refillLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"
+              class="p-button-outlined"
+              [disabled]="refillLoading() || isPoolBlockingRefill()"
+              (click)="onRefill()">
             </button>
           }
         </div>

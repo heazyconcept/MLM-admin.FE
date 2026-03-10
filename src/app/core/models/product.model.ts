@@ -43,6 +43,7 @@ export interface Product {
   thumbnail?: string;
   assignedMerchants?: string[];
   createdBy?: string;
+  adminPoolQuantity?: number;
 }
 
 export interface Category {

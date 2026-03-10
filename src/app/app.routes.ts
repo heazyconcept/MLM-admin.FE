@@ -137,6 +137,8 @@ export const routes: Routes = [
         data: { feature: Feature.Merchants },
         children: [
           { path: '', loadComponent: () => import('./features/merchants/list/merchants-list.component').then(m => m.MerchantsListComponent) },
+          { path: 'category-config', loadComponent: () => import('./features/merchants/category-config/merchant-category-config-list.component').then(m => m.MerchantCategoryConfigListComponent) },
+          { path: 'category-config/:type', loadComponent: () => import('./features/merchants/category-config-edit/merchant-category-config-edit.component').then(m => m.MerchantCategoryConfigEditComponent) },
           { path: ':id', loadComponent: () => import('./features/merchants/details/merchant-details.component').then(m => m.MerchantDetailsComponent) }
         ]
       },
