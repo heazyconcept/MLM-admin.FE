@@ -1,8 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { ApiService } from '../../../core/services/api.service';
-import { Observable } from 'rxjs';
-import { map, tap, catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { Observable, of, forkJoin } from 'rxjs';
+import { map, tap, catchError, switchMap } from 'rxjs/operators';
 import { Product, ProductStatus, Category, PackageCode, ProductPrice, ProductImage } from '../../../core/models/product.model';
 
 export interface AdminCategoryDto {
@@ -41,6 +40,11 @@ export interface AdminProductDto {
   cpv?: string | number | null;
   effectiveFrom?: string | null;
   effectiveTo?: string | null;
+  adminPoolQuantity?: string | number | null;
+  poolQuantity?: string | number | null;
+  adminPool?: {
+    quantity?: string | number | null;
+  } | null;
   [key: string]: unknown;
 }
 
@@ -69,6 +73,15 @@ export interface SetProductPricePayload {
   pv: number;
   cpv: number;
   effectiveFrom?: string;
+}
+
+export interface ProductPoolPayload {
+  quantity: number;
+}
+
+export interface AdminPoolResponse {
+  productId: string;
+  quantity: number;
 }
 
 @Injectable({
@@ -122,6 +135,7 @@ export class AdminProductsService {
           this.totalProducts.set(total);
           return list.map((p) => this.mapProductDtoToProduct(p));
         }),
+        switchMap((list) => this.hydratePoolQuantities(list)),
         tap((list) => {
           this.products.set(list);
           this.loadingProducts.set(false);
@@ -165,11 +179,37 @@ export class AdminProductsService {
     visibleToAll?: boolean;
     visibleToPackages?: PackageCode[];
     merchantOnly?: boolean;
+    initialPoolQuantity?: number;
   }): Observable<Product> {
     const dto = this.mapProductToDto(body);
     return this.api.post<AdminProductDto>('admin/products', dto).pipe(
       map((p) => this.mapProductDtoToProduct(p)),
       tap((p) => this.products.update((list) => [p, ...list]))
+    );
+  }
+
+  getProductPool(id: string): Observable<AdminPoolResponse> {
+    return this.api.get<AdminPoolResponse>(`admin/products/${encodeURIComponent(id)}/pool`);
+  }
+
+  setProductPool(id: string, quantity: number): Observable<AdminPoolResponse> {
+    return this.api.put<AdminPoolResponse>(`admin/products/${encodeURIComponent(id)}/pool`, { quantity }).pipe(
+      tap((res) => {
+        const nextQuantity = Number(res?.quantity ?? quantity);
+        this.products.update((list) =>
+          list.map((p) => (p.id === id ? { ...p, adminPoolQuantity: Number.isFinite(nextQuantity) ? nextQuantity : quantity } : p))
+        );
+      })
+    );
+  }
+
+  topUpProductPool(id: string, quantity: number): Observable<AdminPoolResponse> {
+    return this.getProductPool(id).pipe(
+      switchMap((pool) => {
+        const current = Number(pool?.quantity ?? 0);
+        const next = Math.max(0, current + quantity);
+        return this.setProductPool(id, next);
+      })
     );
   }
 
@@ -289,6 +329,27 @@ export class AdminProductsService {
     return this.products().find((p) => p.id === id) ?? null;
   }
 
+  private hydratePoolQuantities(products: Product[]): Observable<Product[]> {
+    if (!products.length) return of(products);
+
+    return forkJoin(
+      products.map((product) =>
+        this.getProductPool(product.id).pipe(
+          map((pool) => ({
+            ...product,
+            adminPoolQuantity: Number(pool?.quantity ?? 0),
+          })),
+          catchError(() =>
+            of({
+              ...product,
+              adminPoolQuantity: Number(product.adminPoolQuantity ?? 0),
+            })
+          )
+        )
+      )
+    );
+  }
+
   private mapCategoryDtoToCategory(dto: AdminCategoryDto): Category {
     return {
       id: dto.id,
@@ -316,6 +377,9 @@ export class AdminProductsService {
   }
 
   private mapProductDtoToProduct(dto: AdminProductDto): Product {
+    const adminPoolQuantityRaw = dto.adminPoolQuantity ?? dto.poolQuantity ?? dto.adminPool?.quantity;
+    const adminPoolQuantity = adminPoolQuantityRaw == null ? undefined : Number(adminPoolQuantityRaw);
+
     let currentPrice: ProductPrice | null = null;
     
     // Check if price info is nested in currentPrice or price objects
@@ -355,7 +419,8 @@ export class AdminProductsService {
       images: dto.images ?? [],
       thumbnail: dto.images?.[0]?.url ?? '',
       assignedMerchants: [],
-      createdBy: ''
+      createdBy: '',
+      adminPoolQuantity: Number.isFinite(adminPoolQuantity as number) ? adminPoolQuantity : undefined
     };
   }
 
@@ -368,6 +433,7 @@ export class AdminProductsService {
     visibleToAll?: boolean;
     visibleToPackages?: PackageCode[];
     merchantOnly?: boolean;
+    initialPoolQuantity?: number;
   }): Record<string, unknown> {
     const dto: Record<string, unknown> = {};
     if (p.categoryId != null) dto['categoryId'] = p.categoryId;
@@ -378,6 +444,7 @@ export class AdminProductsService {
     if (p.visibleToAll != null) dto['visibleToAll'] = p.visibleToAll;
     if (p.visibleToPackages != null) dto['visibleToPackages'] = p.visibleToPackages;
     if (p.merchantOnly != null) dto['merchantOnly'] = p.merchantOnly;
+    if (p.initialPoolQuantity != null) dto['initialPoolQuantity'] = p.initialPoolQuantity;
     return dto;
   }
 }

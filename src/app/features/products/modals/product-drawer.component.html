@@ -57,6 +57,20 @@
           </div>
 
           <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Initial Admin Pool Quantity</label>
+            <p-inputNumber
+              formControlName="initialPoolQuantity"
+              [min]="0"
+              [minFractionDigits]="0"
+              [maxFractionDigits]="0"
+              mode="decimal"
+              styleClass="w-full text-sm"
+              placeholder="e.g. 100">
+            </p-inputNumber>
+            <small class="text-gray-500 text-xs">Optional stock for merchant onboarding/refill allocations.</small>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
             <label class="text-xs font-medium text-gray-700 uppercase tracking-wide">Description</label>
             <textarea
               pTextarea

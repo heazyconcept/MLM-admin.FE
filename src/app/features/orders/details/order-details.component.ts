@@ -55,6 +55,10 @@ export class OrderDetailsComponent implements OnInit {
   loadingDetail = this.ordersService.loadingDetail;
   loadError = this.ordersService.error;
   assigning = this.ordersService.assigning;
+  markSentLoading = signal(false);
+  confirmDeliveryLoading = signal(false);
+  deliveryProof = signal('');
+  deliveryNotes = signal('');
 
   // Merchant picker state
   merchants = this.merchantService.merchants;
@@ -79,6 +83,28 @@ export class OrderDetailsComponent implements OnInit {
       (o.status === 'PAID' || o.status === 'ASSIGNED_TO_MERCHANT') &&
       this.canAssignMerchant()
     );
+  });
+
+  canShowDeliveryActions = computed(() => {
+    const o = this.order();
+    if (!o) return false;
+    return (
+      o.fulfilmentMode === 'OFFLINE_DELIVERY' &&
+      !!o.assignedMerchantId &&
+      this.canAssignMerchant()
+    );
+  });
+
+  canMarkSent = computed(() => {
+    const o = this.order();
+    if (!o) return false;
+    return this.canShowDeliveryActions() && !o.sentAt;
+  });
+
+  canConfirmDelivery = computed(() => {
+    const o = this.order();
+    if (!o) return false;
+    return this.canShowDeliveryActions() && !!o.sentAt && !o.receivedAt;
   });
 
   ngOnInit(): void {
@@ -127,6 +153,69 @@ export class OrderDetailsComponent implements OnInit {
     if (order) {
       this.ordersService.loadOrder(order.id).subscribe();
     }
+  }
+
+  onMarkSent(): void {
+    const order = this.order();
+    const merchantId = order?.assignedMerchantId;
+    if (!order || !merchantId || this.markSentLoading()) return;
+
+    this.markSentLoading.set(true);
+    this.merchantService.markOrderSent(merchantId, order.id).subscribe({
+      next: (res) => {
+        this.markSentLoading.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Order Marked Sent',
+          detail: res?.message || 'Order was marked as sent successfully.',
+        });
+        this.ordersService.loadOrder(order.id).subscribe();
+      },
+      error: (err) => {
+        this.markSentLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Action Failed',
+          detail: err?.error?.message || 'Failed to mark order as sent.',
+        });
+      },
+    });
+  }
+
+  onConfirmDelivery(): void {
+    const order = this.order();
+    const merchantId = order?.assignedMerchantId;
+    if (!order || !merchantId || this.confirmDeliveryLoading()) return;
+
+    const proof = this.deliveryProof().trim();
+    const notes = this.deliveryNotes().trim();
+    const body = {
+      ...(proof ? { proof } : {}),
+      ...(notes ? { notes } : {}),
+    };
+
+    this.confirmDeliveryLoading.set(true);
+    this.merchantService.confirmDelivery(merchantId, order.id, body).subscribe({
+      next: (res) => {
+        this.confirmDeliveryLoading.set(false);
+        this.deliveryProof.set('');
+        this.deliveryNotes.set('');
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Delivery Confirmed',
+          detail: res?.message || 'Order delivery confirmed successfully.',
+        });
+        this.ordersService.loadOrder(order.id).subscribe();
+      },
+      error: (err) => {
+        this.confirmDeliveryLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Action Failed',
+          detail: err?.error?.message || 'Failed to confirm delivery.',
+        });
+      },
+    });
   }
 
   // ── Display helpers ────────────────────────────────────────

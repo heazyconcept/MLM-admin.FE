@@ -294,6 +294,48 @@
           }
         </div>
 
+        <!-- Admin Pool -->
+        <div class="sidebar-card">
+          <p class="text-xs font-medium text-gray-400 mb-3">Admin pool</p>
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Current quantity</span>
+              <span class="font-medium text-gray-900">{{ product()?.adminPoolQuantity ?? 0 }}</span>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs text-gray-500">Quantity</label>
+              <p-inputNumber
+                [ngModel]="poolInput()"
+                (ngModelChange)="poolInput.set($event)"
+                [min]="0"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="0"
+                mode="decimal"
+                styleClass="w-full"
+                placeholder="Enter quantity">
+              </p-inputNumber>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                pButton
+                label="Set"
+                class="p-button-sm p-button-outlined"
+                [loading]="settingPool()"
+                [disabled]="!canSetPool()"
+                (click)="onSetPool()">
+              </button>
+              <button
+                pButton
+                label="Top-up"
+                class="p-button-sm"
+                [loading]="toppingUpPool()"
+                [disabled]="!canTopUpPool()"
+                (click)="onTopUpPool()">
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Metadata -->
         <div class="sidebar-card space-y-2">
           <div class="flex justify-between">

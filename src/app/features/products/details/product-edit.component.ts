@@ -57,8 +57,13 @@ export class ProductEditComponent implements OnInit {
     return id ? (list.find((p) => p.id === id) ?? null) : null;
   });
   productLoading = signal(true);
+  poolInput = signal<number | null>(null);
+  settingPool = signal(false);
+  toppingUpPool = signal(false);
   priceHistory = signal<ProductPrice[]>([]);
   loadingHistory = signal(false);
+  canSetPool = computed(() => this.poolInput() != null && Math.trunc(Number(this.poolInput())) >= 0 && !this.settingPool());
+  canTopUpPool = computed(() => this.poolInput() != null && Math.trunc(Number(this.poolInput())) > 0 && !this.toppingUpPool());
 
   /** Whether the current price is scheduled (future effectiveFrom).
    *  A 5-minute buffer avoids false positives from client/server clock drift
@@ -248,6 +253,60 @@ export class ProductEditComponent implements OnInit {
 
   onCancel() {
     this.router.navigate(['/admin/products']);
+  }
+
+  onSetPool(): void {
+    const id = this.productId();
+    const quantity = Math.max(0, Math.trunc(Number(this.poolInput() ?? 0)));
+    if (!id || quantity < 0 || this.settingPool()) return;
+
+    this.settingPool.set(true);
+    this.adminProducts.setProductPool(id, quantity).subscribe({
+      next: () => {
+        this.settingPool.set(false);
+        this.poolInput.set(null);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Pool Updated',
+          detail: 'Admin pool quantity has been set successfully.'
+        });
+      },
+      error: (err) => {
+        this.settingPool.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Update Failed',
+          detail: err?.error?.message ?? 'Could not set admin pool quantity.'
+        });
+      }
+    });
+  }
+
+  onTopUpPool(): void {
+    const id = this.productId();
+    const quantity = Math.max(0, Math.trunc(Number(this.poolInput() ?? 0)));
+    if (!id || quantity <= 0 || this.toppingUpPool()) return;
+
+    this.toppingUpPool.set(true);
+    this.adminProducts.topUpProductPool(id, quantity).subscribe({
+      next: () => {
+        this.toppingUpPool.set(false);
+        this.poolInput.set(null);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Pool Topped Up',
+          detail: 'Admin pool quantity has been increased successfully.'
+        });
+      },
+      error: (err) => {
+        this.toppingUpPool.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Top-up Failed',
+          detail: err?.error?.message ?? 'Could not top up admin pool.'
+        });
+      }
+    });
   }
 
   onApplyStatus(): void {

@@ -83,7 +83,15 @@ export class SidebarComponent {
             { label: 'Logistics', icon: 'pi pi-truck', route: '/admin/logistics', feature: Feature.OrdersLogistics }
           ]
         },
-        { label: 'Merchants', icon: 'pi pi-store', route: '/admin/merchants', feature: Feature.Merchants },
+        {
+          label: 'Merchants',
+          icon: 'pi pi-store',
+          feature: Feature.Merchants,
+          submenu: [
+            { label: 'All Merchants', icon: 'pi pi-list', route: '/admin/merchants', feature: Feature.Merchants },
+            { label: 'Category Config', icon: 'pi pi-sliders-h', route: '/admin/merchants/category-config', feature: Feature.Merchants }
+          ]
+        },
         { label: 'Notifications', icon: 'pi pi-bell', route: '/admin/notifications', feature: Feature.Notifications }
       ]
     },

@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
@@ -20,6 +21,7 @@ import { PackageCode, ProductStatus } from '../../../core/models/product.model';
     DrawerModule,
     ButtonModule,
     InputTextModule,
+    InputNumberModule,
     TextareaModule,
     SelectModule,
     MultiSelectModule,
@@ -65,6 +67,7 @@ export class ProductDrawerComponent {
     categoryId: ['', [Validators.required]],
     description: [''],
     sku: ['', [Validators.required]],
+    initialPoolQuantity: [0, [Validators.min(0)]],
     status: ['DRAFT' as ProductStatus, [Validators.required]],
     visibleToAll: [true],
     visibleToPackages: [[] as PackageCode[]],
@@ -79,11 +82,13 @@ export class ProductDrawerComponent {
     if (this.productForm.valid) {
       const formValue = this.productForm.value;
       const visibleToAll = !!formValue.visibleToAll;
+      const initialPoolQuantity = Math.max(0, Math.trunc(Number(formValue.initialPoolQuantity ?? 0)));
       this.adminProducts.createProduct({
         name: formValue.name!,
         categoryId: formValue.categoryId!,
         description: formValue.description || '',
         sku: formValue.sku!,
+        initialPoolQuantity,
         status: formValue.status || 'DRAFT',
         visibleToAll,
         visibleToPackages: visibleToAll ? [] : (formValue.visibleToPackages || []),
@@ -97,6 +102,7 @@ export class ProductDrawerComponent {
           });
           this.saved.emit();
           this.productForm.reset({
+            initialPoolQuantity: 0,
             status: 'DRAFT',
             visibleToAll: true,
             visibleToPackages: [],

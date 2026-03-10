@@ -1,0 +1,110 @@
+## Product images
+
+All image endpoints require **Admin** auth and a valid product `id`. Images are stored in Cloudflare R2; if R2 is not configured, `POST .../images` returns 400. Maximum **10 images per product**; adding more returns 400.
+
+---
+
+### POST /admin/products/:id/images
+
+**Purpose:** Upload one or more images for a product. Files are sent as `multipart/form-data`. Each file is stored in R2 and a `ProductImage` row is created with `url`, `position` (auto-assigned after existing images). Returns the full list of images for the product (including the new ones).
+
+**Request**
+
+- **Method:** `POST`
+- **Path:** `/admin/products/{id}/images` — `id` = product UUID
+- **Headers:** `Authorization: Bearer <token>`, `Content-Type: multipart/form-data`
+- **Body:** form-data field name **`images`** (array of files)
+  - **Allowed types:** `image/jpeg`, `image/jpg`, `image/png`, `image/webp`
+  - **Max file size:** 10 MB per file
+  - **Max files per request:** 10 (and total images for the product cannot exceed 10)
+
+**Example (frontend)**
+
+- **HTML form:** `<input type="file" name="images" multiple accept="image/jpeg,image/png,image/webp" />`
+- **fetch:** use `FormData`, append each file with key `images` (same key for multiple files so the backend receives an array):
+  ```js
+  const form = new FormData();
+  files.forEach((file) => form.append('images', file));
+  fetch(`/admin/products/${productId}/images`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  ```
+
+**Response (201)**
+
+Array of product images (all images for this product, ordered by `position` ascending):
+
+```json
+[
+  {
+    "id": "image-uuid",
+    "productId": "product-uuid",
+    "url": "https://...",
+    "altText": null,
+    "position": 0,
+    "createdAt": "...",
+    "updatedAt": "..."
+  }
+]
+```
+
+**Errors:** 404 product not found; 400 if R2 not configured, invalid file type, file too large, or product would exceed 10 images.
+
+---
+
+### DELETE /admin/products/:id/images/:imageId
+
+**Purpose:** Remove one image from a product. Deletes the `ProductImage` row; actual object in R2 may or may not be removed depending on backend implementation.
+
+**Request**
+
+- **Method:** `DELETE`
+- **Path:** `/admin/products/{id}/images/{imageId}` — `id` = product UUID, `imageId` = image UUID
+- **Headers:** `Authorization: Bearer <token>`
+- **Body:** none
+
+**Response (204)**  
+No body.
+
+**Errors:** 404 if product or image not found (or image not belonging to that product).
+
+**Frontend:** After delete, refetch the product’s images (e.g. from product detail or a dedicated list endpoint) to update the UI.
+
+---
+
+### PUT /admin/products/:id/images/reorder
+
+**Purpose:** Update the display order of product images. Send the full list of image ids with their new `position` values (0-based). Backend updates each image’s `position` and returns the full list of images for the product in new order.
+
+**Request**
+
+- **Method:** `PUT`
+- **Path:** `/admin/products/{id}/images/reorder` — `id` = product UUID
+- **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+- **Body:**
+
+```json
+{
+  "order": [
+    { "id": "image-uuid-1", "position": 0 },
+    { "id": "image-uuid-2", "position": 1 },
+    { "id": "image-uuid-3", "position": 2 }
+  ]
+}
+```
+
+- `order`: array of `{ id: string, position: number }`
+  - `id`: existing `ProductImage.id` for this product
+  - `position`: new index (0-based, integer ≥ 0). Order in the array and uniqueness of positions are up to the frontend; backend just sets `position` per id.
+
+**Response (200)**
+
+Array of product images (same shape as POST response), ordered by new `position` ascending.
+
+**Errors:** 404 product not found.
+
+**Frontend:** Use drag-and-drop or up/down buttons to build the new order, then send all current image ids with 0, 1, 2, … as positions. After reorder, you can use the response to update local state.
+
+---

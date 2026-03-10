@@ -5,10 +5,11 @@ import { FormsModule } from '@angular/forms';
 import { MerchantService, Merchant, MerchantStatus } from '../services/merchant.service';
 import { AdminProductsService } from '../../products/services/admin-products.service';
 import { Product } from '../../../core/models/product.model';
+import { MerchantCategoryConfigService } from '../services/merchant-category-config.service';
+import { MerchantCategoryType } from '../../../core/models/merchant-category-config.model';
 import { PermissionService } from '../../../core/services/permission.service';
 import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
-import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
@@ -23,7 +24,6 @@ import { MessageService } from 'primeng/api';
     RouterModule,
     FormsModule,
     StatusBadgeComponent,
-    InfoBannerComponent,
     ConfirmationModalComponent,
     ButtonModule,
     ToastModule,
@@ -36,7 +36,8 @@ import { MessageService } from 'primeng/api';
 })
 export class MerchantDetailsComponent implements OnInit {
   private merchantService = inject(MerchantService);
-    private productService = inject(AdminProductsService);
+  private productService = inject(AdminProductsService);
+  private categoryConfigService = inject(MerchantCategoryConfigService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private messageService = inject(MessageService);
@@ -55,6 +56,7 @@ export class MerchantDetailsComponent implements OnInit {
   showRejectModal = signal(false);
   showSuspendModal = signal(false);
   showReactivateModal = signal(false);
+  showRefillModal = signal(false);
   showAssignProductModal = signal(false);
   showRemoveProductModal = signal(false);
 
@@ -63,6 +65,7 @@ export class MerchantDetailsComponent implements OnInit {
   rejectLoading = signal(false);
   suspendLoading = signal(false);
   reactivateLoading = signal(false);
+  refillLoading = signal(false);
   assignProductLoading = signal(false);
   removeProductLoading = signal(false);
 
@@ -76,17 +79,70 @@ export class MerchantDetailsComponent implements OnInit {
   });
   loadingProducts = this.productService.loadingProducts;
   productToRemove = signal<{ id: string; name: string } | null>(null);
+  categoryConfigs = this.categoryConfigService.configs;
+  loadingCategoryConfigs = this.categoryConfigService.loading;
+
+  private merchantCategoryType = computed<MerchantCategoryType | null>(() => {
+    const type = this.merchant()?.type;
+    if (type === 'REGIONAL' || type === 'NATIONAL' || type === 'GLOBAL') {
+      return type;
+    }
+    return null;
+  });
+
+  poolShortages = computed(() => {
+    const categoryType = this.merchantCategoryType();
+    if (!categoryType) return [] as Array<{ productId: string; productName: string; required: number; available: number; shortBy: number }>;
+
+    const config = this.categoryConfigs().find((c) => c.merchantType === categoryType);
+    if (!config || !Array.isArray(config.onboardingItems) || config.onboardingItems.length === 0) {
+      return [] as Array<{ productId: string; productName: string; required: number; available: number; shortBy: number }>;
+    }
+
+    const products = this.productService.products();
+    return config.onboardingItems
+      .map((item) => {
+        const product = products.find((p) => p.id === item.productId);
+        const available = Math.max(0, Number(product?.adminPoolQuantity ?? 0));
+        const required = Math.max(0, Number(item.quantity ?? 0));
+        const shortBy = required - available;
+        return {
+          productId: item.productId,
+          productName: product?.name ?? item.productId,
+          required,
+          available,
+          shortBy,
+        };
+      })
+      .filter((row) => row.shortBy > 0);
+  });
+
+  hasPoolShortage = computed(() => this.poolShortages().length > 0);
+  canPrecheckPool = computed(() => !!this.merchantCategoryType());
+  isPoolBlockingApprove = computed(() => this.canApprove() && this.canPrecheckPool() && this.hasPoolShortage());
+  isPoolBlockingRefill = computed(() => this.canRefill() && this.canPrecheckPool() && this.hasPoolShortage());
 
   // Computed
   canApprove = computed(() => this.merchant()?.status === 'PENDING');
   canReject = computed(() => this.merchant()?.status === 'PENDING');
   canSuspend = computed(() => this.merchant()?.status === 'ACTIVE');
   canReactivate = computed(() => this.merchant()?.status === 'SUSPENDED');
+  canRefill = computed(() => this.merchant()?.status === 'ACTIVE');
   isSuspended = computed(() => this.merchant()?.status === 'SUSPENDED');
 
   ngOnInit() {
-      // Load active products for assignment
-      this.productService.loadProducts({ status: 'ACTIVE', limit: 500 }).subscribe();
+    // Show view-only toast if applicable
+    if (this.isViewOnly()) {
+      this.messageService.add({
+        severity: 'info',
+        summary: 'View-Only Mode',
+        detail: 'You have view-only access. Contact an administrator for changes.'
+      });
+    }
+
+    // Load products and category config for pool sufficiency checks and assignment actions
+    this.productService.loadProducts({ limit: 500, offset: 0 }).subscribe();
+    this.categoryConfigService.loadConfigs().subscribe();
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -118,10 +174,31 @@ export class MerchantDetailsComponent implements OnInit {
   }
 
   // Action openers
-  onApprove() { this.showApproveModal.set(true); }
+  onApprove() {
+    if (this.isPoolBlockingApprove()) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Insufficient Admin Pool',
+        detail: 'Top up admin pool stock for onboarding products before approving this merchant.'
+      });
+      return;
+    }
+    this.showApproveModal.set(true);
+  }
   onReject() { this.showRejectModal.set(true); }
   onSuspend() { this.showSuspendModal.set(true); }
   onReactivate() { this.showReactivateModal.set(true); }
+  onRefill() {
+    if (this.isPoolBlockingRefill()) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Insufficient Admin Pool',
+        detail: 'Top up admin pool stock for onboarding products before refilling this merchant.'
+      });
+      return;
+    }
+    this.showRefillModal.set(true);
+  }
   onAssignProduct() { 
     this.selectedProduct.set(null);
     this.showAssignProductModal.set(true); 
@@ -248,6 +325,34 @@ export class MerchantDetailsComponent implements OnInit {
     }
   }
 
+  handleRefillConfirm(event: { confirmed: boolean; reason?: string }) {
+    if (event.confirmed) {
+      const id = this.merchant()?.id;
+      if (id) {
+        this.refillLoading.set(true);
+        this.merchantService.refillMerchant(id).subscribe({
+          next: (res) => {
+            this.refillLoading.set(false);
+            this.refreshMerchant(id);
+            const allocationsCount = Array.isArray(res?.allocationIds) ? res.allocationIds.length : 0;
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Merchant Refilled',
+              detail: allocationsCount > 0
+                ? `Refill created ${allocationsCount} allocation(s)`
+                : (res?.message ?? 'Merchant refill completed successfully')
+            });
+          },
+          error: (err) => {
+            this.refillLoading.set(false);
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: err?.error?.message ?? 'Failed to refill merchant' });
+          }
+        });
+      }
+    }
+    this.showRefillModal.set(false);
+  }
+
   handleRemoveProductConfirm(event: { confirmed: boolean; reason?: string }) {
     if (event.confirmed) {
       const merchantId = this.merchant()?.id;
@@ -274,12 +379,13 @@ export class MerchantDetailsComponent implements OnInit {
     }
   }
 
-  handleModalCancel(modalName: 'approve' | 'reject' | 'suspend' | 'reactivate' | 'assignProduct' | 'removeProduct') {
+  handleModalCancel(modalName: 'approve' | 'reject' | 'suspend' | 'reactivate' | 'refill' | 'assignProduct' | 'removeProduct') {
     switch (modalName) {
       case 'approve': this.showApproveModal.set(false); break;
       case 'reject': this.showRejectModal.set(false); break;
       case 'suspend': this.showSuspendModal.set(false); break;
       case 'reactivate': this.showReactivateModal.set(false); break;
+      case 'refill': this.showRefillModal.set(false); break;
       case 'assignProduct': this.showAssignProductModal.set(false); break;
       case 'removeProduct': 
         this.showRemoveProductModal.set(false);

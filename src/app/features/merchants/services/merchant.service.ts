@@ -4,7 +4,7 @@ import { ApiService } from '../../../core/services/api.service';
 
 // Types matching API enums
 export type MerchantStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED';
-export type MerchantType = 'PICKUP_POINT' | 'DELIVERY_PARTNER';
+export type MerchantType = 'PICKUP_POINT' | 'DELIVERY_PARTNER' | 'REGIONAL' | 'NATIONAL' | 'GLOBAL';
 
 // Sub-interfaces matching API response shape
 export interface MerchantUser {
@@ -55,6 +55,11 @@ interface AdminMerchantsListResponse {
 
 interface MerchantProductsResponse {
   products: MerchantProduct[];
+}
+
+interface MerchantRefillResponse {
+  message: string;
+  allocationIds?: string[];
 }
 
 @Injectable({
@@ -169,6 +174,10 @@ export class MerchantService {
     );
   }
 
+  refillMerchant(id: string): Observable<MerchantRefillResponse> {
+    return this.api.post<MerchantRefillResponse>(`admin/merchants/${id}/refill`, {});
+  }
+
   // ---------- Products ----------
 
   getMerchantProducts(merchantId: string): Observable<MerchantProduct[]> {
@@ -219,7 +228,10 @@ export class MerchantService {
   getDisplayType(type: MerchantType): string {
     const map: Record<MerchantType, string> = {
       PICKUP_POINT: 'Pickup Point',
-      DELIVERY_PARTNER: 'Delivery Partner'
+      DELIVERY_PARTNER: 'Delivery Partner',
+      REGIONAL: 'Regional',
+      NATIONAL: 'National',
+      GLOBAL: 'Global'
     };
     return map[type] ?? type;
   }
