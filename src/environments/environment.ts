@@ -1,3 +1,3 @@
 export const environment = {
-  apiBaseUrl: 'https://segulah-api.onrender.com'
+  apiBaseUrl: 'https://api.segulah.ng'
 };
