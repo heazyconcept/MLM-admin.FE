@@ -28,6 +28,9 @@ import { ToastModule } from 'primeng/toast';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MerchantCategoryConfigListComponent implements OnInit {
+getCardAccentClass(arg0: string): string|string[]|Set<string>|{ [klass: string]: any; }|null|undefined {
+throw new Error('Method not implemented.');
+}
   private configService = inject(MerchantCategoryConfigService);
   private permission = inject(PermissionService);
   private router = inject(Router);
@@ -55,6 +58,16 @@ export class MerchantCategoryConfigListComponent implements OnInit {
     const configured = new Set(this.configs().map((c) => c.merchantType));
     return this.allTypes.filter((t) => !configured.has(t));
   });
+
+getAccentStripClass(type: string): string {
+  const map: Record<string, string> = {
+    REGIONAL: 'bg-brand-green-primary',  // #49A321
+    NATIONAL: 'bg-brand-gold',           // #F9A825
+    GLOBAL:   'bg-brand-green-dark',     // #1B5E20
+  };
+  return map[type?.toUpperCase()] ?? 'bg-slate-300';
+}
+
 
   /** True when API returned an empty array (none of the 3 types configured) */
   isFullyEmpty = computed(() => !this.loading() && this.configs().length === 0 && !this.error());
