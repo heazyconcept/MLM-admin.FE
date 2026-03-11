@@ -362,14 +362,14 @@ export class ProductEditComponent implements OnInit {
     });
   }
 
-  getStatusSeverity(status: string): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | undefined {
-    switch (status) {
-      case 'ACTIVE': return 'success';
-      case 'DRAFT': return 'secondary';
-      case 'INACTIVE': return 'warn';
-      default: return undefined;
-    }
-  }
+ getStatusClass(status: string): string {
+  const map: Record<string, string> = {
+    ACTIVE:   'bg-brand-green-light text-brand-green-dark',
+    DRAFT:    'bg-slate-100 text-slate-600',
+    INACTIVE: 'bg-mlm-red-50 text-mlm-red-700',
+  };
+  return map[status?.toUpperCase()] ?? 'bg-slate-100 text-slate-500';
+}
 
   onSetPrice(): void {
     if (this.priceForm.invalid) {

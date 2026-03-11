@@ -1,146 +1,180 @@
 <p-toast></p-toast>
 
-<div class="min-h-screen bg-linear-to-br from-gray-50 via-white to-purple-50/30 p-8">
-  <!-- Header -->
-  <div class="mb-8">
-    <div class="flex items-center gap-3 text-xs text-gray-400 mb-3">
+<div class="min-h-screen bg-mlm-background font-geist p-8">
+
+  <!-- ── Header ── -->
+  <div class="mb-10">
+    <div class="flex items-center gap-2 mb-4">
       <button
         [routerLink]="['/admin/merchants']"
-        class="p-2 rounded-md hover:bg-gray-100 transition">
-        <i class="pi pi-arrow-left"></i>
+        class="flex items-center gap-2 text-xs text-mlm-secondary hover:text-mlm-text transition-colors duration-150">
+        <i class="pi pi-arrow-left text-[11px]"></i>
+        Back to Merchants
       </button>
-      Back to Merchants
     </div>
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-black text-mlm-text mb-2">Merchant Category Config</h1>
-        <p class="text-mlm-secondary">Configure commissions, registration fees, and onboarding products per merchant type</p>
+        <h1 class="text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+          Merchant Category Config
+        </h1>
+        <p class="text-sm text-mlm-secondary">
+          Configure commissions, registration fees, and onboarding products per merchant type
+        </p>
       </div>
+
       <button
         pButton
         icon="pi pi-refresh"
         label="Refresh"
-        class="p-button-outlined p-button-secondary"
+        class="p-button-outlined p-button-secondary shrink-0
+               !text-sm !font-medium !rounded-lg
+               !border-slate-300 !text-mlm-secondary
+               hover:!border-slate-400 hover:!text-mlm-text
+               transition-colors duration-150"
         [disabled]="loading()"
         (click)="reload()">
       </button>
     </div>
   </div>
 
-  <!-- Error -->
+  <!-- ── Error ── -->
   @if (error()) {
-    <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm">
-      {{ error() }}
-      <button type="button" (click)="reload()" class="ml-3 underline font-medium">Retry</button>
+    <div class="mb-6 px-4 py-3 rounded-lg bg-mlm-red-50 border border-mlm-red-200
+                text-mlm-red-700 text-sm flex items-center justify-between">
+      <span>{{ error() }}</span>
+      <button type="button" (click)="reload()"
+              class="underline font-medium ml-4 shrink-0">Retry</button>
     </div>
   }
 
-  <!-- Loading Skeleton -->
+  <!-- ── Loading Skeleton ── -->
   @if (loading() && orderedConfigs().length === 0) {
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
       @for (i of [1, 2, 3]; track i) {
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 animate-pulse">
-          <div class="flex items-center gap-3 mb-6">
-            <div class="w-12 h-12 rounded-xl bg-gray-200"></div>
-            <div>
-              <div class="w-24 h-5 rounded bg-gray-200 mb-2"></div>
-              <div class="w-32 h-3 rounded bg-gray-100"></div>
-            </div>
-          </div>
-          <div class="space-y-4">
-            @for (j of [1, 2, 3, 4]; track j) {
+        <div class="bg-white rounded-xl border border-slate-100 p-6 animate-pulse">
+          <div class="w-16 h-2.5 rounded bg-slate-200 mb-1.5"></div>
+          <div class="w-28 h-5 rounded bg-slate-200 mb-6"></div>
+          <div class="space-y-3">
+            @for (j of [1, 2, 3]; track j) {
               <div class="flex justify-between">
-                <div class="w-28 h-4 rounded bg-gray-100"></div>
-                <div class="w-16 h-4 rounded bg-gray-200"></div>
+                <div class="w-24 h-3 rounded bg-slate-100"></div>
+                <div class="w-12 h-3 rounded bg-slate-200"></div>
               </div>
             }
           </div>
-          <div class="mt-6 w-full h-10 rounded-lg bg-gray-200"></div>
+          <div class="mt-8 w-full h-9 rounded-lg bg-slate-100"></div>
         </div>
       }
     </div>
   }
 
-  <!-- Config Cards -->
+  <!-- ── Configured Cards ── -->
   @if (orderedConfigs().length > 0) {
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
       @for (config of orderedConfigs(); track config.id) {
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col
+                    hover:shadow-[0_2px_16px_rgba(0,0,0,0.08)] transition-shadow duration-200">
+
+          <!-- Accent strip — brand colors only -->
+          <div class="h-[3px] w-full" [ngClass]="getAccentStripClass(config.merchantType)"></div>
+
           <!-- Card Header -->
-          <div class="p-6 border-b border-gray-100">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-xl flex items-center justify-center"
-                   [ngClass]="getTypeBgColor(config.merchantType)">
-                <i [class]="getTypeIcon(config.merchantType) + ' text-xl'"
-                   [ngClass]="getTypeIconColor(config.merchantType)"></i>
-              </div>
+          <div class="px-5 pt-5 pb-4 border-b border-slate-100">
+            <div class="flex items-start justify-between gap-2">
               <div>
-                <h2 class="text-lg font-semibold text-gray-900">{{ getTypeLabel(config.merchantType) }}</h2>
-                <p class="text-xs text-gray-500 uppercase tracking-wider">{{ config.merchantType }}</p>
+                <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-0.5">
+                  {{ config.merchantType }}
+                </p>
+                <h2 class="text-lg font-bold text-mlm-text tracking-tight leading-tight">
+                  {{ getTypeLabel(config.merchantType) }}
+                </h2>
               </div>
+              <span class="text-[11px] font-semibold text-mlm-primary tracking-wide mt-0.5 shrink-0">
+                ✓ Configured
+              </span>
             </div>
           </div>
 
           <!-- Card Body -->
-          <div class="p-6 space-y-4">
+          <div class="px-5 py-5 flex-1 space-y-5">
+
             <!-- Commission Rates -->
             <div>
-              <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Commission Rates</h3>
-              <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-gray-600">Delivery Commission</span>
-                  <span class="text-sm font-semibold text-gray-900">{{ formatPct(config.deliveryCommissionPct) }}</span>
+              <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+                Commission Rates
+              </p>
+              <div class="grid grid-cols-2 gap-2.5">
+                <div class="bg-slate-50 rounded-lg px-3 py-2.5 border border-slate-100">
+                  <p class="text-[10px] text-slate-400 mb-1">Delivery</p>
+                  <p class="text-2xl font-bold text-mlm-text tracking-tight leading-none">
+                    {{ formatPct(config.deliveryCommissionPct) }}
+                  </p>
                 </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-gray-600">Product Commission</span>
-                  <span class="text-sm font-semibold text-gray-900">{{ formatPct(config.productCommissionPct) }}</span>
+                <div class="bg-slate-50 rounded-lg px-3 py-2.5 border border-slate-100">
+                  <p class="text-[10px] text-slate-400 mb-1">Product</p>
+                  <p class="text-2xl font-bold text-mlm-text tracking-tight leading-none">
+                    {{ formatPct(config.productCommissionPct) }}
+                  </p>
                 </div>
               </div>
             </div>
 
             <!-- Registration Fee -->
-            <div class="pt-2 border-t border-gray-100">
-              <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Registration Fee</h3>
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Fee (USD)</span>
-                <span class="text-sm font-semibold"
-                      [class.text-gray-900]="config.registrationFeeUsd !== null"
-                      [class.text-gray-400]="config.registrationFeeUsd === null">
+            <div class="border-t border-slate-100 pt-4">
+              <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+                Registration Fee
+              </p>
+              <div class="flex items-baseline justify-between">
+                <span class="text-xs text-slate-400">USD</span>
+                <span class="text-2xl font-bold tracking-tight"
+                      [class.text-mlm-text]="config.registrationFeeUsd !== null"
+                      [class.text-slate-300]="config.registrationFeeUsd === null">
                   {{ formatFee(config.registrationFeeUsd) }}
                 </span>
               </div>
             </div>
 
             <!-- Onboarding Products -->
-            <div class="pt-2 border-t border-gray-100">
-              <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Onboarding Products</h3>
+            <div class="border-t border-slate-100 pt-4">
+              <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+                Onboarding Products
+              </p>
+
               @if (config.onboardingItems && config.onboardingItems.length > 0) {
-                <div class="space-y-2">
+                <div>
                   @for (item of config.onboardingItems; track item.productId) {
-                    <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 border border-gray-100">
-                      <span class="text-xs font-mono text-gray-500 truncate max-w-[140px]" [pTooltip]="item.productId">
-                        {{ item.productId | slice:0:12 }}...
+                    <div class="flex items-center justify-between
+                                py-2 border-b border-slate-100 last:border-0">
+                      <span class="text-xs font-mono text-slate-500 truncate max-w-[150px]"
+                            [pTooltip]="item.productId">
+                        {{ item.productId | slice:0:14 }}…
                       </span>
-                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      <span class="text-xs font-semibold font-mono text-slate-700 tabular-nums">
                         × {{ item.quantity }}
                       </span>
                     </div>
                   }
                 </div>
               } @else {
-                <p class="text-sm text-gray-400 italic">No onboarding products</p>
+                <p class="text-sm text-slate-400">None assigned</p>
               }
             </div>
           </div>
 
           <!-- Card Footer -->
-          <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
+          <div class="px-5 py-4 border-t border-slate-100 bg-slate-50/40">
             @if (canEdit()) {
               <button
                 pButton
                 label="Edit Configuration"
                 icon="pi pi-pencil"
-                class="p-button-outlined w-full"
+                class="p-button-outlined w-full
+                       !rounded-lg !text-sm !font-semibold
+                       !border-slate-900 !text-slate-900
+                       hover:!bg-slate-900 hover:!text-white
+                       transition-colors duration-150"
                 (click)="editConfig(config)">
               </button>
             } @else {
@@ -148,59 +182,69 @@
                 pButton
                 label="View Details"
                 icon="pi pi-eye"
-                class="p-button-text p-button-secondary w-full"
+                class="p-button-text w-full
+                       !rounded-lg !text-sm !font-medium
+                       !text-mlm-secondary hover:!text-mlm-text hover:!bg-slate-100
+                       transition-colors duration-150"
                 (click)="editConfig(config)">
               </button>
             }
           </div>
         </div>
+
       }
     </div>
   }
 
-  <!-- Unconfigured Types (show setup cards for types not yet configured) -->
+  <!-- ── Unconfigured Types ── -->
   @if (!loading() && unconfiguredTypes().length > 0 && !error()) {
+
     @if (orderedConfigs().length > 0) {
-      <h2 class="text-lg font-semibold text-gray-900 mt-10 mb-4">Not Yet Configured</h2>
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mt-10 mb-4">
+        Not Yet Configured
+      </p>
     }
 
-
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
       @for (type of unconfiguredTypes(); track type) {
-        <div class="bg-white rounded-2xl border border-dashed border-gray-300 shadow-sm hover:shadow-md transition-shadow">
+
+        <div class="bg-white rounded-xl border border-dashed border-slate-300 overflow-hidden
+                    flex flex-col hover:border-slate-400
+                    hover:shadow-[0_2px_16px_rgba(0,0,0,0.05)]
+                    transition-all duration-200">
+
+          <!-- Dimmed accent strip -->
+          <div class="h-[3px] w-full opacity-25" [ngClass]="getAccentStripClass(type)"></div>
+
           <!-- Card Header -->
-          <div class="p-6 border-b border-gray-100">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-xl flex items-center justify-center"
-                   [ngClass]="getTypeBgColor(type)">
-                <i [class]="getTypeIcon(type) + ' text-xl'"
-                   [ngClass]="getTypeIconColor(type)"></i>
-              </div>
-              <div>
-                <h2 class="text-lg font-semibold text-gray-900">{{ getTypeLabel(type) }}</h2>
-                <p class="text-xs text-gray-500 uppercase tracking-wider">{{ type }}</p>
-              </div>
-            </div>
+          <div class="px-5 pt-5 pb-4 border-b border-slate-100">
+            <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-0.5">
+              {{ type }}
+            </p>
+            <h2 class="text-lg font-bold text-mlm-text tracking-tight">
+              {{ getTypeLabel(type) }}
+            </h2>
           </div>
 
-          <!-- Card Body -->
-          <div class="p-6 flex flex-col items-center justify-center text-center py-10">
-            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-              <i class="pi pi-cog text-gray-400 text-xl"></i>
-            </div>
-            <p class="text-gray-500 text-sm mb-1">Not configured yet</p>
-            <p class="text-gray-400 text-xs">Set commissions, fee, and onboarding products</p>
+          <!-- Empty Body -->
+          <div class="px-5 py-9 flex-1">
+            <p class="text-sm text-slate-400 mb-1">No configuration set</p>
+            <p class="text-xs text-slate-300">
+              Commissions, fees, and onboarding products are pending.
+            </p>
           </div>
 
           <!-- Card Footer -->
-          <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
+          <div class="px-5 py-4 border-t border-slate-100 bg-slate-50/40">
             @if (canEdit()) {
               <button
                 pButton
                 label="Set Up Configuration"
                 icon="pi pi-plus"
-                class="p-button-outlined w-full"
+                class="w-full !rounded-lg !text-sm !font-semibold
+                       !bg-mlm-primary !border-mlm-primary !text-white
+                       hover:!bg-brand-green-dark hover:!border-brand-green-dark
+                       transition-colors duration-150"
                 (click)="setupType(type)">
               </button>
             } @else {
@@ -208,13 +252,18 @@
                 pButton
                 label="View Details"
                 icon="pi pi-eye"
-                class="p-button-text p-button-secondary w-full"
+                class="p-button-text w-full
+                       !rounded-lg !text-sm !font-medium
+                       !text-mlm-secondary hover:!text-mlm-text hover:!bg-slate-100
+                       transition-colors duration-150"
                 (click)="setupType(type)">
               </button>
             }
           </div>
         </div>
+
       }
     </div>
   }
+
 </div>

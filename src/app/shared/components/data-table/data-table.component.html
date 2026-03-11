@@ -1,26 +1,47 @@
 <p-table
   [value]="value()"
-  [paginator]="true"
+  [paginator]="value().length > 0"
   [rows]="rows()"
   [rowsPerPageOptions]="rowsPerPageOptions()"
   [loading]="loading()"
   responsiveLayout="scroll"
-  styleClass="ui-clean-table"
+  styleClass="ui-clean-table w-full"
+  [tableStyle]="{ 'min-width': '100%' }"
 >
 
-  <!-- HEADER -->
+  <!-- ── Column Headers ── -->
   <ng-template pTemplate="header">
-    <tr>
+    <tr class="border-b border-slate-100">
       <th *ngFor="let h of headers()"
-          class="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+          class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em]
+                 uppercase text-slate-400 bg-white whitespace-nowrap">
         {{ h }}
       </th>
     </tr>
   </ng-template>
 
-  <!-- BODY - Use projected template -->
+  <!-- ── Body (projected from parent) ── -->
   <ng-template pTemplate="body" let-row>
-    <ng-container *ngTemplateOutlet="bodyTemplate; context: { $implicit: row }"></ng-container>
+    <ng-container *ngTemplateOutlet="bodyTemplate; context: { $implicit: row }">
+    </ng-container>
+  </ng-template>
+
+  <!-- ── Empty State ── -->
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td [attr.colspan]="headers().length"
+          class="px-5 py-14 text-center">
+        <p class="text-sm text-slate-400 mb-1">No results found</p>
+        <p class="text-xs text-slate-300">Try adjusting your search or filters</p>
+      </td>
+    </tr>
+  </ng-template>
+
+  <!-- ── Paginator ── -->
+  <ng-template pTemplate="paginatorleft">
+    <span class="text-xs text-slate-400 pl-1">
+      {{ value().length }} item{{ value().length !== 1 ? 's' : '' }}
+    </span>
   </ng-template>
 
 </p-table>

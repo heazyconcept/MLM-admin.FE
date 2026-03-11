@@ -1,205 +1,219 @@
-<div class="p-6 space-y-6">
-  <!-- Header -->
-  <div class="flex justify-between items-center">
+<div class="p-8 font-geist min-h-screen bg-mlm-background">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <!-- ── Header ── -->
+  <div class="flex items-start justify-between gap-4 mb-8">
     <div>
-      <h1 class="text-2xl font-bold text-slate-800">Product Catalog</h1>
-      <p class="text-slate-500 text-sm">Manage products, pricing, and visibility</p>
+      <h1 class="text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        Product Catalog
+      </h1>
+      <p class="text-sm text-mlm-secondary">Manage products, pricing, and visibility</p>
     </div>
-    <div class="flex items-center gap-2">
-      <p-button
-        label="Manage Categories"
-        icon="pi pi-tags"
-        severity="secondary"
-        (onClick)="onManageCategories()">
-      </p-button>
-      <p-button 
-        label="Add Product" 
-        icon="pi pi-plus" 
-        (onClick)="onAddProduct()"
-        class="p-button-primary">
-      </p-button>
+
+    <div class="flex items-center gap-2.5 shrink-0 pt-1">
+      <button
+        (click)="onManageCategories()"
+        class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
+               text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+               flex items-center gap-2 transition-colors duration-150">
+        <i class="pi pi-tags text-xs"></i>
+        Manage Categories
+      </button>
+
+      <button
+        (click)="onAddProduct()"
+        class="h-9 px-4 rounded-lg text-sm font-semibold text-white
+               bg-mlm-primary border border-mlm-primary
+               hover:bg-brand-green-dark hover:border-brand-green-dark
+               flex items-center gap-2 transition-colors duration-150">
+        <i class="pi pi-plus text-xs"></i>
+        Add Product
+      </button>
     </div>
   </div>
 
-  <!-- Filters -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-xl border border-slate-200">
-    <!-- Search -->
-    <div class="col-span-1 md:col-span-2">
-      <p-iconfield iconPosition="left">
-        <p-inputicon class="pi pi-search"></p-inputicon>
-        <input 
-          type="text" 
-          pInputText 
-          placeholder="Search by name or SKU..." 
-          class="w-full"
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)" />
-      </p-iconfield>
-    </div>
-
-    <!-- Category Filter -->
-    <div>
-      <p-select 
-        [options]="categoryOptions()" 
-        [ngModel]="selectedCategory()"
-        (ngModelChange)="selectedCategory.set($event)"
-        optionLabel="label" 
-        optionValue="value"
-        placeholder="Select Category"
-        class="w-full">
-      </p-select>
-    </div>
-
-    <!-- Status Filter -->
-    <div>
-      <p-select 
-        [options]="statusOptions" 
-        [ngModel]="selectedStatus()"
-        (ngModelChange)="selectedStatus.set($event)"
-        optionLabel="label" 
-        optionValue="value"
-        placeholder="Select Status"
-        class="w-full">
-      </p-select>
-    </div>
-  </div>
-
+  <!-- ── Error ── -->
   @if (loadError()) {
-    <div class="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center justify-between">
-      <p class="text-sm text-red-700">{{ loadError() }}</p>
-      <button pButton label="Retry" icon="pi pi-refresh" class="p-button-sm p-button-outlined" (click)="onRefresh()"></button>
+    <div class="mb-5 px-4 py-3 rounded-lg bg-mlm-red-50 border border-mlm-red-200
+                text-mlm-red-700 text-sm flex items-center justify-between">
+      <span>{{ loadError() }}</span>
+      <button (click)="onRefresh()"
+              class="flex items-center gap-1.5 underline font-medium ml-4 shrink-0">
+        <i class="pi pi-refresh text-xs"></i> Retry
+      </button>
     </div>
   }
 
-  <!-- Product Table -->
-  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+  <!-- ── Single Card: Filters + Table ── -->
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+
+    <!-- Filter Bar -->
+    <div class="px-5 py-4 border-b border-slate-100 grid grid-cols-1 md:grid-cols-4 gap-3">
+
+      <!-- Search (spans 2 cols) -->
+      <div class="col-span-1 md:col-span-2 relative">
+        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2
+                  text-slate-400 text-xs pointer-events-none"></i>
+        <input
+          type="text"
+          placeholder="Search by name or SKU…"
+          class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm
+                 text-mlm-text bg-white placeholder:text-slate-300
+                 focus:outline-none focus:ring-2 focus:ring-mlm-primary transition"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)" />
+      </div>
+
+      <!-- Category Filter -->
+      <p-select
+        [options]="categoryOptions()"
+        [ngModel]="selectedCategory()"
+        (ngModelChange)="selectedCategory.set($event)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All Categories"
+        styleClass="w-full !h-9 !text-sm !rounded-lg !border-slate-200">
+      </p-select>
+
+      <!-- Status Filter -->
+      <p-select
+        [options]="statusOptions"
+        [ngModel]="selectedStatus()"
+        (ngModelChange)="selectedStatus.set($event)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All Statuses"
+        styleClass="w-full !h-9 !text-sm !rounded-lg !border-slate-200">
+      </p-select>
+
+    </div>
+
+    <!-- Loading Skeleton -->
     @if (loadingProducts()) {
-      <div class="p-8 animate-pulse space-y-4">
+      <div class="p-6 space-y-3 animate-pulse">
         @for (i of [1,2,3,4,5]; track i) {
-          <div class="flex gap-4 items-center">
-            <div class="h-12 w-12 rounded bg-slate-200"></div>
-            <div class="flex-1 h-4 rounded bg-slate-200"></div>
-            <div class="h-4 w-24 rounded bg-slate-200"></div>
+          <div class="flex items-center gap-4">
+            <div class="h-10 w-10 rounded-lg bg-slate-100 shrink-0"></div>
+            <div class="flex-1 h-3 rounded bg-slate-100"></div>
+            <div class="w-20 h-3 rounded bg-slate-100"></div>
+            <div class="w-16 h-3 rounded bg-slate-100"></div>
+            <div class="w-16 h-3 rounded bg-slate-100"></div>
+            <div class="w-20 h-3 rounded bg-slate-100"></div>
           </div>
         }
       </div>
     } @else {
-    <app-data-table
-      [value]="filteredProducts()"
-      [headers]="tableHeaders()"
-      [rows]="tableRows()"
-      [rowsPerPageOptions]="tableRowsPerPageOptions()"
-      [loading]="loadingProducts()">
 
-      <ng-template pTemplate="body" let-row>
-        <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
-          <!-- Image -->
-          <td class="px-5 py-4">
-            <div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200 overflow-hidden">
-              @if (row.thumbnail) {
-                <img [src]="row.thumbnail" [alt]="row.name" class="w-full h-full object-cover">
-              } @else {
-                <i class="pi pi-image text-slate-400"></i>
-              }
-            </div>
-          </td>
+      <app-data-table
+        [value]="filteredProducts()"
+        [headers]="tableHeaders()"
+        [rows]="tableRows()"
+        [rowsPerPageOptions]="tableRowsPerPageOptions()"
+        [loading]="loadingProducts()">
 
-          <!-- Product Info -->
-          <td class="px-5 py-4">
-            <div class="flex flex-col">
-              <span class="font-medium text-slate-800">{{ row.name }}</span>
-              <span class="text-xs text-slate-500 font-mono">{{ row.sku }}</span>
-            </div>
-          </td>
+        <ng-template pTemplate="body" let-row>
+          <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100 group">
 
-          <!-- Category -->
-          <td class="px-5 py-4 text-sm text-slate-600">
-            {{ row.categoryName }}
-          </td>
+            <!-- Image -->
+            <td class="px-5 py-3.5">
+              <div class="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200
+                          overflow-hidden flex items-center justify-center shrink-0">
+                @if (row.thumbnail) {
+                  <img [src]="row.thumbnail" [alt]="row.name" class="w-full h-full object-cover">
+                } @else {
+                  <span class="text-[10px] font-bold text-slate-400 select-none">
+                    {{ row.name?.charAt(0) }}
+                  </span>
+                }
+              </div>
+            </td>
 
-          <!-- Base Price -->
-          <td class="px-5 py-4 text-sm font-medium text-slate-900">
-            @if (row.currentPrice?.basePrice) {
-              {{ row.currentPrice.basePrice | currency:'USD' }}
-            } @else {
-              <span class="text-slate-500">0</span>
-            }
-          </td>
+            <!-- Product Info -->
+            <td class="px-5 py-3.5 min-w-[160px]">
+              <p class="text-sm font-semibold text-mlm-text leading-tight">{{ row.name }}</p>
+              <p class="text-[11px] font-mono text-slate-400 mt-0.5">{{ row.sku }}</p>
+            </td>
 
-          <!-- Non-member Price -->
-          <td class="px-5 py-4 text-sm font-medium text-slate-900">
-            @if (row.currentPrice?.nonMemberBasePrice) {
-              {{ row.currentPrice.nonMemberBasePrice | currency:'USD' }}
-            } @else {
-              <span class="text-slate-500">0</span>
-            }
-          </td>
+            <!-- Category -->
+            <td class="px-5 py-3.5 text-sm text-mlm-secondary">
+              {{ row.categoryName || '—' }}
+            </td>
 
-          <!-- PV -->
-          <td class="px-5 py-4 text-sm">
-            <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium">{{ row.currentPrice?.pv || 0 }}</span>
-          </td>
+            <!-- Base Price -->
+            <td class="px-5 py-3.5 text-sm font-semibold text-mlm-text tabular-nums text-right">
+              {{ (row.currentPrice?.basePrice | currency:'USD') || '—' }}
+            </td>
 
-          <!-- CPV -->
-          <td class="px-5 py-4 text-sm">
-            <span class="bg-purple-50 text-purple-700 px-2 py-1 rounded text-xs font-medium">{{ row.currentPrice?.cpv || 0 }}</span>
-          </td>
+            <!-- Non-member Price -->
+            <td class="px-5 py-3.5 text-sm font-semibold text-mlm-text tabular-nums text-right">
+              {{ (row.currentPrice?.nonMemberBasePrice | currency:'USD') || '—' }}
+            </td>
 
-          <!-- Admin Pool -->
-          <td class="px-5 py-4 text-sm text-center">
-            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+            <!-- PV / CPV / Admin Pool — monospaced, no color -->
+            <td class="px-5 py-3.5 text-sm font-mono font-semibold text-mlm-text tabular-nums text-center">
+              {{ row.currentPrice?.pv ?? 0 }}
+            </td>
+            <td class="px-5 py-3.5 text-sm font-mono font-semibold text-mlm-text tabular-nums text-center">
+              {{ row.currentPrice?.cpv ?? 0 }}
+            </td>
+            <td class="px-5 py-3.5 text-sm font-mono font-semibold text-mlm-text tabular-nums text-center">
               {{ row.adminPoolQuantity ?? 0 }}
-            </span>
-          </td>
+            </td>
 
-          <!-- Status -->
-          <td class="px-5 py-4 text-center">
-            <p-tag 
-              [value]="row.status === 'DRAFT' ? 'Draft' : row.status === 'ACTIVE' ? 'Active' : 'Inactive'" 
-              [severity]="getStatusSeverity(row.status)">
-            </p-tag>
-          </td>
+            <!-- Status -->
+            <td class="px-5 py-3.5 text-center">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold"
+                    [class.bg-mlm-primary]="false"
+                    [ngClass]="getStatusClass(row.status)">
+                {{ row.status | titlecase }}
+              </span>
+            </td>
 
-          <!-- Visibility -->
-          <td class="px-5 py-4 text-center">
-            <span class="text-xs font-medium" [class.text-emerald-700]="row.visibleToAll" [class.text-amber-700]="!row.visibleToAll">
-              {{ row.visibleToAll ? 'All' : 'Package' }}
-            </span>
-          </td>
+            <!-- Visibility -->
+            <td class="px-5 py-3.5 text-center">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold"
+                    [ngClass]="row.visibleToAll
+                      ? 'bg-slate-100 text-slate-600'
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'">
+                {{ row.visibleToAll ? 'Public' : 'Package' }}
+              </span>
+            </td>
 
-          <!-- Actions -->
-          <td class="px-5 py-4 text-center">
-            <div class="flex justify-center gap-2">
-              <button 
-                pButton 
-                icon="pi pi-eye" 
-                class="p-button-text p-button-sm text-gray-500 hover:text-gray-900"
-                (click)="onViewProduct(row.id)"
-                pTooltip="View Details"
-                tooltipPosition="top">
-              </button>
-              <button 
-                pButton 
-                icon="pi pi-pencil" 
-                class="p-button-text p-button-sm text-gray-500 hover:text-gray-900"
-                (click)="onEditProduct(row.id)"
-                pTooltip="Edit Product"
-                tooltipPosition="top">
-              </button>
-              <button 
-                pButton 
-                icon="pi pi-trash" 
-                class="p-button-text p-button-sm text-gray-500 hover:text-red-700"
-                (click)="onDeleteProduct(row)"
-                pTooltip="Delete Product"
-                tooltipPosition="top">
-              </button>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
+            <!-- Actions -->
+            <td class="px-5 py-3.5">
+              <div class="flex items-center justify-center gap-0.5">
+                <button
+                  (click)="onViewProduct(row.id)"
+                  pTooltip="View" tooltipPosition="top"
+                  class="w-8 h-8 rounded-lg flex items-center justify-center
+                         text-slate-400 hover:text-mlm-primary hover:bg-slate-100
+                         transition-colors duration-150">
+                  <i class="pi pi-eye text-xs"></i>
+                </button>
+                <button
+                  (click)="onEditProduct(row.id)"
+                  pTooltip="Edit" tooltipPosition="top"
+                  class="w-8 h-8 rounded-lg flex items-center justify-center
+                         text-slate-400 hover:text-mlm-primary hover:bg-slate-100
+                         transition-colors duration-150">
+                  <i class="pi pi-pencil text-xs"></i>
+                </button>
+                <button
+                  (click)="onDeleteProduct(row)"
+                  pTooltip="Delete" tooltipPosition="top"
+                  class="w-8 h-8 rounded-lg flex items-center justify-center
+                         text-slate-400 hover:text-mlm-error hover:bg-mlm-red-50
+                         transition-colors duration-150">
+                  <i class="pi pi-trash text-xs"></i>
+                </button>
+              </div>
+            </td>
 
-    </app-data-table>
+          </tr>
+        </ng-template>
+
+      </app-data-table>
     }
   </div>
 
@@ -210,7 +224,3 @@
   [visible]="showDrawer()"
   (visibleChange)="showDrawer.set($event)">
 </app-product-drawer>
-
-<!-- Notifications -->
-<p-toast></p-toast>
-<p-confirmDialog></p-confirmDialog>

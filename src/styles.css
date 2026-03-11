@@ -18,7 +18,7 @@
   --color-mlm-success: #22c55e;
   --color-mlm-error: #ef4444;
   --color-mlm-warning: #f59e0b;
-  --color-mlm-background: #f8fafc;
+  --color-mlm-background: #F5F4F0;
   --color-mlm-text: #000000;
   
   /* Green scale (based on brand green) */
@@ -90,7 +90,7 @@
   --success-color: #22c55e;
   --error-color: #ef4444;
   --warning-color: #f59e0b;
-  --background-color: #f8fafc;
+  --background-color: #F5F4F0;
   --text-color: #000000;
   
   --mlm-blue-50: #eff6ff;

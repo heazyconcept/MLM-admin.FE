@@ -1,245 +1,320 @@
-<div class="min-h-screen bg-linear-to-br from-gray-50 via-white to-purple-50/30 p-8">
+<div class="min-h-screen bg-mlm-background font-geist">
   <p-toast></p-toast>
 
-  <!-- Header -->
-  <div class="mb-8">
-    <div class="flex items-center gap-3 text-xs text-gray-400 mb-3">
-      <button
-        [routerLink]="['/admin/merchants/category-config']"
-        class="p-2 rounded-md hover:bg-gray-100 transition">
-        <i class="pi pi-arrow-left"></i>
-      </button>
-      Back to Category Config
+  <!-- ── Scrollable content + sticky footer wrapper ── -->
+  <div class="pb-24 p-8">
+
+    <!-- ── Header ── -->
+    <div class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <button
+          [routerLink]="['/admin/merchants/category-config']"
+          class="flex items-center gap-2 text-xs text-mlm-secondary hover:text-mlm-text transition-colors duration-150">
+          <i class="pi pi-arrow-left text-[11px]"></i>
+          Back to Category Config
+        </button>
+      </div>
+
+      @if (merchantType(); as type) {
+        <div>
+          <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-0.5">
+            {{ type }}
+          </p>
+          <h1 class="text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+            {{ getTypeLabel(type) }} Config
+          </h1>
+          <p class="text-sm text-mlm-secondary">
+            Edit commissions, fee, and onboarding products for {{ type }} merchants
+          </p>
+        </div>
+      }
     </div>
 
-    @if (merchantType(); as type) {
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div class="flex items-center gap-4">
-          <div class="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center">
-            <i [class]="getTypeIcon(type) + ' text-2xl text-gray-600'"></i>
-          </div>
-          <div>
-            <h1 class="text-3xl font-black text-mlm-text">{{ getTypeLabel(type) }} Config</h1>
-            <p class="text-mlm-secondary text-sm">Edit commissions, fee, and onboarding products for {{ type }} merchants</p>
-          </div>
-        </div>
-      </div>
-    }
-  </div>
-
-
-
-  <!-- Loading Skeleton -->
-  @if (loading()) {
-    <div class="max-w-3xl animate-pulse">
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
-        @for (i of [1, 2, 3, 4]; track i) {
-          <div>
-            <div class="w-32 h-4 rounded bg-gray-200 mb-3"></div>
-            <div class="w-full h-10 rounded-lg bg-gray-100"></div>
-          </div>
-        }
-      </div>
-    </div>
-  }
-
-  <!-- Form -->
-  @if (!loading() && merchantType()) {
-    @if (isNewConfig()) {
-      <!-- Toast will show the new config message via component logic -->
-    }
-    <form [formGroup]="form" (ngSubmit)="onSave()" class="max-w-3xl space-y-6">
-
-      <!-- Commission Rates -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-6">Commission Rates</h2>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Delivery Commission -->
-          <div>
-            <label for="deliveryCommissionPct" class="block text-sm font-medium text-gray-700 mb-2">
-              Delivery Commission (%)
-            </label>
-            <input
-              id="deliveryCommissionPct"
-              type="number"
-              formControlName="deliveryCommissionPct"
-              step="0.1"
-              min="0"
-              max="100"
-              [readonly]="isViewOnly()"
-              class="w-full h-10 px-4 rounded-lg border text-sm focus:outline-none focus:ring-2 transition"
-              [class.border-red-300]="isFieldInvalid('deliveryCommissionPct')"
-              [class.focus:ring-red-500/20]="isFieldInvalid('deliveryCommissionPct')"
-              [class.border-gray-300]="!isFieldInvalid('deliveryCommissionPct')"
-              [class.focus:ring-gray-900/10]="!isFieldInvalid('deliveryCommissionPct')"
-              placeholder="e.g. 4" />
-            @if (isFieldInvalid('deliveryCommissionPct')) {
-              <p class="mt-1 text-xs text-red-600">Required (0–100)</p>
-            }
-          </div>
-
-          <!-- Product Commission -->
-          <div>
-            <label for="productCommissionPct" class="block text-sm font-medium text-gray-700 mb-2">
-              Product Commission (%)
-            </label>
-            <input
-              id="productCommissionPct"
-              type="number"
-              formControlName="productCommissionPct"
-              step="0.1"
-              min="0"
-              max="100"
-              [readonly]="isViewOnly()"
-              class="w-full h-10 px-4 rounded-lg border text-sm focus:outline-none focus:ring-2 transition"
-              [class.border-red-300]="isFieldInvalid('productCommissionPct')"
-              [class.focus:ring-red-500/20]="isFieldInvalid('productCommissionPct')"
-              [class.border-gray-300]="!isFieldInvalid('productCommissionPct')"
-              [class.focus:ring-gray-900/10]="!isFieldInvalid('productCommissionPct')"
-              placeholder="e.g. 3.5" />
-            @if (isFieldInvalid('productCommissionPct')) {
-              <p class="mt-1 text-xs text-red-600">Required (0–100)</p>
-            }
-          </div>
-        </div>
-      </div>
-
-      <!-- Registration Fee -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-2">Registration Fee</h2>
-        <p class="text-sm text-gray-500 mb-6">Leave empty to use the system default fee for this merchant type.</p>
-
-        <div class="max-w-xs">
-          <label for="registrationFeeUsd" class="block text-sm font-medium text-gray-700 mb-2">
-            Fee (USD)
-          </label>
-          <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-            <input
-              id="registrationFeeUsd"
-              type="number"
-              formControlName="registrationFeeUsd"
-              step="1"
-              min="0"
-              [readonly]="isViewOnly()"
-              class="w-full h-10 pl-8 pr-4 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition"
-              placeholder="e.g. 600" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Onboarding Products -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-lg font-semibold text-gray-900">Onboarding Products</h2>
-          @if (!isViewOnly()) {
-            <button
-              type="button"
-              pButton
-              icon="pi pi-plus"
-              label="Add Product"
-              class="p-button-outlined p-button-sm"
-              (click)="addOnboardingItem()">
-            </button>
+    <!-- ── Loading Skeleton ── -->
+    @if (loading()) {
+      <div class="max-w-2xl animate-pulse space-y-8">
+        <div class="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
+          @for (i of [1, 2, 3]; track i) {
+            <div>
+              <div class="w-24 h-2.5 rounded bg-slate-200 mb-3"></div>
+              <div class="w-full h-10 rounded-lg bg-slate-100"></div>
+            </div>
           }
         </div>
-        <p class="text-sm text-gray-500 mb-6">Products transferred to a merchant when approved. Each must be an ACTIVE product.</p>
+      </div>
+    }
 
-        @if (onboardingItems.length > 0) {
-          <div class="space-y-3" formArrayName="onboardingItems">
-            @for (item of onboardingItems.controls; track $index) {
-              <div class="flex items-start gap-3 p-4 rounded-lg border border-gray-100 bg-gray-50/50" [formGroupName]="$index">
-                <!-- Product Select -->
-                <div class="flex-1">
-                  <label class="block text-xs font-medium text-gray-500 mb-1">Product</label>
-                  @if (loadingProducts()) {
-                    <div class="w-full h-10 px-4 rounded-lg border border-gray-200 bg-gray-50 flex items-center text-sm text-gray-400">
-                      <i class="pi pi-spin pi-spinner mr-2 text-indigo-500"></i>
-                      Loading products...
-                    </div>
-                  } @else {
-                    <select
-                      formControlName="productId"
-                      [attr.disabled]="isViewOnly() ? '' : null"
-                      class="w-full h-10 px-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 appearance-none transition bg-white">
-                      <option value="" disabled>Select a product...</option>
-                      @for (product of activeProducts(); track product.id) {
-                        <option [value]="product.id">{{ product.name }} ({{ product.sku }})</option>
-                      }
-                    </select>
-                  }
-                </div>
+    <!-- ── Form ── -->
+    @if (!loading() && merchantType()) {
+      <form [formGroup]="form" (ngSubmit)="onSave()" class="max-w-2xl">
 
-                <!-- Quantity -->
-                <div class="w-28">
-                  <label class="block text-xs font-medium text-gray-500 mb-1">Quantity</label>
+        <!-- Single card, sections divided by border-t -->
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+
+          <!-- ── Section: Commission Rates ── -->
+          <div class="px-6 py-6">
+            <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-5">
+              Commission Rates
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+              <!-- Delivery Commission -->
+              <div>
+                <label for="deliveryCommissionPct"
+                       class="block text-xs font-medium text-slate-600 mb-1.5">
+                  Delivery Commission
+                </label>
+                <div class="relative">
                   <input
+                    id="deliveryCommissionPct"
                     type="number"
-                    formControlName="quantity"
-                    min="1"
-                    step="1"
+                    formControlName="deliveryCommissionPct"
+                    step="0.1" min="0" max="100"
                     [readonly]="isViewOnly()"
-                    class="w-full h-10 px-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition"
-                    placeholder="Qty" />
+                    class="w-full h-10 pl-3 pr-9 rounded-lg border text-sm
+                           text-mlm-text bg-white
+                           placeholder:text-slate-300
+                           focus:outline-none focus:ring-2 transition"
+                    [class.border-mlm-error]="isFieldInvalid('deliveryCommissionPct')"
+                    [class.focus:ring-mlm-error]="isFieldInvalid('deliveryCommissionPct')"
+                    [class.border-slate-200]="!isFieldInvalid('deliveryCommissionPct')"
+                    [class.focus:ring-mlm-primary]="!isFieldInvalid('deliveryCommissionPct')"
+                    placeholder="0" />
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2
+                               text-xs font-semibold text-slate-400 pointer-events-none">
+                    %
+                  </span>
                 </div>
+                @if (isFieldInvalid('deliveryCommissionPct')) {
+                  <p class="mt-1.5 text-xs text-mlm-error">Required · must be 0–100</p>
+                }
+              </div>
 
-                <!-- Remove -->
-                @if (!isViewOnly()) {
-                  <div class="pt-5">
-                    <button
-                      type="button"
-                      pButton
-                      icon="pi pi-trash"
-                      class="p-button-text p-button-danger p-button-sm"
-                      pTooltip="Remove item"
-                      (click)="removeOnboardingItem($index)">
-                    </button>
+              <!-- Product Commission -->
+              <div>
+                <label for="productCommissionPct"
+                       class="block text-xs font-medium text-slate-600 mb-1.5">
+                  Product Commission
+                </label>
+                <div class="relative">
+                  <input
+                    id="productCommissionPct"
+                    type="number"
+                    formControlName="productCommissionPct"
+                    step="0.1" min="0" max="100"
+                    [readonly]="isViewOnly()"
+                    class="w-full h-10 pl-3 pr-9 rounded-lg border text-sm
+                           text-mlm-text bg-white
+                           placeholder:text-slate-300
+                           focus:outline-none focus:ring-2 transition"
+                    [class.border-mlm-error]="isFieldInvalid('productCommissionPct')"
+                    [class.focus:ring-mlm-error]="isFieldInvalid('productCommissionPct')"
+                    [class.border-slate-200]="!isFieldInvalid('productCommissionPct')"
+                    [class.focus:ring-mlm-primary]="!isFieldInvalid('productCommissionPct')"
+                    placeholder="0" />
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2
+                               text-xs font-semibold text-slate-400 pointer-events-none">
+                    %
+                  </span>
+                </div>
+                @if (isFieldInvalid('productCommissionPct')) {
+                  <p class="mt-1.5 text-xs text-mlm-error">Required · must be 0–100</p>
+                }
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ── Section: Registration Fee ── -->
+          <div class="px-6 py-6 border-t border-slate-100">
+            <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1">
+              Registration Fee
+            </p>
+            <p class="text-xs text-slate-400 mb-5">
+              Leave empty to fall back to the system default for this merchant type.
+            </p>
+
+            <div class="max-w-[200px]">
+              <label for="registrationFeeUsd"
+                     class="block text-xs font-medium text-slate-600 mb-1.5">
+                Fee 
+              </label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2
+                             text-xs font-semibold text-slate-400 pointer-events-none">
+                    ₦
+                </span>
+                <input
+                  id="registrationFeeUsd"
+                  type="text"
+                  inputmode="numeric"
+                  formControlName="registrationFeeUsd"
+                  [readonly]="isViewOnly()"
+                  (input)="formatRegistrationFeeInput($event)"
+                  class="w-full h-10 pl-7 pr-3 rounded-lg border border-slate-200 text-sm
+                         text-mlm-text bg-white placeholder:text-slate-300
+                         focus:outline-none focus:ring-2 focus:ring-mlm-primary transition"
+                  placeholder="600" />
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Section: Onboarding Products ── -->
+          <div class="px-6 py-6 border-t border-slate-100">
+            <div class="flex items-start justify-between gap-4 mb-1">
+              <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
+                Onboarding Products
+              </p>
+              @if (!isViewOnly()) {
+                <button
+                  type="button"
+                  (click)="addOnboardingItem()"
+                  class="flex items-center gap-1.5 text-xs font-semibold
+                         text-mlm-primary hover:text-brand-green-dark
+                         transition-colors duration-150 shrink-0 -mt-0.5">
+                  <i class="pi pi-plus text-[10px]"></i>
+                  Add Product
+                </button>
+              }
+            </div>
+            <p class="text-xs text-slate-400 mb-5">
+              Transferred to a merchant on approval. Each must be an ACTIVE product.
+            </p>
+
+            <!-- Product rows -->
+            @if (onboardingItems.length > 0) {
+              <div class="space-y-2.5" formArrayName="onboardingItems">
+                @for (item of onboardingItems.controls; track $index) {
+                  <div class="flex items-end gap-3 p-4 rounded-lg
+                              border border-slate-100 bg-slate-50/60"
+                       [formGroupName]="$index">
+
+                    <!-- Product Select -->
+                    <div class="flex-1">
+                      <label class="block text-[10px] font-semibold tracking-wide
+                                   text-slate-400 uppercase mb-1.5">
+                        Product
+                      </label>
+                      @if (loadingProducts()) {
+                        <div class="w-full h-10 px-3 rounded-lg border border-slate-200
+                                    bg-white flex items-center text-xs text-slate-400 gap-2">
+                          <i class="pi pi-spin pi-spinner text-mlm-primary"></i>
+                          Loading products…
+                        </div>
+                      } @else {
+                        <select
+                          formControlName="productId"
+                          [attr.disabled]="isViewOnly() ? '' : null"
+                          class="w-full h-10 px-3 rounded-lg border border-slate-200
+                                 text-sm text-mlm-text bg-white
+                                 focus:outline-none focus:ring-2 focus:ring-mlm-primary
+                                 appearance-none transition">
+                          <option value="" disabled>Select a product…</option>
+                          @for (product of activeProducts(); track product.id) {
+                            <option [value]="product.id">
+                              {{ product.name }} ({{ product.sku }})
+                            </option>
+                          }
+                        </select>
+                      }
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="w-24">
+                      <label class="block text-[10px] font-semibold tracking-wide
+                                   text-slate-400 uppercase mb-1.5">
+                        Qty
+                      </label>
+                      <input
+                        type="number"
+                        formControlName="quantity"
+                        min="1" step="1"
+                        [readonly]="isViewOnly()"
+                        class="w-full h-10 px-3 rounded-lg border border-slate-200
+                               text-sm text-mlm-text bg-white tabular-nums
+                               focus:outline-none focus:ring-2 focus:ring-mlm-primary transition"
+                        placeholder="1" />
+                    </div>
+
+                    <!-- Remove -->
+                    @if (!isViewOnly()) {
+                      <button
+                        type="button"
+                        (click)="removeOnboardingItem($index)"
+                        class="h-10 w-10 flex items-center justify-center rounded-lg
+                               border border-slate-200 text-slate-400
+                               hover:border-mlm-error hover:text-mlm-error hover:bg-mlm-red-50
+                               transition-colors duration-150 shrink-0"
+                        pTooltip="Remove">
+                        <i class="pi pi-trash text-xs"></i>
+                      </button>
+                    }
                   </div>
                 }
               </div>
-            }
-          </div>
-        } @else {
-          <div class="text-center py-8 border border-dashed border-gray-200 rounded-lg">
-            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-              <i class="pi pi-box text-gray-400 text-xl"></i>
-            </div>
-            <p class="text-gray-500 text-sm mb-3">No onboarding products configured</p>
-            @if (!isViewOnly()) {
-              <button
-                type="button"
-                pButton
-                icon="pi pi-plus"
-                label="Add First Product"
-                class="p-button-outlined p-button-sm"
-                (click)="addOnboardingItem()">
-              </button>
-            }
-          </div>
-        }
-      </div>
 
-      <!-- Action Buttons -->
-      @if (!isViewOnly()) {
-        <div class="flex items-center justify-end gap-3 pt-2">
+            } @else {
+              <!-- Empty state — text only, no icon -->
+              <div class="py-8 border border-dashed border-slate-200 rounded-lg px-5">
+                <p class="text-sm text-slate-400 mb-0.5">No products added</p>
+                <p class="text-xs text-slate-300">
+                  Use "Add Product" above to assign onboarding items.
+                </p>
+              </div>
+            }
+          </div>
+
+        </div>
+        <!-- /single card -->
+
+      </form>
+    }
+
+  </div>
+  <!-- /scrollable content -->
+
+  <!-- ── Sticky Footer (view-only hides this entirely) ── -->
+  @if (!loading() && merchantType() && !isViewOnly()) {
+    <div class="fixed bottom-0 left-0 right-0 z-10
+                border-t border-slate-200 bg-white/90 backdrop-blur-sm">
+      <div class="max-w-2xl mx-auto px-8 py-4 flex items-center justify-between gap-4">
+
+        <p class="text-xs text-slate-400 hidden sm:block">
+          Changes apply immediately on save.
+        </p>
+
+        <div class="flex items-center gap-3 ml-auto">
           <button
             type="button"
-            pButton
-            label="Cancel"
-            class="p-button-text p-button-secondary"
-            (click)="onCancel()">
+            (click)="onCancel()"
+            class="h-9 px-5 rounded-lg border border-slate-300 text-sm font-medium
+                   text-mlm-secondary hover:text-mlm-text hover:border-slate-400
+                   bg-white transition-colors duration-150">
+            Cancel
           </button>
+
           <button
             type="submit"
-            pButton
-            [label]="saving() ? 'Saving...' : 'Save Configuration'"
-            [icon]="saving() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
-            class="p-button-primary"
-            [disabled]="form.invalid || saving()">
+            form="configForm"
+            (click)="onSave()"
+            [disabled]="form?.invalid || saving()"
+            class="h-9 px-5 rounded-lg text-sm font-semibold text-white
+                   bg-mlm-primary border border-mlm-primary
+                   hover:bg-brand-green-dark hover:border-brand-green-dark
+                   disabled:opacity-40 disabled:cursor-not-allowed
+                   transition-colors duration-150 flex items-center gap-2">
+            @if (saving()) {
+              <i class="pi pi-spin pi-spinner text-xs"></i>
+              Saving…
+            } @else {
+              <i class="pi pi-check text-xs"></i>
+              Save Configuration
+            }
           </button>
         </div>
-      }
-    </form>
+      </div>
+    </div>
   }
+
 </div>

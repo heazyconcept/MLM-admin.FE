@@ -23,7 +23,7 @@ module.exports = {
         'mlm-success': '#22c55e',
         'mlm-error': '#ef4444',
         'mlm-warning': '#f59e0b',
-        'mlm-background': '#f8fafc',
+        'mlm-background': '#F5F4F0',
         'mlm-text': '#000000', // Black for main text
         'mlm-blue': {
           50: '#eff6ff',
