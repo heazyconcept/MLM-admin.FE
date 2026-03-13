@@ -95,11 +95,13 @@ export class WithdrawalService {
         this.limitSignal.set(limit);
         this.offsetSignal.set(offset);
 
-        // The endpoint returns an array; estimate total for paginator continuity.
+        // The endpoint returns an array; estimate total for paginator.
+        // If the page is full, assume at least one more page exists; otherwise
+        // the current offset + count is the true total.
         const estimatedTotal = items.length === limit
           ? offset + items.length + limit
           : offset + items.length;
-        this.totalSignal.set(Math.max(this.totalSignal(), estimatedTotal));
+        this.totalSignal.set(estimatedTotal);
 
         this.statusHistoryMap.clear();
         mapped.forEach(w => {
