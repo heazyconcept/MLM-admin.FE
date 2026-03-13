@@ -1,6 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { ApiService } from '../../../core/services/api.service';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 
@@ -56,7 +56,9 @@ export class AdminPackagesService {
     );
   }
 
-  updatePackage(packageId: string, payload: AdminPackageUpdatePayload): Observable<AdminPackageConfig> {
+  updatePackage(packageId: string, payload: Partial<AdminPackageUpdatePayload>): Observable<AdminPackageConfig> {
+    this.error.set(null);
+
     return this.api.put<AdminPackageConfig>(`admin/packages/${encodeURIComponent(packageId)}`, payload).pipe(
       tap((updated) => {
         const current = this.packages();
@@ -72,6 +74,10 @@ export class AdminPackagesService {
         } else {
           this.packages.set([...current, updated]);
         }
+      }),
+      catchError((err) => {
+        this.error.set(err?.error?.message ?? err?.message ?? 'Failed to update package');
+        return throwError(() => err);
       })
     );
   }

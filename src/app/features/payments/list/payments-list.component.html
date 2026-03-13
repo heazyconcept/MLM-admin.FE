@@ -1,166 +1,213 @@
-<div class="min-h-screen bg-gray-50 px-8 py-6">
+<div class="p-8 font-geist min-h-screen bg-mlm-background">
   <p-toast></p-toast>
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+
+  <!-- ── Header ── -->
+  <div class="flex items-start justify-between gap-4 mb-8">
     <div>
-      <h1 class="text-2xl font-semibold text-gray-900">Payments Management</h1>
-      <p class="text-sm text-gray-500 mt-1">Monitor and manage all system-wide financial inflows</p>
+      <h1 class="text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        Payments Management
+      </h1>
+      <p class="text-sm text-mlm-secondary">Monitor and manage all system-wide financial inflows</p>
+    </div>
+
+    <div class="flex items-center gap-2.5 shrink-0 mt-1">
+      <button
+        (click)="openFundingModal()"
+        class="h-9 px-4 rounded-lg text-sm font-semibold text-white
+               bg-mlm-primary border border-mlm-primary
+               hover:bg-brand-green-dark hover:border-brand-green-dark
+               flex items-center gap-2 transition-colors duration-150">
+        <i class="pi pi-plus text-xs"></i>
+        Admin Fund User
+      </button>
+      <button
+        (click)="onExport()"
+        class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
+               text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+               flex items-center gap-2 transition-colors duration-150">
+        <i class="pi pi-download text-xs"></i>
+        Export
+      </button>
     </div>
   </div>
 
-  <!-- Stats Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+  <!-- ── Stats Cards ── -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+
     <!-- Success Rate -->
-    <div class="bg-white rounded-xl border border-gray-200 px-6 py-5 hover:border-gray-300 transition group">
-      <div class="flex items-start justify-between">
-        <div>
-          <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Success Rate</p>
-          <h3 class="mt-2 text-4xl font-semibold text-gray-900">{{ stats().successRate }}%</h3>
-          <p class="mt-1 text-xs text-green-600 font-medium flex items-center gap-1">
-            <i class="pi pi-arrow-up text-[10px]"></i>
-            Highly stable throughput
-          </p>
-        </div>
-        <i class="pi pi-verified text-gray-300 text-lg transition-colors group-hover:text-green-400"></i>
-      </div>
+    <div class="bg-white rounded-xl border border-slate-200 px-6 py-5
+                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        Success Rate
+      </p>
+      <p class="text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2">
+        {{ stats().successRate }}%
+      </p>
+      <p class="text-xs font-medium text-mlm-primary flex items-center gap-1">
+        <i class="pi pi-arrow-up text-[10px]"></i>
+        Highly stable throughput
+      </p>
     </div>
 
-    <!-- Pending Action -->
-    <div class="bg-white rounded-xl border border-gray-200 px-6 py-5 hover:border-gray-300 transition group">
-      <div class="flex items-start justify-between">
-        <div>
-          <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Pending Confirmation</p>
-          <h3 class="mt-2 text-4xl font-semibold text-gray-900">{{ stats().totalPending }}</h3>
-          <p class="mt-1 text-xs text-orange-600 font-medium">Requires manual verification</p>
-        </div>
-        <i class="pi pi-clock text-gray-300 text-lg transition-colors group-hover:text-orange-400"></i>
-      </div>
+    <!-- Pending Confirmation -->
+    <div class="bg-white rounded-xl border border-slate-200 px-6 py-5
+                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        Pending Confirmation
+      </p>
+      <p class="text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2">
+        {{ stats().totalPending }}
+      </p>
+      <p class="text-xs font-medium text-mlm-warning">Requires manual verification</p>
     </div>
 
     <!-- Total Volume -->
-    <div class="bg-white rounded-xl border border-gray-200 px-6 py-5 hover:border-gray-300 transition group">
-      <div class="flex items-start justify-between">
-        <div>
-          <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Total Volume</p>
-          <h3 class="mt-2 text-4xl font-semibold text-gray-900">{{ stats().totalVolume | currency:'USD':'symbol':'1.0-0' }}</h3>
-          <p class="mt-1 text-xs text-gray-500">Trailing all-time volume</p>
-        </div>
-        <i class="pi pi-chart-line text-gray-300 text-lg transition-colors group-hover:text-blue-400"></i>
-      </div>
+    <div class="bg-white rounded-xl border border-slate-200 px-6 py-5
+                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        Total Volume
+      </p>
+      <p class="text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2 tabular-nums">
+        {{ stats().totalVolume | currency:'USD':'symbol':'1.0-0' }}
+      </p>
+      <p class="text-xs text-slate-400">Trailing all-time volume</p>
     </div>
+
   </div>
 
-  <!-- Filters -->
-  <div class="bg-white border border-gray-200 rounded-xl px-5 py-4 mb-6">
-    <div class="flex flex-col gap-4">
-      <!-- Filters grid (status, method, date range) -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
-        <!-- Status Filter -->
-        <select
-          [formControl]="selectedStatusControl"
-          class="h-10 px-4 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-shadow">
-          @for (option of statusOptions; track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </select>
+  <!-- ── Single Card: Filters + Table ── -->
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
 
-        <!-- Method Filter -->
-        <select
-          [formControl]="selectedMethodControl"
-          class="h-10 px-4 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-shadow">
-          @for (option of methodOptions; track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </select>
+    <!-- Filter Bar -->
+    <div class="px-5 py-4 border-b border-slate-100">
+      <div class="flex flex-col lg:flex-row lg:items-center gap-3">
 
-        <!-- Date range -->
-        <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+        <!-- Search -->
+        <div class="relative flex-1 max-w-xs">
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2
+                    text-slate-400 text-xs pointer-events-none"></i>
           <input
-            type="date"
-            [formControl]="fromDateControl"
-            class="h-10 px-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-shadow"
-          />
-          <span class="text-xs text-gray-400 text-center sm:text-left">to</span>
-          <input
-            type="date"
-            [formControl]="toDateControl"
-            class="h-10 px-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-shadow"
-          />
+            type="text"
+            [value]="searchQuery()"
+            (input)="onSearch($event)"
+            placeholder="Search by ID or user…"
+            class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm
+                   text-mlm-text bg-white placeholder:text-slate-300
+                   focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
+        </div>
+
+        <!-- Filters -->
+        <div class="flex flex-wrap items-center gap-2">
+
+          <select
+            [formControl]="selectedStatusControl"
+            class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text
+                   bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary
+                   transition appearance-none pr-8 w-36">
+            @for (option of statusOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+
+          <select
+            [formControl]="selectedMethodControl"
+            class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text
+                   bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary
+                   transition appearance-none pr-8 w-36">
+            @for (option of methodOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+
+          <!-- Date range -->
+          <div class="flex items-center gap-2">
+            <input
+              type="date"
+              [formControl]="fromDateControl"
+              class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text
+                     bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
+            <span class="text-xs text-slate-400">to</span>
+            <input
+              type="date"
+              [formControl]="toDateControl"
+              class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text
+                     bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
+          </div>
+
         </div>
       </div>
-
-      <!-- Search row (full width) -->
-      <div class="relative">
-        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-        <input
-          type="text"
-          [value]="searchQuery()"
-          (input)="onSearch($event)"
-          placeholder="Search by ID or user..."
-          class="h-10 w-full max-w-md pl-9 pr-4 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-shadow"
-        />
-      </div>
-
-      <!-- Actions row -->
-      <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
-        <button
-          (click)="openFundingModal()"
-          class="h-10 px-4 rounded-lg bg-mlm-primary text-white text-sm font-medium hover:bg-brand-green-dark transition-colors flex items-center justify-center gap-2">
-          <i class="pi pi-plus text-sm"></i>
-          Admin Fund User
-        </button>
-        <button
-          (click)="onExport()"
-          class="h-10 px-4 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-          <i class="pi pi-download text-sm"></i>
-          Export
-        </button>
-      </div>
     </div>
+
+    <!-- Table — 7 <td> matching 7 headers:
+         PAYMENT ID · USER · PURPOSE · AMOUNT · METHOD · STATUS · DATE -->
+    <app-data-table
+      [value]="filteredPayments()"
+      [headers]="tableHeaders()"
+      [loading]="tableLoading()">
+
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100">
+
+          <!-- Payment ID → header[0] -->
+          <td class="px-5 py-3.5 w-[140px]">
+            <span class="text-[11px] font-mono text-slate-400">
+              {{ row.id | slice:0:10 }}…
+            </span>
+          </td>
+
+          <!-- User → header[1] -->
+          <td class="px-5 py-3.5 min-w-[160px]">
+            <p class="text-sm font-semibold text-mlm-text leading-tight">{{ row.userName }}</p>
+            <p class="text-[11px] font-mono text-slate-400 mt-0.5">{{ row.userEmail }}</p>
+          </td>
+
+          <!-- Purpose → header[2] -->
+          <td class="px-5 py-3.5">
+            <span
+              class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
+              [class]="getPurposeClass(row.purpose)">
+              {{ row.purpose }}
+            </span>
+          </td>
+
+          <!-- Amount → header[3] -->
+          <td class="px-5 py-3.5 text-right w-[120px]">
+            <span class="text-sm font-semibold text-mlm-text tabular-nums font-mono">
+              {{ row.amount | currency:'USD' }}
+            </span>
+          </td>
+
+          <!-- Method → header[4] -->
+          <td class="px-5 py-3.5 w-[120px]">
+            <span class="text-xs font-medium text-slate-600 capitalize">
+              {{ row.method }}
+            </span>
+          </td>
+
+          <!-- Status → header[5] -->
+          <td class="px-5 py-3.5 w-[120px]">
+            <app-status-badge [status]="row.status"></app-status-badge>
+          </td>
+
+          <!-- Date → header[6] -->
+          <td class="px-5 py-3.5 w-[140px]">
+            <span class="text-xs font-mono text-slate-400 tabular-nums">
+              {{ row.createdAt | date:'M/d/yyyy' }}
+            </span>
+          </td>
+
+        </tr>
+      </ng-template>
+
+    </app-data-table>
+
   </div>
 
-  <!-- Table Section -->
-  <app-data-table
-    [value]="filteredPayments()"
-    [headers]="tableHeaders()"
-    [loading]="tableLoading()">
-    
-    <!-- Row Template -->
-    <ng-template pTemplate="body" let-row>
-      <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
-        <!-- Purpose -->
-        <td class="px-5 py-4">
-          <span 
-            class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
-            [class]="getPurposeClass(row.purpose)">
-            {{ row.purpose }}
-          </span>
-        </td>
-
-        <!-- Status -->
-        <td class="px-5 py-4">
-          <app-status-badge [status]="row.status"></app-status-badge>
-        </td>
-      </tr>
-    </ng-template>
-  </app-data-table>
-
+  <!-- Funding Modal -->
   <app-admin-funding-modal
     [visible]="fundingModalVisible()"
     (confirmed)="handleFundingConfirmed($event)"
     (cancelled)="handleFundingCancelled()">
   </app-admin-funding-modal>
 
-  <!-- Empty State -->
-  @if (filteredPayments().length === 0) {
-    <div class="bg-white rounded-xl border border-gray-200 p-16 text-center mt-2">
-      <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
-        <i class="pi pi-credit-card text-gray-300 text-3xl"></i>
-      </div>
-      <h3 class="text-gray-900 font-semibold text-lg">No payments found</h3>
-      <p class="text-gray-500 text-sm mt-1 max-w-sm mx-auto">
-        Your search or filters didn't return any results. Try broadening your criteria.
-      </p>
-    </div>
-  }
 </div>

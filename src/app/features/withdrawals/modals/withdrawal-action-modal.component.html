@@ -46,6 +46,20 @@
       </div>
     }
 
+    <!-- Payout Reference Section -->
+    @if (action() === 'MarkPaid') {
+      <div class="space-y-2">
+        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Payout Reference <span class="text-gray-400">(Optional)</span></label>
+        <input
+          type="text"
+          pInputText
+          class="w-full rounded-xl border-gray-100"
+          placeholder="e.g. BANK-TRX-123456"
+          [formControl]="payoutReferenceControl">
+        <p class="text-[10px] text-gray-500 font-medium">Leave blank to use an auto-generated admin reference.</p>
+      </div>
+    }
+
     <!-- Buttons -->
     <div class="flex gap-3 pt-2">
       <button 

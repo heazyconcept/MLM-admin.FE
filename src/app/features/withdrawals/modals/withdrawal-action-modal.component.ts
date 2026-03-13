@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
+import { InputTextModule } from 'primeng/inputtext';
 import { WithdrawalRequest } from '../services/withdrawal.service';
 
 export type ActionType = 'Approve' | 'Reject' | 'MarkProcessing' | 'MarkPaid';
@@ -15,7 +16,8 @@ export type ActionType = 'Approve' | 'Reject' | 'MarkProcessing' | 'MarkPaid';
     ReactiveFormsModule,
     DialogModule,
     ButtonModule,
-    TextareaModule
+    TextareaModule,
+    InputTextModule
   ],
   templateUrl: './withdrawal-action-modal.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -25,10 +27,11 @@ export class WithdrawalActionModalComponent {
   withdrawal = input<WithdrawalRequest | null | undefined>(null);
   action = input<ActionType | null>(null);
   
-  confirmed = output<{ action: ActionType, reason?: string }>();
+  confirmed = output<{ action: ActionType, reason?: string, payoutReference?: string }>();
   cancelled = output<void>();
 
   reasonControl = new FormControl('');
+  payoutReferenceControl = new FormControl('');
 
   get title(): string {
     switch (this.action()) {
@@ -103,6 +106,7 @@ export class WithdrawalActionModalComponent {
   onConfirm() {
     const action = this.action();
     const reasonValue = this.reasonControl.value || '';
+    const payoutReferenceValue = this.payoutReferenceControl.value || '';
     if (action === 'Reject' && !reasonValue.trim()) {
       return;
     }
@@ -110,14 +114,17 @@ export class WithdrawalActionModalComponent {
     if (action) {
       this.confirmed.emit({ 
         action: action, 
-        reason: action === 'Reject' ? reasonValue : undefined 
+        reason: action === 'Reject' ? reasonValue.trim() : undefined,
+        payoutReference: action === 'MarkPaid' ? payoutReferenceValue.trim() : undefined
       });
       this.reasonControl.reset('');
+      this.payoutReferenceControl.reset('');
     }
   }
 
   onCancel() {
     this.cancelled.emit();
     this.reasonControl.reset('');
+    this.payoutReferenceControl.reset('');
   }
 }

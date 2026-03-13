@@ -1,12 +1,16 @@
 <p-table
   [value]="value()"
-  [paginator]="value().length > 0"
+  [paginator]="paginator() && (lazy() || value().length > 0)"
   [rows]="rows()"
+  [first]="first()"
+  [totalRecords]="lazy() ? totalRecords() : value().length"
+  [lazy]="lazy()"
   [rowsPerPageOptions]="rowsPerPageOptions()"
   [loading]="loading()"
   responsiveLayout="scroll"
   styleClass="ui-clean-table w-full"
   [tableStyle]="{ 'min-width': '100%' }"
+  (onPage)="onPageChange($event)"
 >
 
   <!-- ── Column Headers ── -->

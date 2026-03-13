@@ -32,8 +32,9 @@
         class="grid grid-cols-12 gap-4 px-6 py-3
                text-[11px] font-medium uppercase tracking-wide text-gray-400
                border-b border-gray-100 bg-gray-50">
-        <div class="col-span-3">Package</div>
-        <div class="col-span-3">Price (NGN)</div>
+        <div class="col-span-2">Package</div>
+        <div class="col-span-2">Price (NGN)</div>
+        <div class="col-span-2">Price (USD)</div>
         <div class="col-span-3">Earnings / Cashout</div>
         <div class="col-span-2">PV / CPV</div>
         <div class="col-span-1 text-right">Action</div>
@@ -43,26 +44,55 @@
           class="grid grid-cols-12 gap-4 px-6 py-4 items-center
                  border-b border-gray-100 last:border-b-0
                  hover:bg-gray-50 transition">
-          <div class="col-span-3">
+          <div class="col-span-2">
             <span
               class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold"
               [class]="getPackageClass(getPackageId(pkg))">
               {{ pkg.package }}
             </span>
           </div>
-          <div class="col-span-3 flex items-center gap-3">
+          <div class="col-span-2">
             @if (!isEditing(pkg)) {
               <p class="text-lg font-semibold text-gray-900">
                 {{ pkg.priceNGN != null ? (pkg.priceNGN | currency:'NGN') : '—' }}
               </p>
             } @else {
-              <p-inputNumber
-                [formControl]="getPriceControl(pkg)"
-                mode="decimal"
-                [minFractionDigits]="0"
-                [maxFractionDigits]="2"
-                styleClass="w-32 p-inputtext-sm">
-              </p-inputNumber>
+              <div class="space-y-1">
+                <p-inputNumber
+                  [formControl]="getPriceNgnControl(pkg)"
+                  mode="decimal"
+                  [min]="0.01"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="2"
+                  [useGrouping]="false"
+                  styleClass="w-32 p-inputtext-sm">
+                </p-inputNumber>
+                @if (isPriceInvalid(getPriceNgnControl(pkg))) {
+                  <p class="text-xs text-red-600">Enter a valid NGN amount greater than 0.</p>
+                }
+              </div>
+            }
+          </div>
+          <div class="col-span-2">
+            @if (!isEditing(pkg)) {
+              <p class="text-lg font-semibold text-gray-900">
+                {{ pkg.priceUSD != null ? (pkg.priceUSD | currency:'USD') : '—' }}
+              </p>
+            } @else {
+              <div class="space-y-1">
+                <p-inputNumber
+                  [formControl]="getPriceUsdControl(pkg)"
+                  mode="decimal"
+                  [min]="0.01"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="2"
+                  [useGrouping]="false"
+                  styleClass="w-32 p-inputtext-sm">
+                </p-inputNumber>
+                @if (isPriceInvalid(getPriceUsdControl(pkg))) {
+                  <p class="text-xs text-red-600">Enter a valid USD amount greater than 0.</p>
+                }
+              </div>
             }
           </div>
           <div class="col-span-3 text-sm text-gray-700">

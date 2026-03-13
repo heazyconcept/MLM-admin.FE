@@ -1,7 +1,8 @@
-import { Component, inject, computed, signal, ChangeDetectionStrategy, OnInit, ViewChild, TemplateRef } from '@angular/core';
+import { Component, inject, computed, signal, ChangeDetectionStrategy, OnInit, ViewChild, TemplateRef, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { WithdrawalService, WithdrawalRequest, WithdrawalStatus } from '../services/withdrawal.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
@@ -9,6 +10,7 @@ import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { TablePageEvent } from 'primeng/table';
 
 interface StatusOption {
   label: string;
@@ -34,11 +36,15 @@ interface StatusOption {
 export class WithdrawalsListComponent implements OnInit {
   private withdrawalService = inject(WithdrawalService);
   private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
 
   @ViewChild('status', { static: true }) statusTemplate!: TemplateRef<unknown>;
 
   withdrawals = this.withdrawalService.withdrawals;
   tableLoading = signal(false);
+  totalRecords = this.withdrawalService.total;
+  rowsPerPage = signal(10);
+  firstRecord = signal(0);
   
   selectedStatusControl = new FormControl('all');
   searchQuery = signal<string>('');
@@ -48,17 +54,12 @@ export class WithdrawalsListComponent implements OnInit {
     { label: 'Pending', value: 'Pending' },
     { label: 'Approved', value: 'Approved' },
     { label: 'Rejected', value: 'Rejected' },
-    { label: 'Processing', value: 'Processing' },
     { label: 'Paid', value: 'Paid' }
   ];
 
   filteredWithdrawals = computed(() => {
     let requests = this.withdrawalService.withdrawals();
-    
-    if (this.selectedStatusControl.value !== 'all') {
-      requests = requests.filter(r => r.status === this.selectedStatusControl.value);
-    }
-    
+
     const query = this.searchQuery().toLowerCase();
     if (query) {
       requests = requests.filter(r => 
@@ -117,6 +118,13 @@ export class WithdrawalsListComponent implements OnInit {
       this.selectedStatusControl.setValue(defaultFilter);
     }
 
+    this.selectedStatusControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.firstRecord.set(0);
+        this.fetchWithdrawals(0, this.rowsPerPage());
+      });
+
     this.columns.set([
       {
         field: 'id',
@@ -166,11 +174,7 @@ export class WithdrawalsListComponent implements OnInit {
       }
     ]);
 
-    this.tableLoading.set(true);
-    this.withdrawalService.loadFromApi().subscribe({
-      next: () => this.tableLoading.set(false),
-      error: () => this.tableLoading.set(false)
-    });
+    this.fetchWithdrawals(0, this.rowsPerPage());
   }
 
   private router = inject(Router);
@@ -182,6 +186,14 @@ export class WithdrawalsListComponent implements OnInit {
   onSearch(event: Event) {
     const value = (event.target as HTMLInputElement).value;
     this.searchQuery.set(value);
+  }
+
+  onPageChange(event: TablePageEvent): void {
+    const first = event.first ?? 0;
+    const rows = event.rows ?? this.rowsPerPage();
+    this.firstRecord.set(first);
+    this.rowsPerPage.set(rows);
+    this.fetchWithdrawals(first, rows);
   }
 
   onExport() {
@@ -196,6 +208,28 @@ export class WithdrawalsListComponent implements OnInit {
       case 'Rejected': return 'danger';
       case 'Processing': return 'secondary';
       default: return 'info';
+    }
+  }
+
+  private fetchWithdrawals(offset: number, limit: number): void {
+    this.tableLoading.set(true);
+    this.withdrawalService.loadFromApi({
+      status: this.toApiStatus(this.selectedStatusControl.value),
+      limit,
+      offset
+    }).subscribe({
+      next: () => this.tableLoading.set(false),
+      error: () => this.tableLoading.set(false)
+    });
+  }
+
+  private toApiStatus(status: string | null): 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID' | undefined {
+    switch (status) {
+      case 'Pending': return 'PENDING';
+      case 'Approved': return 'APPROVED';
+      case 'Rejected': return 'REJECTED';
+      case 'Paid': return 'PAID';
+      default: return undefined;
     }
   }
 }

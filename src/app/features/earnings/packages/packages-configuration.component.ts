@@ -1,6 +1,6 @@
 import { Component, inject, signal, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
@@ -24,7 +24,8 @@ export class PackagesConfigurationComponent implements OnInit {
 
   editingId = signal<string | null>(null);
   savingId = signal<string | null>(null);
-  priceControls: Record<string, FormControl<number | null>> = {};
+  ngnPriceControls: Record<string, FormControl<number | null>> = {};
+  usdPriceControls: Record<string, FormControl<number | null>> = {};
 
   ngOnInit(): void {
     this.packagesService.loadPackages().subscribe();
@@ -46,12 +47,28 @@ export class PackagesConfigurationComponent implements OnInit {
     return classes[pkgName?.toUpperCase()] ?? 'bg-gray-100 text-gray-800 border border-gray-200';
   }
 
-  getPriceControl(pkg: AdminPackageConfig): FormControl<number | null> {
+  getPriceNgnControl(pkg: AdminPackageConfig): FormControl<number | null> {
     const id = this.getPackageId(pkg);
-    if (!this.priceControls[id]) {
-      this.priceControls[id] = new FormControl<number | null>(pkg.priceNGN ?? null);
+    if (!this.ngnPriceControls[id]) {
+      this.ngnPriceControls[id] = new FormControl<number | null>(pkg.priceNGN ?? null, {
+        validators: [Validators.required, Validators.min(0.01)]
+      });
     }
-    return this.priceControls[id];
+    return this.ngnPriceControls[id];
+  }
+
+  getPriceUsdControl(pkg: AdminPackageConfig): FormControl<number | null> {
+    const id = this.getPackageId(pkg);
+    if (!this.usdPriceControls[id]) {
+      this.usdPriceControls[id] = new FormControl<number | null>(pkg.priceUSD ?? null, {
+        validators: [Validators.required, Validators.min(0.01)]
+      });
+    }
+    return this.usdPriceControls[id];
+  }
+
+  isPriceInvalid(control: FormControl<number | null>): boolean {
+    return control.invalid && (control.touched || control.dirty);
   }
 
   isEditing(pkg: AdminPackageConfig): boolean {
@@ -63,46 +80,78 @@ export class PackagesConfigurationComponent implements OnInit {
   }
 
   startEdit(pkg: AdminPackageConfig): void {
-    this.getPriceControl(pkg).setValue(pkg.priceNGN ?? null);
+    this.getPriceNgnControl(pkg).setValue(pkg.priceNGN ?? null);
+    this.getPriceUsdControl(pkg).setValue(pkg.priceUSD ?? null);
     this.editingId.set(this.getPackageId(pkg));
   }
 
   cancelEdit(pkg: AdminPackageConfig): void {
     this.editingId.set(null);
-    this.getPriceControl(pkg).reset(pkg.priceNGN ?? null);
+    this.getPriceNgnControl(pkg).reset(pkg.priceNGN ?? null);
+    this.getPriceUsdControl(pkg).reset(pkg.priceUSD ?? null);
   }
 
   saveEdit(pkg: AdminPackageConfig): void {
     const id = this.getPackageId(pkg);
-    const newPrice = this.priceControls[id]?.value;
-    if (newPrice === null || newPrice === undefined) {
+    const ngnControl = this.getPriceNgnControl(pkg);
+    const usdControl = this.getPriceUsdControl(pkg);
+
+    ngnControl.markAsTouched();
+    usdControl.markAsTouched();
+
+    if (ngnControl.invalid || usdControl.invalid) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Validation',
+        detail: 'Enter valid NGN and USD prices greater than 0.'
+      });
       return;
     }
+
+    const payload: Partial<AdminPackageUpdatePayload> = {};
+    const updatedFields: string[] = [];
+
+    if (ngnControl.value !== pkg.priceNGN) {
+      payload.priceNGN = ngnControl.value as number;
+      updatedFields.push('NGN');
+    }
+
+    if (usdControl.value !== pkg.priceUSD) {
+      payload.priceUSD = usdControl.value as number;
+      updatedFields.push('USD');
+    }
+
+    if (Object.keys(payload).length === 0) {
+      this.editingId.set(null);
+      this.messageService.add({
+        severity: 'info',
+        summary: 'No changes',
+        detail: 'Nothing to update for this package.'
+      });
+      return;
+    }
+
     this.savingId.set(id);
-    const payload: AdminPackageUpdatePayload = {
-      priceNGN: newPrice,
-      priceUSD: pkg.priceUSD,
-      earningsPercentage: pkg.earningsPercentage,
-      cashoutPercentage: pkg.cashoutPercentage,
-      registrationPV: pkg.registrationPV,
-      registrationCPV: pkg.registrationCPV
-    };
     this.packagesService.updatePackage(id, payload).subscribe({
       next: () => {
+        const updatedSummary = updatedFields.length === 2
+          ? 'NGN and USD prices'
+          : `${updatedFields[0]} price`;
+
         this.messageService.add({
           severity: 'success',
           summary: 'Updated',
-          detail: `${pkg.package} price updated successfully.`
+          detail: `${pkg.package} ${updatedSummary} updated successfully.`
         });
         this.editingId.set(null);
         this.savingId.set(null);
       },
       error: (err) => {
-        console.error('Failed to update package', err);
+        const message = err?.error?.message ?? err?.message ?? 'Could not update package. Please check the values and try again.';
         this.messageService.add({
           severity: 'error',
           summary: 'Save failed',
-          detail: 'Could not update package. Please check the values and try again.'
+          detail: message
         });
         this.savingId.set(null);
       }

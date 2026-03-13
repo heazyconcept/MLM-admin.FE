@@ -117,7 +117,12 @@
     <app-data-table
       [value]="filteredWithdrawals()"
       [headers]="tableHeaders()"
-      [loading]="tableLoading()">
+      [loading]="tableLoading()"
+      [lazy]="true"
+      [rows]="rowsPerPage()"
+      [first]="firstRecord()"
+      [totalRecords]="totalRecords()"
+      (pageChange)="onPageChange($event)">
       
       <!-- Body Row Template -->
       <ng-template pTemplate="body" let-row>

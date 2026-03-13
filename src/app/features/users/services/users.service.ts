@@ -47,6 +47,10 @@ interface AdminUserApi {
   id: string;
   email: string;
   phone?: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
   role: 'USER' | 'ADMIN' | 'MERCHANT';
   registrationPackage: 'SILVER' | 'GOLD' | 'PLATINUM' | 'RUBY' | 'DIAMOND';
   registrationCurrency: string;
@@ -61,6 +65,10 @@ interface AdminUsersListResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+interface ResetPasswordResponse {
+  message: string;
 }
 
 @Injectable({
@@ -88,10 +96,13 @@ export class UsersService {
     return this.api.put<void>(`admin/users/${userId}/status`, { status, reason });
   }
 
+  resetUserPassword(userId: string): Observable<string> {
+    return this.api.post<ResetPasswordResponse>(`admin/users/${userId}/reset-password`, {}).pipe(
+      map(response => response.message)
+    );
+  }
+
   addActivityLog(userId: string, action: string): Observable<void> {
-    if (action === 'Password reset requested') {
-      return this.api.post<void>(`admin/users/${userId}/reset-password`, {});
-    }
     return this.api.post<void>(`admin/users/${userId}/activity`, { action });
   }
 
@@ -112,10 +123,14 @@ export class UsersService {
       ADMIN: 'User' // treat admin accounts as regular users in this view for now
     };
 
+    const fullName =
+      apiUser.fullName?.trim() ||
+      `${apiUser.firstName ?? ''} ${apiUser.lastName ?? ''}`.trim();
+
     return {
       id: apiUser.id,
-      fullName: apiUser.email.split('@')[0],
-      username: apiUser.email.split('@')[0],
+      fullName,
+      username: apiUser.username || apiUser.email.split('@')[0],
       email: apiUser.email || '',
       phone: apiUser.phone || '',
       package: packageMap[apiUser.registrationPackage] ?? 'Silver',

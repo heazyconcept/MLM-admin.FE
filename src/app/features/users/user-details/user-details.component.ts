@@ -55,6 +55,7 @@ export class UserDetailsComponent implements OnInit {
 
   user = signal<User | null>(null);
   activeTab = signal('basic');
+  actionLoading = signal(false);
   
   actionConfig = signal<ActionConfig>({
     visible: false,
@@ -220,21 +221,26 @@ export class UserDetailsComponent implements OnInit {
         });
         break;
       case 'resetPassword':
-        this.usersService.addActivityLog(user.id, 'Password reset requested').subscribe({
-          next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Password reset link sent' });
+        this.actionLoading.set(true);
+        this.usersService.resetUserPassword(user.id).subscribe({
+          next: (message) => {
+            this.messageService.add({ severity: 'success', summary: 'Success', detail: message || 'Password reset link sent' });
+            this.actionConfig.update(prev => ({ ...prev, visible: false }));
+            this.actionLoading.set(false);
           },
-          error: () => {
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to reset password' });
+          error: (error) => {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.error?.message || 'Failed to reset password' });
+            this.actionLoading.set(false);
           }
         });
-        break;
+        return;
     }
 
     this.actionConfig.update(prev => ({ ...prev, visible: false }));
   }
 
   onActionCancel(): void {
+    this.actionLoading.set(false);
     this.actionConfig.update(prev => ({ ...prev, visible: false }));
   }
 
