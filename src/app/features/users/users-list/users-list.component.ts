@@ -69,6 +69,7 @@ export class UsersListComponent implements OnInit {
   profileModalVisible = signal(false);
   globalFilter = signal('');
   tableLoading = signal(false);
+  actionLoading = signal(false);
 
   // Filter signals
   statusFilter = signal('');
@@ -107,10 +108,10 @@ export class UsersListComponent implements OnInit {
     }
     if (search) {
       result = result.filter(u =>
-        u.fullName.toLowerCase().includes(search) ||
-        u.email.toLowerCase().includes(search) ||
-        u.username.toLowerCase().includes(search) ||
-        u.id.toLowerCase().includes(search)
+        (u.fullName || '').toLowerCase().includes(search) ||
+        (u.email || '').toLowerCase().includes(search) ||
+        (u.username || '').toLowerCase().includes(search) ||
+        (u.id || '').toLowerCase().includes(search)
       );
     }
 
@@ -120,8 +121,9 @@ export class UsersListComponent implements OnInit {
   // Table configurations
   columns = signal<TableColumn<User>[]>([
     { field: 'id', header: 'ID', width: '100px', align: 'center', class: 'font-mono text-xs text-gray-500' },
-    { field: 'fullName', header: 'User' },
-    { field: 'email', header: 'Email', class: 'text-sm text-gray-600' },
+    { field: 'fullName', header: 'Full Name' },
+    { field: 'email', header: 'Email Address', class: 'text-sm text-gray-600' },
+    { field: 'role', header: 'Role', width: '120px', align: 'center' },
     { field: 'package', header: 'Package', width: '130px', align: 'center' },
     { field: 'status', header: 'Status', width: '130px', align: 'center' },
     { 
@@ -484,23 +486,28 @@ export class UsersListComponent implements OnInit {
         });
         break;
       case 'resetPassword':
-        this.usersService.addActivityLog(user.id, 'Password reset requested').subscribe({
-          next: () => {
+        this.actionLoading.set(true);
+        this.usersService.resetUserPassword(user.id).subscribe({
+          next: (message) => {
             this.messageService.add({
               severity: 'success',
               summary: 'Password Reset',
-              detail: `Password reset link sent to ${user.email}`
+              detail: message || `Password reset link sent to ${user.email}`
             });
+            this.actionConfig.visible = false;
+            this.selectedUser.set(null);
+            this.actionLoading.set(false);
           },
-          error: () => {
+          error: (error) => {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: 'Failed to reset password'
+              detail: error?.error?.message || 'Failed to reset password'
             });
+            this.actionLoading.set(false);
           }
         });
-        break;
+        return;
     }
 
     this.actionConfig.visible = false;
@@ -508,6 +515,7 @@ export class UsersListComponent implements OnInit {
   }
 
   onActionCancel(): void {
+    this.actionLoading.set(false);
     this.actionConfig.visible = false;
     this.selectedUser.set(null);
   }

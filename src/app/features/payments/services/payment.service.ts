@@ -23,6 +23,7 @@ export interface Payment {
   currency: string;
   method: string;
   status: PaymentStatus;
+  createdAt: string;
   date: Date;
   notes?: string;
   proofUrl?: string; // For manual payments
@@ -195,6 +196,7 @@ export class PaymentService {
       currency: item.currency,
       method: item.provider || 'Unknown',
       status,
+      createdAt: item.createdAt,
       date: new Date(item.createdAt),
       notes: undefined,
       proofUrl: undefined,

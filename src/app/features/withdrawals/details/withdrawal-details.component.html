@@ -63,16 +63,6 @@
             </button>
           }
 
-          @if (canPerformWithdrawalActions() && canMarkProcessing()) {
-            <button 
-              pButton 
-              label="Processing" 
-              icon="pi pi-sync" 
-              class="p-button-info"
-              (click)="onMarkProcessing()">
-            </button>
-          }
-
           @if (canPerformWithdrawalActions() && canMarkPaid()) {
             <button 
               pButton 

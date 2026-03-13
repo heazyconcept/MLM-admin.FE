@@ -173,7 +173,7 @@ export class PaymentsListComponent implements OnInit {
         template: this.statusTemplate
       },
       {
-        field: 'date',
+        field: 'createdAt',
         header: 'Date',
         width: '140px',
         sortable: true,

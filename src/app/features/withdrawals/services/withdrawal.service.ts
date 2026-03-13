@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { inject } from '@angular/core';
 import { ApiService } from '../../../core/services/api.service';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 
 export type WithdrawalStatus = 'Pending' | 'Approved' | 'Rejected' | 'Processing' | 'Paid';
 export type Currency = 'USD' | 'NGN';
@@ -23,8 +23,18 @@ export interface WithdrawalRequest {
   fees: number;
   netPayout: number;
   notes?: string;
+  payoutReference?: string;
   walletBalance: number;
   walletType: string;
+}
+
+export interface WithdrawalListQuery {
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
+  userId?: string;
+  fromDate?: string;
+  toDate?: string;
+  limit?: number;
+  offset?: number;
 }
 
 export interface StatusHistory {
@@ -45,14 +55,8 @@ interface AdminWithdrawalItem {
   createdAt: string;
   processedAt?: string;
   rejectionReason?: string;
+  payoutReference?: string;
   metadata?: Record<string, unknown>;
-}
-
-interface AdminWithdrawalsResponse {
-  items: AdminWithdrawalItem[];
-  total: number;
-  limit: number;
-  offset: number;
 }
 
 @Injectable({
@@ -60,17 +64,43 @@ interface AdminWithdrawalsResponse {
 })
 export class WithdrawalService {
   private readonly api = inject(ApiService);
+  private static readonly DEFAULT_LIMIT = 20;
 
   private withdrawalsSignal = signal<WithdrawalRequest[]>([]);
   readonly withdrawals = this.withdrawalsSignal.asReadonly();
+  private totalSignal = signal(0);
+  readonly total = this.totalSignal.asReadonly();
+  private limitSignal = signal(WithdrawalService.DEFAULT_LIMIT);
+  readonly limit = this.limitSignal.asReadonly();
+  private offsetSignal = signal(0);
+  readonly offset = this.offsetSignal.asReadonly();
 
   private statusHistoryMap = new Map<string, StatusHistory[]>();
 
-  loadFromApi(): Observable<WithdrawalRequest[]> {
-    return this.api.get<AdminWithdrawalsResponse>('admin/withdrawals').pipe(
-      map(response => {
-        const mapped = (response.items ?? []).map(item => this.mapAdminWithdrawal(item));
+  loadFromApi(query: WithdrawalListQuery = {}): Observable<WithdrawalRequest[]> {
+    const limit = query.limit ?? this.limitSignal();
+    const offset = query.offset ?? 0;
+
+    return this.api.get<AdminWithdrawalItem[]>('admin/withdrawals', {
+      status: query.status,
+      userId: query.userId,
+      fromDate: query.fromDate,
+      toDate: query.toDate,
+      limit,
+      offset
+    }).pipe(
+      map(items => {
+        const mapped = (items ?? []).map(item => this.mapAdminWithdrawal(item));
         this.withdrawalsSignal.set(mapped);
+        this.limitSignal.set(limit);
+        this.offsetSignal.set(offset);
+
+        // The endpoint returns an array; estimate total for paginator continuity.
+        const estimatedTotal = items.length === limit
+          ? offset + items.length + limit
+          : offset + items.length;
+        this.totalSignal.set(Math.max(this.totalSignal(), estimatedTotal));
+
         this.statusHistoryMap.clear();
         mapped.forEach(w => {
           this.statusHistoryMap.set(w.id, [{
@@ -90,16 +120,43 @@ export class WithdrawalService {
     return this.withdrawalsSignal().find(w => w.id === id);
   }
 
-  approveWithdrawal(id: string): Observable<void> {
-    return this.api.post<void>(`admin/withdrawals/${id}/approve`, {});
+  approveWithdrawal(id: string): Observable<WithdrawalRequest> {
+    return this.api.post<AdminWithdrawalItem>(`admin/withdrawals/${id}/approve`, {}).pipe(
+      tap(item => {
+        if (item?.id) {
+          this.replaceOrMergeWithdrawal(this.mapAdminWithdrawal(item));
+        } else {
+          this.patchWithdrawalStatus(id, 'Approved', undefined, undefined);
+        }
+      }),
+      map(item => this.mapAdminWithdrawal(item))
+    );
   }
 
-  rejectWithdrawal(id: string, reason: string): Observable<void> {
-    return this.api.post<void>(`admin/withdrawals/${id}/reject`, { reason });
+  rejectWithdrawal(id: string, reason: string): Observable<WithdrawalRequest> {
+    return this.api.post<AdminWithdrawalItem>(`admin/withdrawals/${id}/reject`, { reason }).pipe(
+      tap(item => {
+        if (item?.id) {
+          this.replaceOrMergeWithdrawal(this.mapAdminWithdrawal(item));
+        } else {
+          this.patchWithdrawalStatus(id, 'Rejected', reason, undefined);
+        }
+      }),
+      map(item => this.mapAdminWithdrawal(item))
+    );
   }
 
-  markPaid(id: string, payoutReference: string): Observable<void> {
-    return this.api.post<void>(`admin/withdrawals/${id}/mark-paid`, { payoutReference });
+  markPaid(id: string, payoutReference?: string): Observable<WithdrawalRequest> {
+    return this.api.post<AdminWithdrawalItem>(`admin/withdrawals/${id}/mark-paid`, { payoutReference }).pipe(
+      tap(item => {
+        if (item?.id) {
+          this.replaceOrMergeWithdrawal(this.mapAdminWithdrawal(item));
+        } else {
+          this.patchWithdrawalStatus(id, 'Paid', undefined, payoutReference);
+        }
+      }),
+      map(item => this.mapAdminWithdrawal(item))
+    );
   }
 
   getStatusHistory(id: string): StatusHistory[] {
@@ -115,6 +172,49 @@ export class WithdrawalService {
       reason
     });
     this.statusHistoryMap.set(id, history);
+  }
+
+  private replaceOrMergeWithdrawal(next: WithdrawalRequest): void {
+    const current = this.withdrawalsSignal();
+    const index = current.findIndex(w => w.id === next.id);
+    if (index === -1) {
+      return;
+    }
+
+    const updated = [...current];
+    updated[index] = {
+      ...updated[index],
+      ...next,
+      requestDate: next.requestDate || updated[index].requestDate
+    };
+    this.withdrawalsSignal.set(updated);
+
+    const reason = next.status === 'Rejected' ? next.rejectionReason : undefined;
+    this.addStatusHistory(next.id, next.status, 'Admin', reason);
+  }
+
+  private patchWithdrawalStatus(
+    id: string,
+    status: WithdrawalStatus,
+    reason?: string,
+    payoutReference?: string
+  ): void {
+    const current = this.withdrawalsSignal();
+    const index = current.findIndex(w => w.id === id);
+    if (index === -1) {
+      return;
+    }
+
+    const updated = [...current];
+    updated[index] = {
+      ...updated[index],
+      status,
+      processedDate: new Date(),
+      rejectionReason: status === 'Rejected' ? reason : updated[index].rejectionReason,
+      payoutReference: status === 'Paid' ? payoutReference : updated[index].payoutReference
+    };
+    this.withdrawalsSignal.set(updated);
+    this.addStatusHistory(id, status, 'Admin', reason);
   }
 
   private mapAdminWithdrawal(item: AdminWithdrawalItem): WithdrawalRequest {
@@ -141,6 +241,7 @@ export class WithdrawalService {
       requestDate: new Date(item.createdAt),
       processedDate: item.processedAt ? new Date(item.processedAt) : undefined,
       rejectionReason: item.rejectionReason,
+      payoutReference: item.payoutReference,
       fees,
       netPayout: item.amount - fees,
       notes: undefined,
