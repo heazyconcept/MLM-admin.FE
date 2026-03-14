@@ -7,10 +7,11 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
+import { StatusBadgeComponent } from "../../../shared/components/status-badge/status-badge.component";
 
 @Component({
   selector: 'app-wallet-list',
-  imports: [CommonModule, DataTableComponent, ButtonModule, TagModule, InputTextModule, TooltipModule],
+  imports: [CommonModule, DataTableComponent, ButtonModule, TagModule, InputTextModule, TooltipModule, StatusBadgeComponent],
   templateUrl: './wallet-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })

@@ -1,96 +1,119 @@
-<div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-  <div class="max-w-[1400px] mx-auto px-6 py-8">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Wallet Management</h1>
-      <p class="text-gray-600">View and manage user wallets and balances</p>
+<div class="min-h-screen bg-mlm-background font-geist p-8">
+
+  <!-- ── Header ── -->
+  <div class="flex items-start justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        Wallet Management
+      </h1>
+      <p class="text-sm text-mlm-secondary">View and manage user wallets and balances</p>
     </div>
 
-    <!-- Search and Actions Bar -->
-    <div class="mb-6 flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-      <!-- Search -->
-      <div class="relative flex-1 max-w-md">
-        <input 
-          type="text" 
-          pInputText 
-          placeholder="Search wallets..." 
-          class="w-1/2 pl-11 pr-4 h-12 border-gray-200 rounded-lg focus:ring-2 focus:ring-mlm-primary/20 focus:border-mlm-primary bg-white shadow-sm"
-          (input)="onSearch($event)"/>
+    <button
+      (click)="onExport()"
+      class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
+             text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+             flex items-center gap-2 transition-colors duration-150 shrink-0 mt-1">
+      <i class="pi pi-download text-xs"></i>
+      Export
+    </button>
+  </div>
+
+  <!-- ── Single Card: Search + Table ── -->
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+
+    <!-- Search Bar -->
+    <div class="px-5 py-4 border-b border-slate-100">
+      <div class="relative max-w-xs">
+        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2
+                  text-slate-400 text-xs pointer-events-none"></i>
+        <input
+          type="text"
+          placeholder="Search wallets…"
+          class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm
+                 text-mlm-text bg-white placeholder:text-slate-300
+                 focus:outline-none focus:ring-2 focus:ring-mlm-primary transition"
+          (input)="onSearch($event)" />
       </div>
-
-      <!-- Export Button -->
-      <button 
-        pButton 
-        label="Export" 
-        icon="pi pi-download"
-        class="p-button-outlined h-12 px-6 text-sm font-semibold rounded-lg shadow-sm hover:shadow-md transition-shadow"
-        (click)="onExport()">
-      </button>
     </div>
 
-    <!-- Data Table Card -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <app-data-table
-        [value]="filteredWallets()"
-        [headers]="tableHeaders"
-        [rows]="tableRows"
-        [rowsPerPageOptions]="tableRowsPerPageOptions"
-        [loading]="loading()">
+    <!-- Table — 7 <td> matching headers:
+         WALLET ID · USER · TYPE · BALANCE · STATUS · LAST UPDATED · ACTIONS -->
+    <app-data-table
+      [value]="filteredWallets()"
+      [headers]="tableHeaders"
+      [rows]="tableRows"
+      [rowsPerPageOptions]="tableRowsPerPageOptions"
+      [loading]="loading()">
 
-        <ng-template pTemplate="body" let-wallet>
-          <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
-            <!-- Wallet ID -->
-            <td class="px-5 py-4 text-sm font-mono text-gray-600">
+      <ng-template pTemplate="body" let-wallet>
+        <tr class="border-b border-slate-100 hover:bg-slate-50/60
+                   transition-colors duration-100 cursor-pointer"
+            (click)="router.navigate(['/admin/wallets', wallet.id])">
+
+          <!-- Wallet ID -->
+          <td class="px-5 py-3.5 w-[120px]">
+            <span class="text-[11px] font-mono text-slate-400">
               {{ wallet.id }}
-            </td>
+            </span>
+          </td>
 
-            <!-- User -->
-            <td class="px-5 py-4">
-              <div class="flex flex-col py-1">
-                <span class="font-semibold text-gray-900 leading-tight">{{ wallet.userName }}</span>
-                <span class="text-xs text-gray-500 mt-0.5">{{ wallet.userId }}</span>
-              </div>
-            </td>
+          <!-- User -->
+          <td class="px-5 py-3.5 w-[220px]">
+            <p class="text-sm font-semibold text-mlm-text leading-tight">
+              {{ wallet.userName }}
+            </p>
+            <p class="text-[11px] font-mono text-slate-400 mt-0.5">
+              {{ wallet.userId }}
+            </p>
+          </td>
 
-            <!-- Type -->
-            <td class="px-5 py-4 text-center">
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-gray-100 text-gray-700 border border-gray-200">
-                {{ wallet.type }}
-              </span>
-            </td>
+          <!-- Type -->
+          <td class="px-5 py-3.5 w-[110px]">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md
+                         text-[10px] font-bold tracking-[0.08em] uppercase
+                         bg-slate-100 text-slate-600 border border-slate-200">
+              {{ wallet.type }}
+            </span>
+          </td>
 
-            <!-- Balance -->
-            <td class="px-5 py-4">
-              <span class="font-bold text-gray-900 text-base">
-                {{ wallet.balance | currency:wallet.currency:'symbol-narrow' }}
-              </span>
-            </td>
+          <!-- Balance -->
+          <td class="px-5 py-3.5 w-[140px] text-right">
+            <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
+              {{ wallet.balance | currency:wallet.currency:'symbol-narrow' }}
+            </span>
+          </td>
 
-            <!-- Status -->
-            <td class="px-5 py-4 text-center">
-              <p-tag [value]="wallet.status" [severity]="getStatusSeverity(wallet.status)"></p-tag>
-            </td>
+          <!-- Status — uses app-status-badge for consistency -->
+          <td class="px-5 py-3.5 w-[120px]">
+            <app-status-badge [status]="wallet.status"></app-status-badge>
+          </td>
 
-            <!-- Last Updated -->
-            <td class="px-5 py-4 text-center text-sm text-gray-600">
-              {{ wallet.lastUpdated | date:'mediumDate' }}
-            </td>
+          <!-- Last Updated -->
+          <td class="px-5 py-3.5 w-[140px]">
+            <span class="text-xs font-mono text-slate-400 tabular-nums">
+              {{ wallet.lastUpdated | date:'MMM d, y' }}
+            </span>
+          </td>
 
-            <!-- Actions -->
-            <td class="px-5 py-4 text-center">
-              <button 
-                pButton 
-                icon="pi pi-eye" 
-                class="p-button-text p-button-sm text-gray-500 hover:text-gray-900"
+          <!-- Actions — stop propagation so row click doesn't also fire -->
+          <td class="px-5 py-3.5 w-[80px]" (click)="$event.stopPropagation()">
+            <div class="flex items-center justify-center">
+              <button
                 (click)="router.navigate(['/admin/wallets', wallet.id])"
-                pTooltip="View Details"
-                tooltipPosition="top">
+                pTooltip="View Details" tooltipPosition="top"
+                class="w-8 h-8 rounded-lg flex items-center justify-center
+                       text-slate-400 hover:text-mlm-primary hover:bg-slate-100
+                       transition-colors duration-150">
+                <i class="pi pi-eye text-xs"></i>
               </button>
-            </td>
-          </tr>
-        </ng-template>
+            </div>
+          </td>
 
-      </app-data-table>
-    </div>
+        </tr>
+      </ng-template>
+
+    </app-data-table>
+
   </div>
 </div>

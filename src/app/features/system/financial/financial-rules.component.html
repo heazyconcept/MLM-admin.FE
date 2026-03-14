@@ -1,4 +1,4 @@
-<div class="space-y-8 max-w-2xl">
+<div class="space-y-8 max-w-4xl">
   <p class="text-sm text-gray-500">Informational and future-effective only. Changes do not affect historical data.</p>
 
   <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-6" [formGroup]="form">
@@ -48,9 +48,148 @@
         label="Save"
         icon="pi pi-check"
         class="p-button-primary"
-        [disabled]="!isDirty() || form.invalid"
+        [disabled]="saveDisabled()"
         (click)="onSaveClick()">
       </button>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-6">
+    <div class="flex flex-wrap gap-3 justify-between items-start">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-900">Ranking Rules</h2>
+        <p class="text-sm text-gray-500 mt-1">Configure progression stages and bonus amounts. Saving replaces the full ranking rule set.</p>
+      </div>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-plus"
+        label="Add rule"
+        class="p-button-outlined"
+        [disabled]="rankingLoading()"
+        (click)="onStartAddRule()">
+      </button>
+    </div>
+
+    @if (saveError()) {
+      <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ saveError() }}</div>
+    }
+
+    @if (rankingApiError() && !rankingDirty()) {
+      <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ rankingApiError() }}</div>
+    }
+
+    @if (rankingLoading()) {
+      <p class="text-sm text-gray-500">Loading ranking rules...</p>
+    } @else {
+      <div class="overflow-x-auto border border-gray-200 rounded-lg">
+        <table class="w-full min-w-[640px] text-sm">
+          <thead class="bg-gray-50 text-gray-600">
+            <tr>
+              <th class="px-4 py-3 text-left font-medium">Stage</th>
+              <th class="px-4 py-3 text-left font-medium">Rank Name</th>
+              <th class="px-4 py-3 text-left font-medium">Required Level</th>
+              <th class="px-4 py-3 text-left font-medium">Bonus Amount</th>
+              <th class="px-4 py-3 text-right font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rule of rankingRules(); track trackByRank($index, rule)) {
+              <tr class="border-t border-gray-100">
+                <td class="px-4 py-3 text-gray-900">{{ rule.stage }}</td>
+                <td class="px-4 py-3 text-gray-900">{{ rule.rankName }}</td>
+                <td class="px-4 py-3 text-gray-900">{{ rule.requiredLevel }}</td>
+                <td class="px-4 py-3 text-gray-900">{{ rule.bonusAmount | number:'1.0-2' }}</td>
+                <td class="px-4 py-3 text-right space-x-2">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-pencil"
+                    class="p-button-text p-button-sm"
+                    [disabled]="rankingLoading()"
+                    (click)="onEditRule($index)">
+                  </button>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-trash"
+                    class="p-button-text p-button-danger p-button-sm"
+                    [disabled]="rankingLoading()"
+                    (click)="onDeleteRule($index)">
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="px-4 py-8 text-center text-gray-500">No ranking rules yet. Add your first rule.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4" [formGroup]="rankingForm">
+      <h3 class="text-sm font-semibold text-gray-900 mb-4">
+        @if (editingRuleIndex() !== null) {
+          Edit ranking rule
+        } @else {
+          Add ranking rule
+        }
+      </h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <app-config-input
+          label="Stage"
+          type="number"
+          [control]="stageControl"
+          [min]="1"
+          [error]="stageControl.touched && stageControl.invalid ? 'Stage must be at least 1' : null">
+        </app-config-input>
+
+        <app-config-input
+          label="Rank name"
+          type="text"
+          [control]="rankNameControl"
+          [error]="rankNameControl.touched && rankNameControl.invalid ? 'Rank name is required' : null">
+        </app-config-input>
+
+        <app-config-input
+          label="Required level"
+          type="number"
+          [control]="requiredLevelControl"
+          [min]="1"
+          [error]="requiredLevelControl.touched && requiredLevelControl.invalid ? 'Required level must be at least 1' : null">
+        </app-config-input>
+
+        <app-config-input
+          label="Bonus amount"
+          type="number"
+          [control]="bonusAmountControl"
+          [min]="0"
+          [error]="bonusAmountControl.touched && bonusAmountControl.invalid ? 'Bonus amount must be 0 or more' : null">
+        </app-config-input>
+      </div>
+
+      <div class="flex flex-wrap justify-end gap-2 mt-4">
+        <button
+          pButton
+          type="button"
+          label="Reset"
+          class="p-button-secondary p-button-outlined"
+          [disabled]="rankingLoading()"
+          (click)="onStartAddRule()">
+        </button>
+        <button
+          pButton
+          type="button"
+          [label]="editingRuleIndex() !== null ? 'Update Rule' : 'Add Rule'"
+          icon="pi pi-check"
+          class="p-button-primary"
+          [disabled]="rankingLoading()"
+          (click)="onApplyRule()">
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -59,9 +198,11 @@
   [visible]="confirmVisible()"
   (visibleChange)="confirmVisible.set(false)"
   title="Confirm financial rules"
-  message="Are you sure you want to save these financial rules?"
+  message="Are you sure you want to save these financial settings and ranking rules?"
   confirmLabel="Save"
   cancelLabel="Cancel"
+  [confirmDisabled]="saveDisabled()"
+  [loading]="saveLoading()"
   (confirm)="onConfirm($event)"
   (cancel)="onCancelConfirm()">
 </app-confirmation-modal>

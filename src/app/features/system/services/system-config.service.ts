@@ -1,4 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { ApiService } from '../../../core/services/api.service';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 
 export interface GeneralConfig {
   systemName: string;
@@ -44,8 +47,28 @@ export interface ThresholdsConfig {
   lastModifiedBy?: string;
 }
 
+export interface RankingRule {
+  id?: string;
+  stage: number;
+  rankName: string;
+  requiredLevel: number;
+  bonusAmount: number;
+  isActive?: boolean;
+  createdAt?: string;
+}
+
+export interface RankingRulesResponse {
+  rules?: RankingRule[];
+}
+
+export interface RankingRulesUpdatePayload {
+  rules: Array<Pick<RankingRule, 'stage' | 'rankName' | 'requiredLevel' | 'bonusAmount'>>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SystemConfigService {
+  private readonly api = inject(ApiService);
+
   private readonly _general = signal<GeneralConfig>({
     systemName: 'Segulah MLM',
     environment: 'Production',
@@ -90,11 +113,18 @@ export class SystemConfigService {
     lastModifiedBy: 'Admin',
   });
 
+  private readonly _rankingRules = signal<RankingRule[]>([]);
+  private readonly _rankingLoading = signal<boolean>(false);
+  private readonly _rankingError = signal<string | null>(null);
+
   readonly general = this._general.asReadonly();
   readonly financial = this._financial.asReadonly();
   readonly currency = this._currency.asReadonly();
   readonly features = this._features.asReadonly();
   readonly thresholds = this._thresholds.asReadonly();
+  readonly rankingRules = this._rankingRules.asReadonly();
+  readonly rankingLoading = this._rankingLoading.asReadonly();
+  readonly rankingError = this._rankingError.asReadonly();
 
   setGeneral(config: Partial<GeneralConfig>): void {
     this._general.update((prev) => ({ ...prev, ...config }));
@@ -120,5 +150,55 @@ export class SystemConfigService {
 
   setThresholds(config: Partial<ThresholdsConfig>): void {
     this._thresholds.update((prev) => ({ ...prev, ...config }));
+  }
+
+  setRankingRulesLocal(rules: RankingRule[]): void {
+    this._rankingRules.set([...rules]);
+  }
+
+  loadRankingRules(): Observable<RankingRule[]> {
+    this._rankingLoading.set(true);
+    this._rankingError.set(null);
+
+    return this.api.get<RankingRulesResponse>('admin/ranking-rules').pipe(
+      map((res) => res?.rules ?? []),
+      tap((rules) => {
+        this._rankingRules.set(rules);
+        this._rankingLoading.set(false);
+      }),
+      catchError((err) => {
+        this._rankingLoading.set(false);
+        this._rankingError.set(err?.error?.message ?? err?.message ?? 'Failed to load ranking rules');
+        this._rankingRules.set([]);
+        return of([]);
+      })
+    );
+  }
+
+  saveRankingRules(rules: RankingRule[]): Observable<RankingRule[]> {
+    this._rankingLoading.set(true);
+    this._rankingError.set(null);
+
+    const payload: RankingRulesUpdatePayload = {
+      rules: rules.map((rule) => ({
+        stage: Number(rule.stage),
+        rankName: (rule.rankName ?? '').trim(),
+        requiredLevel: Number(rule.requiredLevel),
+        bonusAmount: Number(rule.bonusAmount),
+      })),
+    };
+
+    return this.api.put<RankingRulesResponse>('admin/ranking-rules', payload).pipe(
+      map((res) => res?.rules ?? []),
+      tap((updatedRules) => {
+        this._rankingRules.set(updatedRules);
+        this._rankingLoading.set(false);
+      }),
+      catchError((err) => {
+        this._rankingLoading.set(false);
+        this._rankingError.set(err?.error?.message ?? err?.message ?? 'Failed to save ranking rules');
+        return throwError(() => err);
+      })
+    );
   }
 }

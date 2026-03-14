@@ -1,158 +1,134 @@
-<div class="min-h-screen bg-linear-to-br from-gray-50 via-white to-blue-50/30 p-8 space-y-10">
+<div class="min-h-screen bg-mlm-background font-geist p-8 space-y-6">
 
-  <!-- Header -->
-  <div class="flex items-end justify-between">
+  <!-- ── Header ── -->
+  <div class="flex items-start justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-black text-mlm-text mb-1">Financial Overview</h1>
-      <p class="text-mlm-secondary">
+      <h1 class="text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        Financial Overview
+      </h1>
+      <p class="text-sm text-mlm-secondary">
         Real-time visibility into system liquidity and wallet health
       </p>
     </div>
 
-    <!-- System Status Pill -->
-    <div
-      class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold"
-      [class.bg-red-50]="stats().lockedWallets + stats().frozenWallets > 0"
-      [class.text-red-600]="stats().lockedWallets + stats().frozenWallets > 0"
-      [class.bg-green-50]="stats().lockedWallets + stats().frozenWallets === 0"
-      [class.text-green-600]="stats().lockedWallets + stats().frozenWallets === 0">
-      <span
-        class="w-2 h-2 rounded-full"
-        [class.bg-red-500]="stats().lockedWallets + stats().frozenWallets > 0"
-        [class.bg-green-500]="stats().lockedWallets + stats().frozenWallets === 0">
+    <!-- System status — anchored to header, not floating -->
+    <div class="flex items-center gap-2 shrink-0 mt-1.5">
+      <span class="w-2 h-2 rounded-full shrink-0"
+            [class.bg-mlm-error]="stats().lockedWallets + stats().frozenWallets > 0"
+            [class.bg-mlm-primary]="stats().lockedWallets + stats().frozenWallets === 0">
       </span>
-      {{ stats().lockedWallets + stats().frozenWallets > 0 ? 'Attention Required' : 'System Healthy' }}
+      <span class="text-xs font-semibold"
+            [class.text-mlm-error]="stats().lockedWallets + stats().frozenWallets > 0"
+            [class.text-mlm-primary]="stats().lockedWallets + stats().frozenWallets === 0">
+        {{ stats().lockedWallets + stats().frozenWallets > 0 ? 'Attention Required' : 'System Healthy' }}
+      </span>
     </div>
   </div>
 
-  <!-- Total Balances -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <!-- ── Total Balances ── -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-   <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition relative">
-
-  <div class="flex items-start justify-between mb-6">
-    <div>
-      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+    <!-- USD -->
+    <div class="bg-white rounded-xl border border-slate-200 px-6 py-6
+                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-0.5">
         Total Balance
       </p>
-      <p class="text-sm font-semibold text-gray-700">
-        USD Wallets
+      <p class="text-xs font-medium text-mlm-secondary mb-4">USD Wallets</p>
+      <p class="text-4xl font-bold text-mlm-text tracking-tight tabular-nums leading-none">
+        {{ overview().totalBalanceUSD | currency:'USD':'symbol':'1.0-0' }}
       </p>
     </div>
-
-    <!-- Neutral Icon -->
-    <i class="pi pi-dollar text-xl text-gray-300"></i>
-  </div>
-
-  <h3 class="text-4xl font-black text-mlm-text tracking-tight mb-4">
-    {{ overview().totalBalanceUSD | currency:'USD':'symbol':'1.0-0' }}
-  </h3>
-
-  <!-- Structural Accent -->
-  <div class="h-px bg-linear-to-r from-gray-200 via-gray-100 to-transparent"></div>
-</div>
-
 
     <!-- NGN -->
-   <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition relative">
-
-  <div class="flex items-start justify-between mb-6">
-    <div>
-      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+    <div class="bg-white rounded-xl border border-slate-200 px-6 py-6
+                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-0.5">
         Total Balance
       </p>
-      <p class="text-sm font-semibold text-gray-700">
-        NGN Wallets
+      <p class="text-xs font-medium text-mlm-secondary mb-4">NGN Wallets</p>
+      <p class="text-4xl font-bold text-mlm-text tracking-tight tabular-nums leading-none">
+        {{ overview().totalBalanceNGN | currency:'NGN':'symbol-narrow':'1.0-0' }}
       </p>
     </div>
 
-    <!-- Neutral Icon -->
-    <span class="text-xl font-bold text-gray-300">₦</span>
   </div>
 
-  <h3 class="text-4xl font-black text-mlm-text tracking-tight mb-4">
-    {{ overview().totalBalanceNGN | currency:'NGN':'symbol-narrow':'1.0-0' }}
-  </h3>
+  <!-- ── Wallet Health: 4 stat cards ── -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-  <div class="h-px bg-linear-to-r from-gray-200 via-gray-100 to-transparent"></div>
-</div>
-
-  </div>
-
-  <!-- Wallet Health Metrics -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-    <!-- Total -->
-    <div class="bg-white p-6 rounded-2xl border border-gray-100">
-      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Total Wallets</p>
-      <h3 class="text-3xl font-black text-mlm-text">{{ stats().totalWallets }}</h3>
+    <!-- Total Wallets -->
+    <div class="bg-white rounded-xl border border-slate-200 px-5 py-5">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        Total Wallets
+      </p>
+      <p class="text-3xl font-bold text-mlm-text tracking-tight leading-none">
+        {{ stats().totalWallets }}
+      </p>
     </div>
 
-    <!-- Active -->
-   <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-    Active Wallets
-  </p>
+    <!-- Active Wallets -->
+    <div class="bg-white rounded-xl border border-slate-200 px-5 py-5">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        Active
+      </p>
+      <p class="text-3xl font-bold text-mlm-text tracking-tight leading-none mb-2">
+        {{ stats().activeWallets }}
+      </p>
+      <p class="text-[11px] font-medium text-mlm-primary">
+        {{ ((stats().activeWallets / stats().totalWallets) * 100 | number:'1.0-0') }}% of total
+      </p>
+    </div>
 
-  <div class="flex items-end justify-between">
-    <h3 class="text-3xl font-black text-mlm-text">
-      {{ stats().activeWallets }}
-    </h3>
+    <!-- Frozen Wallets -->
+    <div class="bg-white rounded-xl border border-slate-200 px-5 py-5"
+         [class.border-amber-200]="stats().frozenWallets > 0">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        Frozen
+      </p>
+      <p class="text-3xl font-bold tracking-tight leading-none mb-2"
+         [class.text-mlm-text]="stats().frozenWallets === 0"
+         [class.text-mlm-warning]="stats().frozenWallets > 0">
+        {{ stats().frozenWallets }}
+      </p>
+      <p class="text-[11px] font-medium"
+         [class.text-slate-400]="stats().frozenWallets === 0"
+         [class.text-mlm-warning]="stats().frozenWallets > 0">
+        {{ stats().frozenWallets === 0 ? 'None frozen' : 'Requires review' }}
+      </p>
+    </div>
 
-    <i class="pi pi-check-circle text-lg text-gray-300"></i>
-  </div>
-
-  <div class="mt-4 h-px bg-gray-100"></div>
-</div>
-
-
-    <!-- Frozen -->
-   <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-    Frozen Wallets
-  </p>
-
-  <div class="flex items-end justify-between">
-    <h3 class="text-3xl font-black text-mlm-text">
-      {{ stats().frozenWallets }}
-    </h3>
-
-    <i class="pi pi-check-circle text-lg text-gray-300"></i>
-  </div>
-
-  <div class="mt-4 h-px bg-gray-100"></div>
-</div>
-
-
-    <!-- Locked -->
-   <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-    Locked Wallets
-  </p>
-
-  <div class="flex items-end justify-between">
-    <h3 class="text-3xl font-black text-mlm-text">
-      {{ stats().lockedWallets }}
-    </h3>
-
-    <i class="pi pi-lock text-lg text-gray-300"></i>
-  </div>
-
-  <div class="mt-4 h-px bg-gray-100"></div>
-</div>
+    <!-- Locked Wallets -->
+    <div class="bg-white rounded-xl border border-slate-200 px-5 py-5"
+         [class.border-mlm-error]="stats().lockedWallets > 0"
+         [class.border-opacity-50]="stats().lockedWallets > 0">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        Locked
+      </p>
+      <p class="text-3xl font-bold tracking-tight leading-none mb-2"
+         [class.text-mlm-text]="stats().lockedWallets === 0"
+         [class.text-mlm-error]="stats().lockedWallets > 0">
+        {{ stats().lockedWallets }}
+      </p>
+      <p class="text-[11px] font-medium"
+         [class.text-slate-400]="stats().lockedWallets === 0"
+         [class.text-mlm-error]="stats().lockedWallets > 0">
+        {{ stats().lockedWallets === 0 ? 'None locked' : 'Action needed' }}
+      </p>
+    </div>
 
   </div>
 
-  <!-- Distribution + Actions -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- ── Distribution + Quick Actions ── -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-    <!-- Chart -->
-    <div class="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-100">
-      <h3 class="text-lg font-bold text-mlm-text mb-6">
+    <!-- Chart — spans 2 cols -->
+    <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 px-6 py-6">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-6">
         Wallet Type Distribution
-      </h3>
+      </p>
 
-      <div class="h-[320px]">
+      <div class="h-[280px]">
         <p-chart
           type="doughnut"
           [data]="chartData()"
@@ -161,49 +137,108 @@
         </p-chart>
       </div>
 
-      <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
+      <!-- Legend — brand tokens only -->
+      <div class="grid grid-cols-3 gap-4 mt-6 pt-5 border-t border-slate-100">
         <div class="text-center">
-          <p class="text-xs uppercase tracking-widest text-gray-400">Main</p>
-          <p class="text-xl font-black text-green-600">{{ stats().mainWallets }}</p>
+          <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1">
+            Main
+          </p>
+          <p class="text-2xl font-bold text-mlm-text tabular-nums">
+            {{ stats().mainWallets }}
+          </p>
         </div>
         <div class="text-center">
-          <p class="text-xs uppercase tracking-widest text-gray-400">Trading</p>
-          <p class="text-xl font-black text-blue-600">{{ stats().tradingWallets }}</p>
+          <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1">
+            Trading
+          </p>
+          <p class="text-2xl font-bold text-mlm-text tabular-nums">
+            {{ stats().tradingWallets }}
+          </p>
         </div>
         <div class="text-center">
-          <p class="text-xs uppercase tracking-widest text-gray-400">Bonus</p>
-          <p class="text-xl font-black text-orange-600">{{ stats().bonusWallets }}</p>
+          <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1">
+            Bonus
+          </p>
+          <p class="text-2xl font-bold text-mlm-text tabular-nums">
+            {{ stats().bonusWallets }}
+          </p>
         </div>
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="bg-white p-8 rounded-2xl border border-gray-100 space-y-4">
-      <h3 class="text-lg font-bold text-mlm-text">Quick Actions</h3>
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-xl border border-slate-200 px-6 py-6">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-5">
+        Quick Actions
+      </p>
 
-      <button
-        pButton
-        label="View All Wallets"
-        icon="pi pi-list"
-        class="w-full p-button-outlined p-button-lg justify-start"
-        routerLink="/admin/wallets">
-      </button>
+      <div class="space-y-2.5">
 
-      <button
-        pButton
-        label="Locked Wallets"
-        icon="pi pi-ban"
-        class="w-full p-button-outlined p-button-danger p-button-lg justify-start"
-        [disabled]="stats().lockedWallets === 0">
-      </button>
+        <a routerLink="/admin/wallets"
+           class="flex items-center justify-between w-full h-10 px-4 rounded-lg
+                  border border-slate-200 text-sm font-medium text-mlm-text
+                  hover:border-slate-300 hover:bg-slate-50
+                  transition-colors duration-150">
+          <span>View All Wallets</span>
+          <i class="pi pi-arrow-right text-xs text-slate-400"></i>
+        </a>
 
-      <button
-        pButton
-        label="Frozen Wallets"
-        icon="pi pi-lock"
-        class="w-full p-button-outlined p-button-warning p-button-lg justify-start"
-        [disabled]="stats().frozenWallets === 0">
-      </button>
+        <button
+          [disabled]="stats().lockedWallets === 0"
+          class="flex items-center justify-between w-full h-10 px-4 rounded-lg
+                 border text-sm font-medium transition-colors duration-150
+                 disabled:opacity-40 disabled:cursor-not-allowed"
+          [class.border-mlm-error]="stats().lockedWallets > 0"
+          [class.text-mlm-error]="stats().lockedWallets > 0"
+          [class.hover:bg-mlm-red-50]="stats().lockedWallets > 0"
+          [class.border-slate-200]="stats().lockedWallets === 0"
+          [class.text-slate-400]="stats().lockedWallets === 0">
+          <span>Locked Wallets</span>
+          <span class="text-xs font-semibold font-mono tabular-nums">
+            {{ stats().lockedWallets }}
+          </span>
+        </button>
+
+        <button
+          [disabled]="stats().frozenWallets === 0"
+          class="flex items-center justify-between w-full h-10 px-4 rounded-lg
+                 border text-sm font-medium transition-colors duration-150
+                 disabled:opacity-40 disabled:cursor-not-allowed"
+          [class.border-amber-300]="stats().frozenWallets > 0"
+          [class.text-amber-700]="stats().frozenWallets > 0"
+          [class.hover:bg-amber-50]="stats().frozenWallets > 0"
+          [class.border-slate-200]="stats().frozenWallets === 0"
+          [class.text-slate-400]="stats().frozenWallets === 0">
+          <span>Frozen Wallets</span>
+          <span class="text-xs font-semibold font-mono tabular-nums">
+            {{ stats().frozenWallets }}
+          </span>
+        </button>
+
+      </div>
+
+      <!-- Divider + metadata -->
+      <div class="mt-6 pt-5 border-t border-slate-100 space-y-2">
+        <div class="flex justify-between items-baseline">
+          <span class="text-[10px] text-slate-400">Main wallets</span>
+          <span class="text-xs font-mono font-semibold text-mlm-text">
+            {{ stats().mainWallets }}
+          </span>
+        </div>
+        <div class="flex justify-between items-baseline">
+          <span class="text-[10px] text-slate-400">Trading wallets</span>
+          <span class="text-xs font-mono font-semibold text-mlm-text">
+            {{ stats().tradingWallets }}
+          </span>
+        </div>
+        <div class="flex justify-between items-baseline">
+          <span class="text-[10px] text-slate-400">Bonus wallets</span>
+          <span class="text-xs font-mono font-semibold text-mlm-text">
+            {{ stats().bonusWallets }}
+          </span>
+        </div>
+      </div>
     </div>
+
   </div>
 </div>

@@ -1,85 +1,182 @@
-    <p-toast></p-toast>
-    <div class=" mx-auto space-y-8">
-      
-      <!-- List of Bonus Cards -->
-      @for (bonus of bonuses(); track bonus.id) {
-        <div class="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm hover:shadow-md transition-shadow">
-          <div class="flex flex-col md:flex-row md:items-start justify-between gap-6">
-            
-            <!-- Bonus Info -->
-            <div class="flex-1 space-y-2">
-              <div class="flex items-center gap-3">
-                <h3 class="text-lg font-bold text-gray-900">{{ bonus.name }}</h3>
-                <p-tag [value]="bonus.type | titlecase" [severity]="bonus.type === 'percentage' ? 'info' : 'success'"></p-tag>
-              </div>
-              <p class="text-gray-500 text-sm leading-relaxed max-w-2xl">{{ bonus.description }}</p>
-              
-              <!-- Applicable Packages -->
-              <div class="flex flex-wrap gap-2 mt-4">
-                @for (pkg of bonus.applicablePackages; track pkg) {
-                  <span class="px-2.5 py-1 rounded bg-gray-50 border border-gray-100 text-xs font-semibold text-gray-600">
-                    {{ pkg }}
-                  </span>
-                }
-              </div>
-            </div>
+<p-toast></p-toast>
 
-            <!-- Edit/Value Section -->
-            <div class="flex items-center gap-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100 md:min-w-[280px] justify-between">
-               <div class="space-y-1">
-                 <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Current Value</label>
-                 
-                 <!-- Read Mode -->
-                 @if (!isEditing(bonus.id)) {
-                   <div class="text-2xl font-black text-gray-900">
-                     {{ bonus.type === 'percentage' ? (bonus.value + '%') : (bonus.value | currency) }}
-                   </div>
-                 } 
-                 
-                 <!-- Edit Mode -->
-                 @else {
-                    <p-inputNumber 
-                      [formControl]="getEditControl(bonus.id)" 
-                      [suffix]="bonus.type === 'percentage' ? '%' : ''" 
-                      [prefix]="bonus.type === 'flat' ? '$' : ''"
-                      mode="decimal" 
-                      [minFractionDigits]="0" 
-                      [maxFractionDigits]="2"
-                      styleClass="w-32 p-inputtext-sm">
-                    </p-inputNumber>
-                 }
-               </div>
+<div class="space-y-6">
+  <div>
+    <h2 class="text-xl font-semibold text-gray-900">Commission Rules</h2>
+    <p class="text-sm text-gray-500 mt-1">Configure level-based commission values and review PDPA/CDPA matrices.</p>
+  </div>
 
-               <!-- Actions -->
-               <div>
-                 @if (!isEditing(bonus.id)) {
-                   <button 
-                    pButton 
-                    icon="pi pi-pencil" 
-                    class="p-button-rounded p-button-text p-button-secondary"
-                    (click)="startEdit(bonus)">
-                   </button>
-                 } @else {
-                   <div class="flex gap-2">
-                     <button 
-                      pButton 
-                      icon="pi pi-check" 
-                      class="p-button-rounded p-button-success p-button-sm shadow-sm"
-                      (click)="saveEdit(bonus)">
-                     </button>
-                     <button 
-                      pButton 
-                      icon="pi pi-times" 
-                      class="p-button-rounded p-button-secondary p-button-text p-button-sm"
-                      (click)="cancelEdit(bonus.id)">
-                     </button>
-                   </div>
-                 }
-               </div>
-            </div>
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+      {{ error() }}
+    </div>
+  }
 
-          </div>
+  <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h3 class="font-semibold text-gray-900">Active Rules (Full Replacement)</h3>
+      @if (canEdit() && !editMode()) {
+        <button pButton type="button" icon="pi pi-pencil" label="Enable Edit Mode" class="p-button-sm p-button-outlined" (click)="startEditMode()"></button>
+      } @else if (canEdit() && editMode()) {
+        <div class="flex items-center gap-2">
+          <button pButton type="button" icon="pi pi-plus" label="Add Rule" class="p-button-sm p-button-outlined" (click)="addRule()"></button>
+          <button pButton type="button" icon="pi pi-times" label="Exit Edit" class="p-button-sm p-button-secondary p-button-text" (click)="cancelChanges()"></button>
         </div>
       }
-
     </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-3 text-left">Level</th>
+            <th class="px-4 py-3 text-left">Percentage</th>
+            <th class="px-4 py-3 text-left">Currency</th>
+            @if (canEdit() && editMode()) {
+              <th class="px-4 py-3 text-right">Action</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (rule of editableRules(); track $index) {
+            <tr class="border-t border-gray-100">
+              <td class="px-4 py-3">
+                @if (canEdit() && editMode()) {
+                  <p-inputNumber
+                    [ngModel]="rule.level"
+                    (ngModelChange)="updateRuleField($index, 'level', $event ?? 1)"
+                    [min]="1"
+                    [useGrouping]="false"
+                    styleClass="w-28 p-inputtext-sm">
+                  </p-inputNumber>
+                } @else {
+                  {{ rule.level }}
+                }
+              </td>
+              <td class="px-4 py-3">
+                @if (canEdit() && editMode()) {
+                  <p-inputNumber
+                    [ngModel]="rule.percentage"
+                    (ngModelChange)="updateRuleField($index, 'percentage', $event ?? 0)"
+                    mode="decimal"
+                    [min]="0"
+                    [max]="100"
+                    [minFractionDigits]="0"
+                    [maxFractionDigits]="2"
+                    [useGrouping]="false"
+                    suffix="%"
+                    styleClass="w-36 p-inputtext-sm">
+                  </p-inputNumber>
+                } @else {
+                  {{ rule.percentage }}%
+                }
+              </td>
+              <td class="px-4 py-3">
+                @if (canEdit() && editMode()) {
+                  <input
+                    [ngModel]="rule.currency"
+                    (ngModelChange)="updateRuleField($index, 'currency', $event ?? 'USD')"
+                    maxlength="10"
+                    class="w-24 p-2 border border-gray-300 rounded-lg text-sm uppercase"
+                  />
+                } @else {
+                  {{ rule.currency }}
+                }
+              </td>
+              @if (canEdit() && editMode()) {
+                <td class="px-4 py-3 text-right">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-trash"
+                    class="p-button-rounded p-button-text p-button-danger"
+                    [disabled]="editableRules().length === 1"
+                    (click)="removeRule($index)">
+                  </button>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (canEdit() && editMode()) {
+      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
+        <p class="text-xs text-gray-500">Saving replaces current active commission rules.</p>
+        <div class="flex gap-2">
+          <button pButton type="button" label="Reset" class="p-button-text p-button-secondary" [disabled]="saving()" (click)="cancelChanges()"></button>
+          <button pButton type="button" label="Save All" class="p-button-sm" [disabled]="saving() || hasInvalidRules()" [loading]="saving()" (click)="saveAll()"></button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-white border border-gray-200 rounded-xl p-5">
+      <h3 class="font-semibold text-gray-900 mb-3">PDPA Rates</h3>
+      <div class="space-y-2 text-sm">
+        @for (pkg of packageKeys(); track pkg) {
+          <div class="flex items-center justify-between border-b border-gray-100 pb-2 last:border-b-0">
+            <span class="text-gray-600">{{ pkg }}</span>
+            <span class="font-semibold text-gray-900">{{ pdpaRates()[pkg] }}%</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl p-5">
+      <h3 class="font-semibold text-gray-900 mb-3">CDPA Rates</h3>
+      <div class="space-y-2 text-sm">
+        @for (pkg of packageKeys(); track pkg) {
+          <div class="flex items-center justify-between border-b border-gray-100 pb-2 last:border-b-0">
+            <span class="text-gray-600">{{ pkg }}</span>
+            <span class="font-semibold text-gray-900">{{ cdpaRates()[pkg] }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white border border-gray-200 rounded-xl p-5">
+    <h3 class="font-semibold text-gray-900 mb-3">Level Commission Matrix</h3>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-2 text-left">Level</th>
+            @for (pkg of packageKeys(); track pkg) {
+              <th class="px-4 py-2 text-left">{{ pkg }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of levelCommissions(); track row.level) {
+            <tr class="border-t border-gray-100">
+              <td class="px-4 py-2 font-medium">{{ row.level }}</td>
+              @for (pkg of packageKeys(); track pkg) {
+                <td class="px-4 py-2">{{ row.percentages[pkg] }}%</td>
+              }
+            </tr>
+          }
+          @if (levelCommissions().length === 0) {
+            <tr>
+              <td class="px-4 py-4 text-gray-500" [attr.colspan]="packageKeys().length + 1">No level commission rows available.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <app-confirmation-modal
+    [visible]="showConfirmModal()"
+    [title]="'Save Commission Rules'"
+    [message]="'This will replace active commission rules. Do you want to continue?'"
+    [confirmLabel]="'Save Rules'"
+    [cancelLabel]="'Cancel'"
+    [loading]="saving()"
+    (visibleChange)="showConfirmModal.set($event)"
+    (confirm)="handleSaveConfirm($event)">
+  </app-confirmation-modal>
+</div>

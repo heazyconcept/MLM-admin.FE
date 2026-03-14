@@ -34,6 +34,7 @@ export enum Action {
   ApproveMerchant = 'ApproveMerchant',
   SuspendUser = 'SuspendUser',
   ResetUserPassword = 'ResetUserPassword',
+  UpdateEarningsConfig = 'UpdateEarningsConfig',
   ChangeSystemConfig = 'ChangeSystemConfig',
   ToggleFeatures = 'ToggleFeatures'
 }
