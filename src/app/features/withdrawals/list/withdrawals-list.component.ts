@@ -11,6 +11,9 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { TablePageEvent } from 'primeng/table';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { WithdrawalActionModalComponent, ActionType } from '../modals/withdrawal-action-modal.component';
 
 interface StatusOption {
   label: string;
@@ -23,18 +26,21 @@ interface StatusOption {
     CommonModule,
     RouterModule,
     DataTableComponent,
-
     StatusBadgeComponent,
     SelectModule,
     ButtonModule,
     InputTextModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    ToastModule,
+    WithdrawalActionModalComponent
   ],
+  providers: [MessageService],
   templateUrl: './withdrawals-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WithdrawalsListComponent implements OnInit {
   private withdrawalService = inject(WithdrawalService);
+  private messageService = inject(MessageService);
   private route = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
 
@@ -53,9 +59,14 @@ export class WithdrawalsListComponent implements OnInit {
     { label: 'All Statuses', value: 'all' },
     { label: 'Pending', value: 'Pending' },
     { label: 'Approved', value: 'Approved' },
+    { label: 'Processing', value: 'Processing' },
     { label: 'Rejected', value: 'Rejected' },
     { label: 'Paid', value: 'Paid' }
   ];
+
+  actionModalVisible = signal(false);
+  actionModalWithdrawal = signal<WithdrawalRequest | null>(null);
+  actionModalType = signal<ActionType | null>(null);
 
   filteredWithdrawals = computed(() => {
     let requests = this.withdrawalService.withdrawals();
@@ -171,6 +182,12 @@ export class WithdrawalsListComponent implements OnInit {
           month: 'short',
           day: 'numeric'
         })
+      },
+      {
+        field: '_actions',
+        header: 'Actions',
+        width: '220px',
+        align: 'center'
       }
     ]);
 
@@ -223,13 +240,89 @@ export class WithdrawalsListComponent implements OnInit {
     });
   }
 
-  private toApiStatus(status: string | null): 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID' | undefined {
+  private toApiStatus(status: string | null): 'PENDING' | 'APPROVED' | 'PROCESSING' | 'REJECTED' | 'PAID' | undefined {
     switch (status) {
       case 'Pending': return 'PENDING';
       case 'Approved': return 'APPROVED';
+      case 'Processing': return 'PROCESSING';
       case 'Rejected': return 'REJECTED';
       case 'Paid': return 'PAID';
       default: return undefined;
     }
+  }
+
+  isPending(row: WithdrawalRequest): boolean {
+    return row.status === 'Pending';
+  }
+
+  isApproved(row: WithdrawalRequest): boolean {
+    return row.status === 'Approved';
+  }
+
+  isProcessing(row: WithdrawalRequest): boolean {
+    return row.status === 'Processing';
+  }
+
+  isFinal(row: WithdrawalRequest): boolean {
+    return row.status === 'Paid' || row.status === 'Rejected';
+  }
+
+  openActionModal(withdrawal: WithdrawalRequest, action: ActionType): void {
+    this.actionModalWithdrawal.set(withdrawal);
+    this.actionModalType.set(action);
+    this.actionModalVisible.set(true);
+  }
+
+  onActionConfirmed(event: { action: ActionType; reason?: string; payoutReference?: string }): void {
+    const w = this.actionModalWithdrawal();
+    if (!w) return;
+
+    const id = w.id;
+    const obs = (() => {
+      switch (event.action) {
+        case 'Approve': return this.withdrawalService.approveWithdrawal(id);
+        case 'MarkProcessing': return this.withdrawalService.markProcessing(id);
+        case 'Reject': return this.withdrawalService.rejectWithdrawal(id, event.reason ?? '');
+        case 'MarkPaid': return this.withdrawalService.markPaid(id, event.payoutReference);
+        default: return null;
+      }
+    })();
+
+    if (obs) {
+      obs.subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Success', detail: `Withdrawal ${event.action} completed` });
+          this.actionModalVisible.set(false);
+          this.actionModalWithdrawal.set(null);
+          this.actionModalType.set(null);
+        },
+        error: (err) => {
+          const detail = err?.error?.message ?? err?.message ?? 'Operation failed';
+          this.messageService.add({ severity: 'error', summary: 'Error', detail });
+        }
+      });
+    }
+  }
+
+  onActionCancelled(): void {
+    this.actionModalVisible.set(false);
+    this.actionModalWithdrawal.set(null);
+    this.actionModalType.set(null);
+  }
+
+  onApprove(row: WithdrawalRequest): void {
+    this.openActionModal(row, 'Approve');
+  }
+
+  onMarkProcessing(row: WithdrawalRequest): void {
+    this.openActionModal(row, 'MarkProcessing');
+  }
+
+  onReject(row: WithdrawalRequest): void {
+    this.openActionModal(row, 'Reject');
+  }
+
+  onMarkPaid(row: WithdrawalRequest): void {
+    this.openActionModal(row, 'MarkPaid');
   }
 }

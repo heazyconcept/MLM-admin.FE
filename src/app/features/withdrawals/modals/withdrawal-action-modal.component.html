@@ -49,14 +49,16 @@
     <!-- Payout Reference Section -->
     @if (action() === 'MarkPaid') {
       <div class="space-y-2">
-        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Payout Reference <span class="text-gray-400">(Optional)</span></label>
+        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Payout Reference <span class="text-red-500">*</span></label>
         <input
           type="text"
           pInputText
           class="w-full rounded-xl border-gray-100"
           placeholder="e.g. BANK-TRX-123456"
           [formControl]="payoutReferenceControl">
-        <p class="text-[10px] text-gray-500 font-medium">Leave blank to use an auto-generated admin reference.</p>
+        @if (!(payoutReferenceControl.value || '').trim()) {
+          <p class="text-[10px] text-red-500 font-medium">Payout reference is required</p>
+        }
       </div>
     }
 
@@ -73,7 +75,7 @@
         [label]="confirmLabel" 
         [severity]="confirmSeverity"
         class="flex-1"
-        [disabled]="action() === 'Reject' && !(reasonControl.value || '').trim()"
+        [disabled]="(action() === 'Reject' && !(reasonControl.value || '').trim()) || (action() === 'MarkPaid' && !(payoutReferenceControl.value || '').trim())"
         (click)="onConfirm()">
       </button>
     </div>

@@ -110,6 +110,9 @@ export class WithdrawalActionModalComponent {
     if (action === 'Reject' && !reasonValue.trim()) {
       return;
     }
+    if (action === 'MarkPaid' && !payoutReferenceValue.trim()) {
+      return;
+    }
     
     if (action) {
       this.confirmed.emit({ 

@@ -29,7 +29,7 @@ export interface WithdrawalRequest {
 }
 
 export interface WithdrawalListQuery {
-  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
+  status?: 'PENDING' | 'APPROVED' | 'PROCESSING' | 'REJECTED' | 'PAID';
   userId?: string;
   fromDate?: string;
   toDate?: string;
@@ -47,16 +47,24 @@ export interface StatusHistory {
 interface AdminWithdrawalItem {
   id: string;
   userId: string;
+  walletId?: string;
   amount: number;
+  baseAmount?: number;
   currency: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
-  destination?: string;
-  destinationType?: string;
+  status: 'PENDING' | 'APPROVED' | 'PROCESSING' | 'REJECTED' | 'PAID';
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
   createdAt: string;
   processedAt?: string;
   rejectionReason?: string;
   payoutReference?: string;
   metadata?: Record<string, unknown>;
+}
+
+interface AdminWithdrawalListResponse {
+  data: AdminWithdrawalItem[];
+  total: number;
 }
 
 @Injectable({
@@ -81,7 +89,7 @@ export class WithdrawalService {
     const limit = query.limit ?? this.limitSignal();
     const offset = query.offset ?? 0;
 
-    return this.api.get<AdminWithdrawalItem[]>('admin/withdrawals', {
+    return this.api.get<AdminWithdrawalListResponse>('admin/withdrawals', {
       status: query.status,
       userId: query.userId,
       fromDate: query.fromDate,
@@ -89,19 +97,15 @@ export class WithdrawalService {
       limit,
       offset
     }).pipe(
-      map(items => {
-        const mapped = (items ?? []).map(item => this.mapAdminWithdrawal(item));
+      map(response => {
+        const items = response?.data ?? [];
+        const mapped = items.map(item => this.mapAdminWithdrawal(item));
         this.withdrawalsSignal.set(mapped);
         this.limitSignal.set(limit);
         this.offsetSignal.set(offset);
 
-        // The endpoint returns an array; estimate total for paginator.
-        // If the page is full, assume at least one more page exists; otherwise
-        // the current offset + count is the true total.
-        const estimatedTotal = items.length === limit
-          ? offset + items.length + limit
-          : offset + items.length;
-        this.totalSignal.set(estimatedTotal);
+        // The endpoint now returns { data, total }.
+        this.totalSignal.set(response?.total ?? items.length);
 
         this.statusHistoryMap.clear();
         mapped.forEach(w => {
@@ -142,6 +146,19 @@ export class WithdrawalService {
           this.replaceOrMergeWithdrawal(this.mapAdminWithdrawal(item));
         } else {
           this.patchWithdrawalStatus(id, 'Rejected', reason, undefined);
+        }
+      }),
+      map(item => this.mapAdminWithdrawal(item))
+    );
+  }
+
+  markProcessing(id: string): Observable<WithdrawalRequest> {
+    return this.api.post<AdminWithdrawalItem>(`admin/withdrawals/${id}/mark-processing`, {}).pipe(
+      tap(item => {
+        if (item?.id) {
+          this.replaceOrMergeWithdrawal(this.mapAdminWithdrawal(item));
+        } else {
+          this.patchWithdrawalStatus(id, 'Processing', undefined, undefined);
         }
       }),
       map(item => this.mapAdminWithdrawal(item))
@@ -223,6 +240,7 @@ export class WithdrawalService {
     const statusMap: Record<AdminWithdrawalItem['status'], WithdrawalStatus> = {
       PENDING: 'Pending',
       APPROVED: 'Approved',
+      PROCESSING: 'Processing',
       REJECTED: 'Rejected',
       PAID: 'Paid'
     };
@@ -233,12 +251,14 @@ export class WithdrawalService {
     return {
       id: item.id,
       userId: item.userId,
-      userName: (item.metadata?.['userName'] as string) || item.userId,
+      userName: (item.metadata?.['userName'] as string) || item.accountName || item.userId,
       userEmail: (item.metadata?.['userEmail'] as string) || '',
       amount: item.amount,
       currency: (item.currency as Currency) ?? 'NGN',
-      destination: item.destination ?? '',
-      destinationType: (item.destinationType as any) ?? 'Bank Account',
+      destination: item.bankName && item.accountNumber && item.accountName
+        ? `${item.bankName} • ${item.accountNumber} • ${item.accountName}`
+        : '',
+      destinationType: 'Bank Account',
       status,
       requestDate: new Date(item.createdAt),
       processedDate: item.processedAt ? new Date(item.processedAt) : undefined,

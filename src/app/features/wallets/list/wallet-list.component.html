@@ -22,98 +22,154 @@
   <!-- ── Single Card: Search + Table ── -->
   <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
 
-    <!-- Search Bar -->
-    <div class="px-5 py-4 border-b border-slate-100">
-      <div class="relative max-w-xs">
+    <!-- Filter Bar -->
+    <div class="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+      <div class="relative max-w-xs flex-1">
         <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2
                   text-slate-400 text-xs pointer-events-none"></i>
         <input
           type="text"
-          placeholder="Search wallets…"
+          placeholder="Search by user or ID…"
           class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm
                  text-mlm-text bg-white placeholder:text-slate-300
                  focus:outline-none focus:ring-2 focus:ring-mlm-primary transition"
           (input)="onSearch($event)" />
       </div>
+
+      <!-- Wallet type filter tabs -->
+        <!-- <div class="flex items-center gap-1 ml-auto">
+          @for (type of ['All', 'Registration', 'Cash', 'Voucher']; track type) {
+            <button
+              (click)="setTypeFilter(type)"
+              class="h-7 px-3 rounded-md text-[11px] font-semibold transition-colors duration-150"
+              [class.bg-slate-900]="activeTypeFilter() === type"
+              [class.text-white]="activeTypeFilter() === type"
+              [class.text-slate-500]="activeTypeFilter() !== type"
+              [class.hover:text-mlm-text]="activeTypeFilter() !== type"
+              [class.hover:bg-slate-100]="activeTypeFilter() !== type">
+              {{ type }}
+            </button>
+          }
+        </div> -->
     </div>
 
-    <!-- Table — 7 <td> matching headers:
-         WALLET ID · USER · TYPE · BALANCE · STATUS · LAST UPDATED · ACTIONS -->
-    <app-data-table
-      [value]="filteredWallets()"
-      [headers]="tableHeaders"
-      [rows]="tableRows"
-      [rowsPerPageOptions]="tableRowsPerPageOptions"
-      [loading]="loading()">
+    <!-- Table header -->
+    <table class="w-full">
+      <thead>
+        <tr class="border-b border-slate-100">
+          <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[220px]">User</th>
+          <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[120px]">Registration</th>
+          <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[120px]">Cash</th>
+          <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[120px]">Voucher</th>
+          <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[100px]">Status</th>
+          <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[130px]">Last Updated</th>
+          <th class="px-5 py-3 w-[60px]"></th>
+        </tr>
+      </thead>
 
-      <ng-template pTemplate="body" let-wallet>
-        <tr class="border-b border-slate-100 hover:bg-slate-50/60
-                   transition-colors duration-100 cursor-pointer"
-            (click)="router.navigate(['/admin/wallets', wallet.id])">
+      <tbody>
+        @if (loading()) {
+          @for (i of [1,2,3,4,5]; track i) {
+            <tr class="border-b border-slate-100 animate-pulse">
+              <td class="px-4 py-4"><div class="w-4 h-4 rounded bg-slate-100"></div></td>
+              <td class="px-5 py-4">
+                <div class="w-28 h-3 rounded bg-slate-200 mb-1.5"></div>
+                <div class="w-16 h-2.5 rounded bg-slate-100"></div>
+              </td>
+              <td class="px-5 py-4"><div class="w-16 h-3 rounded bg-slate-100"></div></td>
+              <td class="px-5 py-4"><div class="w-16 h-3 rounded bg-slate-100"></div></td>
+              <td class="px-5 py-4"><div class="w-16 h-3 rounded bg-slate-100"></div></td>
+              <td class="px-5 py-4"><div class="w-10 h-4 rounded bg-slate-100"></div></td>
+              <td class="px-5 py-4"><div class="w-20 h-3 rounded bg-slate-100"></div></td>
+              <td class="px-5 py-4"></td>
+            </tr>
+          }
+        }
 
-          <!-- Wallet ID -->
-          <td class="px-5 py-3.5 w-[120px]">
-            <span class="text-[11px] font-mono text-slate-400">
-              {{ wallet.id }}
-            </span>
-          </td>
+        @for (group of pagedGroups(); track group.userId) {
+          <!-- ── User summary row ── -->
+          <tr class="border-b border-slate-100 hover:bg-slate-50/40 transition-colors duration-100">
 
-          <!-- User -->
-          <td class="px-5 py-3.5 w-[220px]">
-            <p class="text-sm font-semibold text-mlm-text leading-tight">
-              {{ wallet.userName }}
-            </p>
-            <p class="text-[11px] font-mono text-slate-400 mt-0.5">
-              {{ wallet.userId }}
-            </p>
-          </td>
+            <!-- User -->
+            <td class="px-5 py-3.5 w-[220px]">
+              <p class="text-sm font-semibold text-mlm-text leading-tight">{{ group.userName }}</p>
+              <p class="text-[11px] font-mono text-slate-400 mt-0.5">{{ group.userId }}</p>
+            </td>
 
-          <!-- Type -->
-          <td class="px-5 py-3.5 w-[110px]">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md
-                         text-[10px] font-bold tracking-[0.08em] uppercase
-                         bg-slate-100 text-slate-600 border border-slate-200">
-              {{ wallet.type }}
-            </span>
-          </td>
+            <!-- Registration balance -->
+            <td class="px-5 py-3.5 w-[120px]">
+              <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
+                {{ group.registrationWallet?.balance | currency:group.registrationWallet?.displayCurrency:'symbol-narrow' }}
+              </span>
+            </td>
 
-          <!-- Balance -->
-          <td class="px-5 py-3.5 w-[140px] text-right">
-            <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
-              {{ wallet.balance | currency:wallet.currency:'symbol-narrow' }}
-            </span>
-          </td>
+            <!-- Cash balance -->
+            <td class="px-5 py-3.5 w-[120px]">
+              <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
+                {{ group.cashWallet?.balance | currency:group.cashWallet?.displayCurrency:'symbol-narrow' }}
+              </span>
+            </td>
 
-          <!-- Status — uses app-status-badge for consistency -->
-          <td class="px-5 py-3.5 w-[120px]">
-            <app-status-badge [status]="wallet.status"></app-status-badge>
-          </td>
+            <!-- Voucher balance -->
+            <td class="px-5 py-3.5 w-[120px]">
+              <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
+                {{ group.voucherWallet?.balance | currency:group.voucherWallet?.displayCurrency:'symbol-narrow' }}
+              </span>
+            </td>
 
-          <!-- Last Updated -->
-          <td class="px-5 py-3.5 w-[140px]">
-            <span class="text-xs font-mono text-slate-400 tabular-nums">
-              {{ wallet.lastUpdated | date:'MMM d, y' }}
-            </span>
-          </td>
+            <!-- Status — worst backend status across user's wallets (LOCKED > FROZEN > ACTIVE) -->
+            <td class="px-5 py-3.5 w-[100px]">
+              <app-status-badge [status]="group.worstStatus"></app-status-badge>
+            </td>
 
-          <!-- Actions — stop propagation so row click doesn't also fire -->
-          <td class="px-5 py-3.5 w-[80px]" (click)="$event.stopPropagation()">
-            <div class="flex items-center justify-center">
+            <!-- Last updated — most recent across all 3 -->
+            <td class="px-5 py-3.5 w-[130px]">
+              <span class="text-xs font-mono text-slate-400 tabular-nums">
+                {{ group.lastUpdated | date:'MM/dd/yyyy' }}
+              </span>
+            </td>
+
+            <!-- Row action -->
+            <td class="px-4 py-3.5 w-[60px]" (click)="$event.stopPropagation()">
               <button
-                (click)="router.navigate(['/admin/wallets', wallet.id])"
-                pTooltip="View Details" tooltipPosition="top"
+                pTooltip="View wallets" tooltipPosition="top"
+                (click)="router.navigate(['/admin/wallets', group.cashWallet?.id || group.registrationWallet?.id || group.wallets[0]?.id])"
                 class="w-8 h-8 rounded-lg flex items-center justify-center
                        text-slate-400 hover:text-mlm-primary hover:bg-slate-100
                        transition-colors duration-150">
-                <i class="pi pi-eye text-xs"></i>
+                <i class="pi pi-wallet text-xs"></i>
               </button>
-            </div>
-          </td>
+            </td>
+          </tr>
+        }
 
-        </tr>
-      </ng-template>
+        <!-- Empty state -->
+        @if (!loading() && groupedWallets().length === 0) {
+          <tr>
+            <td colspan="8" class="px-5 py-14 text-center">
+              <p class="text-sm text-slate-400 mb-1">No wallets found</p>
+              <p class="text-xs text-slate-300">Try adjusting your search or filters</p>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
 
-    </app-data-table>
+    <!-- Paginator area -->
+    <div class="px-5 py-3.5 border-t border-slate-100 flex items-center justify-between">
+      <span class="text-xs text-slate-400">
+        {{ groupedWallets().length }} user{{ groupedWallets().length !== 1 ? 's' : '' }}
+        · {{ total() }} wallets total
+      </span>
+
+      <p-paginator
+        [rows]="currentPage().rows"
+        [first]="currentPage().first"
+        [totalRecords]="groupedWallets().length"
+        [rowsPerPageOptions]="tableRowsPerPageOptions"
+        (onPageChange)="onPageChange($event)">
+      </p-paginator>
+    </div>
 
   </div>
 </div>
