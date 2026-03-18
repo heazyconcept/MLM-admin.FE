@@ -1,22 +1,32 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { ApiService } from '../../../core/services/api.service';
-import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 
-export interface BonusRule {
-  id: string;
-  name: string;
-  type: 'percentage' | 'flat';
-  value: number;
-  description: string;
-  applicablePackages: string[];
+export interface CommissionRule {
+  id?: string;
+  level: number;
+  percentage: number;
+  currency: string;
+  isActive?: boolean;
+  createdAt?: string;
+}
+
+export interface LevelCommission {
+  level: number;
+  percentages: Record<string, number>;
 }
 
 /** GET /admin/commission-rules response */
 export interface CommissionRulesResponse {
-  rules?: unknown[];
+  rules?: CommissionRule[];
   pdpaRates?: Record<string, number>;
   cdpaRates?: Record<string, number>;
+  levelCommissions?: LevelCommission[];
+}
+
+export interface CommissionRulesUpdatePayload {
+  rules: Array<Pick<CommissionRule, 'level' | 'percentage' | 'currency'>>;
 }
 
 export interface RankStage {
@@ -36,9 +46,25 @@ export interface RankStage {
 
 export interface CpvRule {
   id: string;
-  package: string;
-  registrationCpv: number;
-  productCpvMultiplier: number; // e.g., 1.0 = 100%, 0.5 = 50%
+  threshold: number;
+  rewardType: string;
+  rewardAmount: number;
+  materialDescription: string | null;
+  isActive: boolean;
+  createdAt: string;
+  name?: string;
+  reward?: string;
+}
+
+export interface CpvRulesResponse {
+  rules?: CpvRule[];
+}
+
+export interface CpvRuleUpdateInput {
+  threshold: number;
+  rewardType: string;
+  rewardAmount: number;
+  materialDescription: string | null;
 }
 
 export interface EarningsActivity {
@@ -56,9 +82,16 @@ export interface EarningsActivity {
 export class EarningsService {
   private readonly api = inject(ApiService);
 
-  bonuses = signal<BonusRule[]>([]);
+  commissionRules = signal<CommissionRule[]>([]);
+  pdpaRates = signal<Record<string, number>>({});
+  cdpaRates = signal<Record<string, number>>({});
+  levelCommissions = signal<LevelCommission[]>([]);
   ranks = signal<RankStage[]>([]);
   cpvRules = signal<CpvRule[]>([]);
+  commissionLoading = signal<boolean>(false);
+  cpvLoading = signal<boolean>(false);
+  commissionError = signal<string | null>(null);
+  cpvError = signal<string | null>(null);
 
   recentActivity = signal<EarningsActivity[]>([
     { id: 'TX-1001', user: 'Sarah Okonkwo', type: 'Direct Referral', amount: 50, timestamp: new Date(Date.now() - 1000 * 60 * 5), status: 'Processed' },
@@ -70,109 +103,82 @@ export class EarningsService {
     return {
       totalPaidOut: 1250000,
       pendingPayouts: 45000,
-      activeRules: this.bonuses().length,
+      activeRules: this.commissionRules().length,
       lastUpdate: new Date()
     };
   }
 
-  loadCommissionRules(): Observable<BonusRule[]> {
+  loadCommissionRules(): Observable<CommissionRulesResponse> {
+    this.commissionLoading.set(true);
+    this.commissionError.set(null);
+
     return this.api.get<CommissionRulesResponse>('admin/commission-rules').pipe(
-      map((res) => this.mapCommissionRulesToBonuses(res)),
-      tap((bonuses) => this.bonuses.set(bonuses))
+      tap((res) => {
+        this.commissionRules.set(res?.rules ?? []);
+        this.pdpaRates.set(res?.pdpaRates ?? {});
+        this.cdpaRates.set(res?.cdpaRates ?? {});
+        this.levelCommissions.set(res?.levelCommissions ?? []);
+        this.commissionLoading.set(false);
+      }),
+      catchError((err) => {
+        this.commissionLoading.set(false);
+        this.commissionError.set(err?.error?.message ?? err?.message ?? 'Failed to load commission rules');
+        this.commissionRules.set([]);
+        this.pdpaRates.set({});
+        this.cdpaRates.set({});
+        this.levelCommissions.set([]);
+        return of({ rules: [], pdpaRates: {}, cdpaRates: {}, levelCommissions: [] });
+      })
     );
   }
 
-  saveCommissionRules(): Observable<BonusRule[]> {
-    const current = this.bonuses();
+  setCommissionRules(rules: CommissionRule[]): void {
+    this.commissionRules.set(rules);
+  }
 
-    const payload: CommissionRulesResponse = {
-      pdpaRates: {},
-      cdpaRates: {}
+  saveCommissionRules(rules: CommissionRulesUpdatePayload['rules']): Observable<CommissionRulesResponse> {
+    this.commissionLoading.set(true);
+    this.commissionError.set(null);
+
+    const payload: CommissionRulesUpdatePayload = {
+      rules: rules.map((rule) => ({
+        level: Number(rule.level),
+        percentage: Number(rule.percentage),
+        currency: (rule.currency || 'USD').toUpperCase()
+      }))
     };
 
-    for (const rule of current) {
-      if (rule.id.startsWith('pdpa-')) {
-        const pkg = rule.id.substring('pdpa-'.length);
-        if (pkg) {
-          payload.pdpaRates![pkg] = rule.value / 100; // UI stores percentage (e.g. 5 => 0.05)
-        }
-      } else if (rule.id.startsWith('cdpa-')) {
-        const pkg = rule.id.substring('cdpa-'.length);
-        if (pkg) {
-          payload.cdpaRates![pkg] = rule.value;
-        }
-      }
-    }
-
     return this.api.put<CommissionRulesResponse>('admin/commission-rules', payload).pipe(
-      map((res) => this.mapCommissionRulesToBonuses(res)),
-      tap((bonuses) => this.bonuses.set(bonuses))
+      tap((res) => {
+        this.commissionRules.set(res?.rules ?? []);
+        this.pdpaRates.set(res?.pdpaRates ?? {});
+        this.cdpaRates.set(res?.cdpaRates ?? {});
+        this.levelCommissions.set(res?.levelCommissions ?? []);
+        this.commissionLoading.set(false);
+      }),
+      catchError((err) => {
+        this.commissionLoading.set(false);
+        this.commissionError.set(err?.error?.message ?? err?.message ?? 'Failed to save commission rules');
+        return throwError(() => err);
+      })
     );
   }
 
-  private mapCommissionRulesToBonuses(res: CommissionRulesResponse): BonusRule[] {
-    const list: BonusRule[] = [];
-    const packages = ['NICKEL', 'SILVER', 'GOLD', 'PLATINUM', 'RUBY', 'DIAMOND'];
+  saveCpvRules(rules: CpvRuleUpdateInput[]): Observable<CpvRule[]> {
+    this.cpvLoading.set(true);
+    this.cpvError.set(null);
 
-    if (res.pdpaRates && typeof res.pdpaRates === 'object') {
-      for (const pkg of packages) {
-        const rate = res.pdpaRates[pkg];
-        if (rate != null) {
-          list.push({
-            id: `pdpa-${pkg}`,
-            name: `PDPA (${pkg})`,
-            type: 'percentage',
-            value: typeof rate === 'number' ? rate * 100 : 0,
-            description: `Personal direct purchase allowance - ${pkg}`,
-            applicablePackages: [pkg],
-          });
-        }
-      }
-    }
-
-    if (res.cdpaRates && typeof res.cdpaRates === 'object') {
-      for (const pkg of packages) {
-        const rate = res.cdpaRates[pkg];
-        if (rate != null) {
-          list.push({
-            id: `cdpa-${pkg}`,
-            name: `CDPA (${pkg})`,
-            type: 'percentage',
-            value: typeof rate === 'number' ? rate : 0,
-            description: `Commission on direct purchase allowance - ${pkg}`,
-            applicablePackages: [pkg],
-          });
-        }
-      }
-    }
-
-    if (res.rules && Array.isArray(res.rules)) {
-      (res.rules as any[]).forEach((r: any, i: number) => {
-        list.push({
-          id: r.id ?? `rule-${i}`,
-          name: r.name ?? r.rank ?? r.tier ?? `Rule ${i + 1}`,
-          type: (r.type === 'flat' ? 'flat' : 'percentage') as 'percentage' | 'flat',
-          value: Number(r.value ?? r.rate ?? r.percentage ?? 0),
-          description: r.description ?? '',
-          applicablePackages: Array.isArray(r.applicablePackages) ? r.applicablePackages : (r.package ? [r.package] : []),
-        });
-      });
-    }
-
-    return list;
-  }
-
-  updateBonus(updated: BonusRule): void {
-    const current = this.bonuses();
-    this.bonuses.set(
-      current.map((b) => (b.id === updated.id ? { ...b, value: updated.value } : b))
-    );
-  }
-
-  saveCpvRules(): Observable<CpvRule[]> {
-    const payload = this.cpvRules();
-    return this.api.put<CpvRule[]>('admin/cpv-rules', payload).pipe(
-      tap((rules) => this.cpvRules.set(rules))
+    return this.api.put<CpvRulesResponse>('admin/cpv-rules', { rules }).pipe(
+      map((res) => res?.rules ?? []),
+      tap((updatedRules) => {
+        this.cpvRules.set(updatedRules);
+        this.cpvLoading.set(false);
+      }),
+      catchError((err) => {
+        this.cpvLoading.set(false);
+        this.cpvError.set(err?.error?.message ?? err?.message ?? 'Failed to save CPV rules');
+        return throwError(() => err);
+      })
     );
   }
 
@@ -184,16 +190,27 @@ export class EarningsService {
   }
 
   loadCpvRules(): Observable<CpvRule[]> {
-    return this.api.get<CpvRule[]>('admin/cpv-rules').pipe(rules => {
-      (rules as any).subscribe((data: CpvRule[]) => this.cpvRules.set(data));
-      return rules as unknown as Observable<CpvRule[]>;
-    });
+    this.cpvLoading.set(true);
+    this.cpvError.set(null);
+
+    return this.api.get<CpvRulesResponse>('admin/cpv-rules').pipe(
+      map((res) => res?.rules ?? []),
+      tap((rules) => {
+        this.cpvRules.set(rules);
+        this.cpvLoading.set(false);
+      }),
+      catchError((err) => {
+        this.cpvLoading.set(false);
+        this.cpvError.set(err?.error?.message ?? err?.message ?? 'Failed to load CPV rules');
+        this.cpvRules.set([]);
+        return of([]);
+      })
+    );
   }
 
   loadRankingRules(): Observable<RankStage[]> {
-    return this.api.get<RankStage[]>('admin/ranking-rules').pipe(rules => {
-      (rules as any).subscribe((data: RankStage[]) => this.ranks.set(data));
-      return rules as unknown as Observable<RankStage[]>;
-    });
+    return this.api.get<RankStage[]>('admin/ranking-rules').pipe(
+      tap((data) => this.ranks.set(data))
+    );
   }
 }

@@ -13,10 +13,11 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 
 @Component({
   selector: 'app-wallet-details',
-  imports: [CommonModule, RouterModule, InfoBannerComponent, DataTableComponent, FundsAdjustmentModalComponent, WalletActionModalComponent, ButtonModule, TagModule, ToastModule],
+  imports: [CommonModule, RouterModule, InfoBannerComponent, DataTableComponent, FundsAdjustmentModalComponent, WalletActionModalComponent, ButtonModule, TagModule, ToastModule, StatusBadgeComponent],
   providers: [MessageService],
   templateUrl: './wallet-details.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -34,14 +35,15 @@ export class WalletDetailsComponent {
 
   walletId = signal<string>(this.route.snapshot.paramMap.get('id') || '');
   
-  wallet = computed(() => {
-    const id = this.walletId();
-    return this.walletService.getWallet(id)();
-  });
+  wallet = signal<Wallet | null>(null);
+  ledger = signal<LedgerEntry[]>([]);
 
-  ledger = computed(() => {
-    const id = this.walletId();
-    return this.walletService.getWalletLedger(id)();
+  /** Other wallets for the same user (excluding the current wallet). */
+  siblingWallets = computed(() => {
+    const current = this.wallet();
+    if (!current) return [];
+    const byUser = this.walletService.getWalletsByUserId(current.userId);
+    return byUser.filter(w => w.id !== current.id);
   });
 
   loading = signal(false);
@@ -98,22 +100,68 @@ export class WalletDetailsComponent {
     }
   }
 
+  ngOnInit(): void {
+    const id = this.walletId();
+    if (!id) {
+      return;
+    }
+
+    this.loading.set(true);
+    this.walletService.getWalletById(id).subscribe({
+      next: ({ wallet, ledger }) => {
+        this.wallet.set(wallet);
+        this.ledger.set(ledger);
+        this.loading.set(false);
+        // Load same user's wallets so siblingWallets has data
+        this.walletService.listWallets({ userId: wallet.userId, limit: 50 }).subscribe();
+      },
+      error: () => {
+        this.loading.set(false);
+      }
+    });
+  }
+
+  /** Backend returns status as LOCKED, ACTIVE, FROZEN. */
+  isLocked(w: Wallet): boolean {
+    return (w.status ?? '').toUpperCase() === 'LOCKED';
+  }
+
+  isFrozen(w: Wallet): boolean {
+    return (w.status ?? '').toUpperCase() === 'FROZEN';
+  }
+
   toggleLock(w: Wallet) {
-    this.pendingAction.set(w.status === 'Locked' ? 'Unlock' : 'Lock');
+    this.pendingAction.set(this.isLocked(w) ? 'Unlock' : 'Lock');
     this.showActionModal.set(true);
   }
 
   confirmAction() {
     const w = this.wallet();
     if (!w) return;
-    
-    if (this.pendingAction() === 'Unlock') {
-      this.walletService.unlockWallet(w.id);
-      this.messageService.add({severity:'success', summary:'Unlocked', detail:'Wallet has been unlocked.'});
-    } else {
-      this.walletService.lockWallet(w.id);
-      this.messageService.add({severity:'warn', summary:'Locked', detail:'Wallet has been locked.'});
-    }
+
+    const action = this.pendingAction();
+    const request$ = action === 'Unlock'
+      ? this.walletService.unlockWallet(w.id)
+      : this.walletService.lockWallet(w.id);
+
+    request$.subscribe({
+      next: (status) => {
+        this.wallet.set({ ...w, status });
+        this.showActionModal.set(false);
+        this.messageService.add({
+          severity: action === 'Unlock' ? 'success' : 'warn',
+          summary: action === 'Unlock' ? 'Unlocked' : 'Locked',
+          detail: `Wallet has been ${action === 'Unlock' ? 'unlocked' : 'locked'}.`
+        });
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Action failed',
+          detail: 'Could not update wallet status. Please try again.'
+        });
+      }
+    });
   }
 
   openAdjustment() {
@@ -126,5 +174,14 @@ export class WalletDetailsComponent {
       summary: 'Adjustment Complete',
       detail: 'Wallet balance has been updated'
     });
+    const id = this.walletId();
+    if (id) {
+      this.walletService.getWalletById(id).subscribe({
+        next: ({ wallet, ledger }) => {
+          this.wallet.set(wallet);
+          this.ledger.set(ledger);
+        }
+      });
+    }
   }
 }

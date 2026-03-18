@@ -14,20 +14,31 @@ import { ButtonModule } from 'primeng/button';
 export class WalletDashboardComponent {
   private walletService = inject(WalletService);
   
-  overview = this.walletService.getOverview();
-  wallets = this.walletService.wallets();
+  wallets = this.walletService.wallets;
+
+  overview = computed(() => {
+    const wallets = this.wallets();
+    return {
+      totalBalanceUSD: wallets
+        .filter(w => (w.displayCurrency ?? '').toUpperCase() === 'USD')
+        .reduce((acc, w) => acc + w.balance, 0),
+      totalBalanceNGN: wallets
+        .filter(w => (w.displayCurrency ?? '').toUpperCase() === 'NGN')
+        .reduce((acc, w) => acc + w.balance, 0)
+    };
+  });
 
   // Computed statistics
   stats = computed(() => {
-    const wallets = this.walletService.wallets();
+    const wallets = this.wallets();
     return {
       totalWallets: wallets.length,
       activeWallets: wallets.filter(w => w.status === 'Active').length,
       lockedWallets: wallets.filter(w => w.status === 'Locked').length,
       frozenWallets: wallets.filter(w => w.status === 'Frozen').length,
-      mainWallets: wallets.filter(w => w.type === 'Main').length,
-      tradingWallets: wallets.filter(w => w.type === 'Trading').length,
-      bonusWallets: wallets.filter(w => w.type === 'Bonus').length
+      mainWallets: wallets.filter(w => w.walletType === 'CASH').length,
+      tradingWallets: wallets.filter(w => w.walletType === 'TRADING').length,
+      bonusWallets: wallets.filter(w => w.walletType === 'BONUS').length
     };
   });
 
@@ -54,4 +65,9 @@ export class WalletDashboardComponent {
       }
     }
   };
+
+  ngOnInit(): void {
+    // Load a sample of wallets to drive basic stats and chart.
+    this.walletService.listWallets({ limit: 50, offset: 0 }).subscribe();
+  }
 }

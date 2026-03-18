@@ -60,6 +60,25 @@
       [value]="filteredLogs()"
       [headers]="tableHeaders()"
       [loading]="tableLoading()">
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-slate-100 last:border-b-0">
+          @for (col of columns(); track col.field) {
+            <td class="px-5 py-4 text-sm text-slate-700 whitespace-nowrap">
+              {{ col.formatter ? col.formatter(getCell(row, col.field), row) : (getCell(row, col.field) ?? '—') }}
+            </td>
+          }
+          <td class="px-5 py-4 text-right whitespace-nowrap">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-eye"
+              label="Details"
+              class="p-button-text p-button-secondary"
+              (click)="openDetail(row)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
     </app-data-table>
   </div>
 </div>

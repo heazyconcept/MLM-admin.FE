@@ -90,6 +90,7 @@ export const ACTION_PERMISSION_MATRIX: Record<AdminRole, Record<Action, boolean>
     [Action.ApproveMerchant]: true,
     [Action.SuspendUser]: true,
     [Action.ResetUserPassword]: true,
+    [Action.UpdateEarningsConfig]: true,
     [Action.ChangeSystemConfig]: true,
     [Action.ToggleFeatures]: true
   },
@@ -102,6 +103,7 @@ export const ACTION_PERMISSION_MATRIX: Record<AdminRole, Record<Action, boolean>
     [Action.ApproveMerchant]: false,
     [Action.SuspendUser]: false,
     [Action.ResetUserPassword]: false,
+    [Action.UpdateEarningsConfig]: false,
     [Action.ChangeSystemConfig]: false,
     [Action.ToggleFeatures]: false
   },
@@ -114,6 +116,7 @@ export const ACTION_PERMISSION_MATRIX: Record<AdminRole, Record<Action, boolean>
     [Action.ApproveMerchant]: true,
     [Action.SuspendUser]: false,
     [Action.ResetUserPassword]: false,
+    [Action.UpdateEarningsConfig]: false,
     [Action.ChangeSystemConfig]: false,
     [Action.ToggleFeatures]: false
   },
@@ -126,6 +129,7 @@ export const ACTION_PERMISSION_MATRIX: Record<AdminRole, Record<Action, boolean>
     [Action.ApproveMerchant]: false,
     [Action.SuspendUser]: true,
     [Action.ResetUserPassword]: true,
+    [Action.UpdateEarningsConfig]: false,
     [Action.ChangeSystemConfig]: false,
     [Action.ToggleFeatures]: false
   },
@@ -138,6 +142,7 @@ export const ACTION_PERMISSION_MATRIX: Record<AdminRole, Record<Action, boolean>
     [Action.ApproveMerchant]: false,
     [Action.SuspendUser]: false,
     [Action.ResetUserPassword]: false,
+    [Action.UpdateEarningsConfig]: false,
     [Action.ChangeSystemConfig]: false,
     [Action.ToggleFeatures]: false
   }

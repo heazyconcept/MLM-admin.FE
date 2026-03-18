@@ -23,7 +23,9 @@ import { AuditDetailDrawerComponent } from './audit-detail-drawer.component';
 export interface AuditLogEntry {
   id: string;
   timestamp: string;
-  actor: 'Admin' | 'System';
+  actor: 'Admin' | 'System' | 'User';
+  username?: string;
+  ip?: string;
   action: string;
   entity: string;
   referenceId: string;
@@ -48,6 +50,16 @@ interface AdminAuditResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+interface AdminAuditWrappedResponse {
+  data?: AdminAuditResponse | AdminAuditItem[] | Record<string, unknown>;
+  items?: AdminAuditItem[];
+  total?: number;
+  limit?: number;
+  offset?: number;
+  result?: Record<string, unknown>;
+  payload?: Record<string, unknown>;
 }
 
 interface FilterOption {
@@ -84,6 +96,7 @@ export class AuditLogsComponent implements OnInit {
   actorOptions: FilterOption[] = [
     { label: 'All', value: 'all' },
     { label: 'Admin', value: 'Admin' },
+    { label: 'User', value: 'User' },
     { label: 'System', value: 'System' },
   ];
 
@@ -97,15 +110,15 @@ export class AuditLogsComponent implements OnInit {
 
   filteredLogs = computed(() => {
     let logs = this.auditLogs();
-    const actor = this.actorFilter();
-    const actionType = this.actionTypeFilter();
+    const actor = this.normalizeFilterValue(this.actorFilter());
+    const actionType = this.normalizeFilterValue(this.actionTypeFilter());
     const range = this.dateRange();
 
     if (actor !== 'all') {
       logs = logs.filter((l) => l.actor === actor);
     }
     if (actionType !== 'all') {
-      logs = logs.filter((l) => l.action === actionType);
+      logs = logs.filter((l) => l.action === actionType || l.action.toLowerCase() === actionType.toLowerCase());
     }
     if (range && range.length >= 2 && range[0] && range[1]) {
       const from = range[0].getTime();
@@ -125,19 +138,23 @@ export class AuditLogsComponent implements OnInit {
       width: '160px',
       sortable: true,
       formatter: (v: unknown) =>
-        new Date(v as string).toLocaleString('en-US', {
-          dateStyle: 'short',
-          timeStyle: 'short',
-        }),
+        v
+          ? new Date(v as string).toLocaleString('en-US', {
+              dateStyle: 'short',
+              timeStyle: 'short',
+            })
+          : '—',
     },
     { field: 'actor', header: 'Actor', width: '100px', sortable: true },
+    { field: 'username', header: 'Username', width: '140px', sortable: true },
     { field: 'action', header: 'Action', width: '100px', sortable: true },
     { field: 'entity', header: 'Entity', width: '120px', sortable: true },
     { field: 'referenceId', header: 'Reference ID', width: '140px', sortable: true },
+    { field: 'ip', header: 'IP Address', width: '140px', sortable: true },
     { field: 'description', header: 'Description', sortable: true },
   ]);
 
-  tableHeaders = computed(() => this.columns().map(c => c.header));
+  tableHeaders = computed(() => [...this.columns().map((c) => c.header), 'Details']);
 
   tableConfig: TableConfig = {
     paginator: true,
@@ -160,6 +177,10 @@ export class AuditLogsComponent implements OnInit {
     },
   ]);
 
+  getCell(row: AuditLogEntry, field: string): unknown {
+    return (row as unknown as Record<string, unknown>)[field];
+  }
+
   ngOnInit(): void {
     this.loadAuditLogs();
   }
@@ -176,24 +197,38 @@ export class AuditLogsComponent implements OnInit {
 
   private loadAuditLogs(): void {
     this.tableLoading.set(true);
-    this.api.get<AdminAuditResponse>('admin/audit').subscribe({
+    this.api.get<AdminAuditResponse | AdminAuditWrappedResponse | AdminAuditItem[]>('admin/audit').subscribe({
       next: (response) => {
-        const mapped: AuditLogEntry[] = (response.items ?? []).map((e) => {
+        const items = this.extractAuditItems(response);
+        const mapped: AuditLogEntry[] = items.map((e) => {
           const metadata = e.metadata ?? {};
-          const actorType = (metadata['actorType'] as string | undefined) ?? 'ADMIN';
-          const username = (metadata['username'] as string | undefined) ?? undefined;
+          const actorType = (metadata['actorType'] as string | undefined) ?? 'USER';
+          const username =
+            (metadata['username'] as string | undefined) ??
+            (metadata['email'] as string | undefined) ??
+            undefined;
+          const ip = (metadata['ip'] as string | undefined) ?? undefined;
+          const eventTimestamp =
+            (metadata['timestamp'] as string | undefined) ?? e.createdAt;
 
           const descriptionParts: string[] = [];
-          descriptionParts.push(e.action);
+          descriptionParts.push(this.formatAction(e.action));
           if (username) {
             descriptionParts.push(`by ${username}`);
           }
 
           return {
             id: e.id,
-            timestamp: e.createdAt,
-            actor: actorType === 'SYSTEM' ? 'System' : 'Admin',
-            action: e.action,
+            timestamp: eventTimestamp,
+            actor:
+              actorType === 'SYSTEM'
+                ? 'System'
+                : actorType === 'ADMIN'
+                  ? 'Admin'
+                  : 'User',
+            username,
+            ip,
+            action: this.formatAction(e.action),
             entity: e.entityType,
             referenceId: e.entityId,
             description: descriptionParts.join(' '),
@@ -203,6 +238,7 @@ export class AuditLogsComponent implements OnInit {
           };
         });
         this.auditLogs.set(mapped);
+        this.actionTypeOptions = this.buildActionOptions(mapped);
         this.tableLoading.set(false);
       },
       error: () => {
@@ -210,5 +246,74 @@ export class AuditLogsComponent implements OnInit {
         this.tableLoading.set(false);
       }
     });
+  }
+
+  private extractAuditItems(
+    response: AdminAuditResponse | AdminAuditWrappedResponse | AdminAuditItem[]
+  ): AdminAuditItem[] {
+    const candidates: unknown[] = [
+      response,
+      this.asRecord(response)?.['data'],
+      this.asRecord(response)?.['result'],
+      this.asRecord(response)?.['payload'],
+      this.asRecord(this.asRecord(response)?.['data'])?.['data'],
+      this.asRecord(this.asRecord(response)?.['result'])?.['data'],
+      this.asRecord(this.asRecord(response)?.['payload'])?.['data'],
+    ];
+
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate)) {
+        return candidate as AdminAuditItem[];
+      }
+
+      const record = this.asRecord(candidate);
+      if (!record) {
+        continue;
+      }
+
+      const list = record['items'] ?? record['records'] ?? record['logs'];
+      if (Array.isArray(list)) {
+        return list as AdminAuditItem[];
+      }
+    }
+
+    return [];
+  }
+
+  private formatAction(action: string): string {
+    return action
+      .toLowerCase()
+      .split('_')
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }
+
+  private normalizeFilterValue(value: unknown): string {
+    if (typeof value !== 'string') {
+      return 'all';
+    }
+
+    const normalized = value.trim();
+    return normalized ? normalized : 'all';
+  }
+
+  private buildActionOptions(entries: AuditLogEntry[]): FilterOption[] {
+    const uniqueActions = Array.from(new Set(entries.map((entry) => entry.action))).sort((a, b) =>
+      a.localeCompare(b)
+    );
+
+    return [
+      { label: 'All', value: 'all' },
+      ...uniqueActions.map((action) => ({ label: action, value: action })),
+    ];
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return null;
+    }
+
+    return value as Record<string, unknown>;
   }
 }

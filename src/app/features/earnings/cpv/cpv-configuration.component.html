@@ -1,74 +1,142 @@
+<p-toast></p-toast>
+
 <div class="space-y-6">
-  <!-- Header -->
   <div>
-    <h2 class="text-xl font-semibold text-gray-900">CPV Configuration</h2>
-    <p class="text-sm text-gray-500 mt-1">
-      Manage Commission Point Values (CPV) for packages and products.
-    </p>
+    <h2 class="text-xl font-semibold text-gray-900">CPV Rules Configuration</h2>
+    <p class="text-sm text-gray-500 mt-1">Manage CPV rules using threshold, reward type, reward amount, and optional material description.</p>
   </div>
 
-  <!-- Rows Wrapper -->
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+      {{ error() }}
+    </div>
+  }
+
   <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
-    <!-- Header Row -->
-    <div
-      class="grid grid-cols-12 gap-4 px-6 py-3
-             text-[11px] font-medium uppercase tracking-wide text-gray-400
-             border-b border-gray-100 bg-gray-50">
-      <div class="col-span-3">Package</div>
-      <div class="col-span-4">Registration CPV</div>
-      <div class="col-span-3">Product Multiplier</div>
-      <div class="col-span-2 text-right">Action</div>
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h3 class="font-semibold text-gray-900">Rules (Full Replacement)</h3>
+      @if (canEdit() && !editMode()) {
+        <button pButton type="button" icon="pi pi-pencil" label="Enable Edit Mode" class="p-button-sm p-button-outlined" (click)="startEditMode()"></button>
+      } @else if (canEdit() && editMode()) {
+        <div class="flex items-center gap-2">
+          <button pButton type="button" icon="pi pi-plus" label="Add Rule" class="p-button-sm p-button-outlined" (click)="addRule()"></button>
+          <button pButton type="button" icon="pi pi-times" label="Exit Edit" class="p-button-sm p-button-secondary p-button-text" (click)="cancelChanges()"></button>
+        </div>
+      }
     </div>
 
-    <!-- Data Rows -->
-    @for (rule of rules(); track rule.id) {
-      <div
-        class="grid grid-cols-12 gap-4 px-6 py-4 items-center
-               border-b border-gray-100 last:border-b-0
-               hover:bg-gray-50 transition">
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-3 text-left">Threshold</th>
+            <th class="px-4 py-3 text-left">Reward Type</th>
+            <th class="px-4 py-3 text-left">Reward Amount</th>
+            <th class="px-4 py-3 text-left">Material Description</th>
+            @if (canEdit() && editMode()) {
+              <th class="px-4 py-3 text-right">Action</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (rule of editableRules(); track $index) {
+            <tr class="border-t border-gray-100">
+              <td class="px-4 py-3">
+                @if (canEdit() && editMode()) {
+                  <p-inputNumber
+                    [ngModel]="rule.threshold"
+                    (ngModelChange)="updateRuleField($index, 'threshold', $event ?? 0)"
+                    [min]="1"
+                    [useGrouping]="false"
+                    styleClass="w-32 p-inputtext-sm">
+                  </p-inputNumber>
+                } @else {
+                  {{ rule.threshold }}
+                }
+              </td>
+              <td class="px-4 py-3">
+                @if (canEdit() && editMode()) {
+                  <select
+                    [ngModel]="rule.rewardType"
+                    (ngModelChange)="updateRuleField($index, 'rewardType', $event)"
+                    class="w-36 p-2 border border-gray-300 rounded-lg text-sm">
+                    @for (type of rewardTypeOptions; track type) {
+                      <option [value]="type">{{ type }}</option>
+                    }
+                  </select>
+                } @else {
+                  {{ rule.rewardType }}
+                }
+              </td>
+              <td class="px-4 py-3">
+                @if (canEdit() && editMode()) {
+                  <p-inputNumber
+                    [ngModel]="rule.rewardAmount"
+                    (ngModelChange)="updateRuleField($index, 'rewardAmount', $event ?? 0)"
+                    mode="decimal"
+                    [min]="0.01"
+                    [minFractionDigits]="0"
+                    [maxFractionDigits]="2"
+                    [useGrouping]="false"
+                    styleClass="w-36 p-inputtext-sm">
+                  </p-inputNumber>
+                } @else {
+                  {{ rule.rewardAmount }}
+                }
+              </td>
+              <td class="px-4 py-3">
+                @if (canEdit() && editMode()) {
+                  <input
+                    [ngModel]="rule.materialDescription"
+                    (ngModelChange)="updateRuleField($index, 'materialDescription', $event)"
+                    placeholder="Optional"
+                    class="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                  />
+                } @else {
+                  {{ rule.materialDescription || '—' }}
+                }
+              </td>
+              @if (canEdit() && editMode()) {
+                <td class="px-4 py-3 text-right">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-trash"
+                    class="p-button-rounded p-button-text p-button-danger"
+                    [disabled]="editableRules().length === 1"
+                    (click)="removeRule($index)">
+                  </button>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 
-        <!-- Package -->
-        <div class="col-span-3">
-          <span
-            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold"
-            [class]="getPackageClass(rule.package)">
-            {{ rule.package }}
-          </span>
-        </div>
-
-        <!-- Registration CPV -->
-        <div class="col-span-4">
-          <p class="text-2xl font-semibold text-gray-900 leading-none">
-            {{ rule.registrationCpv }}
-          </p>
-          <p class="text-xs text-gray-400 mt-1">
-            Base registration value
-          </p>
-        </div>
-
-        <!-- Product Multiplier -->
-        <div class="col-span-3 flex items-center gap-3">
-          <p class="text-lg font-medium text-gray-800">
-            {{ rule.productCpvMultiplier }}x
-          </p>
-          <span
-            class="px-2 py-0.5 text-xs font-medium
-                   rounded-md bg-gray-100 text-gray-600">
-            {{ rule.productCpvMultiplier * 100 }}%
-          </span>
-        </div>
-
-        <!-- Action -->
-        <div class="col-span-2 flex justify-end">
-          <button
-            class="inline-flex items-center gap-2
-                   text-sm font-medium text-gray-600
-                   hover:text-gray-900 transition">
-            <i class="pi pi-pencil text-sm"></i>
-            Edit
-          </button>
+    @if (canEdit() && editMode()) {
+      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
+        <p class="text-xs text-gray-500">Saving replaces all existing CPV rules.</p>
+        <div class="flex gap-2">
+          <button pButton type="button" label="Reset" class="p-button-text p-button-secondary" [disabled]="saving()" (click)="cancelChanges()"></button>
+          <button pButton type="button" label="Save All" [loading]="saving()" [disabled]="saving() || hasInvalidRules()" (click)="saveAll()"></button>
         </div>
       </div>
     }
   </div>
+
+  @if (rules().length > 0) {
+    <div class="bg-white border border-gray-200 rounded-xl p-5">
+      <h3 class="font-semibold text-gray-900 mb-3">Display Preview From API</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+        @for (rule of rules(); track rule.id) {
+          <div class="border border-gray-100 rounded-lg p-3 bg-gray-50">
+            <div class="font-semibold text-gray-900">{{ rule.name || (rule.threshold + ' CPVs') }}</div>
+            <div class="text-gray-600">Reward: {{ rule.reward || rule.rewardAmount }}</div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
 </div>

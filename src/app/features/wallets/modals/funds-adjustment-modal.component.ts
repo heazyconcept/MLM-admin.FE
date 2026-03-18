@@ -41,16 +41,30 @@ export class FundsAdjustmentModalComponent {
       const w = this.wallet()!;
       
       if (amount && reason) {
-        this.walletService.adjustFunds(w.id, this.type(), amount, reason);
-        
-        this.messageService.add({
-          severity: 'success', 
-          summary: 'Success', 
-          detail: `Successfully ${this.type() === 'Credit' ? 'credited' : 'debited'} ${w.currency} ${amount}`
+        const signedAmount = this.type() === 'Credit' ? amount : -amount;
+
+        this.walletService.adjustWallet(w.id, {
+          amount: signedAmount,
+          reason
+        }).subscribe({
+          next: (newBalance) => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: `Successfully ${this.type() === 'Credit' ? 'credited' : 'debited'} ${w.displayCurrency} ${amount}`
+            });
+
+            this.adjusted.emit();
+            this.close();
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Adjustment Failed',
+              detail: 'Could not adjust wallet balance. Please try again.'
+            });
+          }
         });
-        
-        this.adjusted.emit();
-        this.close();
       }
     }
   }
