@@ -10,11 +10,13 @@ import { TagModule } from 'primeng/tag';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { TooltipModule } from 'primeng/tooltip';
 
 // App
 import { AdminOrdersService } from '../services/admin-orders.service';
 import { MerchantService, Merchant } from '../../merchants/services/merchant.service';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
+import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { Order, OrderStatus, FulfilmentMode, CustomerType } from '../../../core/models/order.model';
 import { PermissionService } from '../../../core/services/permission.service';
 import { Feature, Action } from '../../../core/models/admin-permission.model';
@@ -25,9 +27,11 @@ import { Feature, Action } from '../../../core/models/admin-permission.model';
     CommonModule,
     FormsModule,
     InfoBannerComponent,
+    StatusBadgeComponent,
     ButtonModule,
     TagModule,
     SelectModule,
+    TooltipModule,
     ToastModule,
   ],
   providers: [MessageService],

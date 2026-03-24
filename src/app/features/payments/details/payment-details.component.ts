@@ -102,29 +102,55 @@ export class PaymentDetailsComponent implements OnInit {
     const payment = this.payment();
     if (!payment) return;
 
+    const reason = (event.reason || '').trim() || 'No reason provided';
+    const onSuccess = () => {
+      this.paymentService.loadFromApi().subscribe();
+      this.showActionModal.set(false);
+      this.pendingAction.set(null);
+    };
+    const onError = (err: { error?: { message?: string }; message?: string }) => {
+      const detail = err?.error?.message ?? err?.message ?? 'Request failed';
+      this.messageService.add({ severity: 'error', summary: 'Action Failed', detail });
+      this.showActionModal.set(false);
+      this.pendingAction.set(null);
+    };
+
     if (event.action === 'Flag') {
-      this.paymentService.flagPayment(payment.id, event.reason || 'Flagged by admin', 'Admin Sarah');
-      this.messageService.add({ severity: 'warn', summary: 'Transaction Flagged', detail: 'The transaction has been flagged for review.' });
+      this.paymentService.flagPayment(payment.id, reason).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'warn', summary: 'Transaction Flagged', detail: 'The transaction has been flagged for review.' });
+          onSuccess();
+        },
+        error: onError
+      });
     } else if (event.action === 'ConfirmSuccess') {
       this.paymentService.verifyPayment(payment.id).subscribe({
         next: () => {
-          this.paymentService.updateStatus(payment.id, 'Successful', 'Admin Sarah', event.reason);
           this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment marked as successful via API.' });
+          onSuccess();
         },
-        error: () => {
-          this.messageService.add({ severity: 'error', summary: 'Verification Failed', detail: 'API verification failed.' });
-        }
+        error: onError
+      });
+    } else if (event.action === 'Fail') {
+      this.paymentService.failPayment(payment.id, reason).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Payment Failed', detail: 'Payment has been marked as failed.' });
+          onSuccess();
+        },
+        error: onError
+      });
+    } else if (event.action === 'Reverse') {
+      this.paymentService.reversePayment(payment.id, reason).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Payment Reversed', detail: 'Payment has been reversed and wallet credited.' });
+          onSuccess();
+        },
+        error: onError
       });
     } else {
-      let nextStatus: 'Successful' | 'Failed' | 'Reversed' = 'Successful';
-      if (event.action === 'Fail') nextStatus = 'Failed';
-      if (event.action === 'Reverse') nextStatus = 'Reversed';
-
-      this.paymentService.updateStatus(payment.id, nextStatus, 'Admin Sarah', event.reason);
-      this.messageService.add({ severity: 'success', summary: 'Status Updated', detail: `Payment status changed to ${nextStatus}` });
+      this.showActionModal.set(false);
+      this.pendingAction.set(null);
     }
-
-    this.showActionModal.set(false);
   }
 
   handleActionCancelled() {

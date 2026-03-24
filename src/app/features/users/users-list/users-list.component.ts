@@ -155,13 +155,8 @@ export class UsersListComponent implements OnInit {
       command: (user) => this.router.navigate(['/admin/users', user.id]),
       severity: 'secondary'
     },
-    { 
-      icon: 'pi pi-ban', 
-      tooltip: 'Suspend User', 
-      visible: (user) => user.status === 'Active' || user.status === 'Flagged',
-      command: (user) => this.showActionModal('suspend', user),
-      severity: 'danger' 
-    },
+    // Suspend and Flag - commented out until backend supports
+    // { icon: 'pi pi-ban', tooltip: 'Suspend User', visible: (user) => user.status === 'Active' || user.status === 'Flagged', command: (user) => this.showActionModal('suspend', user), severity: 'danger' },
     { 
       icon: 'pi pi-check', 
       tooltip: 'Reactivate', 
@@ -169,13 +164,7 @@ export class UsersListComponent implements OnInit {
       command: (user) => this.showActionModal('reactivate', user),
       severity: 'success'
     },
-    { 
-      icon: 'pi pi-flag', 
-      tooltip: 'Flag User', 
-      visible: (user) => user.status === 'Active',
-      command: (user) => this.showActionModal('flag', user),
-      severity: 'warning'
-    },
+    // { icon: 'pi pi-flag', tooltip: 'Flag User', visible: (user) => user.status === 'Active', command: (user) => this.showActionModal('flag', user), severity: 'warning' },
     { 
       icon: 'pi pi-key', 
       tooltip: 'Reset Password', 
@@ -266,26 +255,13 @@ export class UsersListComponent implements OnInit {
   getActionMenuItems(user: User, menu: { hide: () => void }): MenuItem[] {
     const items: MenuItem[] = [];
 
-    if (user.status === 'Active') {
-      items.push(
-        {
-          label: 'Suspend User',
-          icon: 'pi pi-ban',
-          command: () => {
-            menu.hide();
-            this.showActionModal('suspend', user);
-          }
-        },
-        {
-          label: 'Flag Account',
-          icon: 'pi pi-flag',
-          command: () => {
-            menu.hide();
-            this.showActionModal('flag', user);
-          }
-        }
-      );
-    }
+    // Suspend and Flag - commented out until backend supports
+    // if (user.status === 'Active') {
+    //   items.push(
+    //     { label: 'Suspend User', icon: 'pi pi-ban', command: () => { menu.hide(); this.showActionModal('suspend', user); } },
+    //     { label: 'Flag Account', icon: 'pi pi-flag', command: () => { menu.hide(); this.showActionModal('flag', user); } }
+    //   );
+    // }
 
     if (user.status === 'Suspended') {
       items.push({
@@ -307,15 +283,9 @@ export class UsersListComponent implements OnInit {
             menu.hide();
             this.showActionModal('unflag', user);
           }
-        },
-        {
-          label: 'Suspend User',
-          icon: 'pi pi-ban',
-          command: () => {
-            menu.hide();
-            this.showActionModal('suspend', user);
-          }
         }
+        // Suspend - commented out until backend supports
+        // , { label: 'Suspend User', icon: 'pi pi-ban', command: () => { menu.hide(); this.showActionModal('suspend', user); } }
       );
     }
 
