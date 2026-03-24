@@ -99,7 +99,8 @@ export class PaymentService {
 
     return this.api.get<AdminPaymentsResponse | AdminPaymentItem[]>('admin/payments', params).pipe(
       map(response => {
-        const items = Array.isArray(response) ? response : response.items ?? [];
+        const raw = response as { items?: AdminPaymentItem[]; data?: AdminPaymentItem[] };
+        const items = Array.isArray(response) ? response : raw.items ?? raw.data ?? [];
         const mapped = items.map(p => this.mapAdminPayment(p));
         this.paymentsSignal.set(mapped);
         return mapped;
@@ -114,6 +115,18 @@ export class PaymentService {
 
   verifyPayment(id: string): Observable<void> {
     return this.api.post<void>(`admin/payments/${id}/verify`, {});
+  }
+
+  failPayment(id: string, reason: string): Observable<unknown> {
+    return this.api.post<unknown>(`admin/payments/${id}/fail`, { reason });
+  }
+
+  reversePayment(id: string, reason: string): Observable<unknown> {
+    return this.api.post<unknown>(`admin/payments/${id}/reverse`, { reason });
+  }
+
+  flagPayment(id: string, reason: string): Observable<unknown> {
+    return this.api.post<unknown>(`admin/payments/${id}/flag`, { reason });
   }
 
   adminFundUser(body: { userId: string; amount: number; currency: string; provider: string; reference?: string; notes?: string }): Observable<void> {
@@ -141,33 +154,12 @@ export class PaymentService {
     });
   }
 
-  flagPayment(id: string, reason: string, admin: string) {
-    // In this mock, we just add it to history as a "Flagged" event but keep status
-    // or maybe we add a 'Flagged' property to Payment interface
-    this.paymentsSignal.update(payments => {
-      return payments.map(p => {
-        if (p.id === id) {
-          return {
-            ...p,
-            notes: p.notes ? `${p.notes} | FLAG: ${reason}` : `FLAG: ${reason}`,
-            statusHistory: [...p.statusHistory, {
-              status: p.status, // keep current status
-              timestamp: new Date(),
-              admin,
-              reason: `FLAGGED: ${reason}`
-            }]
-          };
-        }
-        return p;
-      });
-    });
-  }
-
   private mapAdminPayment(item: AdminPaymentItem): Payment {
     const statusMap: Record<string, PaymentStatus> = {
       INITIATED: 'Pending',
       SUCCESS: 'Successful',
-      FAILED: 'Failed'
+      FAILED: 'Failed',
+      REVERSED: 'Reversed'
     };
 
     const purposeMap: Record<string, PaymentPurpose> = {

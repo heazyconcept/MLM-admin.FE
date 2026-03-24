@@ -58,16 +58,18 @@
           [class]="activeTab === 'network' ? 'px-4 py-2 border-b-2 border-mlm-primary text-mlm-primary font-medium' : 'px-4 py-2 text-mlm-secondary hover:text-mlm-text'">
           Network
         </button>
-        <button
+        <!-- Wallets tab - commented out until backend provides wallet data -->
+        <!-- <button
           (click)="activeTab = 'wallets'"
           [class]="activeTab === 'wallets' ? 'px-4 py-2 border-b-2 border-mlm-primary text-mlm-primary font-medium' : 'px-4 py-2 text-mlm-secondary hover:text-mlm-text'">
           Wallets
-        </button>
-        <button
+        </button> -->
+        <!-- Activity Log tab - commented out until backend provides activity data -->
+        <!-- <button
           (click)="activeTab = 'activity'"
           [class]="activeTab === 'activity' ? 'px-4 py-2 border-b-2 border-mlm-primary text-mlm-primary font-medium' : 'px-4 py-2 text-mlm-secondary hover:text-mlm-text'">
           Activity Log
-        </button>
+        </button> -->
       </div>
 
       <!-- Tab Content -->
@@ -139,76 +141,24 @@
         </div>
       }
 
-      <!-- Wallet Summary -->
-      @if (activeTab === 'wallets') {
+      <!-- Wallet Summary - commented out until backend provides wallet data -->
+      <!-- @if (activeTab === 'wallets') {
         <div>
         <div class="space-y-3 py-2">
-          <div class="flex items-center justify-between p-3 rounded-lg bg-mlm-background">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-mlm-success/10 flex items-center justify-center">
-                <i class="pi pi-wallet text-mlm-success"></i>
-              </div>
-              <div>
-                <p class="font-medium text-mlm-text">Cash Wallet</p>
-                <p class="text-xs text-mlm-secondary">Withdrawable</p>
-              </div>
-            </div>
-            <span class="font-semibold text-mlm-text">{{ formatCurrency(userData.wallets.cash) }}</span>
-          </div>
-          <div class="flex items-center justify-between p-3 rounded-lg bg-mlm-background">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-mlm-blue-100 flex items-center justify-center">
-                <i class="pi pi-ticket text-mlm-blue-600"></i>
-              </div>
-              <div>
-                <p class="font-medium text-mlm-text">Product Voucher</p>
-                <p class="text-xs text-mlm-secondary">Non-Withdrawable</p>
-              </div>
-            </div>
-            <span class="font-semibold text-mlm-text">{{ formatCurrency(userData.wallets.productVoucher) }}</span>
-          </div>
-          <div class="flex items-center justify-between p-3 rounded-lg bg-mlm-background">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-mlm-warning/10 flex items-center justify-center">
-                <i class="pi pi-refresh text-mlm-warning"></i>
-              </div>
-              <div>
-                <p class="font-medium text-mlm-text">Autoship Wallet</p>
-                <p class="text-xs text-mlm-secondary">Non-Withdrawable</p>
-              </div>
-            </div>
-            <span class="font-semibold text-mlm-text">{{ formatCurrency(userData.wallets.autoship) }}</span>
-          </div>
+          ...
         </div>
         </div>
-      }
+      } -->
 
-      <!-- Activity Log -->
-      @if (activeTab === 'activity') {
+      <!-- Activity Log - commented out until backend provides activity data -->
+      <!-- @if (activeTab === 'activity') {
         <div>
         <div class="space-y-3 py-2 max-h-[300px] overflow-y-auto">
-          @for (activity of userData.activityLog; track activity.id) {
-            <div class="flex items-start gap-3 pb-3 border-b border-gray-50 last:border-0">
-              <div class="w-2 h-2 rounded-full bg-mlm-primary mt-2 shrink-0"></div>
-              <div class="flex-1">
-                <p class="text-sm text-mlm-text">{{ activity.action }}</p>
-                <div class="flex items-center gap-2 mt-1">
-                  <span class="text-xs text-mlm-secondary">{{ formatDateTime(activity.timestamp) }}</span>
-                  <span class="text-xs text-mlm-secondary">•</span>
-                  <span class="text-xs text-mlm-primary">{{ activity.performedBy }}</span>
-                </div>
-              </div>
-            </div>
-          }
-          @if (userData.activityLog.length === 0) {
-            <div class="text-center py-8">
-              <i class="pi pi-inbox text-3xl text-mlm-secondary/50 mb-2"></i>
-              <p class="text-mlm-secondary">No activity recorded</p>
-            </div>
-          }
+          @for (activity of userData.activityLog; track activity.id) { ... }
+          @if (userData.activityLog.length === 0) { ... }
         </div>
         </div>
-      }
+      } -->
     </div>
   }
 
@@ -216,7 +166,8 @@
     <div class="flex items-center justify-between">
       <div class="flex gap-2">
         @if (user(); as u) {
-          @if (u.status === 'Active') {
+          <!-- Suspend and Flag buttons - commented out until backend supports -->
+          <!-- @if (u.status === 'Active') {
             <button 
               pButton 
               label="Suspend" 
@@ -231,7 +182,7 @@
               class="p-button-warning p-button-outlined"
               (click)="onAction('flag')">
             </button>
-          }
+          } -->
           @if (u.status === 'Suspended') {
             <button 
               pButton 
@@ -249,13 +200,8 @@
             class="p-button-outlined"
             (click)="onAction('unflag')">
           </button>
-          <button 
-            pButton 
-            label="Suspend" 
-            icon="pi pi-ban"
-            class="p-button-danger p-button-outlined"
-            (click)="onAction('suspend')">
-          </button>
+          <!-- Suspend - commented out until backend supports -->
+          <!-- <button pButton label="Suspend" icon="pi pi-ban" class="p-button-danger p-button-outlined" (click)="onAction('suspend')"></button> -->
           }
         }
         <button 

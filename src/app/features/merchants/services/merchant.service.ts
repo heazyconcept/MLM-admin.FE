@@ -81,13 +81,13 @@ export class MerchantService {
   readonly loading = this.loadingState.asReadonly();
   readonly loadingError = this.loadingErrorState.asReadonly();
 
-  readonly pendingCount = computed(() =>
+  readonly pendingCount = computed(() => 
     this.merchantsState().filter(m => m.status === 'PENDING').length
   );
   readonly activeCount = computed(() =>
     this.merchantsState().filter(m => m.status === 'ACTIVE').length
   );
-  readonly suspendedCount = computed(() =>
+  readonly suspendedCount = computed(() => 
     this.merchantsState().filter(m => m.status === 'SUSPENDED').length
   );
 
