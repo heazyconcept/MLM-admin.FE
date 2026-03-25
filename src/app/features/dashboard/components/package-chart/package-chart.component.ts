@@ -1,4 +1,11 @@
-import { Component, input, OnInit, ChangeDetectionStrategy, computed } from '@angular/core';
+import {
+  Component,
+  input,
+  ChangeDetectionStrategy,
+  computed,
+  effect,
+  signal
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 
@@ -16,49 +23,71 @@ export interface PackageData {
   styleUrls: ['./package-chart.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PackageChartComponent implements OnInit {
+export class PackageChartComponent {
   packages = input<PackageData[]>([]);
-  
-  data: unknown;
-  options: unknown;
-  totalUsers = 0;
 
-  ngOnInit() {
-    this.initChart();
+  data = signal<unknown>({ labels: [], datasets: [] });
+  options = signal<unknown>({});
+  totalUsers = signal(0);
+
+  packageList = computed(() => {
+    const p = this.packages();
+    if (p.length > 0) return p;
+    return [] as PackageData[];
+  });
+
+  constructor() {
+    effect(() => {
+      this.packages();
+      this.initChart();
+    });
   }
 
-  initChart() {
-    // Default MLM package data
-    const defaultPackages: PackageData[] = [
-      { name: 'Silver', count: 4520, percentage: 45.2, color: '#94a3b8' },
-      { name: 'Gold', count: 2890, percentage: 28.9, color: '#F9A825' },
-      { name: 'Platinum', count: 1560, percentage: 15.6, color: '#64748b' },
-      { name: 'Ruby', count: 680, percentage: 6.8, color: '#ef4444' },
-      { name: 'Diamond', count: 350, percentage: 3.5, color: '#3b82f6' }
-    ];
+  private initChart(): void {
+    const fromInput = this.packages();
+    if (!fromInput.length) {
+      this.totalUsers.set(0);
+      this.data.set({
+        labels: ['No data'],
+        datasets: [
+          {
+            data: [1],
+            backgroundColor: ['#e5e7eb'],
+            borderWidth: 0,
+            hoverOffset: 0
+          }
+        ]
+      });
+      this.options.set({
+        cutout: '65%',
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+      });
+      return;
+    }
 
-    const packagesToUse = this.packages().length > 0 ? this.packages() : defaultPackages;
-    this.totalUsers = packagesToUse.reduce((sum: number, p: PackageData) => sum + p.count, 0);
+    const packagesToUse = fromInput;
+    const total = packagesToUse.reduce((sum, p) => sum + p.count, 0);
+    this.totalUsers.set(total);
 
-    this.data = {
-      labels: packagesToUse.map((p: PackageData) => p.name),
+    this.data.set({
+      labels: packagesToUse.map((p) => p.name),
       datasets: [
         {
-          data: packagesToUse.map((p: PackageData) => p.count),
-          backgroundColor: packagesToUse.map((p: PackageData) => p.color),
+          data: packagesToUse.map((p) => p.count),
+          backgroundColor: packagesToUse.map((p) => p.color),
           borderWidth: 0,
           hoverOffset: 8
         }
       ]
-    };
+    });
 
-    this.options = {
+    const totalRef = total;
+    this.options.set({
       cutout: '65%',
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          display: false
-        },
+        legend: { display: false },
         tooltip: {
           backgroundColor: '#1f2937',
           titleColor: '#fff',
@@ -67,23 +96,13 @@ export class PackageChartComponent implements OnInit {
           displayColors: true,
           callbacks: {
             label: (context: { raw: number; label: string }) => {
-              const percentage = ((context.raw / this.totalUsers) * 100).toFixed(1);
-              return `${context.label}: ${context.raw.toLocaleString()} (${percentage}%)`;
+              const pct =
+                totalRef > 0 ? ((context.raw / totalRef) * 100).toFixed(1) : '0';
+              return `${context.label}: ${context.raw.toLocaleString()} (${pct}%)`;
             }
           }
         }
       }
-    };
+    });
   }
-
-  packageList = computed(() => {
-    if (this.packages().length > 0) return this.packages();
-    return [
-      { name: 'Silver', count: 4520, percentage: 45.2, color: '#94a3b8' },
-      { name: 'Gold', count: 2890, percentage: 28.9, color: '#F9A825' },
-      { name: 'Platinum', count: 1560, percentage: 15.6, color: '#64748b' },
-      { name: 'Ruby', count: 680, percentage: 6.8, color: '#ef4444' },
-      { name: 'Diamond', count: 350, percentage: 3.5, color: '#3b82f6' }
-    ];
-  });
 }

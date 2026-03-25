@@ -1,7 +1,9 @@
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { DatePickerModule } from 'primeng/datepicker';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { PermissionService } from '../../../core/services/permission.service';
@@ -9,6 +11,14 @@ import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { UsersService, User } from '../services/users.service';
+import {
+  EarningsService,
+  UserEarningsActivityItem,
+  formatUserEarningsActivityAmount,
+  getUserEarningsActivityDetail,
+  getUserEarningsActivityKind,
+  userEarningsActivityTrackId,
+} from '../../earnings/services/earnings.service';
 
 interface ActionConfig {
   visible: boolean;
@@ -26,9 +36,11 @@ interface ActionConfig {
 @Component({
   selector: 'app-user-details',
   imports: [
-    CommonModule, 
-    RouterModule, 
-    ButtonModule, 
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    ButtonModule,
+    DatePickerModule,
     ToastModule,
     InfoBannerComponent,
     ConfirmationModalComponent
@@ -42,6 +54,7 @@ export class UserDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private usersService = inject(UsersService);
+  private earningsService = inject(EarningsService);
   private messageService = inject(MessageService);
   protected permission = inject(PermissionService);
 
@@ -56,6 +69,18 @@ export class UserDetailsComponent implements OnInit {
   user = signal<User | null>(null);
   activeTab = signal('basic');
   actionLoading = signal(false);
+
+  /** GET /admin/earnings/activity */
+  eaItems = signal<UserEarningsActivityItem[]>([]);
+  eaLoading = signal(false);
+  eaError = signal<string | null>(null);
+  /** Set when API returns total; otherwise null (pagination by page size). */
+  eaServerTotal = signal<number | null>(null);
+  /** When API omits total, use page-size heuristic for "Load more". */
+  eaHasMore = signal(false);
+  eaLimit = 50;
+  eaOffset = signal(0);
+  eaDateRange = signal<Date[] | null>(null);
   
   actionConfig = signal<ActionConfig>({
     visible: false,
@@ -279,4 +304,78 @@ export class UserDetailsComponent implements OnInit {
     };
     return colors[pkg] || '#94a3b8';
   }
+
+  onEarningsTabClick(): void {
+    this.activeTab.set('earnings');
+    this.loadEarningsActivity(true);
+  }
+
+  loadEarningsActivity(resetOffset: boolean): void {
+    const u = this.user();
+    if (!u?.id) return;
+    if (resetOffset) this.eaOffset.set(0);
+    this.eaLoading.set(true);
+    this.eaError.set(null);
+    const range = this.eaDateRange();
+    let from: string | undefined;
+    let to: string | undefined;
+    if (range && range.length >= 2 && range[0] && range[1]) {
+      const start = new Date(range[0]);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(range[1]);
+      end.setHours(23, 59, 59, 999);
+      from = start.toISOString();
+      to = end.toISOString();
+    }
+    this.earningsService
+      .getUserEarningsActivity({
+        userId: u.id,
+        limit: this.eaLimit,
+        offset: this.eaOffset(),
+        from,
+        to,
+      })
+      .subscribe({
+        next: (res) => {
+          this.eaLoading.set(false);
+          if (res === null) {
+            this.eaError.set('Failed to load earnings activity.');
+            this.eaItems.set([]);
+            this.eaServerTotal.set(null);
+            this.eaHasMore.set(false);
+            return;
+          }
+          const batch = res.items ?? [];
+          if (resetOffset) {
+            this.eaItems.set(batch);
+          } else {
+            this.eaItems.update((prev) => [...prev, ...batch]);
+          }
+          const loaded = this.eaItems().length;
+          const total = res.total;
+          if (total != null && total !== undefined) {
+            this.eaServerTotal.set(total);
+            this.eaHasMore.set(loaded < total);
+          } else {
+            this.eaServerTotal.set(null);
+            this.eaHasMore.set(batch.length >= this.eaLimit);
+          }
+        },
+        error: () => {
+          this.eaLoading.set(false);
+          this.eaError.set('Failed to load earnings activity.');
+          this.eaItems.set([]);
+        },
+      });
+  }
+
+  loadMoreEarningsActivity(): void {
+    this.eaOffset.update((o) => o + this.eaLimit);
+    this.loadEarningsActivity(false);
+  }
+
+  formatActivityAmount = formatUserEarningsActivityAmount;
+  activityKind = getUserEarningsActivityKind;
+  activityDetail = getUserEarningsActivityDetail;
+  activityTrack = userEarningsActivityTrackId;
 }

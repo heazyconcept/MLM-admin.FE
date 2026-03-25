@@ -1,9 +1,10 @@
 import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-stat-card',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './stat-card.component.html',
   styleUrls: ['./stat-card.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -19,6 +20,7 @@ export class StatCardComponent {
   changeLabel = input('from last month');
   showMenu = input(true);
   compact = input(false);
+  routerLink = input<string[] | undefined>(undefined);
 
   isPositive = computed(() => {
     const changeVal = this.change();

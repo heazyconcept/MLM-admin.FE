@@ -3,46 +3,39 @@ import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
-import { EarningsService } from '../services/earnings.service';
+import { RouterModule } from '@angular/router';
+import { SystemConfigService, RankingRule } from '../../system/services/system-config.service';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
+import { TableColumn, TableConfig } from '../../../shared/components/data-table/data-table.types';
 
 @Component({
   selector: 'app-ranking-stages',
-  imports: [CommonModule, TableModule, ButtonModule, TagModule, DataTableComponent],
+  imports: [
+    CommonModule,
+    TableModule,
+    ButtonModule,
+    TagModule,
+    RouterModule,
+    DataTableComponent
+  ],
   templateUrl: './ranking-stages.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RankingStagesComponent implements OnInit {
-  earningsService = inject(EarningsService);
-  ranks = this.earningsService.ranks;
+  private readonly config = inject(SystemConfigService);
 
-  columns = signal<TableColumn<unknown>[]>([
-    {
-      field: 'level',
-      header: 'Level',
-      width: '100px',
-      align: 'center'
-      // Custom template
-    },
-    {
-      field: 'name',
-      header: 'Rank Name'
-      // Custom template
-    },
-    {
-      field: 'requirements',
-      header: 'Requirements (Personal / Team / Directs)'
-      // Custom template
-    },
-    {
-      field: 'benefits',
-      header: 'Benefits (Bonus / Cap)'
-      // Custom template
-    }
+  rankingRules = this.config.rankingRules;
+  rankingLoading = this.config.rankingLoading;
+  rankingError = this.config.rankingError;
+
+  columns = signal<TableColumn<RankingRule>[]>([
+    { field: 'stage', header: 'Stage', width: '100px', align: 'center' },
+    { field: 'rankName', header: 'Rank name' },
+    { field: 'requiredLevel', header: 'Required level', width: '140px', align: 'center' },
+    { field: 'bonusAmount', header: 'Bonus amount', width: '140px', align: 'right' }
   ]);
 
-  tableHeaders = computed(() => this.columns().map(c => c.header));
+  tableHeaders = computed(() => this.columns().map((c) => c.header));
 
   tableConfig = signal<TableConfig>({
     paginator: false,
@@ -50,15 +43,7 @@ export class RankingStagesComponent implements OnInit {
     size: 'large'
   });
 
-  actions = signal<TableAction<unknown>[]>([
-    {
-      icon: 'pi pi-pencil',
-      command: (row) => console.log('Edit rank', row),
-      severity: 'secondary'
-    }
-  ]);
-
   ngOnInit(): void {
-    this.earningsService.loadRankingRules().subscribe();
+    this.config.loadRankingRules().subscribe();
   }
 }

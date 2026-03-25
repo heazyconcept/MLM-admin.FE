@@ -1,35 +1,23 @@
-<div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm h-full">
-  <div class="flex items-center justify-between mb-4">
-    <h3 class="text-lg font-semibold text-mlm-text">Wallet Balances</h3>
-    <button class="p-1 rounded hover:bg-gray-100 text-mlm-secondary transition-colors">
-      <i class="pi pi-ellipsis-h"></i>
-    </button>
+<div class="min-h-full rounded-lg border border-slate-200/70 bg-white p-6">
+  <div class="mb-5">
+    <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Wallet balances</h3>
+    <p class="text-[13px] text-slate-400 mt-0.5">Platform totals by type</p>
   </div>
 
-  <!-- Total Balance -->
-  <div class="mb-4 pb-4 border-b border-gray-100">
-    <p class="text-sm text-mlm-secondary mb-1">Total System Balance</p>
-    <p class="text-3xl font-bold text-mlm-text">{{ totalBalance() }}</p>
+  <div class="pb-4 mb-4 border-b border-slate-100">
+    <p class="text-[11px] uppercase tracking-wide text-slate-400 mb-1">Combined</p>
+    <p class="text-2xl font-semibold text-slate-800 tabular-nums tracking-tight">{{ totalBalance() }}</p>
   </div>
 
-  <!-- Wallet Types -->
-  <div class="space-y-3">
-    @for (wallet of wallets(); track wallet.type) {
-      <div class="flex items-center justify-between p-3 rounded-lg bg-mlm-background hover:bg-mlm-green-50/50 transition-colors">
-        <div class="flex items-center gap-3">
-          <div 
-            class="w-10 h-10 rounded-lg flex items-center justify-center"
-            [style.background-color]="wallet.color + '20'">
-            <i [class]="wallet.icon" [style.color]="wallet.color"></i>
-          </div>
-          <div>
-            <p class="font-medium text-mlm-text">{{ wallet.label }}</p>
-            <p class="text-xs text-mlm-secondary">{{ wallet.type }}</p>
-          </div>
+  <div class="space-y-0 divide-y divide-slate-100">
+    @for (wallet of wallets(); track wallet.label) {
+      <div class="flex items-baseline justify-between gap-4 py-3 first:pt-0">
+        <div class="min-w-0">
+          <p class="text-sm text-slate-800">{{ wallet.label }}</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">{{ wallet.type }}</p>
         </div>
-        <span class="font-semibold text-mlm-text">{{ wallet.balance }}</span>
+        <span class="text-sm font-medium text-slate-800 tabular-nums shrink-0">{{ wallet.balance }}</span>
       </div>
     }
   </div>
 </div>
-

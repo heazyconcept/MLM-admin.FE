@@ -58,6 +58,12 @@
           [class]="activeTab === 'network' ? 'px-4 py-2 border-b-2 border-mlm-primary text-mlm-primary font-medium' : 'px-4 py-2 text-mlm-secondary hover:text-mlm-text'">
           Network
         </button>
+        <button
+          type="button"
+          (click)="onEarningsTab()"
+          [class]="activeTab === 'earnings' ? 'px-4 py-2 border-b-2 border-mlm-primary text-mlm-primary font-medium' : 'px-4 py-2 text-mlm-secondary hover:text-mlm-text'">
+          Earnings activity
+        </button>
         <!-- Wallets tab - commented out until backend provides wallet data -->
         <!-- <button
           (click)="activeTab = 'wallets'"
@@ -118,6 +124,43 @@
             <p class="font-medium text-mlm-text">{{ userData.phone }}</p>
           </div>
         </div>
+        </div>
+      }
+
+      @if (activeTab === 'earnings') {
+        <div class="py-2 space-y-3">
+          
+          @if (earningsError()) {
+            <p class="text-sm text-red-600">{{ earningsError() }}</p>
+          }
+          @if (earningsLoading() && earningsItems().length === 0) {
+            <p class="text-sm text-mlm-secondary">Loading…</p>
+          } @else if (!earningsLoading() && earningsItems().length === 0 && !earningsError()) {
+            <p class="text-sm text-mlm-secondary">No earnings activity.</p>
+          } @else {
+            <div class="max-h-[280px] overflow-y-auto border border-gray-100 rounded-lg">
+              <table class="w-full text-sm">
+                <thead class="sticky top-0 bg-gray-50 text-left text-[10px] uppercase text-gray-500">
+                  <tr>
+                    <th class="px-3 py-2">Kind</th>
+                    <th class="px-3 py-2">Detail</th>
+                    <th class="px-3 py-2 text-right">Amount</th>
+                    <th class="px-3 py-2">When</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of earningsItems(); track activityTrack($index, row)) {
+                    <tr class="border-t border-gray-100">
+                      <td class="px-3 py-2 text-xs">{{ activityKind(row) }}</td>
+                      <td class="px-3 py-2 text-xs text-gray-600">{{ activityDetail(row) }}</td>
+                      <td class="px-3 py-2 text-right tabular-nums">{{ formatActivityAmount(row) }}</td>
+                      <td class="px-3 py-2 text-gray-600">{{ row.createdAt | date: 'short' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
         </div>
       }
 
