@@ -1,73 +1,68 @@
-<div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-  <div class="flex items-center justify-between mb-4">
-    <h3 class="text-lg font-semibold text-mlm-text">Pending Actions</h3>
-    <a (click)="viewAll()" class="text-sm text-mlm-primary hover:text-brand-green-dark transition-colors cursor-pointer font-medium">View All</a>
+<div class="rounded-lg border border-slate-200/70 bg-white p-6">
+  <div class="flex items-baseline justify-between gap-4 mb-5">
+    <div>
+      <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Queues</h3>
+      <p class="text-[13px] text-slate-400 mt-0.5">Items needing attention</p>
+    </div>
+    <button
+      type="button"
+      (click)="viewAll()"
+      class="text-xs font-medium text-slate-600 hover:text-slate-900 underline-offset-2 hover:underline">
+      View all
+    </button>
   </div>
 
-  <div class="grid grid-cols-2 gap-3">
-    @for (action of displayActions(); track action.type) {
-      <button 
-        (click)="openModal(action)"
-        class="p-4 rounded-xl border border-gray-100 hover:border-mlm-green-200 hover:bg-mlm-green-50/30 transition-all text-left group">
-        <div class="flex items-start justify-between mb-3">
-          <div 
-            class="w-10 h-10 rounded-lg flex items-center justify-center"
-            [class]="action.iconBg">
-            <i [class]="action.icon + ' ' + action.iconColor"></i>
-          </div>
-          <span 
-            class="px-2 py-0.5 text-xs font-medium rounded-full"
-            [class]="getUrgencyClass(action.urgency)">
-            {{ action.count }}
-          </span>
-        </div>
-        <p class="text-sm font-medium text-mlm-text group-hover:text-mlm-primary transition-colors">
-          {{ action.label }}
-        </p>
-        <p class="text-xs text-mlm-secondary mt-1">
-          Click to view details
-        </p>
-      </button>
-    }
-  </div>
+  @if (displayActions().length === 0) {
+    <p class="text-sm text-slate-400 py-8 text-center">Nothing in the summary.</p>
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-px bg-slate-100 rounded-lg overflow-hidden border border-slate-100">
+      @for (action of displayActions(); track action.type) {
+        <button
+          type="button"
+          (click)="openModal(action)"
+          class="bg-white hover:bg-slate-50/80 text-left px-4 py-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-inset">
+          <p class="text-[11px] uppercase tracking-wide text-slate-400 mb-2">{{ action.label }}</p>
+          <p class="text-2xl font-semibold text-slate-800 tabular-nums">{{ action.count }}</p>
+        </button>
+      }
+    </div>
+  }
 </div>
 
 <!-- Modal -->
-<p-dialog 
-  [visible]="modalVisible()" 
+<p-dialog
+  [visible]="modalVisible()"
   (visibleChange)="modalVisible.set($event)"
   [header]="selectedAction()?.label || 'Details'"
   [modal]="true"
-  [style]="{width: '600px'}"
+  [style]="{ width: '600px' }"
   [draggable]="false"
   [resizable]="false">
-  
+
   @if (selectedAction(); as action) {
     <div class="mb-4">
-      <p class="text-mlm-secondary">
-        Showing {{ modalItems().length }} pending items requiring attention.
+      <p class="text-sm text-slate-500">
+        {{ modalItems().length }} sample rows (connect list APIs for live data).
       </p>
     </div>
 
-    <app-data-table
-      [value]="modalItems()"
-      [headers]="tableHeaders()">
-      
-      <!-- Row Template -->
+    <app-data-table [value]="modalItems()" [headers]="tableHeaders()">
       <ng-template pTemplate="body" let-row>
-        <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
-          <td class="px-5 py-4">
+        <tr class="border-b border-slate-100">
+          <td class="px-5 py-3 font-mono text-xs text-slate-500">{{ row.id }}</td>
+          <td class="px-5 py-3 text-sm text-slate-800">{{ row.name }}</td>
+          <td class="px-5 py-3 text-sm text-slate-600">{{ row.amount }}</td>
+          <td class="px-5 py-3 text-sm text-slate-500">{{ row.date }}</td>
+          <td class="px-5 py-3">
             <p-tag [value]="row.status" [severity]="getStatusSeverity(row.status)" [rounded]="true"></p-tag>
           </td>
         </tr>
       </ng-template>
-
     </app-data-table>
 
-
-    <div class="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
-      <button pButton label="Close" class="p-button-text" (click)="modalVisible.set(false)"></button>
-      <button pButton label="View All" icon="pi pi-external-link" class="p-button-primary" (click)="viewAll()"></button>
+    <div class="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-100">
+      <button pButton type="button" label="Close" class="p-button-text p-button-sm" (click)="modalVisible.set(false)"></button>
+      <button pButton type="button" label="Open queue" class="p-button-sm p-button-outlined" (click)="viewAll()"></button>
     </div>
   }
 </p-dialog>

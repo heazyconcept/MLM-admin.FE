@@ -1,6 +1,5 @@
 import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TagModule } from 'primeng/tag';
 
 export interface Activity {
   id: string;
@@ -14,7 +13,7 @@ export interface Activity {
 
 @Component({
   selector: 'app-activity-feed',
-  imports: [CommonModule, TagModule],
+  imports: [CommonModule],
   templateUrl: './activity-feed.component.html',
   styleUrls: ['./activity-feed.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -74,14 +73,15 @@ export class ActivityFeedComponent {
     return this.activities().length > 0 ? this.activities() : this.defaultActivities();
   });
 
-  getTypeConfig(type: string) {
-    const configs: Record<string, { icon: string; bg: string; color: string }> = {
-      registration: { icon: 'pi pi-user-plus', bg: 'bg-mlm-success/10', color: 'text-mlm-success' },
-      earning: { icon: 'pi pi-dollar', bg: 'bg-mlm-primary/10', color: 'text-mlm-primary' },
-      withdrawal: { icon: 'pi pi-wallet', bg: 'bg-mlm-warning/10', color: 'text-mlm-warning' },
-      order: { icon: 'pi pi-shopping-cart', bg: 'bg-mlm-blue-100', color: 'text-mlm-blue-600' }
+  /** Minimal left accent (no icons). */
+  getTypeAccent(type: string): string {
+    const map: Record<string, string> = {
+      registration: 'bg-emerald-500',
+      earning: 'bg-[#49A321]',
+      withdrawal: 'bg-amber-500',
+      order: 'bg-slate-400'
     };
-    return configs[type] || configs['registration'];
+    return map[type] ?? 'bg-slate-300';
   }
 
   formatTime(date: Date): string {

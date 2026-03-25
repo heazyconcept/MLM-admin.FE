@@ -149,6 +149,35 @@ export class AdminProductsService {
       );
   }
 
+  /** GET /admin/products/:id — merges into local products list for list/detail consistency */
+  loadProductById(id: string): Observable<Product> {
+    return this.api.get<AdminProductDto>(`admin/products/${encodeURIComponent(id)}`).pipe(
+      map((dto) => this.mapProductDtoToProduct(dto)),
+      switchMap((p) =>
+        this.getProductPool(p.id).pipe(
+          map((pool) => ({
+            ...p,
+            adminPoolQuantity: Number(pool?.quantity ?? p.adminPoolQuantity ?? 0)
+          })),
+          catchError(() => of(p))
+        )
+      ),
+      tap((p) => this.upsertProductInList(p))
+    );
+  }
+
+  private upsertProductInList(p: Product): void {
+    this.products.update((list) => {
+      const i = list.findIndex((x) => x.id === p.id);
+      if (i >= 0) {
+        const next = [...list];
+        next[i] = p;
+        return next;
+      }
+      return [p, ...list];
+    });
+  }
+
   createCategory(body: { name: string; slug: string; description?: string; isActive?: boolean }): Observable<Category> {
     return this.api.post<AdminCategoryDto>('admin/categories', body).pipe(
       map((c) => this.mapCategoryDtoToCategory(c)),
@@ -324,7 +353,7 @@ export class AdminProductsService {
     );
   }
 
-  /** Resolve a single product by id (from current list; no GET /admin/products/:id in API) */
+  /** Resolve a single product by id from the in-memory list (call loadProductById to fetch from API). */
   getProductById(id: string): Product | null {
     return this.products().find((p) => p.id === id) ?? null;
   }

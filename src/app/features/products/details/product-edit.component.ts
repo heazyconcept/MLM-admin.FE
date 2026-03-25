@@ -134,17 +134,37 @@ export class ProductEditComponent implements OnInit {
         this.loadProductImages(id);
         this.productLoading.set(false);
       } else {
-        this.adminProducts.loadProducts({ limit: 500, offset: 0 }).subscribe({
-          next: () => {
-            const found = this.adminProducts.getProductById(id);
-            if (found) {
-              this.patchFormFromProduct(found);
-              this.loadPriceHistory(id);
-              this.loadProductImages(id);
-            }
+        this.adminProducts.loadProductById(id).subscribe({
+          next: (found) => {
+            this.patchFormFromProduct(found);
+            this.loadPriceHistory(id);
+            this.loadProductImages(id);
             this.productLoading.set(false);
           },
-          error: () => this.productLoading.set(false)
+          error: () => {
+            this.adminProducts.loadProducts({ limit: 500, offset: 0 }).subscribe({
+              next: () => {
+                const found = this.adminProducts.getProductById(id);
+                if (found) {
+                  this.patchFormFromProduct(found);
+                  this.loadPriceHistory(id);
+                  this.loadProductImages(id);
+                } else {
+                  this.messageService.add({
+                    severity: 'error',
+                    summary: 'Product not found',
+                    detail: 'Could not load this product.'
+                  });
+                  void this.router.navigate(['/admin/products']);
+                }
+                this.productLoading.set(false);
+              },
+              error: () => {
+                this.productLoading.set(false);
+                void this.router.navigate(['/admin/products']);
+              }
+            });
+          }
         });
       }
     } else {

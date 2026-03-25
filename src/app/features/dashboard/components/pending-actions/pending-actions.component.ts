@@ -36,6 +36,8 @@ export interface PendingItem {
 })
 export class PendingActionsComponent {
   actions = input<PendingAction[]>([]);
+  /** When true, an empty `actions` array does not fall back to demo data (dashboard API mode). */
+  preferLiveSummary = input(false);
   private router = inject(Router);
 
   modalVisible = signal(false);
@@ -116,7 +118,9 @@ export class PendingActionsComponent {
 
   displayActions = computed(() => {
     const a = this.actions();
-    return a.length > 0 ? a : this.defaultActions;
+    if (a.length > 0) return a;
+    if (this.preferLiveSummary()) return [];
+    return this.defaultActions;
   });
 
   openModal(action: PendingAction) {

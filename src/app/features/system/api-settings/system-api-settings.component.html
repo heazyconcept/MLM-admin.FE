@@ -1,0 +1,97 @@
+<p-toast></p-toast>
+
+@if (isViewOnly()) {
+  <div class="mb-6">
+    <app-info-banner
+      message="You have view-only access. Contact an administrator for changes."
+      type="info">
+    </app-info-banner>
+  </div>
+}
+
+<div class="max-w-5xl space-y-6">
+  <div>
+    <h2 class="text-lg font-semibold text-gray-900">System settings (API)</h2>
+    <p class="text-sm text-gray-500 mt-1">
+      Key-value settings from <code class="text-xs bg-gray-100 px-1 rounded">GET /admin/settings</code>.
+      Values may be JSON — use valid JSON for objects and arrays.
+    </p>
+  </div>
+
+  @if (loadError()) {
+    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex flex-wrap items-center justify-between gap-2">
+      <span>{{ loadError() }}</span>
+      <button
+        pButton
+        type="button"
+        label="Retry"
+        class="p-button-sm p-button-outlined"
+        [disabled]="loading()"
+        (click)="reload()">
+      </button>
+    </div>
+  }
+
+  <div class="flex flex-wrap items-center gap-3">
+    <button
+      pButton
+      type="button"
+      label="Reload"
+      class="p-button-outlined p-button-sm"
+      [disabled]="loading() || saving()"
+      (click)="reload()">
+    </button>
+    @if (canEdit()) {
+      <button
+        pButton
+        type="button"
+        label="Save changes"
+        class="p-button-sm"
+        [disabled]="loading() || saving() || !hasChanges()"
+        [loading]="saving()"
+        (click)="save()">
+      </button>
+    }
+    @if (hasChanges() && canEdit()) {
+      <span class="text-xs text-amber-700">{{ dirtyKeys().length }} unsaved change(s)</span>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="text-sm text-gray-500">Loading settings…</p>
+  } @else if (rows().length === 0 && !loadError()) {
+    <p class="text-sm text-gray-500">No settings returned.</p>
+  } @else {
+    <div class="space-y-6">
+      @for (row of rows(); track row.key) {
+        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div class="flex flex-wrap items-start justify-between gap-2 mb-2">
+            <div>
+              <p class="font-mono text-sm font-semibold text-gray-900">{{ row.key }}</p>
+              @if (row.description) {
+                <p class="text-xs text-gray-500 mt-0.5">{{ row.description }}</p>
+              }
+            </div>
+            <div class="text-right text-[11px] text-gray-400">
+              @if (row.version !== undefined) {
+                <span>v{{ row.version }}</span>
+              }
+              @if (row.updatedAt) {
+                <span class="ml-2">{{ row.updatedAt | date: 'medium' }}</span>
+              }
+            </div>
+          </div>
+          <textarea
+            pTextarea
+            [ngModel]="valueDraft()[row.key] || ''"
+            (ngModelChange)="onValueChange(row.key, $event)"
+            [readonly]="isViewOnly()"
+            rows="4"
+            class="w-full font-mono text-sm"
+            [class.opacity-60]="isViewOnly()">
+          </textarea>
+        </div>
+      }
+    </div>
+  }
+</div>

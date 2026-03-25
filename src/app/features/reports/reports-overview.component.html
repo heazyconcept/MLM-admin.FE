@@ -1,74 +1,109 @@
 <div class="min-h-screen bg-linear-to-br from-gray-50 via-white to-purple-50/30 p-8">
-  <!-- Header -->
   <div class="mb-8">
     <h1 class="text-3xl font-black text-mlm-text mb-2">Reports</h1>
-    <p class="text-mlm-secondary">Generate operational and financial reports. View-only; no data exports.</p>
+    <p class="text-mlm-secondary">Operational and financial reports from the admin API. Read-only view.</p>
   </div>
 
-  <!-- Report categories -->
+  @if (loadError()) {
+    <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      {{ loadError() }}
+    </div>
+  }
+
   <div class="mb-6">
     <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Report categories</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       @for (cat of categories; track cat.id) {
         <button
           type="button"
           (click)="selectCategory(cat)"
-          class="flex items-center gap-3 p-4 rounded-xl border text-left transition"
+          class="flex items-center p-4 rounded-xl border text-left transition w-full"
           [class.border-mlm-primary]="selectedCategory() === cat.id"
           [class.bg-mlm-green-50]="selectedCategory() === cat.id"
           [class.border-gray-200]="selectedCategory() !== cat.id"
           [class.hover:border-gray-300]="selectedCategory() !== cat.id">
-          <i [class]="cat.icon" class="text-xl text-gray-500"></i>
           <span class="font-medium text-gray-900">{{ cat.label }}</span>
         </button>
       }
     </div>
   </div>
 
-  <!-- Date range & Generate -->
   <div class="bg-white border border-gray-200 rounded-xl px-5 py-4 mb-6">
-    <div class="flex flex-col md:flex-row md:items-center gap-4">
-      <div class="flex items-center gap-3">
-        <label class="text-sm font-medium text-gray-700">Date range</label>
-        <p-datepicker
-          [ngModel]="dateRange()"
-          (ngModelChange)="dateRange.set($event)"
-          selectionMode="range"
-          placeholder="From – To"
-          [showIcon]="true"
-          iconDisplay="input"
-          appendTo="body"
-          styleClass="w-64"
-          inputStyleClass="w-full h-10 border-gray-300"
-          panelStyleClass="p-datepicker-premium">
-        </p-datepicker>
+    @if (selectedCategory() === 'admin_fees') {
+      <div class="flex flex-col md:flex-row md:items-end gap-4">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Date range (optional)</label>
+          <p-datepicker
+            [ngModel]="dateRange()"
+            (ngModelChange)="dateRange.set($event)"
+            selectionMode="range"
+            placeholder="From – To"
+            [showIcon]="true"
+            iconDisplay="input"
+            appendTo="body"
+            styleClass="w-64"
+            inputStyleClass="w-full h-10 border-gray-300"
+            panelStyleClass="p-datepicker-premium">
+          </p-datepicker>
+        </div>
+        <button
+          pButton
+          label="Load report"
+          icon="pi pi-play"
+          class="p-button-primary"
+          [disabled]="loading()"
+          [loading]="loading()"
+          (click)="generateReport()">
+        </button>
       </div>
-      <button
-        pButton
-        label="Generate report"
-        icon="pi pi-play"
-        class="p-button-primary"
-        [disabled]="!selectedCategory()"
-        (click)="generateReport()">
-      </button>
-    </div>
+    } @else if (selectedCategory() === 'autoship') {
+      <div class="flex flex-col md:flex-row md:items-end gap-4">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Date range (optional)</label>
+          <p class="text-xs text-gray-500 mb-1">Maps to month range for the autoship report. Leave blank for API defaults.</p>
+          <p-datepicker
+            [ngModel]="autoshipDateRange()"
+            (ngModelChange)="autoshipDateRange.set($event)"
+            selectionMode="range"
+            placeholder="From – To"
+            [showIcon]="true"
+            iconDisplay="input"
+            appendTo="body"
+            styleClass="w-64"
+            inputStyleClass="w-full h-10 border-gray-300"
+            panelStyleClass="p-datepicker-premium">
+          </p-datepicker>
+        </div>
+        <button
+          pButton
+          label="Load report"
+          icon="pi pi-play"
+          class="p-button-primary"
+          [disabled]="loading()"
+          [loading]="loading()"
+          (click)="generateReport()">
+        </button>
+      </div>
+    } @else {
+      <p class="text-sm text-gray-500">Select a report category above.</p>
+    }
   </div>
 
-  <!-- Report viewer (after Generate) -->
   @if (generated()) {
     <div class="space-y-4">
-      <!-- Report summary -->
       <div class="bg-white border border-gray-200 rounded-xl px-5 py-4">
         <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Report summary</h2>
         <p class="text-gray-900 font-medium">
-          Report: {{ selectedCategoryLabel() }}, {{ dateRangeLabel() }}
-        </p>
-        <p class="text-sm text-gray-500 mt-1">
-          {{ filteredReports().length }} record(s). Read-only view.
+          {{ selectedCategoryLabel() }}
+          @if (selectedCategory() === 'admin_fees') {
+            — {{ dateRangeLabel() }}
+          }
+          @if (selectedCategory() === 'autoship') {
+            — {{ autoshipRangeLabel() }}
+          }
         </p>
       </div>
 
-      <!-- Filters & disabled Print/Export -->
       <div class="bg-white border border-gray-200 rounded-xl px-5 py-4">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div class="relative">
@@ -77,40 +112,83 @@
               type="text"
               [value]="reportSearchQuery()"
               (input)="onReportSearch($event)"
-              placeholder="Search in report..."
+              placeholder="Search in loaded data..."
               class="h-10 w-full md:w-72 pl-9 pr-4 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
             />
-          </div>
-          <div class="flex items-center gap-2">
-            <button
-              pButton
-              label="Print"
-              icon="pi pi-print"
-              class="p-button-outlined p-button-secondary"
-              [disabled]="true"
-              pTooltip="Read-only. Available with backend."
-              tooltipPosition="top">
-            </button>
-            <button
-              pButton
-              label="Export"
-              icon="pi pi-download"
-              class="p-button-outlined p-button-secondary"
-              [disabled]="true"
-              pTooltip="Read-only. Available with backend."
-              tooltipPosition="top">
-            </button>
           </div>
         </div>
       </div>
 
-      <!-- Data table -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <app-data-table
-          [value]="filteredReports()"
-          [headers]="tableHeaders()">
-        </app-data-table>
-      </div>
+      @if (selectedCategory() === 'admin_fees') {
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <app-data-table
+            [value]="adminFeesFiltered()"
+            [headers]="adminFeeHeaders()"
+            [loading]="loading()">
+            <ng-template pTemplate="body" let-row>
+              <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+                <td class="px-5 py-4 font-mono text-sm">{{ row.type }}</td>
+                <td class="px-5 py-4 text-right">{{ row.total | number: '1.2-2' }}</td>
+                <td class="px-5 py-4 text-right">{{ row.count }}</td>
+              </tr>
+            </ng-template>
+          </app-data-table>
+        </div>
+      }
+
+      @if (selectedCategory() === 'autoship') {
+        <div class="space-y-6">
+          <div>
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">Monthly summary</h3>
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <app-data-table
+                [value]="autoshipSummaryFiltered()"
+                [headers]="autoshipSummaryHeaders()"
+                [loading]="loading()">
+                <ng-template pTemplate="body" let-row>
+                  <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+                    <td class="px-5 py-4 font-mono text-sm">{{ row.monthIdentifier }}</td>
+                    <td class="px-5 py-4 text-right">{{ row.userCount }}</td>
+                    <td class="px-5 py-4 text-right">{{ row.totalAmountUsd | number: '1.2-2' }}</td>
+                  </tr>
+                </ng-template>
+              </app-data-table>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <h3 class="text-sm font-semibold text-gray-700">Detail rows</h3>
+              <button
+                pButton
+                type="button"
+                label="Load more"
+                class="p-button-outlined p-button-sm"
+                [disabled]="loading()"
+                [loading]="loading()"
+                (click)="loadMoreAutoship()">
+              </button>
+            </div>
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <app-data-table
+                [value]="autoshipRowsFiltered()"
+                [headers]="autoshipDetailHeaders()"
+                [loading]="loading()">
+                <ng-template pTemplate="body" let-row>
+                  <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
+                    <td class="px-5 py-4 font-mono text-xs break-all">{{ row.userId }}</td>
+                    <td class="px-5 py-4 font-mono text-sm">{{ row.monthIdentifier }}</td>
+                    <td class="px-5 py-4 text-right">{{ row.amountUsd | number: '1.2-2' }}</td>
+                    <td class="px-5 py-4 text-sm text-gray-600">
+                      {{ row.processedAt ? (row.processedAt | date: 'medium') : '—' }}
+                    </td>
+                  </tr>
+                </ng-template>
+              </app-data-table>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   }
 </div>

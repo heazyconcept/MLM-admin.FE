@@ -1,44 +1,45 @@
-<div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm h-full">
-  <!-- Header -->
-  <div class="flex items-start justify-between mb-3">
-    <div class="flex items-center gap-3">
-      @if (icon()) {
-        <div 
-          class="w-10 h-10 rounded-lg flex items-center justify-center"
-          [class]="iconBg()">
-          <i [class]="icon() + ' ' + iconColor()"></i>
-        </div>
-      }
-      <div>
-        <span class="text-sm font-medium text-mlm-secondary">{{ title() }}</span>
-        @if (subtitle()) {
-          <p class="text-xs text-mlm-secondary/70">{{ subtitle() }}</p>
-        }
-      </div>
-    </div>
-    @if (showMenu()) {
-      <button class="p-1 rounded hover:bg-gray-100 text-mlm-secondary transition-colors">
-        <i class="pi pi-ellipsis-h"></i>
-      </button>
+<ng-template #cardInner>
+  <div class="bg-white rounded-xl px-5 py-5 border border-slate-200 h-full
+              hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+
+    <!-- Title -->
+    <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+      {{ title() }}
+    </p>
+
+    @if (subtitle()) {
+      <p class="text-[11px] text-slate-400 -mt-2 mb-3">{{ subtitle() }}</p>
     }
-  </div>
 
-  <!-- Value -->
-  <div class="mb-2">
-    <span class="text-2xl font-bold text-mlm-text">{{ value() }}</span>
-  </div>
+    <!-- Value -->
+    <p class="text-3xl font-bold text-mlm-text tracking-tight tabular-nums leading-none mb-3">
+      {{ value() }}
+    </p>
 
-  <!-- Change Indicator -->
-  @if (change() !== null) {
-    <div class="flex items-center gap-2">
-      <span 
-        class="flex items-center gap-1 text-sm font-medium"
-        [class.text-mlm-success]="isPositive()"
-        [class.text-mlm-error]="!isPositive()">
-        <i class="pi text-xs" [class.pi-arrow-up]="isPositive()" [class.pi-arrow-down]="!isPositive()"></i>
-        {{ changeFormatted() }}
-      </span>
-      <span class="text-sm text-mlm-secondary">{{ changeLabel() }}</span>
-    </div>
-  }
-</div>
+    <!-- Change indicator -->
+    @if (change() !== null) {
+      <div class="flex items-center gap-1.5">
+        <span class="flex items-center gap-1 text-xs font-semibold"
+              [class.text-mlm-primary]="isPositive()"
+              [class.text-mlm-error]="!isPositive()">
+          <i class="pi text-[10px]"
+             [class.pi-arrow-up]="isPositive()"
+             [class.pi-arrow-down]="!isPositive()"></i>
+          {{ changeFormatted() }}
+        </span>
+        <span class="text-xs text-slate-400">{{ changeLabel() }}</span>
+      </div>
+    }
+
+  </div>
+</ng-template>
+
+@if (routerLink(); as link) {
+  <a [routerLink]="link"
+     class="block h-full no-underline text-inherit rounded-xl
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-mlm-primary/30">
+    <ng-container *ngTemplateOutlet="cardInner"></ng-container>
+  </a>
+} @else {
+  <ng-container *ngTemplateOutlet="cardInner"></ng-container>
+}

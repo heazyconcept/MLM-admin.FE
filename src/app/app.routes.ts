@@ -128,7 +128,8 @@ export const routes: Routes = [
           { path: 'financial', loadComponent: () => import('./features/system/financial/financial-rules.component').then(m => m.FinancialRulesComponent) },
           { path: 'currency', loadComponent: () => import('./features/system/currency/currency-localization.component').then(m => m.CurrencyLocalizationComponent) },
           { path: 'features', loadComponent: () => import('./features/system/features/feature-toggles.component').then(m => m.FeatureTogglesComponent) },
-          { path: 'thresholds', loadComponent: () => import('./features/system/thresholds/thresholds-limits.component').then(m => m.ThresholdsLimitsComponent) }
+          { path: 'thresholds', loadComponent: () => import('./features/system/thresholds/thresholds-limits.component').then(m => m.ThresholdsLimitsComponent) },
+          { path: 'api-settings', loadComponent: () => import('./features/system/api-settings/system-api-settings.component').then(m => m.SystemApiSettingsComponent) }
         ]
       },
       {
@@ -146,7 +147,7 @@ export const routes: Routes = [
         path: 'notifications',
         canActivate: [permissionGuard],
         data: { feature: Feature.Notifications },
-        loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
+        loadComponent: () => import('./features/notifications/notifications-broadcast.component').then(m => m.NotificationsBroadcastComponent)
       },
       {
         path: '',

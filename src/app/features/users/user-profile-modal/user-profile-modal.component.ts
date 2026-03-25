@@ -1,9 +1,25 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, output, model, input } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  output,
+  model,
+  input,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { User } from '../services/users.service';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
+import {
+  EarningsService,
+  UserEarningsActivityItem,
+  formatUserEarningsActivityAmount,
+  getUserEarningsActivityDetail,
+  getUserEarningsActivityKind,
+  userEarningsActivityTrackId,
+} from '../../earnings/services/earnings.service';
 
 @Component({
   selector: 'app-user-profile-modal',
@@ -13,6 +29,8 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserProfileModalComponent {
+  private earningsService = inject(EarningsService);
+
   visible = model(false);
   user = input<User | null>(null);
 
@@ -20,9 +38,48 @@ export class UserProfileModalComponent {
 
   activeTab = 'basic';
 
+  earningsItems = signal<UserEarningsActivityItem[]>([]);
+  earningsLoading = signal(false);
+  earningsError = signal<string | null>(null);
+
   close(): void {
     this.visible.set(false);
   }
+
+  onEarningsTab(): void {
+    this.activeTab = 'earnings';
+    this.loadEarningsActivity();
+  }
+
+  private loadEarningsActivity(): void {
+    const u = this.user();
+    if (!u?.id) return;
+    this.earningsLoading.set(true);
+    this.earningsError.set(null);
+    this.earningsService
+      .getUserEarningsActivity({ userId: u.id, limit: 25, offset: 0 })
+      .subscribe({
+        next: (res) => {
+          this.earningsLoading.set(false);
+          if (res === null) {
+            this.earningsError.set('Failed to load earnings activity.');
+            this.earningsItems.set([]);
+            return;
+          }
+          this.earningsItems.set(res.items ?? []);
+        },
+        error: () => {
+          this.earningsLoading.set(false);
+          this.earningsError.set('Failed to load earnings activity.');
+          this.earningsItems.set([]);
+        },
+      });
+  }
+
+  formatActivityAmount = formatUserEarningsActivityAmount;
+  activityKind = getUserEarningsActivityKind;
+  activityDetail = getUserEarningsActivityDetail;
+  activityTrack = userEarningsActivityTrackId;
 
   onAction(action: string): void {
     const currentUser = this.user();

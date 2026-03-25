@@ -1,64 +1,46 @@
-    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-      <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-         <div>
-           <h2 class="text-xl font-bold text-gray-900">Rank Structure</h2>
-           <p class="text-gray-500 text-sm mt-1">Define qualification criteria and benefits for each rank.</p>
-         </div>
-      </div>
-      
-      <app-data-table
-        [value]="ranks()"
-        [headers]="tableHeaders()">
+<div class="space-y-4">
+  @if (rankingError()) {
+    <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+      {{ rankingError() }}
+    </div>
+  }
 
-        <!-- Level Template -->
+  <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h2 class="text-xl font-bold text-gray-900">Rank structure</h2>
+        <p class="text-gray-500 text-sm mt-1">
+          Stages from <code class="text-xs bg-gray-100 px-1 rounded">GET /admin/ranking-rules</code>.
+          Edit rules under
+          <a routerLink="/admin/system/financial" class="text-mlm-primary font-medium hover:underline">System → Financial</a>.
+        </p>
+      </div>
+    </div>
+
+    @if (rankingLoading() && rankingRules().length === 0) {
+      <div class="p-8 text-center text-gray-500 text-sm">Loading ranking rules…</div>
+    } @else {
+      <app-data-table [value]="rankingRules()" [headers]="tableHeaders()" [loading]="rankingLoading()">
         <ng-template pTemplate="body" let-row>
           <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition">
-            <!-- Level -->
             <td class="px-5 py-4">
-              <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 font-bold text-sm mx-auto">
-                {{ row.level }}
+              <span
+                class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 font-bold text-sm">
+                {{ row.stage }}
               </span>
             </td>
-
-            <!-- Rank Name -->
             <td class="px-5 py-4">
-              <span class="font-bold text-gray-900">{{ row.name }}</span>
+              <span class="font-bold text-gray-900">{{ row.rankName }}</span>
             </td>
-
-            <!-- Requirements -->
-            <td class="px-5 py-4">
-              <div class="space-y-1 text-sm">
-                <div class="flex items-center gap-2">
-                   <span class="w-20 text-gray-500 text-xs uppercase font-bold">Personal</span>
-                   <span class="font-medium text-gray-900">{{ row.requirements.personalSales | currency }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                   <span class="w-20 text-gray-500 text-xs uppercase font-bold">Team</span>
-                   <span class="font-medium text-gray-900">{{ row.requirements.teamSales | currency }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                   <span class="w-20 text-gray-500 text-xs uppercase font-bold">Directs</span>
-                   <span class="font-medium text-gray-900">{{ row.requirements.directReferrals }} Users</span>
-                </div>
-              </div>
+            <td class="px-5 py-4 text-center">
+              <span class="font-medium text-gray-900">{{ row.requiredLevel }}</span>
             </td>
-
-            <!-- Benefits -->
-            <td class="px-5 py-4">
-              <div class="space-y-1 text-sm">
-                <div class="flex items-center gap-2">
-                   <span class="w-16 text-gray-500 text-xs uppercase font-bold">Bonus</span>
-                   <span class="font-medium text-mlm-success">{{ row.benefits.bonus | currency }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                   <span class="w-16 text-gray-500 text-xs uppercase font-bold">Cap</span>
-                   <span class="font-medium text-gray-900">{{ row.benefits.capLimit | currency }}</span>
-                </div>
-              </div>
+            <td class="px-5 py-4 text-right">
+              <span class="font-medium text-mlm-success">{{ row.bonusAmount | currency }}</span>
             </td>
           </tr>
         </ng-template>
-
       </app-data-table>
-
-    </div>
+    }
+  </div>
+</div>

@@ -1,4 +1,10 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  OnInit
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -6,9 +12,35 @@ import { StatCardComponent } from './components/stat-card/stat-card.component';
 import { SystemStatusComponent } from './components/system-status/system-status.component';
 import { WalletSummaryComponent, WalletSummaryData } from './components/wallet-summary/wallet-summary.component';
 import { OverviewChartComponent } from './components/overview-chart/overview-chart.component';
-import { PackageChartComponent } from './components/package-chart/package-chart.component';
-import { PendingActionsComponent } from './components/pending-actions/pending-actions.component';
+import { PackageChartComponent, PackageData } from './components/package-chart/package-chart.component';
+import { PendingActionsComponent, PendingAction } from './components/pending-actions/pending-actions.component';
 import { ActivityFeedComponent } from './components/activity-feed/activity-feed.component';
+import {
+  AdminDashboardSummary,
+  DashboardService,
+  RevenueTrendPoint
+} from './dashboard.service';
+
+interface StatCardVM {
+  title: string;
+  value: string;
+  subtitle?: string;
+  icon: string;
+  iconBg: string;
+  iconColor: string;
+  change: number | null;
+  changeLabel: string;
+  routerLink?: string[];
+}
+
+const PKG_COLORS: Record<string, string> = {
+  SILVER: '#94a3b8',
+  NICKEL: '#94a3b8',
+  GOLD: '#F9A825',
+  PLATINUM: '#64748b',
+  RUBY: '#ef4444',
+  DIAMOND: '#3b82f6'
+};
 
 @Component({
   selector: 'app-dashboard',
@@ -28,101 +60,293 @@ import { ActivityFeedComponent } from './components/activity-feed/activity-feed.
   styleUrls: ['./dashboard.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
+  private readonly dashboardService = inject(DashboardService);
+
   userName = 'Admin';
   currentDate = new Date();
 
-  // System Overview Stats
-  systemStats = [
-    {
-      title: 'Total Users',
-      value: '12,458',
-      icon: 'pi pi-users',
-      iconBg: 'bg-mlm-green-100',
-      iconColor: 'text-mlm-primary',
-      change: 12.5,
-      changeLabel: 'from last month'
-    },
-    {
-      title: 'Active Users',
-      value: '8,934',
-      subtitle: '71.6% of total',
-      icon: 'pi pi-user-plus',
-      iconBg: 'bg-mlm-success/10',
-      iconColor: 'text-mlm-success',
-      change: 8.2,
-      changeLabel: 'from last month'
-    },
-    {
-      title: 'Merchants',
-      value: '156',
-      icon: 'pi pi-shop',
-      iconBg: 'bg-mlm-blue-100',
-      iconColor: 'text-mlm-blue-600',
-      change: 24.3,
-      changeLabel: 'from last month'
-    }
-  ];
+  loading = signal(false);
+  loadError = signal<string | null>(null);
 
-  // Financial Stats
-  financialStats = [
-    {
-      title: 'Total Earnings',
-      value: '$4,582,340.89',
-      icon: 'pi pi-chart-line',
-      iconBg: 'bg-mlm-primary/10',
-      iconColor: 'text-mlm-primary',
-      change: 18.7,
-      changeLabel: 'from last month'
-    },
-    {
-      title: 'Total Withdrawals',
-      value: '$1,245,670.00',
-      icon: 'pi pi-wallet',
-      iconBg: 'bg-mlm-warning/10',
-      iconColor: 'text-mlm-warning',
-      change: -5.2,
-      changeLabel: 'from last month'
-    }
-  ];
+  systemStats = signal<StatCardVM[]>([]);
+  financialStats = signal<StatCardVM[]>([]);
+  userMetrics = signal<StatCardVM[]>([]);
 
-  // User Metrics
-  userMetrics = [
-    {
-      title: 'New Registrations',
-      value: '847',
-      subtitle: 'This month',
-      icon: 'pi pi-user-plus',
-      iconBg: 'bg-mlm-success/10',
-      iconColor: 'text-mlm-success',
-      change: 15.3,
-      changeLabel: 'from last month'
-    },
-    {
-      title: 'Active Network',
-      value: '45,892',
-      subtitle: 'Total legs',
-      icon: 'pi pi-sitemap',
-      iconBg: 'bg-mlm-primary/10',
-      iconColor: 'text-mlm-primary',
-      change: 9.8,
-      changeLabel: 'growth'
-    }
-  ];
+  walletSummary = signal<WalletSummaryData[]>([]);
+  walletTotalBalance = signal('—');
 
-  // Wallet Summary Data
-  walletSummary: WalletSummaryData[] = [
-    { type: 'Withdrawable', label: 'Cash Wallet', balance: '$2,456,780.00', icon: 'pi pi-wallet', color: '#49A321' },
-    { type: 'Non-Withdrawable', label: 'Product Voucher', balance: '$892,450.00', icon: 'pi pi-ticket', color: '#3b82f6' },
-    { type: 'Non-Withdrawable', label: 'Autoship Wallet', balance: '$345,890.00', icon: 'pi pi-refresh', color: '#F9A825' }
-  ];
+  revenueTrend = signal<RevenueTrendPoint[]>([]);
+  revenueTotalFormatted = signal('—');
+
+  packageData = signal<PackageData[]>([]);
+  pendingActions = signal<PendingAction[]>([]);
+
+  ngOnInit(): void {
+    this.reload();
+  }
+
+  reload(): void {
+    this.loading.set(true);
+    this.loadError.set(null);
+    this.dashboardService.getSummary().subscribe((s) => {
+      this.loading.set(false);
+      if (!s) {
+        this.loadError.set('Failed to load dashboard summary. Please try again.');
+        this.applyEmptyState();
+        return;
+      }
+      this.applySummary(s);
+    });
+  }
+
+  private applyEmptyState(): void {
+    this.systemStats.set([]);
+    this.financialStats.set([]);
+    this.userMetrics.set([]);
+    this.walletSummary.set([]);
+    this.walletTotalBalance.set('—');
+    this.revenueTrend.set([]);
+    this.revenueTotalFormatted.set('—');
+    this.packageData.set([]);
+    this.pendingActions.set([]);
+  }
+
+  private applySummary(s: AdminDashboardSummary): void {
+    const openTasks =
+      (s.pendingWithdrawalsCount ?? 0) +
+      (s.initiatedPaymentsCount ?? 0) +
+      (s.pendingIdentityCount ?? 0);
+
+    this.systemStats.set([
+      {
+        title: 'Total users',
+        value: this.fmtInt(s.userCount),
+        icon: 'pi pi-users',
+        iconBg: 'bg-mlm-green-100',
+        iconColor: 'text-mlm-primary',
+        change: null,
+        changeLabel: ''
+      },
+      {
+        title: 'Merchants',
+        value: this.fmtInt(s.merchantCount),
+        icon: 'pi pi-shop',
+        iconBg: 'bg-mlm-blue-100',
+        iconColor: 'text-mlm-blue-600',
+        change: null,
+        changeLabel: ''
+      },
+      {
+        title: 'Open admin tasks',
+        subtitle: 'Withdrawals + payments + identity',
+        value: this.fmtInt(openTasks),
+        icon: 'pi pi-inbox',
+        iconBg: 'bg-mlm-warning/10',
+        iconColor: 'text-mlm-warning',
+        change: null,
+        changeLabel: ''
+      }
+    ]);
+
+    const trend = Array.isArray(s.revenueTrend) ? s.revenueTrend : [];
+    const revenueSum = trend.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+
+    this.revenueTrend.set(trend);
+    this.revenueTotalFormatted.set(this.fmtAmount(revenueSum));
+
+    this.financialStats.set([
+      {
+        title: 'Revenue (30 days)',
+        value: this.revenueTotalFormatted(),
+        subtitle: 'SUCCESS payments by day',
+        icon: 'pi pi-chart-line',
+        iconBg: 'bg-mlm-primary/10',
+        iconColor: 'text-mlm-primary',
+        change: null,
+        changeLabel: ''
+      },
+      {
+        title: 'Pending withdrawals',
+        value: this.fmtInt(s.pendingWithdrawalsCount ?? 0),
+        icon: 'pi pi-wallet',
+        iconBg: 'bg-mlm-warning/10',
+        iconColor: 'text-mlm-warning',
+        change: null,
+        changeLabel: ''
+      }
+    ]);
+
+    this.userMetrics.set([
+      {
+        title: 'Pending withdrawals',
+        value: this.fmtInt(s.pendingWithdrawalsCount ?? 0),
+        icon: 'pi pi-wallet',
+        iconBg: 'bg-mlm-warning/10',
+        iconColor: 'text-mlm-warning',
+        change: null,
+        changeLabel: '',
+        routerLink: ['/admin/withdrawals/pending']
+      },
+      {
+        title: 'Initiated payments',
+        value: this.fmtInt(s.initiatedPaymentsCount ?? 0),
+        icon: 'pi pi-credit-card',
+        iconBg: 'bg-mlm-blue-100',
+        iconColor: 'text-mlm-blue-600',
+        change: null,
+        changeLabel: '',
+        routerLink: ['/admin/payments']
+      },
+      {
+        title: 'Pending identity',
+        value: this.fmtInt(s.pendingIdentityCount ?? 0),
+        icon: 'pi pi-id-card',
+        iconBg: 'bg-mlm-primary/10',
+        iconColor: 'text-mlm-primary',
+        change: null,
+        changeLabel: ''
+      },
+      {
+        title: 'Total users',
+        value: this.fmtInt(s.userCount),
+        subtitle: 'Registered accounts',
+        icon: 'pi pi-users',
+        iconBg: 'bg-mlm-success/10',
+        iconColor: 'text-mlm-success',
+        change: null,
+        changeLabel: '',
+        routerLink: ['/admin/users']
+      }
+    ]);
+
+    this.walletSummary.set(this.mapWallets(s.wallets ?? {}));
+    const wSum = Object.values(s.wallets ?? {}).reduce(
+      (a, v) => a + (Number(v) || 0),
+      0
+    );
+    this.walletTotalBalance.set(this.fmtAmount(wSum));
+
+    this.packageData.set(this.mapPackageDistribution(s.packageDistribution ?? {}));
+    this.pendingActions.set(this.mapPendingActions(s));
+  }
+
+  private mapWallets(w: Record<string, number>): WalletSummaryData[] {
+    const meta: Record<
+      string,
+      Pick<WalletSummaryData, 'label' | 'type' | 'icon' | 'color'>
+    > = {
+      CASH: {
+        label: 'Cash Wallet',
+        type: 'Withdrawable',
+        icon: 'pi pi-wallet',
+        color: '#49A321'
+      },
+      PRODUCT_VOUCHER: {
+        label: 'Product Voucher',
+        type: 'Non-Withdrawable',
+        icon: 'pi pi-ticket',
+        color: '#3b82f6'
+      },
+      AUTOSHIP: {
+        label: 'Autoship Wallet',
+        type: 'Non-Withdrawable',
+        icon: 'pi pi-refresh',
+        color: '#F9A825'
+      }
+    };
+
+    return Object.entries(w).map(([key, raw]) => {
+      const u = key.toUpperCase();
+      const m = meta[u] ?? {
+        label: key.replace(/_/g, ' '),
+        type: 'Wallet',
+        icon: 'pi pi-wallet',
+        color: '#64748b'
+      };
+      return {
+        ...m,
+        balance: this.fmtAmount(Number(raw) || 0)
+      };
+    });
+  }
+
+  private mapPackageDistribution(dist: Record<string, number>): PackageData[] {
+    const entries = Object.entries(dist).filter(([, c]) => Number(c) > 0);
+    if (!entries.length) return [];
+    const total = entries.reduce((sum, [, n]) => sum + Number(n), 0);
+    return entries
+      .map(([key, count]) => {
+        const c = Number(count) || 0;
+        const name = this.formatPackageKey(key);
+        return {
+          name,
+          count: c,
+          percentage: total > 0 ? Math.round((c / total) * 1000) / 10 : 0,
+          color: PKG_COLORS[key.toUpperCase()] ?? '#64748b'
+        };
+      })
+      .sort((a, b) => b.count - a.count);
+  }
+
+  private formatPackageKey(key: string): string {
+    return key
+      .split(/[_\s]+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  private mapPendingActions(s: AdminDashboardSummary): PendingAction[] {
+    return [
+      {
+        type: 'withdrawals',
+        label: 'Pending withdrawals',
+        count: s.pendingWithdrawalsCount ?? 0,
+        icon: 'pi pi-wallet',
+        iconBg: 'bg-mlm-warning/10',
+        iconColor: 'text-mlm-warning',
+        urgency: 'high'
+      },
+      {
+        type: 'payments',
+        label: 'Initiated payments',
+        count: s.initiatedPaymentsCount ?? 0,
+        icon: 'pi pi-credit-card',
+        iconBg: 'bg-mlm-blue-100',
+        iconColor: 'text-mlm-blue-600',
+        urgency: 'medium'
+      },
+      {
+        type: 'compliance',
+        label: 'Pending identity / KYC',
+        count: s.pendingIdentityCount ?? 0,
+        icon: 'pi pi-id-card',
+        iconBg: 'bg-mlm-warning/10',
+        iconColor: 'text-mlm-warning',
+        urgency: 'medium'
+      }
+    ];
+  }
+
+  private fmtInt(n: number): string {
+    return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(
+      Number(n) || 0
+    );
+  }
+
+  private fmtAmount(n: number): string {
+    return new Intl.NumberFormat(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(Number(n) || 0);
+  }
 
   formatDate(date: Date): string {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
     });
   }
 }

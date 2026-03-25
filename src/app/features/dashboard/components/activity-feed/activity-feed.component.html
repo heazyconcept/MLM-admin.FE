@@ -1,54 +1,48 @@
-<div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-  <div class="flex items-center justify-between mb-4">
-    <h3 class="text-lg font-semibold text-mlm-text">Recent Activity</h3>
-    <a href="#" class="text-sm text-mlm-primary hover:text-brand-green-dark transition-colors">View All</a>
-  </div>
-
-  <div class="space-y-4">
-    @for (activity of displayActivities(); track activity.id) {
-      <div class="flex items-start gap-3 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
-        <!-- Icon -->
-        <div 
-          class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-          [class]="getTypeConfig(activity.type).bg">
-          <i [class]="getTypeConfig(activity.type).icon + ' ' + getTypeConfig(activity.type).color"></i>
-        </div>
-
-        <!-- Content -->
-        <div class="flex-1 min-w-0">
-          <div class="flex items-start justify-between gap-2">
-            <div>
-              <p class="font-medium text-mlm-text">{{ activity.title }}</p>
-              <p class="text-sm text-mlm-secondary truncate">{{ activity.description }}</p>
-            </div>
-            @if (activity.amount) {
-              <span 
-                class="text-sm font-semibold whitespace-nowrap"
-                [class.text-mlm-success]="activity.amount.startsWith('+')"
-                [class.text-mlm-error]="activity.amount.startsWith('-')"
-                [class.text-mlm-text]="!activity.amount.startsWith('+') && !activity.amount.startsWith('-')">
-                {{ activity.amount }}
-              </span>
-            }
-          </div>
-          <div class="flex items-center gap-2 mt-1">
-            <span class="text-xs text-mlm-secondary">{{ formatTime(activity.timestamp) }}</span>
-            @if (activity.user) {
-              <span class="text-xs text-mlm-secondary">•</span>
-              <span class="text-xs text-mlm-primary">{{ activity.user }}</span>
-            }
-          </div>
-        </div>
-      </div>
-    }
-  </div>
-
-  <!-- Empty State -->
-  @if (displayActivities.length === 0) {
-    <div class="text-center py-8">
-      <i class="pi pi-inbox text-4xl text-mlm-secondary/50 mb-3"></i>
-      <p class="text-mlm-secondary">No recent activity</p>
+<div class="rounded-lg border border-slate-200/70 bg-white p-6">
+  <div class="flex items-baseline justify-between gap-4 mb-5">
+    <div>
+      <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Recent activity</h3>
+      <p class="text-[13px] text-slate-400 mt-0.5">Latest events</p>
     </div>
+    <span class="text-xs text-slate-400">Demo data</span>
+  </div>
+
+  @if (displayActivities().length === 0) {
+    <p class="text-sm text-slate-400 py-10 text-center">No recent activity</p>
+  } @else {
+    <ul class="space-y-0 divide-y divide-slate-100">
+      @for (activity of displayActivities(); track activity.id) {
+        <li class="flex gap-0 py-3 first:pt-0">
+          <div
+            class="w-0.5 shrink-0 rounded-full self-stretch min-h-[2.5rem] mr-4"
+            [class]="getTypeAccent(activity.type)">
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-slate-800">{{ activity.title }}</p>
+                <p class="text-[13px] text-slate-500 mt-0.5 line-clamp-2">{{ activity.description }}</p>
+              </div>
+              @if (activity.amount) {
+                <span
+                  class="text-sm font-medium tabular-nums shrink-0"
+                  [class.text-emerald-700]="activity.amount.startsWith('+')"
+                  [class.text-red-600]="activity.amount.startsWith('-')"
+                  [class.text-slate-700]="!activity.amount.startsWith('+') && !activity.amount.startsWith('-')">
+                  {{ activity.amount }}
+                </span>
+              }
+            </div>
+            <div class="flex items-center gap-2 mt-1.5 text-[11px] text-slate-400">
+              <span>{{ formatTime(activity.timestamp) }}</span>
+              @if (activity.user) {
+                <span class="text-slate-300">·</span>
+                <span class="text-slate-500">{{ activity.user }}</span>
+              }
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
   }
 </div>
-

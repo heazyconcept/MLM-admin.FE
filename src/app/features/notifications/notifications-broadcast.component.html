@@ -1,0 +1,93 @@
+<p-toast></p-toast>
+
+<div class="min-h-screen bg-linear-to-br from-gray-50 via-white to-purple-50/30 p-8">
+  <div class="mb-8 max-w-2xl">
+    <h1 class="text-3xl font-black text-mlm-text mb-2">Notifications</h1>
+    <p class="text-mlm-secondary">
+      Send a broadcast announcement to users via <code class="text-xs bg-gray-100 px-1 rounded">POST /admin/notifications/broadcast</code>.
+    </p>
+  </div>
+
+  @if (isViewOnly()) {
+    <div class="mb-6 max-w-2xl">
+      <app-info-banner
+        message="You have view-only access. Contact an administrator to send broadcasts."
+        type="info">
+      </app-info-banner>
+    </div>
+  }
+
+  <div class="max-w-2xl space-y-6 bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+      <input
+        pInputText
+        type="text"
+        class="w-full"
+        [ngModel]="title()"
+        (ngModelChange)="title.set($event)"
+        [disabled]="isViewOnly()"
+        placeholder="Maintenance notice" />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+      <textarea
+        pTextarea
+        rows="5"
+        class="w-full"
+        [ngModel]="message()"
+        (ngModelChange)="message.set($event)"
+        [disabled]="isViewOnly()"
+        placeholder="We will be down at 10 PM UTC.">
+      </textarea>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Audience</label>
+      <select
+        class="w-full h-10 rounded-lg border border-gray-300 px-3 text-sm"
+        [ngModel]="targetAudience()"
+        (ngModelChange)="targetAudience.set($event)"
+        [disabled]="isViewOnly()">
+        <option value="ALL">All users</option>
+        <option value="ACTIVE">Active users</option>
+      </select>
+    </div>
+
+    @if (canBroadcast() && !confirmStep()) {
+      <button
+        pButton
+        type="button"
+        label="Review & send"
+        class="p-button-primary"
+        (click)="beginSend()">
+      </button>
+    }
+
+    @if (confirmStep()) {
+      <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <p class="font-semibold mb-2">Confirm broadcast</p>
+        <p>This may reach many users. Are you sure you want to send?</p>
+        <div class="flex flex-wrap gap-2 mt-4">
+          <button
+            pButton
+            type="button"
+            label="Send now"
+            class="p-button-primary"
+            [loading]="sending()"
+            (click)="submit()">
+          </button>
+          <button
+            pButton
+            type="button"
+            label="Cancel"
+            class="p-button-outlined"
+            [disabled]="sending()"
+            (click)="cancelConfirm()">
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
