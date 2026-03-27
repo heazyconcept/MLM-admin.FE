@@ -74,18 +74,10 @@ export class SidebarComponent {
             { label: 'Categories', icon: 'pi pi-tags', route: '/admin/products/categories', feature: Feature.Products }
           ]
         },
-        {
-          label: 'Orders & Logistics',
-          icon: 'pi pi-box',
-          feature: Feature.OrdersLogistics,
-          submenu: [
-            { label: 'Orders', icon: 'pi pi-box', route: '/admin/orders', feature: Feature.OrdersLogistics },
-            { label: 'Logistics', icon: 'pi pi-truck', route: '/admin/logistics', feature: Feature.OrdersLogistics }
-          ]
-        },
+        { label: 'Orders', icon: 'pi pi-credit-card', route: '/admin/orders', feature: Feature.OrdersLogistics},
         {
           label: 'Merchants',
-          icon: 'pi pi-store',
+          icon: 'pi pi-truck',
           feature: Feature.Merchants,
           submenu: [
             { label: 'All Merchants', icon: 'pi pi-list', route: '/admin/merchants', feature: Feature.Merchants },
@@ -105,7 +97,7 @@ export class SidebarComponent {
     {
       title: 'GENERAL',
       items: [
-        { label: 'System Configuration', icon: 'pi pi-cog', route: '/admin/system', feature: Feature.SystemConfig },
+          // { label: 'System Configuration', icon: 'pi pi-cog', route: '/admin/system', feature: Feature.SystemConfig },
         { label: 'Log out', icon: 'pi pi-sign-out', action: () => this.logout() }
       ]
     }
