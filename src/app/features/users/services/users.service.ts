@@ -67,6 +67,22 @@ interface AdminUsersListResponse {
   offset: number;
 }
 
+/** GET /admin/users query params */
+export interface UsersListQuery {
+  limit?: number;
+  offset?: number;
+  package?: string;
+  rank?: string;
+  isRegistrationPaid?: boolean;
+  isActive?: boolean;
+  role?: 'USER' | 'MERCHANT' | 'ADMIN';
+}
+
+export interface UsersListResult {
+  users: User[];
+  total: number;
+}
+
 interface ResetPasswordResponse {
   message: string;
 }
@@ -80,9 +96,13 @@ export class UsersService {
   users = signal<User[]>([]);
   selectedUser = signal<User | null>(null);
 
-  getUsers(): Observable<User[]> {
-    return this.api.get<AdminUsersListResponse>('admin/users').pipe(
-      map(response => response.users.map(u => this.mapApiUserToUser(u)))
+  getUsers(query?: UsersListQuery): Observable<UsersListResult> {
+    const params = query as Record<string, unknown> | undefined;
+    return this.api.get<AdminUsersListResponse>('admin/users', params).pipe(
+      map((response) => ({
+        users: (response.users ?? []).map((u) => this.mapApiUserToUser(u)),
+        total: response.total ?? 0,
+      }))
     );
   }
 

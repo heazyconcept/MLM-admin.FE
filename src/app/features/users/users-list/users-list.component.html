@@ -48,7 +48,7 @@
           <p-select
             [options]="statusOptions"
             [ngModel]="statusFilter()"
-            (ngModelChange)="statusFilter.set($event)"
+            (ngModelChange)="statusFilter.set($event); onServerFilterChange()"
             placeholder="All Statuses"
             optionLabel="label"
             optionValue="value"
@@ -59,7 +59,7 @@
           <p-select
             [options]="packageOptions"
             [ngModel]="packageFilter()"
-            (ngModelChange)="packageFilter.set($event)"
+            (ngModelChange)="packageFilter.set($event); onServerFilterChange()"
             placeholder="All Packages"
             optionLabel="label"
             optionValue="value"
@@ -110,7 +110,13 @@
     <app-data-table
       [value]="filteredUsers()"
       [headers]="tableHeaders()"
-      [loading]="tableLoading()">
+      [loading]="tableLoading()"
+      [lazy]="true"
+      [totalRecords]="totalRecords()"
+      [first]="tableFirst()"
+      [rows]="pageRows()"
+      [rowsPerPageOptions]="[10, 20, 50]"
+      (pageChange)="onPageChange($event)">
 
       <ng-template pTemplate="body" let-row>
         <tr class="border-b border-slate-100 hover:bg-slate-50/60

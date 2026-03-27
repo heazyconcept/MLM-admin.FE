@@ -1,120 +1,141 @@
-<div class="space-y-12">
+<div class="space-y-6">
+
+  <!-- ── Error ── -->
   @if (loadError()) {
-    <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex items-center justify-between gap-4">
+    <div class="px-4 py-3 rounded-lg bg-mlm-red-50 border border-mlm-red-200
+                text-mlm-red-700 text-sm flex items-center justify-between">
       <span>{{ loadError() }}</span>
-      <button pButton type="button" label="Retry" class="p-button-sm" (click)="reload()"></button>
+      <button (click)="reload()"
+              class="underline font-medium ml-4 shrink-0">Retry</button>
     </div>
   }
 
-  <div class="flex justify-end">
-    <button
-      pButton
-      type="button"
-      icon="pi pi-refresh"
-      class="p-button-outlined p-button-sm"
-      [loading]="loading()"
-      [disabled]="loading()"
-      (click)="reload()">
-    </button>
-  </div>
-
-  <!-- KPI Cards Row — maps to GET /admin/earnings/overview summary -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-10 h-10 flex items-center justify-center overflow-hidden">
-          <img src="assests/paid.png" alt="" class="w-full h-full object-cover" />
-        </div>
-        <div>
-          <p class="text-sm font-medium text-gray-500">Total earnings</p>
-          @if (loading()) {
-            <h3 class="text-2xl font-bold text-gray-400">…</h3>
-          } @else {
-            <h3 class="text-2xl font-bold text-gray-900">{{ summary()?.totalEarnings ?? 0 | currency }}</h3>
-          }
-        </div>
-      </div>
-      <div class="text-xs text-gray-500 font-medium">Ledger credits in period</div>
+  <!-- ── KPI Cards ── -->
+  <div>
+    <div class="flex items-center justify-between mb-4">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
+        Period Summary
+      </p>
+      <button
+        (click)="reload()"
+        [disabled]="loading()"
+        pTooltip="Refresh" tooltipPosition="left"
+        class="w-8 h-8 flex items-center justify-center rounded-lg
+               border border-slate-200 text-slate-400 bg-white
+               hover:border-slate-300 hover:text-mlm-text
+               disabled:opacity-40 transition-colors duration-150">
+        <i class="pi pi-refresh text-xs" [class.pi-spin]="loading()"></i>
+      </button>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
-          <img src="assests/pending.png" alt="" class="w-full h-full object-cover" />
-        </div>
-        <div>
-          <p class="text-sm font-medium text-gray-500">Total CPV</p>
-          @if (loading()) {
-            <h3 class="text-2xl font-bold text-gray-400">…</h3>
-          } @else {
-            <h3 class="text-2xl font-bold text-gray-900">{{ summary()?.totalCpv ?? 0 | number:'1.0-2' }}</h3>
-          }
-        </div>
-      </div>
-      <div class="text-xs text-gray-500 font-medium">CPV volume in period</div>
-    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-blue-600">
-          <img src="assests/filter.png" alt="" class="w-full h-full object-cover" />
-        </div>
-        <div>
-          <p class="text-sm font-medium text-gray-500">Earning transactions</p>
-          @if (loading()) {
-            <h3 class="text-2xl font-bold text-gray-400">…</h3>
-          } @else {
-            <h3 class="text-2xl font-bold text-gray-900">{{ summary()?.earningCount ?? 0 }}</h3>
-          }
-        </div>
-      </div>
-      <div class="text-xs text-gray-500 font-medium">Count of earning entries</div>
-    </div>
-
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
-          <i class="pi pi-chart-line text-xl"></i>
-        </div>
-        <div>
-          <p class="text-sm font-medium text-gray-500">CPV transactions</p>
-          @if (loading()) {
-            <h3 class="text-2xl font-bold text-gray-400">…</h3>
-          } @else {
-            <h3 class="text-2xl font-bold text-gray-900">{{ summary()?.cpvCount ?? 0 }}</h3>
-          }
-        </div>
-      </div>
-      <div class="text-xs text-gray-500 font-medium">
-        @if (lastLoadedAt(); as t) {
-          Updated {{ t | date:'shortTime' }}
+      <!-- Total Earnings -->
+      <div class="bg-white rounded-xl border border-slate-200 px-5 py-5
+                  hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+        <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+          Total Earnings
+        </p>
+        @if (loading()) {
+          <p class="text-3xl font-bold text-slate-300 tracking-tight leading-none mb-2">…</p>
         } @else {
-          —
+          <p class="text-3xl font-bold text-mlm-text tracking-tight tabular-nums leading-none mb-2">
+            {{ summary()?.totalEarnings ?? 0 | currency }}
+          </p>
         }
+        <p class="text-[11px] text-slate-400">Ledger credits in period</p>
       </div>
+
+      <!-- Total CPV -->
+      <div class="bg-white rounded-xl border border-slate-200 px-5 py-5
+                  hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+        <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+          Total CPV
+        </p>
+        @if (loading()) {
+          <p class="text-3xl font-bold text-slate-300 tracking-tight leading-none mb-2">…</p>
+        } @else {
+          <p class="text-3xl font-bold text-mlm-text tracking-tight tabular-nums leading-none mb-2">
+            {{ summary()?.totalCpv ?? 0 | number:'1.0-2' }}
+          </p>
+        }
+        <p class="text-[11px] text-slate-400">CPV volume in period</p>
+      </div>
+
+      <!-- Earning Transactions -->
+      <div class="bg-white rounded-xl border border-slate-200 px-5 py-5
+                  hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+        <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+          Earning Transactions
+        </p>
+        @if (loading()) {
+          <p class="text-3xl font-bold text-slate-300 tracking-tight leading-none mb-2">…</p>
+        } @else {
+          <p class="text-3xl font-bold text-mlm-text tracking-tight tabular-nums leading-none mb-2">
+            {{ summary()?.earningCount ?? 0 }}
+          </p>
+        }
+        <p class="text-[11px] text-slate-400">Count of earning entries</p>
+      </div>
+
+      <!-- CPV Transactions -->
+      <div class="bg-white rounded-xl border border-slate-200 px-5 py-5
+                  hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+        <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+          CPV Transactions
+        </p>
+        @if (loading()) {
+          <p class="text-3xl font-bold text-slate-300 tracking-tight leading-none mb-2">…</p>
+        } @else {
+          <p class="text-3xl font-bold text-mlm-text tracking-tight tabular-nums leading-none mb-2">
+            {{ summary()?.cpvCount ?? 0 }}
+          </p>
+        }
+        <p class="text-[11px] text-slate-400">
+          @if (lastLoadedAt(); as t) {
+            Updated {{ t | date:'shortTime' }}
+          } @else {
+            Count of CPV entries
+          }
+        </p>
+      </div>
+
     </div>
   </div>
 
-  <!-- Charts Row -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-      <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-bold text-gray-900">Earnings &amp; CPV by period</h3>
-        <span class="text-xs text-gray-400 font-mono uppercase">chartBuckets</span>
+  <!-- ── Charts ── -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+    <!-- Earnings & CPV by period — bar chart -->
+    <div class="bg-white rounded-xl border border-slate-200 px-5 py-5
+                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <div class="mb-5">
+        <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-0.5">
+          Earnings &amp; CPV by Period
+        </p>
+        <p class="text-xs text-slate-400">Grouped by time bucket</p>
       </div>
-      <div class="h-[362px]">
-        <p-chart type="bar" [data]="barData" [options]="barOptions"></p-chart>
+      <div class="h-[340px]">
+        <p-chart type="bar" [data]="barData" [options]="barOptions"
+                 styleClass="h-full w-full"></p-chart>
       </div>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-      <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-bold text-gray-900">Earnings by type</h3>
-        <span class="text-xs text-gray-400 font-mono uppercase">byType</span>
+    <!-- Earnings by type — doughnut -->
+    <div class="bg-white rounded-xl border border-slate-200 px-5 py-5
+                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <div class="mb-5">
+        <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-0.5">
+          Earnings by Type
+        </p>
+        <p class="text-xs text-slate-400">Distribution across earning categories</p>
       </div>
       <div class="h-[300px] flex items-center justify-center">
-        <p-chart type="doughnut" [data]="doughnutData" [options]="doughnutOptions" class="w-full h-full flex justify-center"></p-chart>
+        <p-chart type="doughnut" [data]="doughnutData" [options]="doughnutOptions"
+                 class="w-full h-full flex justify-center"></p-chart>
       </div>
     </div>
+
   </div>
+
 </div>

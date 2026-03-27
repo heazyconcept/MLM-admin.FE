@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, signal, computed, inject, OnInit } 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TableModule } from 'primeng/table';
+import { TableModule, TablePageEvent } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { ToastModule } from 'primeng/toast';
@@ -10,7 +10,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { MessageService, MenuItem } from 'primeng/api';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
-import { TableAction, TableColumn, TableConfig } from '../../../shared/components/data-table/data-table.types';
+import { TableAction, TableColumn } from '../../../shared/components/data-table/data-table.types';
 
 import { TooltipModule } from 'primeng/tooltip';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -18,7 +18,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { UserProfileModalComponent } from '../user-profile-modal/user-profile-modal.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
-import { UsersService, User, UserFilters } from '../services/users.service';
+import { UsersService, User, UsersListQuery } from '../services/users.service';
 
 interface ActionConfig {
   visible: boolean;
@@ -49,7 +49,6 @@ interface ActionConfig {
     UserProfileModalComponent,
     StatusBadgeComponent,
     ConfirmationModalComponent,
-    ConfirmationModalComponent,
     DataTableComponent,
 
   ],
@@ -71,29 +70,30 @@ export class UsersListComponent implements OnInit {
   tableLoading = signal(false);
   actionLoading = signal(false);
 
+  /** Server-side pagination (GET /admin/users) */
+  totalRecords = signal(0);
+  tableFirst = signal(0);
+  pageRows = signal(20);
+
   // Filter signals
   statusFilter = signal('');
   packageFilter = signal('');
   roleFilter = signal('');
   dateRange = signal<Date[] | null>(null);
 
-  // Computed filtered users
+  /**
+   * Status / package / role are applied on the server via loadUsers().
+   * Search and joined date range are client-only on the current page (API has no text search).
+   * "Flagged" is client-only on the current page when the list API cannot filter by flag.
+   */
   filteredUsers = computed(() => {
     let result = this.users();
     const status = this.statusFilter();
-    const pkg = this.packageFilter();
-    const role = this.roleFilter();
     const range = this.dateRange();
     const search = this.globalFilter().toLowerCase();
 
-    if (status) {
-      result = result.filter(u => u.status === status);
-    }
-    if (pkg) {
-      result = result.filter(u => u.package === pkg);
-    }
-    if (role) {
-      result = result.filter(u => u.role === role);
+    if (status === 'Flagged') {
+      result = result.filter((u) => u.status === 'Flagged');
     }
     if (range && range.length === 2 && range[0] && range[1]) {
       const start = new Date(range[0]);
@@ -136,17 +136,6 @@ export class UsersListComponent implements OnInit {
   ]);
 
   tableHeaders = computed(() => this.columns().map(c => c.header));
-
-  tableConfig = signal<TableConfig>({
-    paginator: true,
-    rows: 10,
-    rowsPerPageOptions: [10, 25, 50],
-    showCurrentPageReport: true,
-    currentPageReportTemplate: 'Showing {first} to {last} of {totalRecords}',
-    showGridlines: true,
-    hoverable: true,
-    size: 'small'
-  });
 
   actions = signal<TableAction<User>[]>([
     { 
@@ -213,22 +202,63 @@ export class UsersListComponent implements OnInit {
     this.loadUsers();
   }
 
+  /** Build query params supported by GET /admin/users */
+  private serverQuery(): UsersListQuery {
+    const q: UsersListQuery = {};
+    const status = this.statusFilter();
+    if (status === 'Active') {
+      q.isActive = true;
+    } else if (status === 'Suspended') {
+      q.isActive = false;
+    }
+    const pkg = this.packageFilter();
+    if (pkg) {
+      q.package = pkg.toUpperCase();
+    }
+    const role = this.roleFilter();
+    if (role === 'User') {
+      q.role = 'USER';
+    } else if (role === 'Merchant') {
+      q.role = 'MERCHANT';
+    }
+    return q;
+  }
+
   loadUsers(): void {
     this.tableLoading.set(true);
-    this.usersService.getUsers().subscribe({
-      next: (users) => {
-        this.users.set(users);
-        this.tableLoading.set(false);
-      },
-      error: () => {
-        this.tableLoading.set(false);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load users from server'
-        });
-      }
-    });
+    this.usersService
+      .getUsers({
+        ...this.serverQuery(),
+        limit: this.pageRows(),
+        offset: this.tableFirst(),
+      })
+      .subscribe({
+        next: ({ users, total }) => {
+          this.users.set(users);
+          this.totalRecords.set(total);
+          this.tableLoading.set(false);
+        },
+        error: () => {
+          this.tableLoading.set(false);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load users from server',
+          });
+        },
+      });
+  }
+
+  onPageChange(event: TablePageEvent): void {
+    this.tableFirst.set(event.first);
+    this.pageRows.set(event.rows);
+    this.loadUsers();
+  }
+
+  /** Reset to first page when server-backed filters change */
+  onServerFilterChange(): void {
+    this.tableFirst.set(0);
+    this.loadUsers();
   }
 
   onExport(): void {
@@ -245,6 +275,8 @@ export class UsersListComponent implements OnInit {
     this.packageFilter.set('');
     this.roleFilter.set('');
     this.dateRange.set(null);
+    this.tableFirst.set(0);
+    this.loadUsers();
   }
 
   viewProfile(user: User): void {
