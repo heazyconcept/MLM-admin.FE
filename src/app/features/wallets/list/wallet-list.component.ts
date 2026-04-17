@@ -2,7 +2,6 @@ import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@a
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { WalletService, Wallet } from '../services/wallet.service';
-import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { InputTextModule } from 'primeng/inputtext';
@@ -14,7 +13,7 @@ import { PaginatorState } from 'primeng/paginator';
 
 @Component({
   selector: 'app-wallet-list',
-  imports: [CommonModule, DataTableComponent, ButtonModule, TagModule, InputTextModule, TooltipModule, PaginatorModule, StatusBadgeComponent],
+  imports: [CommonModule, ButtonModule, TagModule, InputTextModule, TooltipModule, PaginatorModule, StatusBadgeComponent],
   templateUrl: './wallet-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })

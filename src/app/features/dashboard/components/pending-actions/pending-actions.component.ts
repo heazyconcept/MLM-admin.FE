@@ -38,6 +38,7 @@ export class PendingActionsComponent {
   actions = input<PendingAction[]>([]);
   /** When true, an empty `actions` array does not fall back to demo data (dashboard API mode). */
   preferLiveSummary = input(false);
+  loading = input(false);
   private router = inject(Router);
 
   modalVisible = signal(false);

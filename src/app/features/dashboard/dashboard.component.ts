@@ -3,13 +3,13 @@ import {
   ChangeDetectionStrategy,
   inject,
   signal,
+  computed,
   OnInit
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { StatCardComponent } from './components/stat-card/stat-card.component';
-import { SystemStatusComponent } from './components/system-status/system-status.component';
 import { WalletSummaryComponent, WalletSummaryData } from './components/wallet-summary/wallet-summary.component';
 import { OverviewChartComponent } from './components/overview-chart/overview-chart.component';
 import { PackageChartComponent, PackageData } from './components/package-chart/package-chart.component';
@@ -49,7 +49,6 @@ const PKG_COLORS: Record<string, string> = {
     RouterModule,
     ButtonModule,
     StatCardComponent,
-    SystemStatusComponent,
     WalletSummaryComponent,
     OverviewChartComponent,
     PackageChartComponent,
@@ -73,6 +72,24 @@ export class DashboardComponent implements OnInit {
   financialStats = signal<StatCardVM[]>([]);
   userMetrics = signal<StatCardVM[]>([]);
 
+  private readonly systemStatsSkeleton: StatCardVM[] = [
+    { title: 'Total users', value: '', icon: 'pi pi-users', iconBg: 'bg-mlm-green-100', iconColor: 'text-mlm-primary', change: null, changeLabel: '' },
+    { title: 'Merchants', value: '', icon: 'pi pi-shop', iconBg: 'bg-mlm-blue-100', iconColor: 'text-mlm-blue-600', change: null, changeLabel: '' },
+    { title: 'Open admin tasks', value: '', icon: 'pi pi-inbox', iconBg: 'bg-mlm-warning/10', iconColor: 'text-mlm-warning', change: null, changeLabel: '' }
+  ];
+
+  private readonly financialStatsSkeleton: StatCardVM[] = [
+    { title: 'Revenue (30 days)', value: '', subtitle: 'SUCCESS payments by day', icon: 'pi pi-chart-line', iconBg: 'bg-mlm-primary/10', iconColor: 'text-mlm-primary', change: null, changeLabel: '' },
+    { title: 'Pending withdrawals', value: '', icon: 'pi pi-wallet', iconBg: 'bg-mlm-warning/10', iconColor: 'text-mlm-warning', change: null, changeLabel: '' }
+  ];
+
+  private readonly userMetricsSkeleton: StatCardVM[] = [
+    { title: 'Pending withdrawals', value: '', icon: 'pi pi-wallet', iconBg: 'bg-mlm-warning/10', iconColor: 'text-mlm-warning', change: null, changeLabel: '' },
+    { title: 'Initiated payments', value: '', icon: 'pi pi-credit-card', iconBg: 'bg-mlm-blue-100', iconColor: 'text-mlm-blue-600', change: null, changeLabel: '' },
+    { title: 'Pending identity', value: '', icon: 'pi pi-id-card', iconBg: 'bg-mlm-primary/10', iconColor: 'text-mlm-primary', change: null, changeLabel: '' },
+    { title: 'Total users', value: '', icon: 'pi pi-users', iconBg: 'bg-mlm-success/10', iconColor: 'text-mlm-success', change: null, changeLabel: '' }
+  ];
+
   walletSummary = signal<WalletSummaryData[]>([]);
   walletTotalBalance = signal('—');
 
@@ -81,6 +98,15 @@ export class DashboardComponent implements OnInit {
 
   packageData = signal<PackageData[]>([]);
   pendingActions = signal<PendingAction[]>([]);
+
+  showSystemOverviewSkeleton = computed(() => this.loading() || this.systemStats().length === 0);
+  showFinancialSkeleton = computed(() => this.loading() || this.financialStats().length === 0);
+  showOperationsSkeleton = computed(() => this.loading() || this.userMetrics().length === 0);
+  showQueuesSkeleton = computed(() => this.loading() || this.pendingActions().length === 0);
+
+  systemStatsToShow = computed(() => this.systemStats().length > 0 ? this.systemStats() : this.systemStatsSkeleton);
+  financialStatsToShow = computed(() => this.financialStats().length > 0 ? this.financialStats() : this.financialStatsSkeleton);
+  userMetricsToShow = computed(() => this.userMetrics().length > 0 ? this.userMetrics() : this.userMetricsSkeleton);
 
   ngOnInit(): void {
     this.reload();

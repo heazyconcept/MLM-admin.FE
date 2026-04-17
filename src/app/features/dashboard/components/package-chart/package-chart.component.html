@@ -4,31 +4,61 @@
     <p class="text-[13px] text-slate-400 mt-0.5">By registration package</p>
   </div>
 
-  <div class="flex flex-col sm:flex-row items-stretch gap-8 sm:gap-10">
-    <div class="relative shrink-0 mx-auto sm:mx-0" style="width: 160px; height: 160px;">
-      <p-chart type="doughnut" [data]="data()" [options]="options()" styleClass="w-full h-full"></p-chart>
-      <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <span class="text-xl font-semibold text-slate-800 tabular-nums">{{ totalUsers() | number }}</span>
-        <span class="text-[11px] text-slate-400 mt-0.5">Total</span>
+  @if (loading()) {
+    <div class="animate-pulse flex flex-col sm:flex-row items-stretch gap-8 sm:gap-10">
+      <div class="relative shrink-0 mx-auto sm:mx-0" style="width: 160px; height: 160px;">
+        <div class="w-full h-full rounded-full bg-slate-200"></div>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <div class="w-10 h-5 rounded bg-slate-200 mb-1"></div>
+          <div class="w-8 h-3 rounded bg-slate-200"></div>
+        </div>
+      </div>
+      <div class="flex-1 w-full min-w-0 space-y-3">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-0.5 h-4 rounded-full bg-slate-200"></div>
+              <div class="w-24 h-4 rounded bg-slate-200"></div>
+            </div>
+            <div class="w-16 h-4 rounded bg-slate-200"></div>
+          </div>
+        }
       </div>
     </div>
-
-    <div class="flex-1 w-full min-w-0 divide-y divide-slate-100">
-      @for (pkg of packageList(); track pkg.name) {
-        <div class="flex items-center justify-between gap-4 py-2.5 first:pt-0">
-          <div class="flex items-center gap-3 min-w-0">
-            <span
-              class="w-0.5 h-4 shrink-0 rounded-full"
-              [style.background-color]="pkg.color">
-            </span>
-            <span class="text-sm text-slate-700 truncate">{{ pkg.name }}</span>
-          </div>
-          <div class="text-right shrink-0 tabular-nums">
-            <span class="text-sm font-medium text-slate-800">{{ pkg.count | number }}</span>
-            <span class="text-xs text-slate-400 ml-1.5">{{ pkg.percentage }}%</span>
-          </div>
+  } @else {
+    <div class="flex flex-col sm:flex-row items-stretch gap-8 sm:gap-10">
+      <div class="relative shrink-0 mx-auto sm:mx-0" style="width: 160px; height: 160px;">
+        <p-chart
+          type="doughnut"
+          [data]="data()"
+          [options]="options()"
+          [width]="'160'"
+          [height]="'160'"
+          styleClass="!block w-full h-full">
+        </p-chart>
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span class="text-xl font-semibold leading-none text-slate-800 tabular-nums">{{ totalUsers() | number }}</span>
+          <span class="mt-1 text-[11px] leading-none text-slate-400">Total</span>
         </div>
-      }
+      </div>
+
+      <div class="flex-1 w-full min-w-0 divide-y divide-slate-100">
+        @for (pkg of packageList(); track pkg.name) {
+          <div class="flex items-center justify-between gap-4 py-2.5 first:pt-0">
+            <div class="flex items-center gap-3 min-w-0">
+              <span
+                class="w-0.5 h-4 shrink-0 rounded-full"
+                [style.background-color]="pkg.color">
+              </span>
+              <span class="text-sm text-slate-700 truncate">{{ pkg.name }}</span>
+            </div>
+            <div class="text-right shrink-0 tabular-nums">
+              <span class="text-sm font-medium text-slate-800">{{ pkg.count | number }}</span>
+              <span class="text-xs text-slate-400 ml-1.5">{{ pkg.percentage }}%</span>
+            </div>
+          </div>
+        }
+      </div>
     </div>
-  </div>
+  }
 </div>

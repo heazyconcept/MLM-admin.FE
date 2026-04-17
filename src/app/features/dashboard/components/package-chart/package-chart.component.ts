@@ -25,6 +25,7 @@ export interface PackageData {
 })
 export class PackageChartComponent {
   packages = input<PackageData[]>([]);
+  loading = input(false);
 
   data = signal<unknown>({ labels: [], datasets: [] });
   options = signal<unknown>({});

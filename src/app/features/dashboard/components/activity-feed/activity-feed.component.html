@@ -7,7 +7,28 @@
     <span class="text-xs text-slate-400">Demo data</span>
   </div>
 
-  @if (displayActivities().length === 0) {
+  @if (loading()) {
+    <div class="animate-pulse space-y-4">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="flex gap-0">
+          <div class="w-0.5 shrink-0 rounded-full self-stretch min-h-[2.5rem] mr-4 bg-slate-200"></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0 flex-1">
+                <div class="w-40 h-4 rounded bg-slate-200 mb-2"></div>
+                <div class="w-full h-3 rounded bg-slate-200"></div>
+              </div>
+              <div class="w-16 h-4 rounded bg-slate-200 shrink-0"></div>
+            </div>
+            <div class="flex items-center gap-2 mt-2">
+              <div class="w-12 h-2.5 rounded bg-slate-200"></div>
+              <div class="w-16 h-2.5 rounded bg-slate-200"></div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (displayActivities().length === 0) {
     <p class="text-sm text-slate-400 py-10 text-center">No recent activity</p>
   } @else {
     <ul class="space-y-0 divide-y divide-slate-100">
