@@ -20,6 +20,7 @@ export interface Activity {
 })
 export class ActivityFeedComponent {
   activities = input<Activity[]>([]);
+  loading = input(false);
 
   defaultActivities = computed<Activity[]>(() => {
     return [

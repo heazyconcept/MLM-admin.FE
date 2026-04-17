@@ -19,5 +19,6 @@ export interface WalletSummaryData {
 export class WalletSummaryComponent {
   wallets = input<WalletSummaryData[]>([]);
   totalBalance = input('$0.00');
+  loading = input(false);
 }
 

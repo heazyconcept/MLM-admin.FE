@@ -20,6 +20,7 @@ export class StatCardComponent {
   changeLabel = input('from last month');
   showMenu = input(true);
   compact = input(false);
+  loading = input(false);
   routerLink = input<string[] | undefined>(undefined);
 
   isPositive = computed(() => {

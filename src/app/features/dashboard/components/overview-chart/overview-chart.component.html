@@ -3,14 +3,21 @@
 
   <!-- Header -->
   <div class="flex items-start justify-between mb-5">
-    <div>
-      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1">
-        {{ title() }}
-      </p>
-      <p class="text-2xl font-bold text-mlm-text tracking-tight tabular-nums leading-none">
-        {{ totalValue() }}
-      </p>
-    </div>
+    @if (loading()) {
+      <div class="animate-pulse">
+        <div class="w-24 h-2.5 rounded bg-slate-200 mb-2"></div>
+        <div class="w-32 h-7 rounded bg-slate-200"></div>
+      </div>
+    } @else {
+      <div>
+        <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1">
+          {{ title() }}
+        </p>
+        <p class="text-2xl font-bold text-mlm-text tracking-tight tabular-nums leading-none">
+          {{ totalValue() }}
+        </p>
+      </div>
+    }
     <span class="text-[10px] font-medium text-slate-400 mt-1 shrink-0">
       @if (loading()) { Loading… }
       @else { Last 30 days }
@@ -19,12 +26,20 @@
 
   <!-- Chart -->
   <div class="h-56">
-    <p-chart
-      type="bar"
-      [data]="data()"
-      [options]="options()"
-      styleClass="h-full w-full">
-    </p-chart>
+    @if (loading()) {
+      <div class="animate-pulse h-full flex items-end justify-between gap-2 px-2">
+        @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
+          <div class="flex-1 rounded-t bg-slate-200" [style.height.%]="30 + (i * 5) % 60"></div>
+        }
+      </div>
+    } @else {
+      <p-chart
+        type="bar"
+        [data]="data()"
+        [options]="options()"
+        styleClass="h-full w-full">
+      </p-chart>
+    }
   </div>
 
 </div>
