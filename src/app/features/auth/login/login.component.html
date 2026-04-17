@@ -1,6 +1,6 @@
-<div class="min-h-screen grid lg:grid-cols-2">
+<div class="min-h-screen grid lg:grid-cols-2 bg-mlm-background">
   <!-- Left Panel - Login Form -->
-  <div class="flex flex-col justify-center px-6 py-12 lg:px-16 xl:px-24 bg-white">
+  <div class="flex flex-col justify-center px-6 py-12 lg:px-16 xl:px-24 bg-linear-to-b from-mlm-background to-mlm-blue-100/40">
     <div class="w-full max-w-md mx-auto">
       <!-- Logo -->
       <div class="mb-8">
@@ -73,12 +73,12 @@
               type="checkbox" 
               id="remember-me" 
               name="remember-me"
-              class="w-4 h-4 rounded border-gray-300 text-mlm-primary focus:ring-mlm-primary/20 focus:ring-2 cursor-pointer">
-            <span class="text-sm text-mlm-text group-hover:text-mlm-primary transition-colors">
+              class="w-4 h-4 rounded border-gray-300 text-mlm-blue-600 focus:ring-mlm-blue-600/20 focus:ring-2 cursor-pointer">
+            <span class="text-sm text-mlm-text group-hover:text-mlm-blue-700 transition-colors">
               Remember me
             </span>
           </label>
-          <a href="#" class="text-sm font-medium text-mlm-primary hover:text-brand-green-dark transition-colors">
+          <a href="#" class="text-sm font-medium text-mlm-blue-600 hover:text-mlm-blue-800 transition-colors">
             Forgot password?
           </a>
         </div>
@@ -87,7 +87,7 @@
         <button 
           type="submit"
           [disabled]="isLoading"
-          class="w-full py-3 px-4 bg-mlm-primary hover:bg-brand-green-dark text-white font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-mlm-primary/50 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-mlm-primary flex items-center justify-center gap-2">
+          class="w-full py-3 px-4 bg-mlm-blue-600 hover:bg-mlm-blue-700 text-white font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-mlm-blue-600/50 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-mlm-blue-600 flex items-center justify-center gap-2">
           @if (isLoading) {
             <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
