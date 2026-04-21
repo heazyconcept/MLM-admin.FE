@@ -16,8 +16,6 @@ export class HeaderComponent {
   userName = input('Admin User');
   userAvatar = input('');
   
-  searchQuery = new FormControl('');
-  
   notifications = 3;
   messages = 5;
 }

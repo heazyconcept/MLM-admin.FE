@@ -25,6 +25,7 @@ export class AdminOrdersService {
   private readonly loadingDetailState = signal<boolean>(false);
   private readonly errorState = signal<string | null>(null);
   private readonly assigningState = signal<boolean>(false);
+  private readonly approvingState = signal<boolean>(false);
 
   // ── Public readonly signals ────────────────────────────────
   readonly orders = this.ordersState.asReadonly();
@@ -34,6 +35,7 @@ export class AdminOrdersService {
   readonly loadingDetail = this.loadingDetailState.asReadonly();
   readonly error = this.errorState.asReadonly();
   readonly assigning = this.assigningState.asReadonly();
+  readonly approving = this.approvingState.asReadonly();
 
   // ── Computed counts ────────────────────────────────────────
   readonly paidCount = computed(() => this.ordersState().filter((o) => o.status === 'PAID').length);
@@ -134,6 +136,60 @@ export class AdminOrdersService {
     );
   }
 
+  // ────────────────────────────────────────────────────────────
+  //  POST /admin/orders/:id/approve
+  // ────────────────────────────────────────────────────────────
+  approveOrder(orderId: string): Observable<{ message: string } | null> {
+    this.approvingState.set(true);
+    this.errorState.set(null);
+
+    return this.api.post<{ message: string }>(`admin/orders/${orderId}/approve`, {}).pipe(
+      tap(() => {
+        this.approvingState.set(false);
+        // Update local state
+        this.ordersState.update((list) =>
+          list.map((o) =>
+            o.id === orderId ? { ...o, status: 'APPROVED' as OrderStatus } : o
+          )
+        );
+        if (this.selectedOrderState()?.id === orderId) {
+          this.selectedOrderState.update((o) =>
+            o ? { ...o, status: 'APPROVED' as OrderStatus } : o
+          );
+        }
+      }),
+      catchError((err) => {
+        this.approvingState.set(false);
+        this.errorState.set(err?.error?.message ?? err?.message ?? 'Failed to approve order');
+        return of(null);
+      })
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  //  POST /admin/orders/:id/mark-sent  (admin-level, no merchant)
+  // ────────────────────────────────────────────────────────────
+  adminMarkSent(orderId: string): Observable<{ message: string } | null> {
+    return this.api.post<{ message: string }>(`admin/orders/${orderId}/mark-sent`, {}).pipe(
+      catchError((err) => {
+        this.errorState.set(err?.error?.message ?? err?.message ?? 'Failed to mark order as sent');
+        return of(null);
+      })
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  //  POST /admin/orders/:id/confirm-delivery  (admin-level, no merchant)
+  // ────────────────────────────────────────────────────────────
+  adminConfirmDelivery(orderId: string, body?: { proof?: string; notes?: string }): Observable<{ message: string } | null> {
+    return this.api.post<{ message: string }>(`admin/orders/${orderId}/confirm-delivery`, body ?? {}).pipe(
+      catchError((err) => {
+        this.errorState.set(err?.error?.message ?? err?.message ?? 'Failed to confirm delivery');
+        return of(null);
+      })
+    );
+  }
+
   // ── Helpers ────────────────────────────────────────────────
 
   getOrderById(id: string): Order | undefined {
@@ -155,6 +211,7 @@ export class AdminOrdersService {
       PENDING: 'Pending',
       CREATED: 'Created',
       PAID: 'Paid',
+      APPROVED: 'Approved',
       ASSIGNED_TO_MERCHANT: 'Assigned to Merchant',
       READY_FOR_PICKUP: 'Ready for Pickup',
       OFFLINE_DELIVERY_REQUESTED: 'Delivery Requested',
@@ -169,6 +226,7 @@ export class AdminOrdersService {
       case 'DELIVERED':
       case 'FULFILLED':
         return 'success';
+      case 'APPROVED':
       case 'PAID':
         return 'info';
       case 'ASSIGNED_TO_MERCHANT':

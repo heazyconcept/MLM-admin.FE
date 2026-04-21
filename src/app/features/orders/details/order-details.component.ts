@@ -54,11 +54,11 @@ export class OrderDetailsComponent implements OnInit {
   );
   isViewOnly = computed(() => !this.permission.canEdit(Feature.OrdersLogistics));
 
-  // State
   order = this.ordersService.selectedOrder;
   loadingDetail = this.ordersService.loadingDetail;
   loadError = this.ordersService.error;
   assigning = this.ordersService.assigning;
+  approving = this.ordersService.approving;
   markSentLoading = signal(false);
   confirmDeliveryLoading = signal(false);
   deliveryProof = signal('');
@@ -78,25 +78,40 @@ export class OrderDetailsComponent implements OnInit {
       }))
   );
 
-  // Can assign? Only OFFLINE_DELIVERY + (PAID or ASSIGNED_TO_MERCHANT)
+  // Is this a home delivery order?
+  isHomeDelivery = computed(() => this.order()?.fulfilmentMode === 'OFFLINE_DELIVERY');
+
+  // Can assign? Only for PICKUP orders now, based on user instruction
   canShowAssign = computed(() => {
     const o = this.order();
     if (!o) return false;
     return (
-      o.fulfilmentMode === 'OFFLINE_DELIVERY' &&
+      o.fulfilmentMode !== 'OFFLINE_DELIVERY' &&
       (o.status === 'PAID' || o.status === 'ASSIGNED_TO_MERCHANT') &&
       this.canAssignMerchant()
     );
   });
 
-  canShowDeliveryActions = computed(() => {
+  // Can approve directly? Home delivery + PAID + has permission
+  canApproveDirectly = computed(() => {
     const o = this.order();
     if (!o) return false;
     return (
       o.fulfilmentMode === 'OFFLINE_DELIVERY' &&
-      !!o.assignedMerchantId &&
+      o.status === 'PAID' &&
       this.canAssignMerchant()
     );
+  });
+
+  // Show delivery actions for:
+  //  - orders with an assigned merchant (existing flow)
+  //  - OR home delivery orders that are APPROVED (admin direct flow)
+  canShowDeliveryActions = computed(() => {
+    const o = this.order();
+    if (!o) return false;
+    if (o.fulfilmentMode !== 'OFFLINE_DELIVERY') return false;
+    if (!this.canAssignMerchant()) return false;
+    return !!o.assignedMerchantId || o.status === 'APPROVED';
   });
 
   canMarkSent = computed(() => {
@@ -152,6 +167,29 @@ export class OrderDetailsComponent implements OnInit {
     });
   }
 
+  onApproveOrder(): void {
+    const order = this.order();
+    if (!order) return;
+
+    this.ordersService.approveOrder(order.id).subscribe((res) => {
+      if (res) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Order Approved',
+          detail: res.message || 'Home delivery order approved successfully.',
+        });
+        // Refresh order details
+        this.ordersService.loadOrder(order.id).subscribe();
+      } else {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Approval Failed',
+          detail: this.ordersService.error() || 'Failed to approve order.',
+        });
+      }
+    });
+  }
+
   onRetry(): void {
     const order = this.order();
     if (order) {
@@ -161,19 +199,34 @@ export class OrderDetailsComponent implements OnInit {
 
   onMarkSent(): void {
     const order = this.order();
-    const merchantId = order?.assignedMerchantId;
-    if (!order || !merchantId || this.markSentLoading()) return;
+    if (!order || this.markSentLoading()) return;
+
+    const merchantId = order.assignedMerchantId;
 
     this.markSentLoading.set(true);
-    this.merchantService.markOrderSent(merchantId, order.id).subscribe({
+
+    // Use admin-level endpoint when no merchant is assigned (home delivery approved directly)
+    const request$ = merchantId
+      ? this.merchantService.markOrderSent(merchantId, order.id)
+      : this.ordersService.adminMarkSent(order.id);
+
+    request$.subscribe({
       next: (res) => {
         this.markSentLoading.set(false);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Order Marked Sent',
-          detail: res?.message || 'Order was marked as sent successfully.',
-        });
-        this.ordersService.loadOrder(order.id).subscribe();
+        if (res) {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Order Marked Sent',
+            detail: res.message || 'Order was marked as sent successfully.',
+          });
+          this.ordersService.loadOrder(order.id).subscribe();
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Action Failed',
+            detail: this.ordersService.error() || 'Failed to mark order as sent.',
+          });
+        }
       },
       error: (err) => {
         this.markSentLoading.set(false);
@@ -188,9 +241,9 @@ export class OrderDetailsComponent implements OnInit {
 
   onConfirmDelivery(): void {
     const order = this.order();
-    const merchantId = order?.assignedMerchantId;
-    if (!order || !merchantId || this.confirmDeliveryLoading()) return;
+    if (!order || this.confirmDeliveryLoading()) return;
 
+    const merchantId = order.assignedMerchantId;
     const proof = this.deliveryProof().trim();
     const notes = this.deliveryNotes().trim();
     const body = {
@@ -199,17 +252,31 @@ export class OrderDetailsComponent implements OnInit {
     };
 
     this.confirmDeliveryLoading.set(true);
-    this.merchantService.confirmDelivery(merchantId, order.id, body).subscribe({
+
+    // Use admin-level endpoint when no merchant is assigned (home delivery approved directly)
+    const request$ = merchantId
+      ? this.merchantService.confirmDelivery(merchantId, order.id, body)
+      : this.ordersService.adminConfirmDelivery(order.id, body);
+
+    request$.subscribe({
       next: (res) => {
         this.confirmDeliveryLoading.set(false);
         this.deliveryProof.set('');
         this.deliveryNotes.set('');
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Delivery Confirmed',
-          detail: res?.message || 'Order delivery confirmed successfully.',
-        });
-        this.ordersService.loadOrder(order.id).subscribe();
+        if (res) {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Delivery Confirmed',
+            detail: res.message || 'Order delivery confirmed successfully.',
+          });
+          this.ordersService.loadOrder(order.id).subscribe();
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Action Failed',
+            detail: this.ordersService.error() || 'Failed to confirm delivery.',
+          });
+        }
       },
       error: (err) => {
         this.confirmDeliveryLoading.set(false);

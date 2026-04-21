@@ -4,6 +4,7 @@ export type OrderStatus =
   | 'PENDING'
   | 'CREATED'
   | 'PAID'
+  | 'APPROVED'
   | 'ASSIGNED_TO_MERCHANT'
   | 'READY_FOR_PICKUP'
   | 'OFFLINE_DELIVERY_REQUESTED'
