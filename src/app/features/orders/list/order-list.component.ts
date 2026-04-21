@@ -63,6 +63,7 @@ export class OrderListComponent implements OnInit {
     { label: 'Pending', value: 'PENDING' },
     { label: 'Created', value: 'CREATED' },
     { label: 'Paid', value: 'PAID' },
+    { label: 'Approved', value: 'APPROVED' },
     { label: 'Assigned to Merchant', value: 'ASSIGNED_TO_MERCHANT' },
     { label: 'Ready for Pickup', value: 'READY_FOR_PICKUP' },
     { label: 'Delivery Requested', value: 'OFFLINE_DELIVERY_REQUESTED' },

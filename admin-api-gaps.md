@@ -1,561 +1,421 @@
 # Admin API gaps and required endpoints
 
-This document tracks gaps between the current Segulah admin API (`API.md` / Swagger) and what the admin frontend requires.
+This document tracks the **remaining backend API gaps** for the admin frontend.
 
-**Important for backend engineers:** whenever you implement or update an endpoint listed here, please come back to this document and:
-
-- Add the **final request and response schemas** (including all fields and enums) as actually implemented.
-- Note any **query params, guards, pagination rules, or special behaviours** (e.g. sorting, default limits, error cases).
-- Confirm or correct the **example payloads** so the admin frontend can rely on this file as the single source of truth for integration.
+Last verified against frontend code on: **2026-03-14**  
+**Backend implementation completed:** 2026-03-11
 
 ---
 
-## 1. Admin user detail by ID
+## Implemented (summary)
 
-### Current behaviour
+All eight gaps below have been implemented in the backend. See each section for contracts.
 
-- **Implemented endpoints (from `API.md`):**
-  - `GET /admin/users` – list users; query per `UserFiltersDto`.
-  - `PUT /admin/users/:id/status` – update user active status.
-  - `POST /admin/users/:id/reset-password` – reset user password.
-- **Missing endpoint:**
-  - There is **no** `GET /admin/users/:id` defined in `API.md` or exposed in Swagger.
+- **1. Wallet admin:** `GET /admin/wallets`, `GET /admin/wallets/:id`, `PUT /admin/wallets/:id/lock`, `PUT /admin/wallets/:id/unlock`, `POST /admin/wallets/:id/adjust`
+- **2. Withdrawals:** `WithdrawalStatus.PROCESSING` added; `POST /admin/withdrawals/:id/mark-processing`
+- **3. Payments:** `POST /admin/payments/:id/fail`, `POST /admin/payments/:id/reverse`, `POST /admin/payments/:id/flag` (body: `{ reason: string }`)
+- **4. Payments list:** `GET /admin/payments` response includes `userEmail`, `userName`; returns `{ data: PaymentResponseDto[], total: number }`
+- **5. Earnings:** `GET /admin/earnings/overview`, `GET /admin/earnings/activity/global`, `GET /admin/earnings/metrics`
+- **6. Ranking rules:** `PUT /admin/ranking-rules` request schema documented (Swagger `UpdateRankingRulesDto`)
+- **7. Products:** `GET /admin/products/:id`; admin product/category DTOs documented in Swagger
+- **8. Dashboard:** `GET /admin/dashboard/summary`, `GET /admin/wallets/summary`; `GET /admin/withdrawals` and `GET /admin/payments` return `{ data, total }`
 
-### Frontend requirement
+---
 
-The admin frontend has a **User Details** screen (`/admin/users/:id`) that needs to:
+## 1. Wallet admin views and adjustments
 
-- Fetch a **single user** by ID for:
-  - Displaying core profile fields (email, phone, package, role, registration status, createdAt).
-  - Showing derived stats (e.g. total CPV, downline counts, wallet summary) when available.
-  - Refreshing the view after actions (suspend/reactivate/flag/unflag/reset password) without reloading the entire list.
+### Implemented
 
-Relying only on `GET /admin/users` for this would require:
+- **GET /admin/wallets** – Query: `userId?`, `walletType?`, `status?`, `limit` (default 20), `offset` (default 0). Response: `{ items: AdminWalletListItemDto[], total: number }`. Each item: `id`, `userId`, `userEmail?`, `userName?`, `walletType`, `displayCurrency`, `status`, `balance` (ledger-derived), `createdAt`.
+- **GET /admin/wallets/:id** – Response: `AdminWalletDetailResponseDto` (wallet fields, `balance`, `recentLedger` last 50 entries, optional `userEmail`/`userName`).
+- **PUT /admin/wallets/:id/lock** – No body. Response: `{ message, status: WalletStatus }`. Delegates to wallet service (CASH only).
+- **PUT /admin/wallets/:id/unlock** – No body. Response: `{ message, status: WalletStatus }`.
+- **POST /admin/wallets/:id/adjust** – Body: `{ amount: number, reason: string, displayAmount?: number }`. Response: `{ message, balance }`.
 
-- Fetching the full paginated list and then filtering client‑side, which:
-  - Does not scale for large datasets.
-  - Becomes fragile once server‑side filters/pagination are applied.
+---
 
-### Proposed endpoint
+## 2. Withdrawals processing state alignment
 
-- **Method**: `GET`
-- **Path**: `/admin/users/:id`
-- **Auth**: Bearer + Admin
-- **Description**: Fetch full admin view of a single user by ID.
+### Implemented
 
-#### Request
+- **WithdrawalStatus** enum now includes `PROCESSING` (between PENDING and APPROVED). Migration: `20260311120000_add_withdrawal_processing_status`.
+- **POST /admin/withdrawals/:id/mark-processing** – No body. Transitions `PENDING` → `PROCESSING`. Response: `WithdrawalResponseDto`. Frontend can use `Processing` in domain; backend supports it.
 
-- **Path params**:
-  - `id` (string, required): User ID.
+---
 
-#### Response (example shape)
+## Admin Withdrawals – Lifecycle Actions
+
+The following admin-only endpoints control the lifecycle of a withdrawal:
+
+- `POST /admin/withdrawals/{id}/approve` – approve a pending withdrawal.
+- `POST /admin/withdrawals/{id}/mark-processing` – mark an approved withdrawal as “in processing”.
+- `POST /admin/withdrawals/{id}/reject` – reject a withdrawal with a reason.
+- `POST /admin/withdrawals/{id}/mark-paid` – mark a withdrawal as paid with a payout reference.
+
+Typical state flow:
+
+`PENDING` → `APPROVED` → `PROCESSING` → `PAID`  
+or `PENDING/APPROVED/PROCESSING` → `REJECTED`
+
+All endpoints:
+- Require an **admin bearer token**.
+- Operate on a single withdrawal identified by `{id}`.
+
+---
+
+## POST `/admin/withdrawals/{id}/approve`
+
+### Endpoint Overview
+Approve a **pending** withdrawal. Typically sets status from `PENDING` → `APPROVED`.
+
+### HTTP Method
+**POST**
+
+### URL Path
+`/admin/withdrawals/{id}/approve`
+
+### Authentication
+**Required** – Bearer JWT with `ADMIN` role.
+
+### Request Headers
+- **Authorization**: `Bearer <admin_access_token>`
+
+### Path Parameters
+- `id` (string, required): Withdrawal ID.
+
+### Request Body
+None.
+
+### Response Format
+
+**Success 200** – `WithdrawalResponseDto` (simplified):
 
 ```json
 {
-  "id": "8961071d-5e7d-4b4c-b90f-f0f4209df711",
-  "email": "ezekiel.fadipe@gmail.com",
-  "phone": "08101435948",
-  "role": "USER",
-  "registrationPackage": "SILVER",
-  "registrationCurrency": "NGN",
-  "isActive": true,
-  "isRegistrationPaid": true,
-  "createdAt": "2026-02-25T14:38:36.195Z",
-  "totalCpv": 1,
-  "profile": {
-    "firstName": "Ezekiel",
-    "lastName": "Fadipe",
-    "dateOfBirth": "1990-01-01",
-    "address": "16 Shoremekun Street Shasha Lagos State",
-    "city": "Egbeda",
-    "state": "Lagos",
-    "country": "Nigeria"
-  },
-  "walletSummary": {
-    "cash": 0,
-    "productVoucher": 0,
-    "autoship": 0
-  }
+  "id": "wd_123",
+  "userId": "user_123",
+  "walletId": "wallet_123",
+  "amount": 100,
+  "baseAmount": 100,
+  "currency": "USD",
+  "status": "APPROVED",
+  "reason": null,
+  "payoutReference": null,
+  "approvedAt": "2024-01-02T10:00:00.000Z",
+  "paidAt": null,
+  "rejectedAt": null,
+  "approvedById": "admin_1",
+  "rejectedById": null,
+  "paidById": null,
+  "createdAt": "2024-01-01T00:00:00.000Z"
 }
 ```
 
-> Note: the exact shape can reuse/align with whatever DTO backs `GET /admin/users` today; the key requirement is that the endpoint exists so the admin UI can reliably fetch a single user by ID.
+### Error Responses
+- **400** – Withdrawal not in a state that can be approved.
+- **401 / 403**, **404** – Auth or not found.
 
-### Frontend usage
+### Frontend Integration Notes
+- Show this action on **pending** withdrawals in the admin UI.
+- After success, update the row to `APPROVED` and optionally record `approvedAt`.
 
-Once implemented, the frontend `UsersService.getUserById` can be wired to:
+### Example Request (Axios)
 
-- Call `GET /admin/users/:id`.
-- Map the response into the existing `User` view model used by the **User Details** page.
-
----
-
-## 2. Wallet admin views and adjustments
-
-### Current behaviour
-
-- **Implemented endpoints (from `API.md`):**
-  - `PUT /wallets/:id/lock` – lock wallet (admin-only guard).
-  - `PUT /wallets/:id/unlock` – unlock wallet (admin-only guard).
-  - `POST /admin/wallets/:id/adjust` – adjust wallet balance (body per `WalletAdjustmentDto`).
-- **Missing endpoints:**
-  - No `GET /admin/wallets` to list wallets for all users.
-  - No `GET /admin/wallets/:id` to fetch a single wallet with balances and history.
-
-### Frontend requirement
-
-The admin wallets area needs:
-
-- A paginated list of wallets with user info and balances.
-- A details view per wallet showing:
-  - Current balances by wallet type.
-  - Recent ledger entries.
-- Actions that call:
-  - `PUT /wallets/:id/lock` / `PUT /wallets/:id/unlock`.
-  - `POST /admin/wallets/:id/adjust` with fields such as `{ amount, currency, type, reason }`.
-
-### Proposed endpoints
-
-- `GET /admin/wallets` – list wallets with filters (userId, status, type, fromDate, toDate, limit, offset).
-- `GET /admin/wallets/:id` – detailed wallet view including balances and recent ledger entries.
-
-The frontend can then safely wire existing wallet list/details UIs to these endpoints and use the current lock/unlock/adjust routes for actions.
+```ts
+await axios.post(
+  `/admin/withdrawals/${withdrawalId}/approve`,
+  {},
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+```
 
 ---
 
-## 3. Withdrawals admin flow – processing state
+## POST `/admin/withdrawals/{id}/mark-processing`
 
-### Current behaviour
+### Endpoint Overview
+Mark an approved withdrawal as **processing** by operations/finance.  
+Moves status, for example, `APPROVED` → `PROCESSING`.
 
-- **Implemented endpoints (from `API.md`):**
-  - `GET /admin/withdrawals`
-  - `POST /admin/withdrawals/:id/approve`
-  - `POST /admin/withdrawals/:id/reject` with `{ reason }`
-  - `POST /admin/withdrawals/:id/mark-paid` with `{ payoutReference }`
-- **Frontend actions:**
-  - Approve
-  - Reject (with reason)
-  - **Mark as Processing**
-  - Mark as Paid
+### HTTP Method
+**POST**
 
-### Gap
+### URL Path
+`/admin/withdrawals/{id}/mark-processing`
 
-There is **no dedicated API endpoint** for a `Processing` state:
+### Authentication
+**Required** – Bearer JWT with `ADMIN` role.
 
-- The enum in `API.md` only defines: `PENDING, APPROVED, REJECTED, PAID`.
-- The frontend has a `Processing` state and a **“Mark as Processing”** action.
+### Request Headers
+- **Authorization**: `Bearer <admin_access_token>`
 
-### Impact
+### Path Parameters
+- `id` (string, required): Withdrawal ID.
 
-- Approve / Reject / Mark Paid can be mapped cleanly to existing endpoints and have been wired.
-- “Mark as Processing” currently cannot be persisted via the backend; it is treated as a non-supported action and surfaced as such in the UI.
+### Request Body
+Usually **none** (status-only change). If your backend adds metadata, pass it as JSON.
 
-### Options
+### Response Format
 
-- Either:
-  - Introduce a `PROCESSING` state and an endpoint like `POST /admin/withdrawals/:id/mark-processing`, **or**
-  - Remove the Processing status from the domain model and UI.
-
----
-
-## 4. Payments admin actions (fail / reverse / flag)
-
-### Current behaviour
-
-- **Implemented endpoints (from `API.md`):**
-  - `GET /admin/payments` – list payments.
-  - `POST /admin/payments/:id/verify` – verify payment by ID (typically transitions to SUCCESS).
-  - `POST /admin/payments/fund` – admin funding of a user (body per `AdminFundingDto`).
-- **Frontend actions in the payment details UI:**
-  - Confirm success (can map to `/admin/payments/:id/verify`).
-  - Mark failed.
-  - Reverse payment.
-  - Flag payment (for review / notes).
-
-### Gaps
-
-- No explicit endpoints for:
-  - Marking a payment as **Failed**.
-  - Marking a payment as **Reversed**.
-  - Persisting a **flagged** state or flag notes.
-
-### Proposed endpoints
-
-- `POST /admin/payments/:id/fail` with `{ reason }` – mark a payment as failed.
-- `POST /admin/payments/:id/reverse` with `{ reason }` – reverse a previously successful payment.
-- Optional: `POST /admin/payments/:id/flag` with `{ reason }` – store a flag and audit entry.
-
-With these in place, the existing payment details screen can map each admin action to a concrete backend route instead of keeping these transitions purely in the frontend.
-
----
-
-## 5. Payments list – missing user identity fields
-
-### Current behaviour
-
-- **Example `GET /admin/payments` item** (from live response):
+**Success 200**
 
 ```json
 {
-  "id": "85753999-e9aa-4792-99cf-6c28ee0a2d8d",
-  "userId": "8961071d-5e7d-4b4c-b90f-f0f4209df711",
-  "amount": 35000,
-  "baseAmount": 35,
-  "currency": "NGN",
-  "displayCurrency": "NGN",
-  "type": "REGISTRATION",
-  "provider": "PAYSTACK",
-  "reference": "e80348d2-7ec3-4ee7-b5a2-02eed2f8aa81",
-  "status": "SUCCESS",
-  "metadata": {
-    "fxRate": 1000,
-    "package": "SILVER"
-  },
-  "verifiedAt": "2026-02-25T14:42:22.273Z",
-  "packageId": "SILVER",
-  "createdAt": "2026-02-25T14:42:04.518Z"
+  "id": "wd_123",
+  "userId": "user_123",
+  "walletId": "wallet_123",
+  "amount": 100,
+  "baseAmount": 100,
+  "currency": "USD",
+  "status": "PROCESSING",
+  "reason": null,
+  "payoutReference": null,
+  "approvedAt": "2024-01-02T10:00:00.000Z",
+  "paidAt": null,
+  "rejectedAt": null,
+  "approvedById": "admin_1",
+  "rejectedById": null,
+  "paidById": null,
+  "createdAt": "2024-01-01T00:00:00.000Z"
 }
 ```
 
-- **Note**: The payload includes only `userId` — there is **no `userEmail` or `userName`**.
-- The frontend therefore falls back to showing the raw `userId` in the **User** column for payments.
+### Error Responses
+- **400** – Withdrawal cannot be moved to processing from its current status.
+- **401 / 403**, **404**.
 
-### Gap
+### Frontend Integration Notes
+- Use this as an intermediate step in ops dashboards (“Start processing”).
+- Show `PROCESSING` with a distinct badge/colour so teams see items in progress.
 
-For an admin console, displaying just a GUID-style `userId` is not user-friendly. The payments list needs at least one of:
+### Example Request (Fetch)
 
-- `userEmail`
-- `userName` (full name or username)
-
-### Proposed enhancement
-
-Extend the `GET /admin/payments` item DTO to include:
-
-- `userEmail: string` – primary email of the payer.
-- Optionally `userName: string` – concatenated first/last name or a username.
-
-This can be populated by joining to the Users table when building the admin payments query. The frontend can then display a clear, human-readable identifier (e.g. `Ezekiel Fadipe <ezekiel.fadipe@gmail.com>`) instead of raw `userId`.
+```ts
+await fetch(`/admin/withdrawals/${withdrawalId}/mark-processing`, {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${token}` },
+});
+```
 
 ---
 
-## 6. Admin commission / CPV / ranking rules – update payloads
+## POST `/admin/withdrawals/{id}/reject`
 
-### Current behaviour
+### Endpoint Overview
+Reject a withdrawal and record a rejection reason. Sets status to `REJECTED`.
 
-- **Documented endpoints (from `API.md`):**
-  - `GET /admin/commission-rules` / `PUT /admin/commission-rules`
-  - `GET /admin/cpv-rules` / `PUT /admin/cpv-rules`
-  - `GET /admin/ranking-rules` / `PUT /admin/ranking-rules`
-- **Observed responses (live API):**
-  - `GET /admin/commission-rules` returns:
-    ```json
-    {
-      "rules": [],
-      "pdpaRates": {
-        "NICKEL": 0.05,
-        "SILVER": 0.08,
-        "GOLD": 0.1,
-        "PLATINUM": 0.15,
-        "RUBY": 0.18,
-        "DIAMOND": 0.2
-      },
-      "cdpaRates": {
-        "NICKEL": 5,
-        "SILVER": 10,
-        "GOLD": 15,
-        "PLATINUM": 20,
-        "RUBY": 25,
-        "DIAMOND": 30
-      }
-    }
-    ```
-- **Frontend implementation:**
-  - `GET /admin/commission-rules` is mapped into a list of `BonusRule` items for the **Bonus Configuration** screen.
-  - The UI currently surfaces PDPA/CDPA per package and allows editing the percentage/amount.
-  - `PUT /admin/commission-rules` is implemented to send back only:
-    - `pdpaRates` – derived from `BonusRule` items with ids like `pdpa-<PACKAGE>` (value converted back from percentage to decimal).
-    - `cdpaRates` – derived from `BonusRule` items with ids like `cdpa-<PACKAGE>`.
-  - Any extra complex `rules` (if the backend starts returning them) are **not** currently persisted back, because the UI does not expose or edit them.
-  - `GET /admin/cpv-rules` and `GET /admin/ranking-rules` are wired and rendered read‑only in the UI; `PUT` endpoints are exposed in the `EarningsService` but **not yet invoked by any edit/save flow**.
+### HTTP Method
+**POST**
 
-### Gaps
+### URL Path
+`/admin/withdrawals/{id}/reject`
 
-- The exact DTOs for:
-  - `UpdateCommissionRulesDto` (body of `PUT /admin/commission-rules`),
-  - `UpdateCpvRulesDto` (body of `PUT /admin/cpv-rules`), and
-  - `UpdateRankingRulesDto` (body of `PUT /admin/ranking-rules`)
-  are **not documented** in `API.md` and must be inferred from Swagger/OpenAPI.
-- The frontend currently assumes:
-  - `PUT /admin/commission-rules` accepts the same top-level shape as the GET response and that sending only `pdpaRates` and `cdpaRates` is valid.
-  - `PUT /admin/cpv-rules` accepts an array of CPV rule objects (same shape as returned by GET).
-  - `PUT /admin/ranking-rules` accepts an array of rank stage objects (same shape as returned by GET).
-- If the backend later introduces additional fields (e.g. advanced rule objects under `rules`), the current UI will **not** allow configuring them and may omit them from update payloads.
+### Authentication
+**Required** – Bearer JWT with `ADMIN` role.
 
-### Proposed follow‑ups
+### Request Headers
+- **Authorization**: `Bearer <admin_access_token>`
+- **Content-Type**: `application/json`
 
-- Confirm the exact request schemas in Swagger/OpenAPI for:
-  - `PUT /admin/commission-rules`
-  - `PUT /admin/cpv-rules`
-  - `PUT /admin/ranking-rules`
-- Align the frontend DTOs with those schemas so:
-  - Advanced commission rules (beyond PDPA/CDPA rate maps) can be viewed and edited safely.
-  - CPV and ranking UIs can move from read‑only to full CRUD (with explicit Save actions that call the corresponding `PUT` endpoints).
+### Path Parameters
+- `id` (string, required): Withdrawal ID.
 
----
+### Request Body
 
-## 7. Earnings admin overview and monitoring
+```json
+{
+  "reason": "Invalid bank account details"
+}
+```
 
-### Current behaviour
+### Response Format
 
-- **Frontend screens:**
-  - `EarningsOverviewComponent` shows:
-    - KPIs: **Total Paid Out**, **Pending Payouts**, **Active Rules**, **System Status**, **Last update**.
-    - Charts:
-      - **Payout history** (bar chart) over time, with a period selector (e.g. last 6 months / last year).
-      - **Earnings distribution** (doughnut chart) by bonus/earning type.
-  - `EarningsMonitoringComponent` shows:
-    - A **live activity feed** of earnings events (`type`, `user`, `amount`, `timestamp`, `status`).
-    - Sidebar **real‑time metrics** (transactions/minute, average processing time) and a “High value payouts” style alert.
-- **Implementation today:**
-  - `EarningsService.getSystemOverview()` returns **hard‑coded demo values** for:
-    - `totalPaidOut`
-    - `pendingPayouts`
-    - `activeRules`
-    - `lastUpdate`
-  - `EarningsService.recentActivity` is a static array used by the monitoring feed.
-  - The charts in `EarningsOverviewComponent` are also populated with static sample data.
+**Success 200**
 
-### Documented endpoints
+```json
+{
+  "id": "wd_123",
+  "userId": "user_123",
+  "walletId": "wallet_123",
+  "amount": 100,
+  "baseAmount": 100,
+  "currency": "USD",
+  "status": "REJECTED",
+  "reason": "Invalid bank account details",
+  "payoutReference": null,
+  "approvedAt": null,
+  "paidAt": null,
+  "rejectedAt": "2024-01-02T10:30:00.000Z",
+  "approvedById": null,
+  "rejectedById": "admin_1",
+  "paidById": null,
+  "createdAt": "2024-01-01T00:00:00.000Z"
+}
+```
 
-- From `API.md`:
-  - `GET /admin/reports/financial` – financial report; query: `from?`, `to?`.
-  - `GET /admin/reports/earnings` – earnings report; query: `from?`, `to?`.
-- No response schemas are documented for these endpoints, and they are not yet wired into the earnings admin UI.
-- User‑context earnings endpoints exist:
-  - `GET /earnings`, `GET /earnings/summary`, `GET /earnings/cpv`, `GET /earnings/ranking`
-  - but these are **not suitable** for admin‑level global monitoring.
+### Error Responses
+- **400** – Missing/empty `reason` or invalid status transition.
+- **401 / 403**, **404**.
 
-### Gaps
+### Frontend Integration Notes
+- In the UI, enforce that `reason` is required and non-empty.
+- Use `reason` and `rejectedAt` in both admin views and user history screens.
 
-- There is **no defined admin API contract** that provides:
-  - A global **earnings summary** for KPIs:
-    - `totalPaidOut`
-    - `pendingPayouts`
-    - counts of active rules / other aggregates shown in the overview card row.
-  - Time‑bucketed payout data for the **Payout history** bar chart (e.g. per month with amounts).
-  - Breakdown of earnings by **LedgerEarningType** (PDPA, CDPA, MATCHING_BONUS, etc.) for the **Earnings distribution** doughnut chart.
-  - A paginated **admin earnings activity feed** with:
-    - `{ id, userId, userName/userEmail, type, amount, status, createdAt }`.
-  - **Real‑time metrics** used in the monitoring sidebar:
-    - `transactionsPerMinute`
-    - `avgProcessingTimeSeconds`
-    - any high‑value alert flags / messages.
-- As a result, the admin earnings overview and monitoring screens are currently driven entirely by **static mock data** instead of live backend data.
+### Example Request (Axios)
 
-### Proposed endpoints / enhancements
-
-- Either extend the existing reports endpoints **or** introduce dedicated admin earnings endpoints:
-
-1. **Admin earnings summary + charts**
-   - **Option A (extend existing):**
-     - `GET /admin/reports/earnings`
-     - Response could include:
-       ```json
-       {
-         "summary": {
-           "totalPaidOut": 1250000,
-           "pendingPayouts": 45000
-         },
-         "payoutHistory": [
-           { "label": "2026-01", "totalPaidOut": 100000 },
-           { "label": "2026-02", "totalPaidOut": 120000 }
-         ],
-         "byType": [
-           { "type": "PDPA", "amount": 400000 },
-           { "type": "CDPA", "amount": 250000 },
-           { "type": "MATCHING_BONUS", "amount": 200000 }
-         ]
-       }
-       ```
-   - **Option B (new endpoint):**
-     - `GET /admin/earnings/overview`
-     - Returns a similar payload, tailored exactly to the overview UI needs.
-
-2. **Admin earnings activity feed**
-   - New endpoint:
-     - `GET /admin/earnings/activity`
-     - Query:
-       - `type?`, `status?`, `userId?`, `from?`, `to?`, `limit?`, `offset?`
-     - Response:
-       ```json
-       {
-         "items": [
-           {
-             "id": "TX-1001",
-             "userId": "user-123",
-             "userName": "Sarah Okonkwo",
-             "type": "Direct Referral",
-             "amount": 50,
-             "status": "Processed",
-             "createdAt": "2026-02-26T10:15:00.000Z"
-           }
-         ],
-         "total": 1234,
-         "limit": 20,
-         "offset": 0
-       }
-       ```
-
-3. **Admin earnings metrics / alerts**
-   - New endpoint:
-     - `GET /admin/earnings/metrics`
-     - Response:
-       ```json
-       {
-         "transactionsPerMinute": 142,
-         "avgProcessingTimeSeconds": 0.4,
-         "highValuePayoutAlert": {
-           "isActive": true,
-           "description": "High volume of payouts detected for Diamond package users in last hour (>$50k)."
-         }
-       }
-       ```
-
-### Frontend usage
-
-- Once these contracts are defined and implemented, the frontend can:
-  - Replace `getSystemOverview()` and hardcoded chart data with live responses from `GET /admin/reports/earnings` (or `/admin/earnings/overview`).
-  - Replace `recentActivity` mock data with live data from `GET /admin/earnings/activity`.
-  - Populate the monitoring sidebar metrics and alerts from `GET /admin/earnings/metrics`.
+```ts
+await axios.post(
+  `/admin/withdrawals/${withdrawalId}/reject`,
+  { reason: 'Invalid bank account details' },
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+```
 
 ---
 
-## 9. Admin products & categories
+## POST `/admin/withdrawals/{id}/mark-paid`
 
-### Current behaviour
+### Endpoint Overview
+Mark a withdrawal as **paid** and attach a payout reference from your payment processor/bank.
 
-- **Documented endpoints (from `API.md`):**
-  - Categories: `POST /admin/categories`, `PUT /admin/categories/:id`, `GET /admin/categories`
-  - Products: `POST /admin/products`, `PUT /admin/products/:id`, `PUT /admin/products/:id/status`, `POST /admin/products/:id/price`, `GET /admin/products`, `GET /admin/products/:id/price-history`
-- **OpenAPI (docs-json):** Request/response bodies for admin categories and products use a placeholder schema (`Function` / empty object). No DTOs are exposed.
-- **Frontend implementation:**
-  - `AdminProductsService` calls all of the above endpoints. It uses best-guess DTOs (e.g. category: `{ id, name, description }`; product: `{ id, name, sku, categoryId/category, status, price, ... }`) and maps responses to the existing `Product` and `Category` models.
-  - Product list loads via `GET /admin/products` with query `categoryId`, `status`, `limit`, `offset` (all sent; optional filters sent as empty string when not set).
-  - Product edit resolves the current product by id from the **list** (no `GET /admin/products/:id`), so opening edit by direct URL may require loading the full list first.
+### HTTP Method
+**POST**
 
-### Gaps
+### URL Path
+`/admin/withdrawals/{id}/mark-paid`
 
-1. **Request/response schemas not in OpenAPI**  
-   The admin categories and products endpoints need their DTOs documented (e.g. in Swagger/OpenAPI and here) so the frontend can align exactly with the backend (field names, enums, required fields).
+### Authentication
+**Required** – Bearer JWT with `ADMIN` role.
 
-2. **Missing `GET /admin/products/:id`**  
-   There is no documented endpoint to fetch a single product by id. The admin product edit screen currently uses the product from the list; direct navigation to `/admin/products/:id/edit` triggers a full list load to find that product. A dedicated `GET /admin/products/:id` would allow efficient single-product load and avoid reliance on list payload.
+### Request Headers
+- **Authorization**: `Bearer <admin_access_token>`
+- **Content-Type**: `application/json`
 
-3. **Product status enum**  
-   Frontend uses `Draft` | `Active` | `Inactive` | `Archived`. Backend may use different values (e.g. `DRAFT`, `ACTIVE`). The exact enum and any mapping should be documented.
+### Path Parameters
+- `id` (string, required): Withdrawal ID.
 
-4. **Category create/update body**  
-   Frontend sends `{ name, description? }` for create and update. Please confirm required/optional fields and any validation.
+### Request Body
 
-5. **Product create/update body**  
-   Frontend sends a subset of product fields (name, sku, categoryId/category, shortDescription, fullDescription, price, currency, pv, cpv, images, thumbnail, status, visibility). Please document the full create/update DTO and which fields are read-only or server-generated.
+```json
+{
+  "payoutReference": "BANK-TRX-123456"
+}
+```
 
-6. **Price history response**  
-   `GET /admin/products/:id/price-history` is called by the service; the expected array shape (e.g. `{ amount, currency, effectiveAt }`) should be documented.
+### Response Format
 
-### Proposed follow-ups
+**Success 200**
 
-- Expose and document in OpenAPI (and here):
-  - `CreateCategoryDto` / `UpdateCategoryDto` and category response shape
-  - `CreateProductDto` / `UpdateProductDto` and product list/detail response shape
-  - `UpdateProductStatusDto` (e.g. `{ status: ProductStatus }`)
-  - Product price body and price-history response shape
-- Add `GET /admin/products/:id` and document response so the admin edit page can load a single product without loading the full list.
+```json
+{
+  "id": "wd_123",
+  "userId": "user_123",
+  "walletId": "wallet_123",
+  "amount": 100,
+  "baseAmount": 100,
+  "currency": "USD",
+  "status": "PAID",
+  "reason": null,
+  "payoutReference": "BANK-TRX-123456",
+  "approvedAt": "2024-01-02T10:00:00.000Z",
+  "paidAt": "2024-01-02T11:00:00.000Z",
+  "rejectedAt": null,
+  "approvedById": "admin_1",
+  "rejectedById": null,
+  "paidById": "admin_1",
+  "createdAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
+### Error Responses
+- **400** – Withdrawal not in a state that can be marked paid (e.g. not yet approved/processing).
+- **401 / 403**, **404**.
+
+### Frontend Integration Notes
+- Only show this action after verifying that the off-platform payment has succeeded.
+- Display `payoutReference` and `paidAt` in admin reconciliation tools and user receipts.
+
+### Example Request (Axios)
+
+```ts
+await axios.post(
+  `/admin/withdrawals/${withdrawalId}/mark-paid`,
+  { payoutReference: 'BANK-TRX-123456' },
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+```
+
+## 3. Payments admin actions (fail / reverse / flag)
+
+### Implemented
+
+- **POST /admin/payments/:id/fail** – Body: `PaymentActionReasonDto` (`{ reason: string }`, min length 1). Allowed when status is `INITIATED`. Sets status to `FAILED`, stores `failReason`, `failedAt`, `failedById` in metadata. Response: `PaymentResponseDto`.
+- **POST /admin/payments/:id/reverse** – Body: `{ reason: string }`. Allowed when status is `SUCCESS` and not already reversed. Credits the appropriate wallet (REGISTRATION or CASH by payment type) with `LedgerSource.REVERSAL`; stores `reversed`, `reverseReason`, `reversedAt`, `reversedById` in metadata. Response: `PaymentResponseDto`.
+- **POST /admin/payments/:id/flag** – Body: `{ reason: string }`. No status change. Stores `flagged`, `flagReason`, `flaggedAt`, `flaggedById` in metadata. Response: `PaymentResponseDto`.
 
 ---
 
-## 10. Admin dashboard
+## 4. Payments list identity fields
 
-The admin **Dashboard** (`/admin/dashboard`) is the landing page after login. All data is currently **hardcoded or mock**. Below is what the UI shows and which endpoints are needed to power it with real data.
+### Implemented
 
-### Dashboard sections and data sources
+- **GET /admin/payments** returns `{ data: PaymentResponseDto[], total: number }`. Each `PaymentResponseDto` now includes `userEmail?` and `userName?` (from joined user). Repository includes `user.email` and `user.username`; mapper sets `userEmail`, `userName` on each payment. Swagger: `PaymentResponseDto` has `userEmail`, `userName` as optional.
 
-| Section | What the UI shows | Current source | Endpoints needed |
-|--------|--------------------|----------------|------------------|
-| **System Overview** | Total Users, Active Users, Merchants, System Status (online/uptime) | Hardcoded values | See below |
-| **Financial Snapshot** | Total Earnings, Total Withdrawals, Revenue Trend (bar chart) | Hardcoded + default chart data | See below |
-| **User & Network Metrics** | New Registrations (this month), Active Network (total legs), Top Legs Growth, Rank Advances | Hardcoded | See below |
-| **Package Distribution** | Doughnut chart: user count per package (Silver, Gold, Platinum, Ruby, Diamond) | Default mock in `PackageChartComponent` | See below |
-| **Wallet Summary** | Platform-level balances: Cash, Product Voucher, Autoship; total balance | Hardcoded array in `DashboardComponent` | See below |
-| **Pending Actions** | Counts and list: Pending Withdrawals, Merchant Approvals, Failed Payments, Compliance Alerts | `PendingActionsComponent` default counts + `getMockItems()` | See below |
-| **Recent Activity** | Feed of recent events (registration, earning, withdrawal, order, merchant) | `ActivityFeedComponent` default mock list | See below |
+---
 
-### Endpoints needed (existing vs missing)
+## 5. Earnings overview and monitoring APIs
 
-- **Total Users / Active Users**
-  - **Use:** `GET /admin/users` with appropriate filters (e.g. no filter for total; filter by active status if supported).
-  - **Gap:** Response must expose **total count** (and ideally active count) without requiring the frontend to load all pages. If the API returns `{ users, total, limit, offset }`, the dashboard can use `total`; if it only returns a page of users, the frontend would need a dedicated **count** or **summary** endpoint (e.g. `GET /admin/users/summary` → `{ total, activeCount }`) to avoid heavy requests.
+### Implemented
 
-- **Merchants count**
-  - **Use:** `GET /admin/merchants` with query filters. Response must include a **total** count (e.g. `total` in body or via response header) so the dashboard can show the number without loading all merchant records.
+- **GET /admin/earnings/overview** – Query: `from?`, `to?` (date strings). Response: `{ summary: { totalEarnings, totalCpv, earningCount, cpvCount }, byType: Record<string, number>, cpvBySource: Record<string, number>, chartBuckets: { date, earnings, cpv }[] }`.
+- **GET /admin/earnings/activity/global** – Query: `limit` (default 50), `offset` (default 0), `from?`, `to?`. Response: `{ items: (LedgerActivityItemDto | PvActivityItemDto)[] }` (items may include `userId` for display). Merges ledger credits (EARNING/DEPOSIT) and CPV transactions across all users.
+- **GET /admin/earnings/metrics** – Response: `{ transactionsPerMinute: 0, averageProcessingTimeMs: 0, alerts: [] }` (stub for future instrumentation).
+- **GET /admin/earnings/activity** (existing) – Still requires `userId`; returns per-user activity log.
 
-- **System Status (online / uptime)**
-  - **Use:** Optional. If the backend exposes a health or status endpoint (e.g. `GET /` or `GET /health`), the dashboard can call it to show “All systems operational” or uptime. No admin-specific endpoint is required unless you want stored uptime metrics.
+---
 
-- **Total Earnings / Total Withdrawals / Revenue Trend**
-  - **Use:** `GET /admin/reports/financial` and/or `GET /admin/reports/earnings` with query `from`, `to` (e.g. this month, last month, this year).
-  - **Gap:** Response schemas are **not documented** in `API.md`. The dashboard needs at least:
-    - Aggregates: e.g. `totalEarnings`, `totalWithdrawals`, `totalRevenue` (or equivalent names).
-    - Time-series data for the Revenue Trend chart: e.g. `revenueByMonth: { label, value }[]` or similar so the frontend can plot monthly revenue.
+## 6. Ranking rules save flow and DTO clarity
 
-- **New Registrations (this month) / Active Network / Rank Advances**
-  - **Use:** Either:
-    - `GET /admin/users` with date filter and total count (for new registrations and possibly “active network” if defined as user count), or
-    - A dedicated **admin dashboard summary** endpoint that returns counts for: new registrations this month, active network size, rank advances this month, etc.
-  - **Gap:** No single “dashboard summary” endpoint exists. If list endpoints do not support efficient count-only or summary responses, adding something like `GET /admin/dashboard/summary` (or `GET /admin/reports/dashboard`) with `{ newRegistrations, activeNetwork, rankAdvances, ... }` would avoid multiple heavy list calls.
+### Implemented (backend)
 
-- **Package Distribution (user count per package)**
-  - **Use:** Either:
-    - `GET /admin/users` with aggregation by package (if the API supports it), or
-    - A report/summary endpoint that returns counts per package (e.g. `GET /admin/reports/earnings` or a new endpoint that includes `packageDistribution: { package, count }[]`).
-  - **Gap:** No documented endpoint returns **user counts by package**. The frontend could in theory fetch all users and aggregate client-side, but that does not scale. A report or summary that includes package distribution is needed.
+- **PUT /admin/ranking-rules** – Request: `UpdateRankingRulesDto` with `rules: RankingRuleDto[]`. Each `RankingRuleDto`: `stage` (1–6), `rankName`, `requiredLevel` (min 1), `bonusAmount?` (min 0). Response: `RankingRulesResponseDto` with `rules: RankingRuleResponseDto[]`. Swagger: `@ApiProperty` on all fields. UI save flow remains frontend responsibility.
 
-- **Wallet Summary (platform-level)**
-  - **Use:** There is **no** `GET /admin/wallets` or “platform wallet totals” in `API.md`. Section **2** of this document already describes the gap for admin wallet list/detail.
-  - **Need:** Either extend the existing wallet gaps (e.g. `GET /admin/wallets` returning platform-level totals or list of wallets with balances) or add a dedicated `GET /admin/wallets/summary` (or similar) that returns aggregate balances by wallet type (Cash, Product Voucher, Autoship) for the dashboard.
+---
 
-- **Pending Actions (counts and items)**
-  - **Use:**
-    - **Pending Withdrawals:** `GET /admin/withdrawals?status=PENDING` (and optionally limit to first page). Response should include **total** so the dashboard can show “24 pending” without loading all.
-    - **Merchant Approvals:** `GET /admin/merchants` with status filter for pending (if supported). Need **total** or count.
-    - **Failed Payments:** `GET /admin/payments?status=FAILED` (or equivalent). Need **total** or count.
-  - **Compliance Alerts:** No standard endpoint is listed in `API.md`. If “compliance” is derived from audit or other data, that contract should be documented; otherwise the dashboard may leave this as placeholder or remove it.
+## 7. Products: single-item fetch + schema documentation
 
-- **Recent Activity**
-  - **Use:** `GET /admin/audit` with `limit=20` (and optionally `from`/`to`) to show the latest admin audit entries. Map each audit item to the activity feed format (type, title, description, timestamp, user/actor).
-  - **Gap:** None for basic “recent events”; the existing audit endpoint is sufficient if the response shape is documented (see audit section in this doc). Optional: a dedicated “dashboard activity” endpoint that returns a pre-shaped list for the feed.
+### Implemented
 
-### Summary table: endpoints for dashboard
+- **GET /admin/products/:id** – Returns `AdminProductDetailResponseDto`: `id`, `categoryId`, `category?`, `name`, `description`, `sku`, `status`, `visibleToAll`, `visibleToPackages`, `merchantOnly`, `images[]`, `currentPrice?` (NGN), `poolQuantity`, `createdAt`, `updatedAt`. Swagger: `@ApiOkResponse({ type: AdminProductDetailResponseDto })`.
+- **Swagger:** Category create/update (`CreateCategoryDto`, `UpdateCategoryDto`), product status (`UpdateProductStatusDto`), and admin product detail DTOs use `@ApiProperty` / `@ApiPropertyOptional`. Price history shape returned by existing `GET /admin/products/:id/price-history`.
 
-| Data | Endpoint(s) to use | Notes |
-|------|--------------------|--------|
-| Total / active users | `GET /admin/users` (use `total` from response) or `GET /admin/users/summary` | Prefer summary if list does not expose total efficiently |
-| Merchant count | `GET /admin/merchants` (response must include total) | |
-| Financial totals & revenue trend | `GET /admin/reports/financial`, `GET /admin/reports/earnings` | Document response schema (totals + time series) |
-| New registrations, network size, rank advances | List endpoints with filters + total, or `GET /admin/dashboard/summary` | New summary endpoint recommended |
-| Package distribution | Report/summary with package counts, or users list with aggregation | New or extended report recommended |
-| Wallet summary (platform) | `GET /admin/wallets` or `GET /admin/wallets/summary` | See gap §2 |
-| Pending withdrawals count + items | `GET /admin/withdrawals?status=PENDING` | Response must include total |
-| Pending merchants count | `GET /admin/merchants` (filter by status) | Response must include total |
-| Failed payments count | `GET /admin/payments?status=FAILED` | Response must include total |
-| Recent activity | `GET /admin/audit?limit=20` | Map to activity feed format |
-| System status | Optional: `GET /health` or similar | Not blocking |
+### Admin frontend (§5–7)
 
-### Proposed follow-ups
+- **§5:** [`earnings.service.ts`](src/app/features/earnings/services/earnings.service.ts) calls `GET admin/earnings/overview`, `GET admin/earnings/activity/global`, `GET admin/earnings/metrics`. Consumed by [`earnings-overview`](src/app/features/earnings/overview/earnings-overview.component.ts) and [`earnings-monitoring`](src/app/features/earnings/monitoring/earnings-monitoring.component.ts).
+- **§6:** Earnings → Ranking & Stages uses [`SystemConfigService`](src/app/features/system/services/system-config.service.ts) `loadRankingRules()` (read-only table + link to System → Financial for edits). `PUT admin/ranking-rules` save path remains in [`financial-rules.component.ts`](src/app/features/system/financial/financial-rules.component.ts).
+- **§7:** [`AdminProductsService.loadProductById`](src/app/features/products/services/admin-products.service.ts) calls `GET admin/products/:id` and upserts into the products list; [`product-edit.component.ts`](src/app/features/products/details/product-edit.component.ts) uses it for deep links (fallback: list load).
 
-- Document response schemas for `GET /admin/reports/financial` and `GET /admin/reports/earnings` (including totals and time-series for charts).
-- Add **dashboard summary** endpoint (e.g. `GET /admin/dashboard/summary` or `GET /admin/reports/dashboard`) that returns: `totalUsers`, `activeUsers`, `merchantCount`, `newRegistrationsThisMonth`, `activeNetwork`, `rankAdvancesThisMonth`, `packageDistribution: { package, count }[]`, and optionally financial totals, so the dashboard can load in one or two calls.
-- Resolve wallet summary for dashboard via the existing wallet gaps (§2): e.g. `GET /admin/wallets` or `GET /admin/wallets/summary` with platform-level balances.
-- Ensure list endpoints used for counts (`/admin/withdrawals`, `/admin/merchants`, `/admin/payments`) return a **total** (or equivalent) in the response so the dashboard can show counts without paginating through all results.
+---
 
+## 8. Admin dashboard live data
 
+### Implemented
+
+- **GET /admin/dashboard/summary** – Response: `userCount`, `merchantCount`, `pendingWithdrawalsCount`, `initiatedPaymentsCount`, `pendingIdentityCount`, `packageDistribution: Record<Package, number>`, `revenueTrend: { date, amount }[]` (last 30 days of SUCCESS payments by day), `wallets: Record<WalletType, number>` (platform totals by type from ledger).
+- **GET /admin/wallets/summary** – Response: `Record<WalletType, number>` (aggregate balance per wallet type from ledger). Also included in dashboard summary as `wallets`.
+- **Pagination total:** `GET /admin/withdrawals` and `GET /admin/payments` now return `{ data: T[], total: number }`. Query params unchanged; `total` is the full count for the applied filters.
+
+### Admin frontend (§8)
+
+- [`DashboardService`](src/app/features/dashboard/dashboard.service.ts) calls **`GET admin/dashboard/summary`** on the admin home dashboard. Stats, revenue trend chart, package distribution, wallet totals, and pending-action counts are driven from that response (`wallets` field for wallet cards; no second request to `/admin/wallets/summary` on dashboard load). **`GET admin/wallets/summary`** remains on [`WalletService.getWalletSummary`](src/app/features/wallets/services/wallet.service.ts) for other features.
+
+---
+
+## Backend update checklist
+
+Completed for all gaps above:
+
+- Request/response schemas documented in this file and in Swagger (DTOs with `@ApiProperty`).
+- Enum values: `WithdrawalStatus` includes `PROCESSING`; others unchanged.
+- Query/filter/pagination: documented per endpoint in the "Implemented" subsections.
+- Run `prisma migrate deploy` to apply migration `20260311120000_add_withdrawal_processing_status` for Gap 2.
