@@ -89,10 +89,10 @@ export class MerchantCategoryConfigService {
                     ...c,
                     deliveryCommissionPct: body.deliveryCommissionPct,
                     productCommissionPct: body.productCommissionPct,
-                    registrationFeeUsd:
-                      body.registrationFeeUsd !== undefined
-                        ? body.registrationFeeUsd
-                        : c.registrationFeeUsd,
+                    registrationFeeNGN:
+                      body.registrationFeeNGN !== undefined
+                        ? body.registrationFeeNGN
+                        : c.registrationFeeNGN,
                     onboardingItems:
                       body.onboardingItems !== undefined
                         ? body.onboardingItems ?? []

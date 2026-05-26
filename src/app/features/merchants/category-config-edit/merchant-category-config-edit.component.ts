@@ -111,7 +111,7 @@ export class MerchantCategoryConfigEditComponent implements OnInit {
     this.form = this.fb.group({
       deliveryCommissionPct: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
       productCommissionPct: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
-      registrationFeeUsd: [null as number | null],
+      registrationFeeNGN: [null as number | null],
       onboardingItems: this.fb.array([]),
     });
   }
@@ -121,20 +121,20 @@ export class MerchantCategoryConfigEditComponent implements OnInit {
     const digits = input.value.replace(/[^0-9]/g, '');
     if (!digits) {
       input.value = '';
-      this.form.get('registrationFeeUsd')!.setValue('', { emitEvent: false });
+      this.form.get('registrationFeeNGN')!.setValue('', { emitEvent: false });
       return;
     }
     const formatted = Number(digits).toLocaleString('en-US');
     input.value = formatted;
-    this.form.get('registrationFeeUsd')!.setValue(formatted, { emitEvent: false });
+    this.form.get('registrationFeeNGN')!.setValue(formatted, { emitEvent: false });
   }
 
   private populateForm(cfg: MerchantCategoryConfig) {
     this.form.patchValue({
       deliveryCommissionPct: cfg.deliveryCommissionPct,
       productCommissionPct: cfg.productCommissionPct,
-      registrationFeeUsd: cfg.registrationFeeUsd != null
-        ? Number(cfg.registrationFeeUsd).toLocaleString('en-US')
+      registrationFeeNGN: cfg.registrationFeeNGN != null
+        ? Number(cfg.registrationFeeNGN).toLocaleString('en-US')
         : null,
     });
 
@@ -174,14 +174,14 @@ export class MerchantCategoryConfigEditComponent implements OnInit {
     this.form.markAllAsTouched();
 
     const value = this.form.value;
-    const rawFee = value.registrationFeeUsd;
+    const rawFee = value.registrationFeeNGN;
     const parsedFee = rawFee
       ? parseFloat(rawFee.toString().replace(/,/g, ''))
       : null;
     const body: UpdateMerchantCategoryConfigBody = {
       deliveryCommissionPct: value.deliveryCommissionPct,
       productCommissionPct: value.productCommissionPct,
-      registrationFeeUsd: parsedFee != null && !isNaN(parsedFee) ? parsedFee : null,
+      registrationFeeNGN: parsedFee != null && !isNaN(parsedFee) ? parsedFee : null,
       onboardingItems: value.onboardingItems?.map((item: OnboardingItem) => ({
         productId: item.productId,
         quantity: item.quantity,
