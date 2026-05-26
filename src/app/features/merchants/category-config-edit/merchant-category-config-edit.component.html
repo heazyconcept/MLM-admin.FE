@@ -136,7 +136,7 @@
             </p>
 
             <div class="max-w-[200px]">
-              <label for="registrationFeeUsd"
+              <label for="registrationFeeNGN"
                      class="block text-xs font-medium text-slate-600 mb-1.5">
                 Fee (NGN)
               </label>
@@ -146,10 +146,10 @@
                     ₦
                 </span>
                 <input
-                  id="registrationFeeUsd"
+                  id="registrationFeeNGN"
                   type="text"
                   inputmode="numeric"
-                  formControlName="registrationFeeUsd"
+                  formControlName="registrationFeeNGN"
                   [readonly]="isViewOnly()"
                   (input)="formatRegistrationFeeInput($event)"
                   class="w-full h-10 pl-7 pr-3 rounded-lg border border-slate-200 text-sm
