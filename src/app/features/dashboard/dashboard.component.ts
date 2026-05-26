@@ -10,11 +10,10 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { StatCardComponent } from './components/stat-card/stat-card.component';
-import { WalletSummaryComponent, WalletSummaryData } from './components/wallet-summary/wallet-summary.component';
 import { OverviewChartComponent } from './components/overview-chart/overview-chart.component';
 import { PackageChartComponent, PackageData } from './components/package-chart/package-chart.component';
 import { PendingActionsComponent, PendingAction } from './components/pending-actions/pending-actions.component';
-import { ActivityFeedComponent } from './components/activity-feed/activity-feed.component';
+import { WalletSummaryData } from './components/wallet-summary/wallet-summary.component';
 import {
   AdminDashboardSummary,
   DashboardService,
@@ -49,11 +48,9 @@ const PKG_COLORS: Record<string, string> = {
     RouterModule,
     ButtonModule,
     StatCardComponent,
-    WalletSummaryComponent,
     OverviewChartComponent,
     PackageChartComponent,
-    PendingActionsComponent,
-    ActivityFeedComponent
+    PendingActionsComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
