@@ -61,6 +61,7 @@
           <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[120px]">Registration</th>
           <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[120px]">Cash</th>
           <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[120px]">Voucher</th>
+          <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[120px]">Autoship</th>
           <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[100px]">Status</th>
           <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[130px]">Last Updated</th>
           <th class="px-5 py-3 w-[60px]"></th>
@@ -93,7 +94,6 @@
             <!-- User -->
             <td class="px-5 py-3.5 w-[220px]">
               <p class="text-sm font-semibold text-mlm-text leading-tight">{{ group.userName }}</p>
-              <p class="text-[11px] font-mono text-slate-400 mt-0.5">{{ group.userId }}</p>
             </td>
 
             <!-- Registration balance -->
@@ -114,6 +114,13 @@
             <td class="px-5 py-3.5 w-[120px]">
               <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
                 {{ group.voucherWallet?.balance | currency:group.voucherWallet?.displayCurrency:'symbol-narrow' }}
+              </span>
+            </td>
+
+            <!-- Autoship balance -->
+            <td class="px-5 py-3.5 w-[120px]">
+              <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
+                {{ group.autoshipWallet?.balance | currency:group.autoshipWallet?.displayCurrency:'symbol-narrow' }}
               </span>
             </td>
 
