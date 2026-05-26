@@ -53,6 +53,7 @@ export class WalletListComponent {
           registrationWallet: null,
           cashWallet: null,
           voucherWallet: null,
+          autoshipWallet: null,
           worstStatus: 'Active',
           lastUpdated: w.createdAt
         });
@@ -65,6 +66,7 @@ export class WalletListComponent {
       if (type === 'registration') group.registrationWallet = w;
       if (type === 'cash') group.cashWallet = w;
       if (type === 'voucher') group.voucherWallet = w;
+      if (type === 'autoship') group.autoshipWallet = w;
 
       // Use backend status; rank so worst (LOCKED > FROZEN > ACTIVE) wins
       const rank: Record<string, number> = { LOCKED: 3, FROZEN: 2, ACTIVE: 1 };
@@ -167,6 +169,7 @@ interface UserWalletGroup {
   registrationWallet: Wallet | null;
   cashWallet: Wallet | null;
   voucherWallet: Wallet | null;
+  autoshipWallet: Wallet | null;
   worstStatus: string;
   lastUpdated: Date;
 }

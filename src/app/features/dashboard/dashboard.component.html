@@ -112,23 +112,17 @@
         </app-stat-card>
       }
     </div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="mb-5">
       <app-package-chart [packages]="packageData()" [loading]="showOperationsSkeleton()"></app-package-chart>
-      <app-wallet-summary
-        [wallets]="walletSummary()"
-        [totalBalance]="walletTotalBalance()"
-        [loading]="showOperationsSkeleton()">
-      </app-wallet-summary>
     </div>
   </div>
 
   <!-- Section 4: Queues & activity -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+  <div class="mb-5">
     <app-pending-actions
       [actions]="pendingActions()"
       [preferLiveSummary]="true"
       [loading]="showQueuesSkeleton()">
     </app-pending-actions>
-    <app-activity-feed [loading]="showQueuesSkeleton()"></app-activity-feed>
   </div>
 </div>

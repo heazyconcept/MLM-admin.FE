@@ -75,7 +75,7 @@ export class OverviewChartComponent {
 
     this.options.set({
       maintainAspectRatio: false,
-      aspectRatio: 1.5,
+      responsive: true,
       plugins: {
         legend: { display: false },
         tooltip: {
