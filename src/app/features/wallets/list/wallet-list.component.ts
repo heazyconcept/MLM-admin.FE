@@ -150,8 +150,7 @@ export class WalletListComponent {
 
   private loadPage(): void {
     this.loading.set(true);
-    // Load an initial reasonable slice; client-side pagination is done on grouped results.
-    this.walletService.listWallets({ limit: 100, offset: 0 }).subscribe({
+    this.walletService.fetchAllWallets().subscribe({
       next: () => this.loading.set(false),
       error: () => this.loading.set(false)
     });

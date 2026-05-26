@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, map, tap, switchMap, of } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 
 
@@ -88,6 +88,7 @@ export class WalletService {
 
   /**
    * Query options for `GET /admin/wallets`.
+   * Returns only the wallet array for public callers.
    */
   listWallets(query: {
     userId?: string;
@@ -96,23 +97,57 @@ export class WalletService {
     limit?: number;
     offset?: number;
   } = {}): Observable<Wallet[]> {
-    const { userId, walletType, status, limit = 20, offset = 0 } = query;
+    return this.fetchPage(query).pipe(
+      map(({ items }) => items)
+    );
+  }
 
+  /**
+   * Fetches ALL wallets by iterating through pages until total is reached.
+   * Accumulates results into the wallets signal progressively.
+   */
+  fetchAllWallets(query: {
+    userId?: string;
+    walletType?: string;
+    status?: string;
+    pageSize?: number;
+  } = {}): Observable<Wallet[]> {
+    const { pageSize = 100, ...rest } = query;
+    const accumulated: Wallet[] = [];
+
+    const loadNext = (offset: number): Observable<Wallet[]> =>
+      this.fetchPage({ ...rest, limit: pageSize, offset }).pipe(
+        switchMap(({ items, total }) => {
+          accumulated.push(...items);
+          this.walletsSignal.set([...accumulated]);
+          const fetched = offset + items.length;
+          if (fetched < total && items.length > 0) {
+            return loadNext(fetched);
+          }
+          return of(accumulated);
+        })
+      );
+
+    return loadNext(0);
+  }
+
+  /** Internal: fetches one page and returns both items + total. */
+  private fetchPage(query: {
+    userId?: string;
+    walletType?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Observable<{ items: Wallet[]; total: number }> {
+    const { userId, walletType, status, limit = 100, offset = 0 } = query;
     return this.api
-      .get<AdminWalletListResponse>('admin/wallets', {
-        userId,
-        walletType,
-        status,
-        limit,
-        offset
-      })
+      .get<AdminWalletListResponse>('admin/wallets', { userId, walletType, status, limit, offset })
       .pipe(
         map(response => {
           const items = (response?.items ?? []).map(item => this.mapListItemToWallet(item));
           const total = response?.total ?? offset + items.length;
-          this.walletsSignal.set(items);
           this.totalSignal.set(total);
-          return items;
+          return { items, total };
         })
       );
   }

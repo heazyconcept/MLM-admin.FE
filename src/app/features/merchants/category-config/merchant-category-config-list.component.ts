@@ -144,7 +144,7 @@ getAccentStripClass(type: string): string {
 
   formatFee(fee: number | null): string {
     if (fee === null) return 'System default';
-    return `$${fee.toLocaleString()}`;
+    return `₦${fee.toLocaleString()}`;
   }
 
   formatPct(value: number): string {
