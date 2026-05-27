@@ -125,4 +125,289 @@
       [loading]="showQueuesSkeleton()">
     </app-pending-actions>
   </div>
+
+  <!-- Section 5: Live Activity Feed -->
+  <div class="mb-8 mt-6">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 class="text-lg font-semibold text-mlm-text">Live activity feed</h2>
+        <p class="text-sm text-mlm-secondary mt-0.5">Real-time ledger updates and per-product volume distribution</p>
+      </div>
+      <button pButton type="button" icon="pi pi-refresh" class="p-button-text p-button-rounded p-button-secondary"
+        [loading]="activityLoading()" (click)="reload()">
+      </button>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      @if (activityLoading() && activity().length === 0) {
+        <div class="p-8 text-center text-gray-500 text-sm">Loading activity…</div>
+      } @else if (activity().length === 0) {
+        <div class="p-8 text-center text-gray-500 text-sm">No recent activity.</div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-200 bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                <th class="px-4 py-3 w-[150px]">Date</th>
+                <th class="px-4 py-3 w-[90px]">Type</th>
+                <th class="px-4 py-3 w-[90px]">Direction</th>
+                <th class="px-4 py-3">Source</th>
+                <th class="px-4 py-3 w-[140px]">User</th>
+                <th class="px-4 py-3 w-[90px]">Wallet</th>
+                <th class="px-4 py-3 w-[130px] text-right">Amount</th>
+                <th class="px-4 py-3 w-[40px]"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of activity(); track activityTrack($index, row)) {
+                <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition-colors duration-100 cursor-pointer"
+                  (click)="toggleExpandedRow(row)">
+                  <!-- Date -->
+                  <td class="px-4 py-3 text-xs text-gray-600 tabular-nums whitespace-nowrap">
+                    {{ row.createdAt | date: 'MMM d, y HH:mm' }}
+                  </td>
+                  <!-- Type (Ledger/PV) -->
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
+                      [ngClass]="{
+                        'bg-blue-50 text-blue-700 border border-blue-200': row.type === 'ledger',
+                        'bg-violet-50 text-violet-700 border border-violet-200': row.type === 'pv'
+                      }">
+                      {{ row.type === 'ledger' ? 'Ledger' : row.type === 'pv' ? 'PV' : (row.type | titlecase) }}
+                    </span>
+                  </td>
+                  <!-- Direction -->
+                  <td class="px-4 py-3">
+                    @if (row.direction) {
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
+                        [ngClass]="{
+                          'bg-emerald-50 text-emerald-700 border-emerald-200': row.direction === 'CREDIT',
+                          'bg-red-50 text-red-700 border-red-200': row.direction === 'DEBIT'
+                        }">
+                        <i class="pi text-[8px]" [class.pi-arrow-down-left]="row.direction === 'CREDIT'"
+                          [class.pi-arrow-up-right]="row.direction === 'DEBIT'"></i>
+                        {{ row.direction === 'CREDIT' ? 'Credit' : 'Debit' }}
+                      </span>
+                    } @else {
+                      <span class="text-xs text-gray-400">—</span>
+                    }
+                  </td>
+                  <!-- Source (earning type label) -->
+                  <td class="px-4 py-3">
+                    <span class="text-xs font-medium text-gray-800">
+                      {{ getSourceLabel(row) }}
+                    </span>
+                    @if (getSourceSublabel(row); as sub) {
+                      <p class="text-[10px] text-gray-400 mt-0.5">{{ sub }}</p>
+                    }
+                  </td>
+                  <!-- User -->
+                  <td class="px-4 py-3">
+                    <span class="text-xs font-medium text-gray-700 truncate block max-w-[130px]" [title]="row.userId ?? ''">
+                      {{ getUserLabel(row) }}
+                    </span>
+                  </td>
+                  <!-- Wallet -->
+                  <td class="px-4 py-3">
+                    @if (row.walletType) {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide"
+                        [ngClass]="{
+                          'bg-green-50 text-green-700': row.walletType === 'CASH',
+                          'bg-amber-50 text-amber-700': row.walletType === 'AUTOSHIP'
+                        }">
+                        {{ row.walletType === 'AUTOSHIP' ? 'Autoship' : (row.walletType | titlecase) }}
+                      </span>
+                    } @else {
+                      <span class="text-xs text-gray-400">—</span>
+                    }
+                  </td>
+                  <!-- Amount -->
+                  <td class="px-4 py-3 text-right tabular-nums whitespace-nowrap">
+                    <span class="text-sm font-semibold" [ngClass]="{
+                      'text-emerald-600': row.direction === 'CREDIT',
+                      'text-red-600': row.direction === 'DEBIT',
+                      'text-gray-800': !row.direction
+                    }">
+                      {{ formatActivityAmount(row) }}
+                    </span>
+                  </td>
+                  <!-- Expand Toggle -->
+                  <td class="px-3 py-3 text-center">
+                    <i class="pi text-[10px] text-gray-400 transition-transform duration-150"
+                      [class.pi-chevron-down]="!isRowExpanded(row)" [class.pi-chevron-up]="isRowExpanded(row)"></i>
+                  </td>
+                </tr>
+                <!-- Expanded Detail Row -->
+                @if (isRowExpanded(row)) {
+                  <tr class="bg-gray-50/40 border-b border-gray-100">
+                    <td [attr.colspan]="8" class="px-6 py-4">
+                      <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden p-6 space-y-5">
+                        <!-- Section Header -->
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                          <span class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                            <span class="w-1.5 h-3 bg-blue-600 rounded-full"></span>
+                            Ledger Details & Metadata
+                          </span>
+                          @if (row.reference) {
+                            <span class="text-[10px] bg-gray-50 text-gray-500 px-2 py-0.5 rounded font-mono border border-gray-100 select-all">Ref: {{ row.reference }}</span>
+                          }
+                        </div>
+
+                        <!-- Side-by-Side Tables -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <!-- Left Column: Core Fields -->
+                          <div class="space-y-3">
+                            <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Transaction Info</h5>
+                            <div class="border border-gray-100 rounded-lg overflow-hidden">
+                              <table class="w-full text-xs">
+                                <tbody class="divide-y divide-gray-50">
+                                  @if (row.id) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50 w-[120px]">Entry ID</td>
+                                      <td class="px-4 py-2.5 font-mono text-gray-700 break-all select-all">{{ row.id }}</td>
+                                    </tr>
+                                  }
+                                  @if (row.userId) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">User ID</td>
+                                      <td class="px-4 py-2.5 font-mono text-gray-700 break-all select-all">{{ row.userId }}</td>
+                                    </tr>
+                                  }
+                                  @if (row.type) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">Activity Type</td>
+                                      <td class="px-4 py-2.5 text-gray-800 uppercase font-semibold">{{ row.type }}</td>
+                                    </tr>
+                                  }
+                                  @if (row.earningType) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">Earning Type</td>
+                                      <td class="px-4 py-2.5 text-gray-800 font-semibold">{{ getSourceLabel(row) }}</td>
+                                    </tr>
+                                  }
+                                  @if (row.source) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">Source Stream</td>
+                                      <td class="px-4 py-2.5 text-gray-700 font-mono">{{ row.source }}</td>
+                                    </tr>
+                                  }
+                                  @if (getMetaValue(row, 'purpose')) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">Purpose</td>
+                                      <td class="px-4 py-2.5 text-gray-700 font-medium">{{ formatPurpose(getMetaValue(row, 'purpose')) }}</td>
+                                    </tr>
+                                  }
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+
+                          <!-- Right Column: Calculations & Scope -->
+                          <div class="space-y-3">
+                            <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Purchase & Reward Metrics</h5>
+                            <div class="border border-gray-100 rounded-lg overflow-hidden">
+                              <table class="w-full text-xs">
+                                <tbody class="divide-y divide-gray-50">
+                                  @if (getMetaValue(row, 'orderId')) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50 w-[120px]">Order ID</td>
+                                      <td class="px-4 py-2.5 font-mono text-gray-700 break-all select-all">{{ getMetaValue(row, 'orderId') }}</td>
+                                    </tr>
+                                  }
+                                  @if (getMetaValue(row, 'buyerId')) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">Buyer ID</td>
+                                      <td class="px-4 py-2.5 font-mono text-gray-700 break-all select-all">{{ getMetaValue(row, 'buyerId') }}</td>
+                                    </tr>
+                                  }
+                                  @if (getMetaValue(row, 'level')) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">Matrix Level</td>
+                                      <td class="px-4 py-2.5 text-gray-800 font-semibold">Level {{ getMetaValue(row, 'level') }}</td>
+                                    </tr>
+                                  }
+                                  @if (getMetaValue(row, 'merchantType')) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">Merchant Tier</td>
+                                      <td class="px-4 py-2.5 text-gray-800 font-semibold uppercase">{{ getMetaValue(row, 'merchantType') }}</td>
+                                    </tr>
+                                  }
+                                  @if (getMetaValue(row, 'ratePct') !== null || getMetaValue(row, 'rate') !== null) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">Calculation Rate</td>
+                                      <td class="px-4 py-2.5 text-emerald-600 font-bold">
+                                        @if (getMetaValue(row, 'ratePct') !== null) {
+                                          {{ getMetaValue(row, 'ratePct') }}%
+                                        } @else {
+                                          {{ getMetaValue(row, 'rate') * 100 }}%
+                                        }
+                                      </td>
+                                    </tr>
+                                  }
+                                  @if (getMetaValue(row, 'baseAmount')) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">Base Amount</td>
+                                      <td class="px-4 py-2.5 text-gray-800 font-semibold">{{ getMetaValue(row, 'baseAmount') | currency:'USD':'symbol':'1.2-2' }}</td>
+                                    </tr>
+                                  }
+                                  @if (getMetaValue(row, 'autoshipAllocationPercent')) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">Autoship Alloc.</td>
+                                      <td class="px-4 py-2.5 text-amber-600 font-semibold">{{ getMetaValue(row, 'autoshipAllocationPercent') }}%</td>
+                                    </tr>
+                                  }
+                                  @if (getMetaValue(row, 'package')) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">Associated Package</td>
+                                      <td class="px-4 py-2.5 text-gray-800 font-medium uppercase">{{ getMetaValue(row, 'package') }}</td>
+                                    </tr>
+                                  }
+                                  @if (getMetaValue(row, 'cdpaPercent')) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">CDPA Contribution</td>
+                                      <td class="px-4 py-2.5 text-gray-700 font-semibold">{{ getMetaValue(row, 'cdpaPercent') }}%</td>
+                                    </tr>
+                                  }
+                                  @if (getMetaValue(row, 'paymentType') || getMetaValue(row, 'paymentId')) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">Payment Info</td>
+                                      <td class="px-4 py-2.5 text-gray-700">
+                                        @if (getMetaValue(row, 'paymentType')) {
+                                          <span class="font-medium block">{{ formatPurpose(getMetaValue(row, 'paymentType')) }}</span>
+                                        }
+                                        @if (getMetaValue(row, 'paymentId')) {
+                                          <span class="font-mono text-gray-500 text-[10px] block mt-0.5 select-all">{{ getMetaValue(row, 'paymentId') }}</span>
+                                        }
+                                      </td>
+                                    </tr>
+                                  }
+                                  @if (row.displayCurrency && row.displayAmount !== undefined) {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                      <td class="px-4 py-2.5 font-medium text-gray-500 bg-gray-50/50">Display Payout</td>
+                                      <td class="px-4 py-2.5 text-gray-900 font-bold select-all">{{ row.displayAmount | number:'1.2-2' }} {{ row.displayCurrency }}</td>
+                                    </tr>
+                                  }
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="p-4 border-t border-gray-100 flex justify-center">
+          <a routerLink="/admin/earnings/monitoring"
+             class="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
+             View full activity logs
+             <i class="pi pi-arrow-right text-[10px]"></i>
+          </a>
+        </div>
+      }
+    </div>
+  </div>
 </div>

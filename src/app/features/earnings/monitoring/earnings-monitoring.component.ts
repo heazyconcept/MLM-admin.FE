@@ -5,9 +5,12 @@ import { ButtonModule } from 'primeng/button';
 import { ProgressBarModule } from 'primeng/progressbar';
 import {
   EarningsService,
-  EarningsActivity,
-  EarningsMetricsResponse
+  EarningsMetricsResponse,
+  UserEarningsActivityItem,
+  formatUserEarningsActivityAmount,
+  userEarningsActivityTrackId,
 } from '../services/earnings.service';
+import { getEarningTypeLabel } from '../../../core/constants/earning-type-labels';
 
 @Component({
   selector: 'app-earnings-monitoring',
@@ -18,11 +21,14 @@ import {
 export class EarningsMonitoringComponent implements OnInit {
   private readonly earningsService = inject(EarningsService);
 
-  activity = signal<EarningsActivity[]>([]);
+  activity = signal<UserEarningsActivityItem[]>([]);
   activityLoading = signal(false);
   metrics = signal<EarningsMetricsResponse | null>(null);
   metricsLoading = signal(false);
   readonly pageSize = 50;
+
+  /** Track which rows are expanded to show metadata. */
+  expandedRowIds = signal<Set<string>>(new Set());
 
   ngOnInit(): void {
     this.reloadAll();
@@ -40,9 +46,10 @@ export class EarningsMonitoringComponent implements OnInit {
   private loadActivity(replace: boolean, offset: number): void {
     this.activityLoading.set(true);
     this.earningsService
-      .getGlobalActivity({ limit: this.pageSize, offset })
+      .getGlobalActivityRaw({ limit: this.pageSize, offset })
       .subscribe({
-        next: (items) => {
+        next: (res) => {
+          const items = res?.items ?? [];
           if (replace) {
             this.activity.set(items);
           } else {
@@ -71,19 +78,6 @@ export class EarningsMonitoringComponent implements OnInit {
     });
   }
 
-  getStatusSeverity(status: string): 'success' | 'info' | 'warn' | 'danger' {
-    switch (status) {
-      case 'Processed':
-        return 'success';
-      case 'Pending':
-        return 'warn';
-      case 'Failed':
-        return 'danger';
-      default:
-        return 'info';
-    }
-  }
-
   formatAvgProcessing(ms: number): string {
     if (!ms || ms <= 0) return '—';
     if (ms < 1000) return `${Math.round(ms)}ms`;
@@ -94,5 +88,82 @@ export class EarningsMonitoringComponent implements OnInit {
     const tpm = this.metrics()?.transactionsPerMinute ?? 0;
     const capped = Math.min(tpm, 200);
     return Math.round((capped / 200) * 100);
+  }
+
+  // ── Table helpers ──
+
+  formatActivityAmount = formatUserEarningsActivityAmount;
+  activityTrack = userEarningsActivityTrackId;
+
+  toggleExpandedRow(row: UserEarningsActivityItem): void {
+    const key = row.id || row.reference || row.sourceId || '';
+    if (!key) return;
+    this.expandedRowIds.update(set => {
+      const next = new Set(set);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }
+
+  isRowExpanded(row: UserEarningsActivityItem): boolean {
+    const key = row.id || row.reference || row.sourceId || '';
+    return this.expandedRowIds().has(key);
+  }
+
+  /**
+   * Human-readable source label from earningType or source.
+   */
+  getSourceLabel(row: UserEarningsActivityItem): string {
+    if (row.earningType) {
+      return getEarningTypeLabel(row.earningType);
+    }
+    if (row.source) {
+      return getEarningTypeLabel(row.source);
+    }
+    return '—';
+  }
+
+  /**
+   * Optional sublabel showing extra context (e.g. metadata source, package).
+   */
+  getSourceSublabel(row: UserEarningsActivityItem): string {
+    const meta = row.metadata as Record<string, unknown> | undefined;
+    const metaSource = meta?.['source'] as string | undefined;
+    const pkg = meta?.['package'] as string | undefined;
+    const parts: string[] = [];
+    if (metaSource) parts.push(metaSource);
+    if (pkg) parts.push(pkg);
+    return parts.join(' · ');
+  }
+
+  /**
+   * Safely access a value from the row's metadata object.
+   */
+  getMetaValue(row: UserEarningsActivityItem, key: string): any {
+    const meta = row.metadata as Record<string, unknown> | undefined;
+    return meta?.[key] ?? null;
+  }
+
+  /**
+   * Format SCREAMING_SNAKE_CASE strings to readable text.
+   */
+  formatPurpose(purpose: string): string {
+    if (!purpose) return '—';
+    return purpose
+      .split('_')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  /**
+   * Short user identifier from the raw item (userName, userEmail, or truncated userId).
+   */
+  getUserLabel(row: UserEarningsActivityItem): string {
+    const raw = row as any;
+    return raw.userName || raw.userEmail || (row.userId ? row.userId.slice(0, 10) + '…' : '—');
   }
 }

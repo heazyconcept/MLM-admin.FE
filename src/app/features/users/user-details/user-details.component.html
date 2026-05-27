@@ -205,24 +205,196 @@
                 } @else if (!eaLoading() && eaItems().length === 0 && !eaError()) {
                   <p class="text-sm text-gray-500">No earnings activity for this range.</p>
                 } @else if (eaItems().length > 0) {
-                  <div class="overflow-x-auto rounded-lg border border-gray-100">
+                  <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
                     <table class="w-full text-sm">
                       <thead>
-                        <tr class="border-b border-gray-100 bg-gray-50/80 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-                          <th class="px-4 py-3">Kind</th>
-                          <th class="px-4 py-3">Detail</th>
-                          <th class="px-4 py-3 text-right">Amount</th>
-                          <th class="px-4 py-3">When</th>
+                        <tr class="border-b border-gray-200 bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                          <th class="px-4 py-3 w-[150px]">Date</th>
+                          <th class="px-4 py-3 w-[100px]">Type</th>
+                          <th class="px-4 py-3 w-[90px]">Direction</th>
+                          <th class="px-4 py-3">Source</th>
+                          <th class="px-4 py-3 w-[100px]">Wallet</th>
+                          <th class="px-4 py-3 w-[140px] text-right">Amount</th>
+                          <th class="px-4 py-3 w-[44px]"></th>
                         </tr>
                       </thead>
                       <tbody>
                         @for (row of eaItems(); track activityTrack($index, row)) {
-                          <tr class="border-b border-gray-50 hover:bg-gray-50/50">
-                            <td class="px-4 py-3 text-xs text-gray-800">{{ activityKind(row) }}</td>
-                            <td class="px-4 py-3 text-xs text-gray-600 max-w-md">{{ activityDetail(row) }}</td>
-                            <td class="px-4 py-3 text-right tabular-nums text-gray-900">{{ formatActivityAmount(row) }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ row.createdAt | date: 'medium' }}</td>
+                          <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition-colors duration-100 cursor-pointer"
+                              (click)="toggleExpandedRow(row)">
+                            <!-- Date -->
+                            <td class="px-4 py-3 text-xs text-gray-600 tabular-nums whitespace-nowrap">
+                              {{ row.createdAt | date: 'MMM d, y HH:mm' }}
+                            </td>
+                            <!-- Type (Ledger/PV) -->
+                            <td class="px-4 py-3">
+                              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
+                                    [ngClass]="{
+                                      'bg-blue-50 text-blue-700 border border-blue-200': row.type === 'ledger',
+                                      'bg-violet-50 text-violet-700 border border-violet-200': row.type === 'pv'
+                                    }">
+                                {{ row.type === 'ledger' ? 'Ledger' : 'PV' }}
+                              </span>
+                            </td>
+                            <!-- Direction -->
+                            <td class="px-4 py-3">
+                              @if (row.direction) {
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
+                                      [ngClass]="{
+                                        'bg-emerald-50 text-emerald-700 border-emerald-200': row.direction === 'CREDIT',
+                                        'bg-red-50 text-red-700 border-red-200': row.direction === 'DEBIT'
+                                      }">
+                                  <i class="pi text-[8px]"
+                                     [class.pi-arrow-down-left]="row.direction === 'CREDIT'"
+                                     [class.pi-arrow-up-right]="row.direction === 'DEBIT'"></i>
+                                  {{ row.direction === 'CREDIT' ? 'Credit' : 'Debit' }}
+                                </span>
+                              } @else {
+                                <span class="text-xs text-gray-400">—</span>
+                              }
+                            </td>
+                            <!-- Source (earning type label) -->
+                            <td class="px-4 py-3">
+                              <span class="text-xs font-medium text-gray-800">
+                                {{ getSourceLabel(row) }}
+                              </span>
+                              @if (getSourceSublabel(row); as sub) {
+                                <p class="text-[10px] text-gray-400 mt-0.5">{{ sub }}</p>
+                              }
+                            </td>
+                            <!-- Wallet -->
+                            <td class="px-4 py-3">
+                              @if (row.walletType) {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide"
+                                      [ngClass]="{
+                                        'bg-green-50 text-green-700': row.walletType === 'CASH',
+                                        'bg-amber-50 text-amber-700': row.walletType === 'AUTOSHIP'
+                                      }">
+                                  {{ row.walletType === 'AUTOSHIP' ? 'Autoship' : (row.walletType | titlecase) }}
+                                </span>
+                              } @else {
+                                <span class="text-xs text-gray-400">—</span>
+                              }
+                            </td>
+                            <!-- Amount -->
+                            <td class="px-4 py-3 text-right tabular-nums whitespace-nowrap">
+                              <span class="text-sm font-semibold"
+                                    [ngClass]="{
+                                      'text-emerald-600': row.direction === 'CREDIT',
+                                      'text-red-600': row.direction === 'DEBIT',
+                                      'text-gray-800': !row.direction
+                                    }">
+                                {{ formatActivityAmount(row) }}
+                              </span>
+                            </td>
+                            <!-- Expand Toggle -->
+                            <td class="px-3 py-3 text-center">
+                              <i class="pi text-[10px] text-gray-400 transition-transform duration-150"
+                                 [class.pi-chevron-down]="!isRowExpanded(row)"
+                                 [class.pi-chevron-up]="isRowExpanded(row)"></i>
+                            </td>
                           </tr>
+                          <!-- Expanded Detail Row -->
+                          @if (isRowExpanded(row)) {
+                            <tr class="bg-gray-50/80 border-b border-gray-100">
+                              <td [attr.colspan]="7" class="px-4 py-3">
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-2.5 text-xs">
+                                  @if (row.reference) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Reference</span>
+                                      <p class="text-gray-700 font-mono text-[11px] mt-0.5 break-all">{{ row.reference }}</p>
+                                    </div>
+                                  }
+                                  @if (row.id) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Entry ID</span>
+                                      <p class="text-gray-700 font-mono text-[11px] mt-0.5">{{ row.id | slice:0:12 }}…</p>
+                                    </div>
+                                  }
+                                  @if (row.source) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Raw Source</span>
+                                      <p class="text-gray-700 font-mono text-[11px] mt-0.5">{{ row.source }}</p>
+                                    </div>
+                                  }
+                                  @if (row.earningType) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Earning Type</span>
+                                      <p class="text-gray-700 font-mono text-[11px] mt-0.5">{{ row.earningType }}</p>
+                                    </div>
+                                  }
+                                  @if (getMetaValue(row, 'purpose')) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Purpose</span>
+                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ formatPurpose(getMetaValue(row, 'purpose')) }}</p>
+                                    </div>
+                                  }
+                                  @if (getMetaValue(row, 'orderId')) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Order ID</span>
+                                      <p class="text-gray-700 font-mono text-[11px] mt-0.5">{{ getMetaValue(row, 'orderId') | slice:0:12 }}…</p>
+                                    </div>
+                                  }
+                                  @if (getMetaValue(row, 'ratePct') || getMetaValue(row, 'rate')) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Rate</span>
+                                      <p class="text-gray-700 text-[11px] mt-0.5">
+                                        {{ getMetaValue(row, 'ratePct') ? getMetaValue(row, 'ratePct') + '%' : (getMetaValue(row, 'rate') * 100) + '%' }}
+                                      </p>
+                                    </div>
+                                  }
+                                  @if (getMetaValue(row, 'baseAmount')) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Base Amount</span>
+                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ getMetaValue(row, 'baseAmount') }}</p>
+                                    </div>
+                                  }
+                                  @if (getMetaValue(row, 'level')) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Level</span>
+                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ getMetaValue(row, 'level') }}</p>
+                                    </div>
+                                  }
+                                  @if (getMetaValue(row, 'merchantType')) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Merchant Type</span>
+                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ getMetaValue(row, 'merchantType') | titlecase }}</p>
+                                    </div>
+                                  }
+                                  @if (getMetaValue(row, 'autoshipAllocationPercent')) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Autoship Alloc.</span>
+                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ getMetaValue(row, 'autoshipAllocationPercent') }}%</p>
+                                    </div>
+                                  }
+                                  @if (getMetaValue(row, 'package')) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Package</span>
+                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ getMetaValue(row, 'package') | titlecase }}</p>
+                                    </div>
+                                  }
+                                  @if (getMetaValue(row, 'cdpaPercent')) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">CDPA %</span>
+                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ getMetaValue(row, 'cdpaPercent') }}%</p>
+                                    </div>
+                                  }
+                                  @if (getMetaValue(row, 'paymentType')) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Payment Type</span>
+                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ formatPurpose(getMetaValue(row, 'paymentType')) }}</p>
+                                    </div>
+                                  }
+                                  @if (row.displayCurrency && row.displayAmount !== undefined) {
+                                    <div>
+                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Display Amount</span>
+                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ row.displayAmount }} {{ row.displayCurrency }}</p>
+                                    </div>
+                                  }
+                                </div>
+                              </td>
+                            </tr>
+                          }
                         }
                       </tbody>
                     </table>

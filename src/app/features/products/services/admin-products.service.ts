@@ -37,6 +37,7 @@ export interface AdminProductDto {
   basePrice?: string | number | null;
   nonMemberBasePrice?: string | number | null;
   pv?: string | number | null;
+  directReferralPv?: string | number | null;
   cpv?: string | number | null;
   effectiveFrom?: string | null;
   effectiveTo?: string | null;
@@ -61,6 +62,7 @@ export interface AdminProductPriceDto {
   basePrice: number;
   nonMemberBasePrice?: number | null;
   pv: number;
+  directReferralPv: number;
   cpv: number;
   effectiveFrom: string;
   effectiveTo?: string | null;
@@ -71,6 +73,7 @@ export interface SetProductPricePayload {
   basePrice: number;
   nonMemberBasePrice?: number;
   pv: number;
+  directReferralPv: number;
   cpv: number;
   effectiveFrom?: string;
 }
@@ -398,6 +401,7 @@ export class AdminProductsService {
       basePrice: dto.basePrice,
       nonMemberBasePrice: dto.nonMemberBasePrice,
       pv: dto.pv,
+      directReferralPv: dto.directReferralPv ?? 0,
       cpv: dto.cpv,
       effectiveFrom: dto.effectiveFrom,
       effectiveTo: dto.effectiveTo,
@@ -424,6 +428,7 @@ export class AdminProductsService {
         basePrice: Number(dto.basePrice) || 0,
         nonMemberBasePrice: dto.nonMemberBasePrice ? Number(dto.nonMemberBasePrice) : null,
         pv: Number(dto.pv) || 0,
+        directReferralPv: Number(dto.directReferralPv) || 0,
         cpv: Number(dto.cpv) || 0,
         effectiveFrom: dto.effectiveFrom || new Date().toISOString(),
         effectiveTo: dto.effectiveTo || null,

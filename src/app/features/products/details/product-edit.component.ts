@@ -118,6 +118,7 @@ export class ProductEditComponent implements OnInit {
     basePrice: [0, [Validators.required, Validators.min(0.01)]],
     nonMemberBasePrice: [null as number | null],
     pv: [0, [Validators.required, Validators.min(0)]],
+    directReferralPv: [0, [Validators.required, Validators.min(0)]],
     cpv: [0, [Validators.required, Validators.min(0)]],
     effectiveFrom: ['']
   });
@@ -202,6 +203,7 @@ export class ProductEditComponent implements OnInit {
         basePrice: p.currentPrice.basePrice,
         nonMemberBasePrice: p.currentPrice.nonMemberBasePrice,
         pv: p.currentPrice.pv,
+        directReferralPv: p.currentPrice.directReferralPv ?? 0,
         cpv: p.currentPrice.cpv,
         effectiveFrom: effectiveFromFormatted
       });
@@ -419,6 +421,7 @@ export class ProductEditComponent implements OnInit {
       basePrice: Number(formValue.basePrice),
       nonMemberBasePrice: formValue.nonMemberBasePrice == null ? undefined : Number(formValue.nonMemberBasePrice),
       pv: Number(formValue.pv),
+      directReferralPv: Number(formValue.directReferralPv),
       cpv: Number(formValue.cpv),
       effectiveFrom: effectiveFromValue ? new Date(effectiveFromValue).toISOString() : undefined
     }).subscribe({

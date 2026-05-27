@@ -88,6 +88,10 @@
                 </div>
                 @if (isFieldInvalid('deliveryCommissionPct')) {
                   <p class="mt-1.5 text-xs text-mlm-error">Required · must be 0–100</p>
+                } @else {
+                  <p class="mt-1.5 text-[11px] text-slate-400 leading-snug">
+                    Applies when merchant confirms customer pickup or delivery
+                  </p>
                 }
               </div>
 
@@ -120,6 +124,10 @@
                 </div>
                 @if (isFieldInvalid('productCommissionPct')) {
                   <p class="mt-1.5 text-xs text-mlm-error">Required · must be 0–100</p>
+                } @else {
+                  <p class="mt-1.5 text-[11px] text-slate-400 leading-snug">
+                    Applies on merchant's own bulk product purchases (second earning stream)
+                  </p>
                 }
               </div>
 

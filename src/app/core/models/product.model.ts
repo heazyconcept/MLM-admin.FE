@@ -8,6 +8,7 @@ export interface ProductPrice {
   basePrice: number;
   nonMemberBasePrice?: number | null;
   pv: number;
+  directReferralPv: number;
   cpv: number;
   effectiveFrom: string;
   effectiveTo?: string | null;

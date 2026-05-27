@@ -162,6 +162,8 @@
                       formControlName="basePrice"
                       mode="decimal"
                       [min]="0"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
                       styleClass="w-full !h-10 !text-sm !rounded-lg"
                     >
                     </p-inputNumber>
@@ -175,6 +177,8 @@
                       formControlName="nonMemberBasePrice"
                       mode="decimal"
                       [min]="0"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
                       styleClass="w-full !h-10 !text-sm !rounded-lg"
                     >
                     </p-inputNumber>
@@ -182,28 +186,50 @@
                   <div>
                     <label
                       class="block text-xs font-medium text-slate-600 mb-1.5"
-                      >PV</label
+                      >Personal PV</label
                     >
                     <p-inputNumber
                       formControlName="pv"
                       mode="decimal"
                       [min]="0"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
                       styleClass="w-full !h-10 !text-sm !rounded-lg"
                     >
                     </p-inputNumber>
+                    <p class="text-[10px] text-slate-400 mt-1">Credited to the buyer</p>
                   </div>
                   <div>
                     <label
                       class="block text-xs font-medium text-slate-600 mb-1.5"
-                      >CPV</label
+                      >Direct Referral PV</label
+                    >
+                    <p-inputNumber
+                      formControlName="directReferralPv"
+                      mode="decimal"
+                      [min]="0"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
+                      styleClass="w-full !h-10 !text-sm !rounded-lg"
+                    >
+                    </p-inputNumber>
+                    <p class="text-[10px] text-slate-400 mt-1">Credited to the buyer's direct sponsor</p>
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs font-medium text-slate-600 mb-1.5"
+                      >Community CPV</label
                     >
                     <p-inputNumber
                       formControlName="cpv"
                       mode="decimal"
                       [min]="0"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
                       styleClass="w-full !h-10 !text-sm !rounded-lg"
                     >
                     </p-inputNumber>
+                    <p class="text-[10px] text-slate-400 mt-1">Split among matrix uplines (not the buyer)</p>
                   </div>
                 </div>
 
@@ -458,16 +484,20 @@
                     </span>
                   </div>
                 }
-                <div
-                  class="flex justify-between items-baseline border-t border-slate-100 pt-2.5"
-                >
-                  <span class="text-xs text-slate-400">PV</span>
+                <div class="flex justify-between items-baseline">
+                  <span class="text-xs text-slate-400">Personal PV</span>
                   <span class="text-xs font-mono font-semibold text-mlm-text">
                     {{ product()?.currentPrice?.pv }}
                   </span>
                 </div>
                 <div class="flex justify-between items-baseline">
-                  <span class="text-xs text-slate-400">CPV</span>
+                  <span class="text-xs text-slate-400">Direct Referral PV</span>
+                  <span class="text-xs font-mono font-semibold text-mlm-text">
+                    {{ product()?.currentPrice?.directReferralPv ?? 0 }}
+                  </span>
+                </div>
+                <div class="flex justify-between items-baseline">
+                  <span class="text-xs text-slate-400">Community CPV</span>
                   <span class="text-xs font-mono font-semibold text-mlm-text">
                     {{ product()?.currentPrice?.cpv }}
                   </span>
@@ -515,7 +545,7 @@
                       </span>
                     </div>
                     <p class="text-[10px] text-slate-400 mt-0.5">
-                      PV {{ entry.pv }} · CPV {{ entry.cpv }}
+                      PV {{ entry.pv }} · DRPV {{ entry.directReferralPv }} · CPV {{ entry.cpv }}
                     </p>
                     @if (!entry.effectiveTo) {
                       <span
