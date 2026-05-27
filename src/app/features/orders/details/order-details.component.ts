@@ -307,7 +307,7 @@ export class OrderDetailsComponent implements OnInit {
     return this.ordersService.getCustomerTypeLabel(type);
   }
 
-  getUserDisplayName(user: { email: string; firstName?: string; lastName?: string } | null | undefined): string {
+  getUserDisplayName(user: { email: string; username?: string; firstName?: string; lastName?: string } | null | undefined): string {
     return this.ordersService.getUserDisplayName(user);
   }
 
