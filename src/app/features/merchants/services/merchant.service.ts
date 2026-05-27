@@ -10,6 +10,7 @@ export type MerchantType = 'PICKUP_POINT' | 'DELIVERY_PARTNER' | 'REGIONAL' | 'N
 export interface MerchantUser {
   id: string;
   email: string;
+  username?: string;
   firstName?: string;
   lastName?: string;
 }
@@ -211,7 +212,7 @@ export class MerchantService {
     if (merchant.user?.firstName || merchant.user?.lastName) {
       return `${merchant.user.firstName ?? ''} ${merchant.user.lastName ?? ''}`.trim();
     }
-    return merchant.user?.email ?? 'Unknown';
+    return merchant.user?.username || merchant.user?.email || 'Unknown';
   }
 
   /** Map API status to display-friendly status for StatusBadge */
