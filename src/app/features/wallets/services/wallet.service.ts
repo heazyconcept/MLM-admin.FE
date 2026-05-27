@@ -50,6 +50,17 @@ interface AdminWalletDetailResponseDto {
   recentLedger: AdminWalletLedgerEntryDto[];
 }
 
+export interface GlobalWalletSummaryItem {
+  walletType: string;
+  totalWallets: number;
+  totalBalance: number;
+  currency: string;
+}
+
+interface GlobalWalletSummaryResponse {
+  summaries: GlobalWalletSummaryItem[];
+}
+
 // Public UI-facing models used by wallet components.
 export interface Wallet {
   id: string;
@@ -199,6 +210,15 @@ export class WalletService {
    */
   getWalletSummary(): Observable<Record<string, number>> {
     return this.api.get<Record<string, number>>('admin/wallets/summary');
+  }
+
+  /**
+   * Fetch per-type ACTIVE wallet count and ledger balance from `GET /admin/wallets/global-summary`.
+   */
+  getGlobalWalletSummary(): Observable<GlobalWalletSummaryItem[]> {
+    return this.api.get<GlobalWalletSummaryResponse>('admin/wallets/global-summary').pipe(
+      map(res => res.summaries || [])
+    );
   }
 
   /**

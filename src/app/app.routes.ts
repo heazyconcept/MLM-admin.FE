@@ -56,6 +56,7 @@ export const routes: Routes = [
         data: { feature: Feature.Wallets },
         children: [
           { path: 'overview', loadComponent: () => import('./features/wallets/dashboard/wallet-dashboard.component').then(m => m.WalletDashboardComponent) },
+          { path: 'types', loadComponent: () => import('./features/wallets/types-summary/wallet-types-summary.component').then(m => m.WalletTypesSummaryComponent) },
           { path: '', loadComponent: () => import('./features/wallets/list/wallet-list.component').then(m => m.WalletListComponent) },
           { path: ':id', loadComponent: () => import('./features/wallets/details/wallet-details.component').then(m => m.WalletDetailsComponent) }
         ]

@@ -3,6 +3,7 @@ export type MerchantCategoryType = 'REGIONAL' | 'NATIONAL' | 'GLOBAL';
 export interface OnboardingItem {
   productId: string;
   quantity: number;
+  productName?: string;
 }
 
 export interface MerchantCategoryConfig {

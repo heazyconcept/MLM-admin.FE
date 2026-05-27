@@ -52,6 +52,7 @@ export class SidebarComponent {
           feature: Feature.Wallets,
           submenu: [
             { label: 'Overview', icon: 'pi pi-chart-bar', route: '/admin/wallets/overview', feature: Feature.Wallets },
+            { label: 'Wallet Types', icon: 'pi pi-wallet', route: '/admin/wallets/types', feature: Feature.Wallets },
             { label: 'All Wallets', icon: 'pi pi-list', route: '/admin/wallets', feature: Feature.Wallets }
           ]
         },

@@ -3,7 +3,7 @@ import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 
 export type UserStatus = 'Active' | 'Suspended' | 'Flagged';
-export type UserPackage = 'Silver' | 'Gold' | 'Platinum' | 'Ruby' | 'Diamond';
+export type UserPackage = 'Nickel' | 'Silver' | 'Gold' | 'Platinum' | 'Ruby' | 'Diamond';
 export type UserRole = 'User' | 'Merchant';
 
 export interface User {
@@ -52,7 +52,7 @@ interface AdminUserApi {
   lastName?: string;
   username?: string;
   role: 'USER' | 'ADMIN' | 'MERCHANT';
-  registrationPackage: 'SILVER' | 'GOLD' | 'PLATINUM' | 'RUBY' | 'DIAMOND';
+  registrationPackage: 'NICKEL' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'RUBY' | 'DIAMOND';
   registrationCurrency: string;
   isActive: boolean;
   isRegistrationPaid: boolean;
@@ -128,6 +128,7 @@ export class UsersService {
 
   private mapApiUserToUser(apiUser: AdminUserApi): User {
     const packageMap: Record<AdminUserApi['registrationPackage'], UserPackage> = {
+      NICKEL: 'Nickel',
       SILVER: 'Silver',
       GOLD: 'Gold',
       PLATINUM: 'Platinum',

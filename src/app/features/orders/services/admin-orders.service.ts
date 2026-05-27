@@ -269,4 +269,13 @@ export class AdminOrdersService {
   getOrderCustomerEmail(order: Order): string {
     return order.user?.email ?? order.guestEmail ?? '';
   }
+
+  getOrderCustomerUsername(order: Order): string {
+    if (order.user) {
+      return order.user.username ?? order.user.email.split('@')[0];
+    }
+    if (order.guestFullName) return order.guestFullName;
+    if (order.guestEmail) return order.guestEmail.split('@')[0];
+    return 'Guest';
+  }
 }

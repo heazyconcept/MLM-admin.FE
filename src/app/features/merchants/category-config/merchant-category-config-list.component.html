@@ -149,9 +149,9 @@
                   @for (item of config.onboardingItems; track item.productId) {
                     <div class="flex items-center justify-between
                                 py-2 border-b border-slate-100 last:border-0">
-                      <span class="text-xs font-mono text-slate-500 truncate max-w-[150px]"
-                            [pTooltip]="item.productId">
-                        {{ item.productId | slice:0:14 }}…
+                      <span class="text-xs text-slate-700 font-medium truncate max-w-[170px]"
+                            [pTooltip]="item.productName || item.productId">
+                        {{ item.productName || (item.productId | slice:0:14) + '…' }}
                       </span>
                       <span class="text-xs font-semibold font-mono text-slate-700 tabular-nums">
                         × {{ item.quantity }}
