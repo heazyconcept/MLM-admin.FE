@@ -250,12 +250,12 @@ export class AdminOrdersService {
     return type === 'MEMBER' ? 'Member' : 'Non-member';
   }
 
-  getUserDisplayName(user: { email: string; firstName?: string; lastName?: string } | null | undefined): string {
+  getUserDisplayName(user: { email: string; username?: string; firstName?: string; lastName?: string } | null | undefined): string {
     if (!user) return 'Guest';
     if (user.firstName || user.lastName) {
       return `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
     }
-    return user.email;
+    return user.username || user.email;
   }
 
   /** Return a display name for the order – prefers user, falls back to guest fields */
