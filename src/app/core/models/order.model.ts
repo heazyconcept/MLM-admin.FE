@@ -33,6 +33,7 @@ export interface OrderItem {
   quantity: number;
   unitPrice: number;
   pv: number;
+  directReferralPv: number;
   cpv: number;
   lineTotal: number;
 }

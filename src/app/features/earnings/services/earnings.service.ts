@@ -2,6 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { ApiService } from '../../../core/services/api.service';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
+import { getEarningTypeLabel } from '../../../core/constants/earning-type-labels';
 
 export interface CommissionRule {
   id?: string;
@@ -124,6 +125,7 @@ export interface UserEarningsActivityItem {
   walletType?: string;
   direction?: string;
   source?: string;
+  earningType?: string;
   sourceId?: string;
   reference?: string;
   metadata?: Record<string, unknown>;
@@ -193,9 +195,26 @@ export function getUserEarningsActivityKind(item: UserEarningsActivityItem): str
   return item.type || '—';
 }
 
+/**
+ * Check whether a source value represents a merchant-stream earning.
+ */
+function isMerchantSource(source: string | undefined): boolean {
+  if (!source) return false;
+  return source.startsWith('MERCHANT_') || source === 'merchant_product_purchase';
+}
+
 export function getUserEarningsActivityDetail(item: UserEarningsActivityItem): string {
   const t = String(item.type ?? '').toLowerCase();
   if (t === 'ledger') {
+    // For merchant earning sources, use the friendly label
+    if (isMerchantSource(item.source)) {
+      const label = getEarningTypeLabel(item.source!);
+      const parts = [item.direction, item.walletType, label].filter(
+        (p) => p !== undefined && p !== null && String(p).trim() !== ''
+      );
+      return parts.length ? parts.map(String).join(' · ') : label;
+    }
+
     const parts = [item.direction, item.walletType, item.source].filter(
       (p) => p !== undefined && p !== null && String(p).trim() !== ''
     );
@@ -204,8 +223,12 @@ export function getUserEarningsActivityDetail(item: UserEarningsActivityItem): s
   if (t === 'pv') {
     const meta = item.metadata as { package?: string; amount?: number } | undefined;
     const pkg = meta?.package ? ` · ${meta.package}` : '';
-    const base = item.source ?? '—';
+    const base = item.source ? getEarningTypeLabel(item.source) : '—';
     return `${base}${pkg}`;
+  }
+  // Fallback — try label map for any raw type
+  if (item.source && isMerchantSource(item.source)) {
+    return getEarningTypeLabel(item.source);
   }
   return item.source ? String(item.source) : '—';
 }
@@ -334,6 +357,22 @@ export class EarningsService {
     return this.api.get<EarningsGlobalActivityResponse>('admin/earnings/activity/global', params).pipe(
       map((res) => (res?.items ?? []).map((item, i) => this.mapGlobalItemToActivity(item, i))),
       catchError(() => of([]))
+    );
+  }
+
+  /**
+   * Returns raw global activity items without mapping to simplified EarningsActivity.
+   * Preserves all rich fields (walletType, direction, earningType, metadata, etc.)
+   * for the table-based monitoring view.
+   */
+  getGlobalActivityRaw(params?: {
+    limit?: number;
+    offset?: number;
+    from?: string;
+    to?: string;
+  }): Observable<UserEarningsActivityResponse> {
+    return this.api.get<UserEarningsActivityResponse>('admin/earnings/activity/global', params).pipe(
+      catchError(() => of({ items: [] }))
     );
   }
 

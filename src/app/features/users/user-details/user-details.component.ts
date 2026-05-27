@@ -19,6 +19,7 @@ import {
   getUserEarningsActivityKind,
   userEarningsActivityTrackId,
 } from '../../earnings/services/earnings.service';
+import { getEarningTypeLabel } from '../../../core/constants/earning-type-labels';
 
 interface ActionConfig {
   visible: boolean;
@@ -378,4 +379,72 @@ export class UserDetailsComponent implements OnInit {
   activityKind = getUserEarningsActivityKind;
   activityDetail = getUserEarningsActivityDetail;
   activityTrack = userEarningsActivityTrackId;
+
+  /** Track which rows are expanded to show metadata. */
+  expandedRowIds = signal<Set<string>>(new Set());
+
+  toggleExpandedRow(row: UserEarningsActivityItem): void {
+    const key = row.id || row.reference || row.sourceId || '';
+    if (!key) return;
+    this.expandedRowIds.update(set => {
+      const next = new Set(set);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }
+
+  isRowExpanded(row: UserEarningsActivityItem): boolean {
+    const key = row.id || row.reference || row.sourceId || '';
+    return this.expandedRowIds().has(key);
+  }
+
+  /**
+   * Human-readable source label from earningType or source.
+   * Uses the earning-type-labels map for friendly names.
+   */
+  getSourceLabel(row: UserEarningsActivityItem): string {
+    if (row.earningType) {
+      return getEarningTypeLabel(row.earningType);
+    }
+    if (row.source) {
+      return getEarningTypeLabel(row.source);
+    }
+    return '—';
+  }
+
+  /**
+   * Optional sublabel showing extra context (e.g. package name, metadata source).
+   */
+  getSourceSublabel(row: UserEarningsActivityItem): string {
+    const meta = row.metadata as Record<string, unknown> | undefined;
+    const metaSource = meta?.['source'] as string | undefined;
+    const pkg = meta?.['package'] as string | undefined;
+    const parts: string[] = [];
+    if (metaSource) parts.push(metaSource);
+    if (pkg) parts.push(pkg);
+    return parts.join(' · ');
+  }
+
+  /**
+   * Safely access a value from the row's metadata object.
+   */
+  getMetaValue(row: UserEarningsActivityItem, key: string): any {
+    const meta = row.metadata as Record<string, unknown> | undefined;
+    return meta?.[key] ?? null;
+  }
+
+  /**
+   * Format SCREAMING_SNAKE_CASE purpose strings to readable text.
+   */
+  formatPurpose(purpose: string): string {
+    if (!purpose) return '—';
+    return purpose
+      .split('_')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
 }

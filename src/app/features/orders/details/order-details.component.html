@@ -116,11 +116,15 @@
                   <p class="text-xs text-slate-400 tabular-nums mt-0.5">
                     Line: {{ item.lineTotal | currency:o.currency:'symbol-narrow' }}
                   </p>
-                  <!-- PV / CPV — no arbitrary colors -->
-                  <div class="flex gap-2 mt-1.5 justify-end">
+                  <!-- PV / DRPV / CPV -->
+                  <div class="flex gap-2 mt-1.5 justify-end flex-wrap">
                     <span class="bg-slate-100 text-slate-600 border border-slate-200
                                  px-2 py-0.5 rounded text-[10px] font-semibold font-mono">
                       PV {{ item.pv }}
+                    </span>
+                    <span class="bg-slate-100 text-slate-600 border border-slate-200
+                                 px-2 py-0.5 rounded text-[10px] font-semibold font-mono">
+                      DRPV {{ item.directReferralPv }}
                     </span>
                     <span class="bg-slate-100 text-slate-600 border border-slate-200
                                  px-2 py-0.5 rounded text-[10px] font-semibold font-mono">

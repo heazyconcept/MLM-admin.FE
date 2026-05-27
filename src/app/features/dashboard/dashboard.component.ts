@@ -19,6 +19,13 @@ import {
   DashboardService,
   RevenueTrendPoint
 } from './dashboard.service';
+import {
+  EarningsService,
+  UserEarningsActivityItem,
+  formatUserEarningsActivityAmount,
+  userEarningsActivityTrackId
+} from '../earnings/services/earnings.service';
+import { getEarningTypeLabel } from '../../core/constants/earning-type-labels';
 
 interface StatCardVM {
   title: string;
@@ -58,6 +65,7 @@ const PKG_COLORS: Record<string, string> = {
 })
 export class DashboardComponent implements OnInit {
   private readonly dashboardService = inject(DashboardService);
+  private readonly earningsService = inject(EarningsService);
 
   userName = 'Admin';
   currentDate = new Date();
@@ -120,6 +128,24 @@ export class DashboardComponent implements OnInit {
         return;
       }
       this.applySummary(s);
+    });
+    this.loadActivity();
+  }
+
+  activity = signal<UserEarningsActivityItem[]>([]);
+  activityLoading = signal(false);
+
+  private loadActivity(): void {
+    this.activityLoading.set(true);
+    this.earningsService.getGlobalActivityRaw({ limit: 10, offset: 0 }).subscribe({
+      next: (res) => {
+        this.activity.set(res?.items ?? []);
+        this.activityLoading.set(false);
+      },
+      error: () => {
+        this.activity.set([]);
+        this.activityLoading.set(false);
+      }
     });
   }
 
@@ -371,5 +397,67 @@ export class DashboardComponent implements OnInit {
       month: 'long',
       year: 'numeric'
     });
+  }
+
+  // ── Activity Table helpers ──
+  expandedRowIds = signal<Set<string>>(new Set());
+  formatActivityAmount = formatUserEarningsActivityAmount;
+  activityTrack = userEarningsActivityTrackId;
+
+  toggleExpandedRow(row: UserEarningsActivityItem): void {
+    const key = row.id || row.reference || row.sourceId || '';
+    if (!key) return;
+    this.expandedRowIds.update(set => {
+      const next = new Set(set);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }
+
+  isRowExpanded(row: UserEarningsActivityItem): boolean {
+    const key = row.id || row.reference || row.sourceId || '';
+    return this.expandedRowIds().has(key);
+  }
+
+  getSourceLabel(row: UserEarningsActivityItem): string {
+    if (row.earningType) {
+      return getEarningTypeLabel(row.earningType);
+    }
+    if (row.source) {
+      return getEarningTypeLabel(row.source);
+    }
+    return '—';
+  }
+
+  getSourceSublabel(row: UserEarningsActivityItem): string {
+    const meta = row.metadata as Record<string, unknown> | undefined;
+    const metaSource = meta?.['source'] as string | undefined;
+    const pkg = meta?.['package'] as string | undefined;
+    const parts: string[] = [];
+    if (metaSource) parts.push(metaSource);
+    if (pkg) parts.push(pkg);
+    return parts.join(' · ');
+  }
+
+  getMetaValue(row: UserEarningsActivityItem, key: string): any {
+    const meta = row.metadata as Record<string, unknown> | undefined;
+    return meta?.[key] ?? null;
+  }
+
+  formatPurpose(purpose: string): string {
+    if (!purpose) return '—';
+    return purpose
+      .split('_')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  getUserLabel(row: UserEarningsActivityItem): string {
+    const raw = row as any;
+    return raw.userName || raw.userEmail || (row.userId ? row.userId.slice(0, 10) + '…' : '—');
   }
 }

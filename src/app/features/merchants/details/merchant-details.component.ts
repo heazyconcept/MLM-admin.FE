@@ -90,6 +90,13 @@ export class MerchantDetailsComponent implements OnInit {
     return null;
   });
 
+  /** Resolved category config for this merchant's tier (REGIONAL/NATIONAL/GLOBAL). */
+  merchantCategoryConfig = computed(() => {
+    const type = this.merchantCategoryType();
+    if (!type) return null;
+    return this.categoryConfigs().find((c) => c.merchantType === type) ?? null;
+  });
+
   poolShortages = computed(() => {
     const categoryType = this.merchantCategoryType();
     if (!categoryType) return [] as Array<{ productId: string; productName: string; required: number; available: number; shortBy: number }>;

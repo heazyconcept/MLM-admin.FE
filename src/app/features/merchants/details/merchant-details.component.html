@@ -494,6 +494,48 @@
           </div>
         </div>
 
+        <!-- Commission Rates -->
+        @if (merchantCategoryConfig(); as cfg) {
+          <div class="bg-white border border-gray-200 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-5">
+              <h3 class="text-lg font-semibold text-gray-900">Commission Rates</h3>
+              <span class="text-[10px] font-semibold tracking-wider text-gray-400 uppercase">
+                {{ getDisplayType(m.type) }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <!-- Product Commission -->
+              <div class="bg-emerald-50/60 rounded-lg px-3 py-3 border border-emerald-100">
+                <p class="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider mb-1">Product</p>
+                <p class="text-2xl font-bold text-gray-900 tracking-tight leading-none">
+                  {{ cfg.productCommissionPct }}%
+                </p>
+                <p class="text-[9px] text-emerald-500 mt-1.5 leading-snug">Bulk purchase stream</p>
+              </div>
+
+              <!-- Delivery Commission -->
+              <div class="bg-blue-50/60 rounded-lg px-3 py-3 border border-blue-100">
+                <p class="text-[10px] text-blue-600 font-semibold uppercase tracking-wider mb-1">Delivery</p>
+                <p class="text-2xl font-bold text-gray-900 tracking-tight leading-none">
+                  {{ cfg.deliveryCommissionPct }}%
+                </p>
+                <p class="text-[9px] text-blue-500 mt-1.5 leading-snug">Pickup / confirm</p>
+              </div>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-3 border border-gray-100">
+              <div class="flex gap-2">
+                <i class="pi pi-info-circle text-gray-400 mt-0.5 text-xs shrink-0"></i>
+                <p class="text-[11px] text-gray-500 leading-relaxed">
+                  Product % applies on merchant's own bulk purchases (second earning stream on top of member earnings).
+                  Delivery % applies when merchant confirms customer pickup or delivery.
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
         <!-- Timestamps -->
         <div class="bg-white border border-gray-200 rounded-xl p-6">
           <h3 class="text-lg font-semibold text-gray-900 mb-6">Timeline</h3>
