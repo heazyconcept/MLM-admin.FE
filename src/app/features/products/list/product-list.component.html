@@ -142,17 +142,20 @@
 
             <!-- Base Price -->
             <td class="px-5 py-3.5 text-sm font-semibold text-mlm-text tabular-nums text-right">
-              {{ (row.currentPrice?.basePrice | currency:'USD') || '—' }}
+              {{ (row.currentPrice?.basePrice | currency:'NGN':'symbol-narrow') || '—' }}
             </td>
 
             <!-- Non-member Price -->
             <td class="px-5 py-3.5 text-sm font-semibold text-mlm-text tabular-nums text-right">
-              {{ (row.currentPrice?.nonMemberBasePrice | currency:'USD') || '—' }}
+              {{ (row.currentPrice?.nonMemberBasePrice | currency:'NGN':'symbol-narrow') || '—' }}
             </td>
 
-            <!-- PV / CPV / Admin Pool — monospaced, no color -->
+            <!-- PV / DRPV / CPV / Admin Pool — monospaced, no color -->
             <td class="px-5 py-3.5 text-sm font-mono font-semibold text-mlm-text tabular-nums text-center">
               {{ row.currentPrice?.pv ?? 0 }}
+            </td>
+            <td class="px-5 py-3.5 text-sm font-mono font-semibold text-mlm-text tabular-nums text-center">
+              {{ row.currentPrice?.directReferralPv ?? 0 }}
             </td>
             <td class="px-5 py-3.5 text-sm font-mono font-semibold text-mlm-text tabular-nums text-center">
               {{ row.currentPrice?.cpv ?? 0 }}
