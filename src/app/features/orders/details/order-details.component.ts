@@ -319,6 +319,10 @@ export class OrderDetailsComponent implements OnInit {
     return this.ordersService.getOrderCustomerEmail(order);
   }
 
+  getOrderCustomerUsername(order: Order): string {
+    return this.ordersService.getOrderCustomerUsername(order);
+  }
+
   getItemsTotal(): number {
     const o = this.order();
     if (!o) return 0;

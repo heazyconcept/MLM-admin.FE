@@ -20,6 +20,7 @@ export type MerchantRoute = 'CLOSEST' | 'OTHER';
 export interface OrderUser {
   id: string;
   email: string;
+  username?: string;
   referralCode?: string;
   firstName?: string;
   lastName?: string;

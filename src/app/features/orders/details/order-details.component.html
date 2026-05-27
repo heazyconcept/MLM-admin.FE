@@ -471,7 +471,7 @@
             </div>
 
             <div class="space-y-1.5 pt-1">
-              <p class="text-xs text-slate-500 break-all">{{ getOrderCustomerEmail(o) }}</p>
+              <p class="text-xs text-slate-500 break-all">&#64;{{ getOrderCustomerUsername(o) }}</p>
               @if (o.user?.referralCode) {
                 <p class="text-[11px] font-mono text-slate-400">{{ o.user?.referralCode }}</p>
               }

@@ -117,13 +117,13 @@
               {{ row.fullName || 'None' }}
             </p>
             <p class="text-[11px] font-mono text-slate-400 mt-0.5">
-              &#64;{{ row.username }}
+              {{ row.email }}
             </p>
           </td>
 
-          <!-- Email → columns[2] field: 'email' -->
+          <!-- Username → columns[2] field: 'username' -->
           <td class="px-5 py-3.5">
-            <span class="text-sm text-mlm-secondary">{{ row.email || 'none' }}</span>
+            <span class="text-sm text-mlm-secondary">&#64;{{ row.username }}</span>
           </td>
 
           <!-- Role → columns[3] field: 'role' -->

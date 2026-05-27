@@ -93,6 +93,7 @@ export class OrderListComponent implements OnInit {
           o.id.toLowerCase().includes(search) ||
           this.ordersService.getOrderCustomerName(o).toLowerCase().includes(search) ||
           this.ordersService.getOrderCustomerEmail(o).toLowerCase().includes(search) ||
+          this.ordersService.getOrderCustomerUsername(o).toLowerCase().includes(search) ||
           o.items.some((i) => i.productName.toLowerCase().includes(search))
       );
     }
@@ -172,6 +173,10 @@ export class OrderListComponent implements OnInit {
 
   getOrderCustomerEmail(order: Order): string {
     return this.ordersService.getOrderCustomerEmail(order);
+  }
+
+  getOrderCustomerUsername(order: Order): string {
+    return this.ordersService.getOrderCustomerUsername(order);
   }
 
   private buildFilters(): AdminOrderFilters {

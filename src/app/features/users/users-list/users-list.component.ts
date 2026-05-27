@@ -100,7 +100,7 @@ export class UsersListComponent implements OnInit {
       const end = new Date(range[1]);
       start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
-      
+
       result = result.filter(u => {
         const regDate = new Date(u.registrationDate);
         return regDate >= start && regDate <= end;
@@ -121,14 +121,14 @@ export class UsersListComponent implements OnInit {
   // Table configurations
   columns = signal<TableColumn<User>[]>([
     { field: 'fullName', header: 'Full Name' },
-    { field: 'email', header: 'Email Address', class: 'text-sm text-gray-600' },
+    { field: 'username', header: 'Username', class: 'text-sm text-gray-600' },
     { field: 'role', header: 'Role', width: '120px', align: 'center' },
     { field: 'package', header: 'Package', width: '130px', align: 'center' },
     { field: 'status', header: 'Status', width: '130px', align: 'center' },
-    { 
-      field: 'registrationDate', 
-      header: 'Joined', 
-      width: '160px', 
+    {
+      field: 'registrationDate',
+      header: 'Joined',
+      width: '160px',
       align: 'center',
       formatter: (val) => this.formatDate(val as Date)
     }
@@ -137,25 +137,25 @@ export class UsersListComponent implements OnInit {
   tableHeaders = computed(() => this.columns().map(c => c.header));
 
   actions = signal<TableAction<User>[]>([
-    { 
-      icon: 'pi pi-eye', 
-      tooltip: 'View Profile', 
+    {
+      icon: 'pi pi-eye',
+      tooltip: 'View Profile',
       command: (user) => this.router.navigate(['/admin/users', user.id]),
       severity: 'secondary'
     },
     // Suspend and Flag - commented out until backend supports
     // { icon: 'pi pi-ban', tooltip: 'Suspend User', visible: (user) => user.status === 'Active' || user.status === 'Flagged', command: (user) => this.showActionModal('suspend', user), severity: 'danger' },
-    { 
-      icon: 'pi pi-check', 
-      tooltip: 'Reactivate', 
+    {
+      icon: 'pi pi-check',
+      tooltip: 'Reactivate',
       visible: (user) => user.status === 'Suspended',
       command: (user) => this.showActionModal('reactivate', user),
       severity: 'success'
     },
     // { icon: 'pi pi-flag', tooltip: 'Flag User', visible: (user) => user.status === 'Active', command: (user) => this.showActionModal('flag', user), severity: 'warning' },
-    { 
-      icon: 'pi pi-key', 
-      tooltip: 'Reset Password', 
+    {
+      icon: 'pi pi-key',
+      tooltip: 'Reset Password',
       command: (user) => this.showActionModal('resetPassword', user),
       severity: 'info'
     }
@@ -184,6 +184,7 @@ export class UsersListComponent implements OnInit {
 
   packageOptions = [
     { label: 'All Packages', value: '' },
+    { label: 'Nickel', value: 'Nickel' },
     { label: 'Silver', value: 'Silver' },
     { label: 'Gold', value: 'Gold' },
     { label: 'Platinum', value: 'Platinum' },
@@ -531,9 +532,10 @@ export class UsersListComponent implements OnInit {
 
   getPackageColor(pkg: string): string {
     const colors: Record<string, string> = {
+      'Nickel': '#64748b',
       'Silver': '#94a3b8',
       'Gold': '#F9A825',
-      'Platinum': '#64748b',
+      'Platinum': '#475569',
       'Ruby': '#ef4444',
       'Diamond': '#3b82f6'
     };
