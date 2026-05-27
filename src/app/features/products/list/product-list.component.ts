@@ -117,7 +117,7 @@ export class ProductListComponent implements OnInit {
     size: 'small'
   });
 
-  tableHeaders = signal<string[]>(['Image', 'Product Info', 'Category', 'Base Price', 'Non-member Price', 'PV', 'DRPV', 'CPV', 'Admin Pool', 'Status', 'Visibility', 'Actions']);
+  tableHeaders = signal<string[]>(['Image', 'Product Info', 'Category', 'Base Price', 'Non-member Price', 'PV', 'CPV', 'Admin Pool', 'Status', 'Visibility', 'Actions']);
 
   tableRows = signal(10);
   tableRowsPerPageOptions = signal([10, 25, 50]);
