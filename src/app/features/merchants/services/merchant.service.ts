@@ -209,10 +209,13 @@ export class MerchantService {
 
   /** Get display name from merchant user object */
   getMerchantDisplayName(merchant: Merchant): string {
+    if (merchant.user?.username) {
+      return merchant.user.username;
+    }
     if (merchant.user?.firstName || merchant.user?.lastName) {
       return `${merchant.user.firstName ?? ''} ${merchant.user.lastName ?? ''}`.trim();
     }
-    return merchant.user?.username || merchant.user?.email || 'Unknown';
+    return merchant.user?.email ? merchant.user.email.split('@')[0] : 'Unknown';
   }
 
   /** Map API status to display-friendly status for StatusBadge */

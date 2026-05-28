@@ -131,7 +131,8 @@ export class UsersListComponent implements OnInit {
       width: '160px',
       align: 'center',
       formatter: (val) => this.formatDate(val as Date)
-    }
+    },
+    { field: 'actions', header: 'Actions', width: '120px', align: 'center' }
   ]);
 
   tableHeaders = computed(() => this.columns().map(c => c.header));
@@ -386,6 +387,16 @@ export class UsersListComponent implements OnInit {
         confirmClass: 'p-button-primary',
         showReasonField: false,
         reasonRequired: false
+      },
+      impersonate: {
+        title: 'Login as User',
+        message: `You will view the dashboard as ${user.username}. Actions are audited.`,
+        icon: 'pi pi-user',
+        iconClass: 'text-mlm-primary',
+        confirmLabel: 'Continue',
+        confirmClass: 'p-button-primary',
+        showReasonField: false,
+        reasonRequired: false
       }
     };
 
@@ -510,6 +521,26 @@ export class UsersListComponent implements OnInit {
           }
         });
         return;
+      case 'impersonate':
+        this.actionLoading.set(true);
+        this.usersService.impersonateUser(user.id).subscribe({
+          next: (response) => {
+            const url = `${response.redirectUrl}?code=${encodeURIComponent(response.exchangeCode)}`;
+            window.open(url, '_blank');
+            this.actionConfig.visible = false;
+            this.selectedUser.set(null);
+            this.actionLoading.set(false);
+          },
+          error: (error) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Impersonation Failed',
+              detail: error?.error?.message || 'Unable to start impersonation'
+            });
+            this.actionLoading.set(false);
+          }
+        });
+        return;
     }
 
     this.actionConfig.visible = false;
@@ -520,6 +551,18 @@ export class UsersListComponent implements OnInit {
     this.actionLoading.set(false);
     this.actionConfig.visible = false;
     this.selectedUser.set(null);
+  }
+
+  onImpersonateClick(user: User, event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.isImpersonationDisabled(user)) {
+      return;
+    }
+    this.showActionModal('impersonate', user);
+  }
+
+  isImpersonationDisabled(user: User): boolean {
+    return user.apiRole === 'ADMIN';
   }
 
   formatDate(date: Date): string {

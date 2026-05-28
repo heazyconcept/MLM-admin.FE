@@ -55,7 +55,7 @@ export class MerchantsListComponent implements OnInit {
   ];
 
   tableHeaders = signal<string[]>([
-    'Merchant ID', 'Owner', 'Username', 'Type', 'Service Areas', 'Products', 'Status', 'Actions'
+    'Merchant ID', 'Username', 'Type', 'Service Areas', 'Products', 'Status', 'Actions'
   ]);
 
   /** Client-side search filter applied on top of API-filtered list */
