@@ -15,6 +15,7 @@ export interface User {
   package: UserPackage;
   status: UserStatus;
   role: UserRole;
+  apiRole: 'USER' | 'ADMIN' | 'MERCHANT';
   registrationDate: Date;
   upline?: string;
   downlinesCount: number;
@@ -87,6 +88,18 @@ interface ResetPasswordResponse {
   message: string;
 }
 
+export interface AdminImpersonationStartResponse {
+  exchangeCode: string;
+  expiresInSeconds: number;
+  redirectUrl: string;
+  targetUser: {
+    id: string;
+    username: string;
+    email: string;
+    role: 'USER' | 'ADMIN' | 'MERCHANT';
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -120,6 +133,10 @@ export class UsersService {
     return this.api.post<ResetPasswordResponse>(`admin/users/${userId}/reset-password`, {}).pipe(
       map(response => response.message)
     );
+  }
+
+  impersonateUser(userId: string): Observable<AdminImpersonationStartResponse> {
+    return this.api.post<AdminImpersonationStartResponse>(`admin/users/${userId}/impersonate`, {});
   }
 
   addActivityLog(userId: string, action: string): Observable<void> {
@@ -157,6 +174,7 @@ export class UsersService {
       package: packageMap[apiUser.registrationPackage] ?? 'Silver',
       status,
       role: roleMap[apiUser.role] ?? 'User',
+      apiRole: apiUser.role,
       registrationDate: new Date(apiUser.createdAt),
       upline: undefined,
       downlinesCount: apiUser.totalCpv ?? 0,

@@ -94,7 +94,7 @@
       </div>
     </div>
 
-    <!-- Table — 7 <td> matching 7 headers: ID · User · Email · Role · Package · Status · Joined -->
+    <!-- Table — 7 <td> matching 7 headers: User · Username · Role · Package · Status · Joined · Actions -->
     <app-data-table
       [value]="filteredUsers()"
       [headers]="tableHeaders()"
@@ -152,6 +152,20 @@
             <span class="text-xs font-mono text-slate-400 tabular-nums">
               {{ row.registrationDate | date:'MMM d, y' }}
             </span>
+          </td>
+
+          <!-- Actions → columns[7] field: 'actions' -->
+          <td class="px-5 py-3.5 w-[120px] text-center">
+            <button
+              type="button"
+              pButton
+              icon="pi pi-user"
+              class="p-button-text p-button-sm"
+              [disabled]="isImpersonationDisabled(row)"
+              [pTooltip]="isImpersonationDisabled(row) ? 'Cannot impersonate admin' : 'Login as user'"
+              tooltipPosition="top"
+              (click)="onImpersonateClick(row, $event)">
+            </button>
           </td>
 
         </tr>

@@ -209,6 +209,15 @@
     <div class="flex items-center justify-between">
       <div class="flex gap-2">
         @if (user(); as u) {
+          @if (u.apiRole !== 'ADMIN') {
+            <button
+              pButton
+              label="Login as User"
+              icon="pi pi-user"
+              class="p-button-secondary p-button-outlined"
+              (click)="onAction('impersonate')">
+            </button>
+          }
           <!-- Suspend and Flag buttons - commented out until backend supports -->
           <!-- @if (u.status === 'Active') {
             <button 
