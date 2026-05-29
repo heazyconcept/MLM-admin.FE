@@ -22,16 +22,16 @@
 
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-      <p-inputNumber
+      <input
+        pInputText
+        type="number"
         [(ngModel)]="amount"
-        [min]="0.01"
-        [max]="999999999"
-        [mode]="'decimal'"
-        [minFractionDigits]="1"
-        [maxFractionDigits]="2"
+        min="0.01"
+        max="999999999"
+        step="any"
+        inputmode="decimal"
         [disabled]="submitting"
-        styleClass="w-full">
-      </p-inputNumber>
+        class="w-full">
     </div>
 
     <div>
@@ -69,7 +69,7 @@
     <button
       pButton
       type="button"
-      [label]="'Credit ' + volumeType"
+      [label]="'Credit ' "
       class="p-button-primary"
       [disabled]="!amount || amount <= 0 || reason.trim().length < 10 || submitting"
       [loading]="submitting"

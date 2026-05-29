@@ -6,6 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
+import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { PermissionService } from '../../../core/services/permission.service';
 import { Feature, Action } from '../../../core/models/admin-permission.model';
@@ -39,6 +40,7 @@ import { WalletDetailDialogComponent } from '../modals/wallet-detail-dialog.comp
     DatePickerModule,
     ToastModule,
     DialogModule,
+    TooltipModule,
     InfoBannerComponent,
     ConfirmationModalComponent,
     FundCashModalComponent,

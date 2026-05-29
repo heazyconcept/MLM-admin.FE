@@ -43,12 +43,25 @@
       @if (showAdjust()) {
         <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
           <p class="text-sm font-semibold text-blue-900">Manual adjustment</p>
+          <p class="text-xs text-blue-800">Enter either a credit or a debit amount.</p>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Amount (positive=credit, negative=debit)</label>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Credit amount</label>
               <p-inputNumber
-                [(ngModel)]="adjustAmount"
-                [min]="-999999999"
+                [ngModel]="creditAmount"
+                (ngModelChange)="setCreditAmount($event)"
+                [min]="0.01"
+                [max]="999999999"
+                [disabled]="adjusting()"
+                styleClass="w-full">
+              </p-inputNumber>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Debit amount</label>
+              <p-inputNumber
+                [ngModel]="debitAmount"
+                (ngModelChange)="setDebitAmount($event)"
+                [min]="0.01"
                 [max]="999999999"
                 [disabled]="adjusting()"
                 styleClass="w-full">
@@ -80,7 +93,7 @@
               type="button"
               label="Confirm adjustment"
               class="p-button-primary p-button-sm"
-              [disabled]="!adjustAmount || adjustReason.trim().length < 10 || adjusting()"
+              [disabled]="isAdjustDisabled()"
               [loading]="adjusting()"
               (click)="confirmAdjust()">
             </button>
