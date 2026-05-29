@@ -114,6 +114,24 @@ export const routes: Routes = [
         loadComponent: () => import('./features/reports/reports-overview.component').then(m => m.ReportsOverviewComponent)
       },
       {
+        path: 'reports/profit',
+        canActivate: [permissionGuard],
+        data: { feature: Feature.ReportsAudit },
+        loadComponent: () => import('./features/reports/profit-reports/profit-reports.component').then(m => m.ProfitReportsComponent)
+      },
+      {
+        path: 'reports/earnings',
+        canActivate: [permissionGuard],
+        data: { feature: Feature.ReportsAudit },
+        loadComponent: () => import('./features/reports/earnings-payouts/earnings-payouts.component').then(m => m.EarningsPayoutsComponent)
+      },
+      {
+        path: 'reports/earnings/:category',
+        canActivate: [permissionGuard],
+        data: { feature: Feature.ReportsAudit },
+        loadComponent: () => import('./features/reports/earnings-payouts/earnings-payouts.component').then(m => m.EarningsPayoutsComponent)
+      },
+      {
         path: 'audit',
         canActivate: [permissionGuard],
         data: { feature: Feature.ReportsAudit },
