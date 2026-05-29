@@ -10,18 +10,18 @@
       class="p-button-text p-button-sm mb-4 -ml-2"
       (click)="goBack()">
     </button>
-    <h1 class="text-3xl font-black text-mlm-text mb-2">Quick broadcast</h1>
+    <h1 class="text-3xl font-black text-mlm-text mb-2">Create campaign</h1>
     <p class="text-mlm-secondary">
-      Text-only notice via
-      <code class="text-xs bg-gray-100 px-1 rounded">POST /admin/notifications/broadcast</code>.
-      Use <a routerLink="/admin/notifications/create" class="text-purple-700 underline">Create campaign</a> for images.
+      Publish a dashboard popup via
+      <code class="text-xs bg-gray-100 px-1 rounded">POST /admin/notifications/announcements</code>
+      (multipart).
     </p>
   </div>
 
   @if (isViewOnly()) {
     <div class="mb-6 max-w-2xl">
       <app-info-banner
-        message="You have view-only access. Contact an administrator to send broadcasts."
+        message="You have view-only access. Contact an administrator to create campaigns."
         type="info">
       </app-info-banner>
     </div>
@@ -37,7 +37,8 @@
         [ngModel]="title()"
         (ngModelChange)="title.set($event)"
         [disabled]="isViewOnly()"
-        placeholder="Maintenance notice" />
+        placeholder="Holiday promo" />
+      <p class="text-xs text-gray-500 mt-1">Minimum 3 characters.</p>
     </div>
 
     <div>
@@ -49,8 +50,9 @@
         [ngModel]="message()"
         (ngModelChange)="message.set($event)"
         [disabled]="isViewOnly()"
-        placeholder="We will be down at 10 PM UTC.">
+        placeholder="Full announcement body shown in the dashboard modal.">
       </textarea>
+      <p class="text-xs text-gray-500 mt-1">Minimum 10 characters.</p>
     </div>
 
     <div>
@@ -64,6 +66,7 @@
         [disabled]="isViewOnly()"
         styleClass="w-full">
       </p-inputNumber>
+      <p class="text-xs text-gray-500 mt-1">How long the popup stays active (1–365).</p>
     </div>
 
     <div>
@@ -79,6 +82,7 @@
         [disabled]="isViewOnly()"
         styleClass="w-full">
       </p-multiSelect>
+      <p class="text-xs text-gray-500 mt-1">Leave empty to target all roles.</p>
     </div>
 
     <div>
@@ -94,29 +98,63 @@
         [disabled]="isViewOnly()"
         styleClass="w-full">
       </p-multiSelect>
+      <p class="text-xs text-gray-500 mt-1">Leave empty to target all packages.</p>
     </div>
 
-    @if (canBroadcast() && !confirmStep()) {
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Images (optional)</label>
+      <input
+        type="file"
+        class="block w-full text-sm text-gray-600"
+        [accept]="imageAccept"
+        multiple
+        [disabled]="isViewOnly() || imagePreviews().length >= maxImages"
+        (change)="onImagesSelected($event)" />
+      <p class="text-xs text-gray-500 mt-1">
+        Up to {{ maxImages }} images (JPEG, PNG, WebP), 5 MB each.
+      </p>
+
+      @if (imagePreviews().length > 0) {
+        <div class="flex flex-wrap gap-3 mt-4">
+          @for (preview of imagePreviews(); track preview.url; let i = $index) {
+            <div class="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
+              <img [src]="preview.url" [alt]="preview.file.name" class="w-full h-full object-cover" />
+              @if (canCreate()) {
+                <button
+                  type="button"
+                  class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white text-xs"
+                  (click)="removeImage(i)"
+                  aria-label="Remove image">
+                  ×
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    @if (canCreate() && !confirmStep()) {
       <button
         pButton
         type="button"
-        label="Review & send"
+        label="Review & publish"
         class="p-button-primary"
-        (click)="beginSend()">
+        (click)="beginSubmit()">
       </button>
     }
 
     @if (confirmStep()) {
       <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-        <p class="font-semibold mb-2">Confirm broadcast</p>
-        <p>This may reach many users. Are you sure you want to send?</p>
+        <p class="font-semibold mb-2">Confirm publish</p>
+        <p>This will show a dashboard popup to matched users for {{ displayDays() }} day(s).</p>
         <div class="flex flex-wrap gap-2 mt-4">
           <button
             pButton
             type="button"
-            label="Send now"
+            label="Publish now"
             class="p-button-primary"
-            [loading]="sending()"
+            [loading]="submitting()"
             (click)="submit()">
           </button>
           <button
@@ -124,7 +162,7 @@
             type="button"
             label="Cancel"
             class="p-button-outlined"
-            [disabled]="sending()"
+            [disabled]="submitting()"
             (click)="cancelConfirm()">
           </button>
         </div>

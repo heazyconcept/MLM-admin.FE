@@ -20,6 +20,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { Order, OrderStatus, FulfilmentMode, CustomerType } from '../../../core/models/order.model';
 import { PermissionService } from '../../../core/services/permission.service';
 import { Feature, Action } from '../../../core/models/admin-permission.model';
+import { StockRefreshService } from '../../products/services/stock-refresh.service';
 
 @Component({
   selector: 'app-order-details',
@@ -46,6 +47,7 @@ export class OrderDetailsComponent implements OnInit {
   private merchantService = inject(MerchantService);
   private messageService = inject(MessageService);
   private destroyRef = inject(DestroyRef);
+  private stockRefresh = inject(StockRefreshService);
   protected permission = inject(PermissionService);
 
   // Permission checks
@@ -154,6 +156,7 @@ export class OrderDetailsComponent implements OnInit {
           summary: 'Merchant Assigned',
           detail: res.message || 'Merchant assigned to order successfully.',
         });
+        this.emitStockRefresh(order);
         // Refresh order details
         this.ordersService.loadOrder(order.id).subscribe();
         this.selectedMerchantId.set(null);
@@ -178,6 +181,7 @@ export class OrderDetailsComponent implements OnInit {
           summary: 'Order Approved',
           detail: res.message || 'Home delivery order approved successfully.',
         });
+        this.emitStockRefresh(order);
         // Refresh order details
         this.ordersService.loadOrder(order.id).subscribe();
       } else {
@@ -287,6 +291,11 @@ export class OrderDetailsComponent implements OnInit {
         });
       },
     });
+  }
+
+  private emitStockRefresh(order: Order): void {
+    const productIds = (order.items || []).map((item) => item.productId).filter(Boolean);
+    this.stockRefresh.emit(productIds);
   }
 
   // ── Display helpers ────────────────────────────────────────

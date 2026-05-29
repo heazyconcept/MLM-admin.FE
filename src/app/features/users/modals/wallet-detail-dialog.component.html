@@ -1,0 +1,134 @@
+<p-toast></p-toast>
+
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [header]="walletLabel() || 'Wallet details'"
+  [style]="{ width: '38rem' }"
+  (onHide)="onHide()">
+  @if (loading()) {
+    <p class="text-sm text-gray-500 py-8 text-center">Loading wallet details…</p>
+  } @else if (wallet(); as w) {
+    <div class="space-y-4">
+      <div class="flex items-center justify-between p-4 rounded-lg border border-gray-200 bg-gray-50">
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Balance</p>
+          <p class="text-2xl font-bold text-gray-900 mt-1">{{ formatBalance(w.balance, w.displayCurrency) }}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</p>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold mt-1"
+                [class.bg-green-100]="w.status === 'ACTIVE'"
+                [class.text-green-800]="w.status === 'ACTIVE'"
+                [class.bg-red-100]="w.status !== 'ACTIVE'"
+                [class.text-red-800]="w.status !== 'ACTIVE'">
+            {{ w.status }}
+          </span>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        @if (!showAdjust()) {
+          <button
+            pButton
+            type="button"
+            label="Adjust balance"
+            icon="pi pi-pencil"
+            class="p-button-outlined p-button-sm"
+            (click)="openAdjust()">
+          </button>
+        }
+      </div>
+
+      @if (showAdjust()) {
+        <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
+          <p class="text-sm font-semibold text-blue-900">Manual adjustment</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Amount (positive=credit, negative=debit)</label>
+              <p-inputNumber
+                [(ngModel)]="adjustAmount"
+                [min]="-999999999"
+                [max]="999999999"
+                [disabled]="adjusting()"
+                styleClass="w-full">
+              </p-inputNumber>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Reason</label>
+            <textarea
+              pTextarea
+              rows="2"
+              class="w-full"
+              [(ngModel)]="adjustReason"
+              [disabled]="adjusting()"
+              placeholder="Manual correction per finance (min 10 chars)">
+            </textarea>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button
+              pButton
+              type="button"
+              label="Cancel"
+              class="p-button-text p-button-sm"
+              [disabled]="adjusting()"
+              (click)="cancelAdjust()">
+            </button>
+            <button
+              pButton
+              type="button"
+              label="Confirm adjustment"
+              class="p-button-primary p-button-sm"
+              [disabled]="!adjustAmount || adjustReason.trim().length < 10 || adjusting()"
+              [loading]="adjusting()"
+              (click)="confirmAdjust()">
+            </button>
+          </div>
+        </div>
+      }
+
+      <div>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Recent ledger</p>
+        @if (ledger().length === 0) {
+          <p class="text-sm text-gray-400">No recent entries.</p>
+        } @else {
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                <tr>
+                  <th class="px-3 py-2">Date</th>
+                  <th class="px-3 py-2">Type</th>
+                  <th class="px-3 py-2">Amount</th>
+                  <th class="px-3 py-2">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of ledger(); track entry.id) {
+                  <tr class="border-b border-gray-100">
+                    <td class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">{{ formatDateTime(entry.timestamp) }}</td>
+                    <td class="px-3 py-2">
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold"
+                            [class.bg-emerald-50]="entry.type === 'Credit'"
+                            [class.text-emerald-700]="entry.type === 'Credit'"
+                            [class.bg-red-50]="entry.type === 'Debit'"
+                            [class.text-red-700]="entry.type === 'Debit'">
+                        {{ entry.type }}
+                      </span>
+                    </td>
+                    <td class="px-3 py-2 text-xs font-semibold"
+                        [class.text-emerald-600]="entry.type === 'Credit'"
+                        [class.text-red-600]="entry.type === 'Debit'">
+                      {{ entry.type === 'Credit' ? '+' : '-' }}{{ entry.amount }}
+                    </td>
+                    <td class="px-3 py-2 text-xs text-gray-600 max-w-[200px] truncate">{{ entry.reason }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</p-dialog>

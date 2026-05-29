@@ -6,6 +6,21 @@ export type UserStatus = 'Active' | 'Suspended' | 'Flagged';
 export type UserPackage = 'Nickel' | 'Silver' | 'Gold' | 'Platinum' | 'Ruby' | 'Diamond';
 export type UserRole = 'User' | 'Merchant';
 
+/** Structured wallet from GET /admin/users/:id response */
+export interface UserWallet {
+  walletId: string;
+  balance: number;
+  displayCurrency: string;
+  status: string;
+}
+
+export interface UserWallets {
+  cash?: UserWallet;
+  registration?: UserWallet;
+  voucher?: UserWallet;
+  autoship?: UserWallet;
+}
+
 export interface User {
   id: string;
   fullName: string;
@@ -20,11 +35,9 @@ export interface User {
   upline?: string;
   downlinesCount: number;
   rank: string;
-  wallets: {
-    cash: number;
-    productVoucher: number;
-    autoship: number;
-  };
+  isActive: boolean;
+  isRegistrationPaid: boolean;
+  wallets: UserWallets;
   activityLog: ActivityLogItem[];
 }
 
@@ -59,6 +72,7 @@ interface AdminUserApi {
   isRegistrationPaid: boolean;
   createdAt: string;
   totalCpv?: number;
+  wallets?: Record<string, { walletId: string; balance: number; displayCurrency: string; status: string }>;
 }
 
 interface AdminUsersListResponse {
@@ -68,7 +82,6 @@ interface AdminUsersListResponse {
   offset: number;
 }
 
-/** GET /admin/users query params */
 export interface UsersListQuery {
   limit?: number;
   offset?: number;
@@ -100,6 +113,57 @@ export interface AdminImpersonationStartResponse {
   };
 }
 
+/** POST /admin/users/:id/activate-registration */
+export interface ActivateRegistrationPayload {
+  mode: 'DEBIT_REGISTRATION_WALLET' | 'WAIVE_PAYMENT';
+  reason: string;
+}
+
+export interface ActivateRegistrationResponse {
+  activated: boolean;
+}
+
+/** POST /admin/users/:id/upgrade */
+export interface UpgradePackagePayload {
+  targetPackage: string;
+  reason: string;
+  waivePayment: boolean;
+}
+
+export interface UpgradePackageResponse {
+  message: string;
+  fromPackage: string;
+  toPackage: string;
+}
+
+/** POST /admin/users/:id/volume/credit */
+export interface CreditVolumePayload {
+  amount: number;
+  volumeType: 'CPV' | 'PERSONAL_PV';
+  reason: string;
+  externalReference?: string;
+}
+
+export interface CreditVolumeResponse {
+  amount: number;
+  volumeType: string;
+  totalCpv?: number;
+  message: string;
+}
+
+/** POST /admin/payments/fund */
+export interface FundCASHWalletPayload {
+  userId: string;
+  amount: number;
+  currency: string;
+  reason: string;
+}
+
+/** PUT /admin/users/:id/status */
+export interface UpdateUserStatusPayload {
+  isActive: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -125,8 +189,39 @@ export class UsersService {
     );
   }
 
-  updateUserStatus(userId: string, status: UserStatus, reason: string): Observable<void> {
-    return this.api.put<void>(`admin/users/${userId}/status`, { status, reason });
+  /** PUT /admin/users/:id/status — login on/off */
+  updateUserStatus(userId: string, payload: UpdateUserStatusPayload): Observable<void> {
+    return this.api.put<void>(`admin/users/${userId}/status`, payload);
+  }
+
+  /** POST /admin/users/:id/activate-registration */
+  activateRegistration(userId: string, payload: ActivateRegistrationPayload): Observable<ActivateRegistrationResponse> {
+    return this.api.post<ActivateRegistrationResponse>(`admin/users/${userId}/activate-registration`, payload);
+  }
+
+  /** POST /admin/users/:id/upgrade */
+  upgradePackage(userId: string, payload: UpgradePackagePayload): Observable<UpgradePackageResponse> {
+    return this.api.post<UpgradePackageResponse>(`admin/users/${userId}/upgrade`, payload);
+  }
+
+  /** POST /admin/users/:id/volume/credit */
+  creditVolume(userId: string, payload: CreditVolumePayload): Observable<CreditVolumeResponse> {
+    return this.api.post<CreditVolumeResponse>(`admin/users/${userId}/volume/credit`, payload);
+  }
+
+  /** POST /admin/payments/fund */
+  fundCASHWallet(payload: FundCASHWalletPayload): Observable<void> {
+    return this.api.post<void>('admin/payments/fund', payload);
+  }
+
+  /** PUT /admin/users/:id/cash-wallet/lock */
+  lockCASHWallet(userId: string): Observable<{ message: string; status: string }> {
+    return this.api.put<{ message: string; status: string }>(`admin/users/${userId}/cash-wallet/lock`, {});
+  }
+
+  /** PUT /admin/users/:id/cash-wallet/unlock */
+  unlockCASHWallet(userId: string): Observable<{ message: string; status: string }> {
+    return this.api.put<{ message: string; status: string }>(`admin/users/${userId}/cash-wallet/unlock`, {});
   }
 
   resetUserPassword(userId: string): Observable<string> {
@@ -144,7 +239,7 @@ export class UsersService {
   }
 
   private mapApiUserToUser(apiUser: AdminUserApi): User {
-    const packageMap: Record<AdminUserApi['registrationPackage'], UserPackage> = {
+    const packageMap: Record<string, UserPackage> = {
       NICKEL: 'Nickel',
       SILVER: 'Silver',
       GOLD: 'Gold',
@@ -155,15 +250,50 @@ export class UsersService {
 
     const status: UserStatus = apiUser.isActive ? 'Active' : 'Suspended';
 
-    const roleMap: Record<AdminUserApi['role'], UserRole> = {
+    const roleMap: Record<string, UserRole> = {
       USER: 'User',
       MERCHANT: 'Merchant',
-      ADMIN: 'User' // treat admin accounts as regular users in this view for now
+      ADMIN: 'User'
     };
 
     const fullName =
       apiUser.fullName?.trim() ||
       `${apiUser.firstName ?? ''} ${apiUser.lastName ?? ''}`.trim();
+
+    const rawWallets = apiUser.wallets ?? {};
+    const wallets: UserWallets = {};
+    if (rawWallets['cash']) {
+      wallets.cash = {
+        walletId: rawWallets['cash'].walletId,
+        balance: rawWallets['cash'].balance,
+        displayCurrency: rawWallets['cash'].displayCurrency,
+        status: rawWallets['cash'].status,
+      };
+    }
+    if (rawWallets['registration']) {
+      wallets.registration = {
+        walletId: rawWallets['registration'].walletId,
+        balance: rawWallets['registration'].balance,
+        displayCurrency: rawWallets['registration'].displayCurrency,
+        status: rawWallets['registration'].status,
+      };
+    }
+    if (rawWallets['voucher']) {
+      wallets.voucher = {
+        walletId: rawWallets['voucher'].walletId,
+        balance: rawWallets['voucher'].balance,
+        displayCurrency: rawWallets['voucher'].displayCurrency,
+        status: rawWallets['voucher'].status,
+      };
+    }
+    if (rawWallets['autoship']) {
+      wallets.autoship = {
+        walletId: rawWallets['autoship'].walletId,
+        balance: rawWallets['autoship'].balance,
+        displayCurrency: rawWallets['autoship'].displayCurrency,
+        status: rawWallets['autoship'].status,
+      };
+    }
 
     return {
       id: apiUser.id,
@@ -179,13 +309,10 @@ export class UsersService {
       upline: undefined,
       downlinesCount: apiUser.totalCpv ?? 0,
       rank: apiUser.isRegistrationPaid ? 'Active Member' : 'Pending Registration',
-      wallets: {
-        cash: 0,
-        productVoucher: 0,
-        autoship: 0
-      },
+      isActive: apiUser.isActive,
+      isRegistrationPaid: apiUser.isRegistrationPaid,
+      wallets,
       activityLog: []
     };
   }
 }
-

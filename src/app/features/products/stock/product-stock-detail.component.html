@@ -1,0 +1,118 @@
+<div class="p-8 font-geist min-h-screen bg-mlm-background">
+  <div class="flex items-start justify-between gap-4 mb-6">
+    <div>
+      <button
+        (click)="onBack()"
+        class="text-sm text-mlm-secondary hover:text-mlm-text flex items-center gap-2 mb-2">
+        <i class="pi pi-arrow-left text-xs"></i>
+        Back to stock list
+      </button>
+      <h1 class="text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        Product Stock
+      </h1>
+      <p class="text-sm text-mlm-secondary">
+        {{ detail()?.productName || 'Loading...' }}
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2.5 shrink-0 pt-1">
+      <button
+        (click)="onAdjustWarehouse()"
+        [disabled]="loadingDetail() || !detail()"
+        class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
+               text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+               flex items-center gap-2 transition-colors duration-150">
+        <i class="pi pi-sliders-h text-xs"></i>
+        Adjust warehouse
+      </button>
+    </div>
+  </div>
+
+  @if (loadError()) {
+    <div class="mb-5 px-4 py-3 rounded-lg bg-mlm-red-50 border border-mlm-red-200
+                text-mlm-red-700 text-sm flex items-center justify-between">
+      <span>{{ loadError() }}</span>
+      <button (click)="loadMovements()"
+              class="flex items-center gap-1.5 underline font-medium ml-4 shrink-0">
+        <i class="pi pi-refresh text-xs"></i> Retry
+      </button>
+    </div>
+  }
+
+  <div class="bg-white rounded-xl border border-slate-200 px-5 py-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      @for (card of summaryCards(); track card.label) {
+        <div class="rounded-lg border border-slate-200 px-4 py-3 bg-white">
+          <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-2">
+            {{ card.label }}
+          </p>
+          @if (loadingDetail()) {
+            <p class="text-xl font-bold text-slate-300">...</p>
+          } @else {
+            <p class="text-xl font-bold text-mlm-text tabular-nums">{{ card.value }}</p>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 px-5 py-4 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <p class="text-sm font-semibold text-mlm-text">Movement history</p>
+        <p class="text-xs text-mlm-secondary">Stock movement ledger for this product.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <p-select
+          [options]="movementOptions"
+          [ngModel]="movementType()"
+          (ngModelChange)="onMovementTypeChange($event)"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All types"
+          styleClass="w-56">
+        </p-select>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <app-data-table
+      [value]="movements()"
+      [headers]="['Date', 'Type', 'Quantity', 'From', 'To', 'Refs', 'Actor']"
+      [loading]="loadingMovements()"
+      [lazy]="true"
+      [totalRecords]="totalMovements()"
+      [first]="movementFirst()"
+      [rows]="movementRows()"
+      [rowsPerPageOptions]="[25, 50, 100]"
+      (pageChange)="onMovementPageChange($event)">
+
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100">
+          <td class="px-5 py-3.5 text-xs font-mono text-slate-400">
+            {{ row.createdAt | date:'MMM d, y, h:mm a' }}
+          </td>
+          <td class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-mlm-secondary">
+            {{ formatType(row.type) }}
+          </td>
+          <td class="px-5 py-3.5 text-sm font-semibold text-mlm-text tabular-nums text-right">
+            {{ row.quantity }}
+          </td>
+          <td class="px-5 py-3.5 text-xs text-slate-500">{{ row.fromLocation }}</td>
+          <td class="px-5 py-3.5 text-xs text-slate-500">{{ row.toLocation }}</td>
+          <td class="px-5 py-3.5 text-[11px] text-slate-400">
+            @if (row.orderId) { <span class="block">Order: {{ row.orderId }}</span> }
+            @if (row.merchantId) { <span class="block">Merchant: {{ row.merchantId }}</span> }
+            @if (row.allocationId) { <span class="block">Allocation: {{ row.allocationId }}</span> }
+          </td>
+          <td class="px-5 py-3.5 text-[11px] text-slate-400">
+            {{ row.actorType }}
+            @if (row.actorId) { <span class="block">{{ row.actorId }}</span> }
+          </td>
+        </tr>
+      </ng-template>
+
+    </app-data-table>
+  </div>
+</div>

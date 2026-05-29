@@ -16,24 +16,17 @@
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <!-- Identity Flow -->
         <div class="flex items-center gap-6">
-          <button 
-            pButton 
-            icon="pi pi-arrow-left" 
+          <button
+            pButton
+            icon="pi pi-arrow-left"
             class="p-button-text p-button-secondary -ml-2"
             [routerLink]="['/admin/users']">
           </button>
-          
+
           <div class="relative">
-            <div class="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center ">
-              <img 
-                src="/assests/sarah-avatar.png"
-                [alt]="user()?.fullName"
-                class="w-full h-full object-cover"
-              />
+            <div class="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center bg-gray-100">
+              <i class="pi pi-user text-2xl text-gray-400"></i>
             </div>
-            <!-- <div class="absolute -bottom-1 -right-1">
-              <app-status-badge [status]="user()?.status || 'Active'" [hideLabel]="true" class="scale-110"></app-status-badge>
-            </div> -->
           </div>
 
           <div>
@@ -42,6 +35,17 @@
               <span class="px-2 py-0.5 rounded bg-gray-100 text-mlm-secondary text-[10px] font-bold uppercase tracking-wider">
                 {{ user()?.package }}
               </span>
+              @if (user(); as u) {
+                @if (u.isRegistrationPaid) {
+                  <span class="px-2 py-0.5 rounded bg-green-100 text-green-800 text-[10px] font-bold uppercase tracking-wider">
+                    Activated
+                  </span>
+                } @else {
+                  <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold uppercase tracking-wider">
+                    Pending activation
+                  </span>
+                }
+              }
             </div>
             <div class="flex items-center gap-4 text-sm text-mlm-secondary">
               <span class="flex items-center gap-1.5 font-medium">
@@ -54,27 +58,92 @@
           </div>
         </div>
 
-        <!-- Action Grid -->
-        @if (canSuspendUser() || canResetPassword()) {
-          <div class="flex items-center gap-3">
-            @if (canSuspendUser()) {
-              <div class="flex items-center gap-2 bg-gray-50 p-1.5 rounded-lg border border-gray-100">
-                <!-- Suspend and Flag - commented out until backend supports -->
-                <!-- @if (user()?.status === 'Active') {
-                  <button pButton label="Suspend" icon="pi pi-ban" class="p-button-danger p-button-sm text-xs font-semibold px-4" (click)="onAction('suspend')"></button>
-                  <button pButton label="Flag" icon="pi pi-flag" class="p-button-warning p-button-sm text-xs font-semibold px-4" (click)="onAction('flag')"></button>
-                } -->
-                @if (user()?.status === 'Suspended') {
-                  <button pButton label="Reactivate" icon="pi pi-check" class="p-button-success p-button-sm text-xs font-semibold px-4" (click)="onAction('reactivate')"></button>
-                }
-                @if (user()?.status === 'Flagged') {
-                  <button pButton label="Remove Flag" icon="pi pi-flag-fill" class="p-button-sm text-xs font-semibold px-4" (click)="onAction('unflag')"></button>
-                  <!-- <button pButton label="Suspend" icon="pi pi-ban" class="p-button-danger p-button-sm text-xs font-semibold px-4" (click)="onAction('suspend')"></button> -->
-                }
-              </div>
-            }
-            @if (canResetPassword()) {
-              <button pButton label="Reset Password" icon="pi pi-key" class="p-button-text p-button-secondary text-xs font-semibold" (click)="onAction('resetPassword')"></button>
+        <!-- Actions -->
+        @if (canEdit()) {
+          <div class="flex flex-wrap items-center gap-2">
+            @if (user(); as u) {
+              <!-- Status toggle -->
+              @if (canSuspendUser()) {
+                <button
+                  pButton
+                  type="button"
+                  [label]="u.isActive ? 'Suspend login' : 'Reactivate login'"
+                  [icon]="u.isActive ? 'pi pi-ban' : 'pi pi-check-circle'"
+                  [class.p-button-danger]="u.isActive"
+                  [class.p-button-success]="!u.isActive"
+                  class="p-button-sm text-xs font-semibold"
+                  (click)="toggleActiveStatus()">
+                </button>
+              }
+
+              <!-- Activate registration -->
+              @if (!u.isRegistrationPaid) {
+                <button
+                  pButton
+                  type="button"
+                  label="Activate registration"
+                  icon="pi pi-check"
+                  class="p-button-primary p-button-sm text-xs font-semibold"
+                  (click)="openActivateModal()">
+                </button>
+              }
+
+              <!-- Fund CASH -->
+              <button
+                pButton
+                type="button"
+                label="Fund CASH"
+                icon="pi pi-wallet"
+                class="p-button-outlined p-button-sm text-xs font-semibold"
+                (click)="openFundModal()">
+              </button>
+
+              <!-- Upgrade package -->
+              @if (u.isRegistrationPaid) {
+                <button
+                  pButton
+                  type="button"
+                  label="Upgrade"
+                  icon="pi pi-arrow-up"
+                  class="p-button-outlined p-button-sm text-xs font-semibold"
+                  (click)="openUpgradeModal()">
+                </button>
+              }
+
+              <!-- Credit volume -->
+              <button
+                pButton
+                type="button"
+                label="Credit volume"
+                icon="pi pi-chart-bar"
+                class="p-button-outlined p-button-sm text-xs font-semibold"
+                (click)="openVolumeModal()">
+              </button>
+
+              <!-- Lock/unlock CASH -->
+              @if (u.wallets.cash) {
+                <button
+                  pButton
+                  type="button"
+                  [label]="u.wallets.cash.status === 'ACTIVE' ? 'Lock CASH' : 'Unlock CASH'"
+                  [icon]="u.wallets.cash.status === 'ACTIVE' ? 'pi pi-lock' : 'pi pi-lock-open'"
+                  [class.p-button-danger]="u.wallets.cash.status === 'ACTIVE'"
+                  [class.p-button-success]="u.wallets.cash.status !== 'ACTIVE'"
+                  class="p-button-sm text-xs font-semibold"
+                  (click)="toggleCashLock()">
+                </button>
+              }
+
+              @if (canResetPassword()) {
+                <button
+                  pButton
+                  type="button"
+                  label="Reset password"
+                  icon="pi pi-key"
+                  class="p-button-text p-button-secondary text-xs font-semibold"
+                  (click)="openResetPasswordConfirm()">
+                </button>
+              }
             }
           </div>
         }
@@ -82,12 +151,12 @@
 
       <!-- Tab Navigation -->
       <div class="flex gap-8 mt-8 -mb-[21px]">
-        <button 
+        <button
           (click)="activeTab.set('basic')"
           [class]="activeTab() === 'basic' ? 'pb-4 border-b-2 border-mlm-primary text-mlm-primary font-bold transition-all' : 'pb-4 text-[#6B7280] font-medium hover:text-mlm-text transition-all'">
           Account Info
         </button>
-        <button 
+        <button
           (click)="activeTab.set('network')"
           [class]="activeTab() === 'network' ? 'pb-4 border-b-2 border-mlm-primary text-mlm-primary font-bold transition-all' : 'pb-4 text-[#6B7280] font-medium hover:text-mlm-text transition-all'">
           Network Details
@@ -104,9 +173,8 @@
 
   <main class="w-full px-6 md:px-8 2xl:px-12 py-8">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 2xl:gap-10">
-      <!-- Left Space: Main Details -->
+      <!-- Main Content -->
       <div class="lg:col-span-8 space-y-8">
-        <!-- Content Card -->
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-8 min-h-[400px]">
           @if (user(); as u) {
             @if (activeTab() === 'basic') {
@@ -153,26 +221,44 @@
                   </span>
                   <p class="text-[15px] font-medium text-mlm-text">{{ u.package }}</p>
                 </div>
+                <div class="space-y-1.5">
+                  <span class="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider flex items-center gap-2">
+                    <i class="pi pi-check-circle text-[10px]"></i>
+                    Login active
+                  </span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                        [class.bg-green-100]="u.isActive"
+                        [class.text-green-800]="u.isActive"
+                        [class.bg-red-100]="!u.isActive"
+                        [class.text-red-800]="!u.isActive">
+                    {{ u.isActive ? 'Active' : 'Suspended' }}
+                  </span>
+                </div>
+                <div class="space-y-1.5">
+                  <span class="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider flex items-center gap-2">
+                    <i class="pi pi-star text-[10px]"></i>
+                    MLM activation
+                  </span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                        [class.bg-green-100]="u.isRegistrationPaid"
+                        [class.text-green-800]="u.isRegistrationPaid"
+                        [class.bg-amber-100]="!u.isRegistrationPaid"
+                        [class.text-amber-800]="!u.isRegistrationPaid">
+                    {{ u.isRegistrationPaid ? 'Activated' : 'Pending activation' }}
+                  </span>
+                </div>
               </div>
             }
 
             @if (activeTab() === 'earnings') {
               <div class="space-y-6">
                 <p class="text-sm text-gray-500">
-                  Read-only log from <code class="text-xs bg-gray-100 px-1 rounded">GET /admin/earnings/activity</code>
-                  for this user.
+                  Read-only log from <code class="text-xs bg-gray-100 px-1 rounded">GET /admin/earnings/activity</code>.
                 </p>
                 @if (eaError()) {
                   <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex flex-wrap items-center justify-between gap-2">
                     <span>{{ eaError() }}</span>
-                    <button
-                      pButton
-                      type="button"
-                      label="Retry"
-                      class="p-button-sm p-button-outlined"
-                      [disabled]="eaLoading()"
-                      (click)="loadEarningsActivity(true)">
-                    </button>
+                    <button pButton type="button" label="Retry" class="p-button-sm p-button-outlined" [disabled]="eaLoading()" (click)="loadEarningsActivity(true)"></button>
                   </div>
                 }
                 <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-4">
@@ -191,14 +277,7 @@
                       panelStyleClass="p-datepicker-premium">
                     </p-datepicker>
                   </div>
-                  <button
-                    pButton
-                    type="button"
-                    label="Apply filters"
-                    class="p-button-outlined p-button-sm"
-                    [disabled]="eaLoading()"
-                    (click)="loadEarningsActivity(true)">
-                  </button>
+                  <button pButton type="button" label="Apply filters" class="p-button-outlined p-button-sm" [disabled]="eaLoading()" (click)="loadEarningsActivity(true)"></button>
                 </div>
                 @if (eaLoading() && eaItems().length === 0) {
                   <p class="text-sm text-gray-500">Loading…</p>
@@ -220,81 +299,53 @@
                       </thead>
                       <tbody>
                         @for (row of eaItems(); track activityTrack($index, row)) {
-                          <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition-colors duration-100 cursor-pointer"
-                              (click)="toggleExpandedRow(row)">
-                            <!-- Date -->
-                            <td class="px-4 py-3 text-xs text-gray-600 tabular-nums whitespace-nowrap">
-                              {{ row.createdAt | date: 'MMM d, y HH:mm' }}
-                            </td>
-                            <!-- Type (Ledger/PV) -->
+                          <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition-colors duration-100 cursor-pointer" (click)="toggleExpandedRow(row)">
+                            <td class="px-4 py-3 text-xs text-gray-600 tabular-nums whitespace-nowrap">{{ row.createdAt | date: 'MMM d, y HH:mm' }}</td>
                             <td class="px-4 py-3">
                               <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
-                                    [ngClass]="{
-                                      'bg-blue-50 text-blue-700 border border-blue-200': row.type === 'ledger',
-                                      'bg-violet-50 text-violet-700 border border-violet-200': row.type === 'pv'
-                                    }">
+                                    [ngClass]="{ 'bg-blue-50 text-blue-700 border border-blue-200': row.type === 'ledger', 'bg-violet-50 text-violet-700 border border-violet-200': row.type === 'pv' }">
                                 {{ row.type === 'ledger' ? 'Ledger' : 'PV' }}
                               </span>
                             </td>
-                            <!-- Direction -->
                             <td class="px-4 py-3">
                               @if (row.direction) {
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
-                                      [ngClass]="{
-                                        'bg-emerald-50 text-emerald-700 border-emerald-200': row.direction === 'CREDIT',
-                                        'bg-red-50 text-red-700 border-red-200': row.direction === 'DEBIT'
-                                      }">
-                                  <i class="pi text-[8px]"
-                                     [class.pi-arrow-down-left]="row.direction === 'CREDIT'"
-                                     [class.pi-arrow-up-right]="row.direction === 'DEBIT'"></i>
+                                      [ngClass]="{ 'bg-emerald-50 text-emerald-700 border-emerald-200': row.direction === 'CREDIT', 'bg-red-50 text-red-700 border-red-200': row.direction === 'DEBIT' }">
+                                  <i class="pi text-[8px]" [class.pi-arrow-down-left]="row.direction === 'CREDIT'" [class.pi-arrow-up-right]="row.direction === 'DEBIT'"></i>
                                   {{ row.direction === 'CREDIT' ? 'Credit' : 'Debit' }}
                                 </span>
                               } @else {
                                 <span class="text-xs text-gray-400">—</span>
                               }
                             </td>
-                            <!-- Source (earning type label) -->
                             <td class="px-4 py-3">
-                              <span class="text-xs font-medium text-gray-800">
-                                {{ getSourceLabel(row) }}
-                              </span>
+                              <span class="text-xs font-medium text-gray-800">{{ getSourceLabel(row) }}</span>
                               @if (getSourceSublabel(row); as sub) {
                                 <p class="text-[10px] text-gray-400 mt-0.5">{{ sub }}</p>
                               }
                             </td>
-                            <!-- Wallet -->
                             <td class="px-4 py-3">
                               @if (row.walletType) {
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide"
-                                      [ngClass]="{
-                                        'bg-green-50 text-green-700': row.walletType === 'CASH',
-                                        'bg-amber-50 text-amber-700': row.walletType === 'AUTOSHIP'
-                                      }">
+                                      [ngClass]="{ 'bg-green-50 text-green-700': row.walletType === 'CASH', 'bg-amber-50 text-amber-700': row.walletType === 'AUTOSHIP' }">
                                   {{ row.walletType === 'AUTOSHIP' ? 'Autoship' : (row.walletType | titlecase) }}
                                 </span>
                               } @else {
                                 <span class="text-xs text-gray-400">—</span>
                               }
                             </td>
-                            <!-- Amount -->
                             <td class="px-4 py-3 text-right tabular-nums whitespace-nowrap">
                               <span class="text-sm font-semibold"
-                                    [ngClass]="{
-                                      'text-emerald-600': row.direction === 'CREDIT',
-                                      'text-red-600': row.direction === 'DEBIT',
-                                      'text-gray-800': !row.direction
-                                    }">
+                                    [ngClass]="{ 'text-emerald-600': row.direction === 'CREDIT', 'text-red-600': row.direction === 'DEBIT', 'text-gray-800': !row.direction }">
                                 {{ formatActivityAmount(row) }}
                               </span>
                             </td>
-                            <!-- Expand Toggle -->
                             <td class="px-3 py-3 text-center">
                               <i class="pi text-[10px] text-gray-400 transition-transform duration-150"
                                  [class.pi-chevron-down]="!isRowExpanded(row)"
                                  [class.pi-chevron-up]="isRowExpanded(row)"></i>
                             </td>
                           </tr>
-                          <!-- Expanded Detail Row -->
                           @if (isRowExpanded(row)) {
                             <tr class="bg-gray-50/80 border-b border-gray-100">
                               <td [attr.colspan]="7" class="px-4 py-3">
@@ -326,20 +377,20 @@
                                   @if (getMetaValue(row, 'purpose')) {
                                     <div>
                                       <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Purpose</span>
-                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ formatPurpose(getMetaValue(row, 'purpose')) }}</p>
+                                      <p class="text-gray-700 text-[11px] mt-0.5">                    {{ formatPurpose(getMetaValue(row, 'purpose')) }}</p>
                                     </div>
                                   }
                                   @if (getMetaValue(row, 'orderId')) {
                                     <div>
                                       <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Order ID</span>
-                                      <p class="text-gray-700 font-mono text-[11px] mt-0.5">{{ getMetaValue(row, 'orderId') | slice:0:12 }}…</p>
+                                      <p class="text-gray-700 font-mono text-[11px] mt-0.5">{{ getMetaValue(row, 'orderId') }}…</p>
                                     </div>
                                   }
                                   @if (getMetaValue(row, 'ratePct') || getMetaValue(row, 'rate')) {
                                     <div>
                                       <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Rate</span>
                                       <p class="text-gray-700 text-[11px] mt-0.5">
-                                        {{ getMetaValue(row, 'ratePct') ? getMetaValue(row, 'ratePct') + '%' : (getMetaValue(row, 'rate') * 100) + '%' }}
+                                        {{ formatRate(row) }}
                                       </p>
                                     </div>
                                   }
@@ -353,42 +404,6 @@
                                     <div>
                                       <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Level</span>
                                       <p class="text-gray-700 text-[11px] mt-0.5">{{ getMetaValue(row, 'level') }}</p>
-                                    </div>
-                                  }
-                                  @if (getMetaValue(row, 'merchantType')) {
-                                    <div>
-                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Merchant Type</span>
-                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ getMetaValue(row, 'merchantType') | titlecase }}</p>
-                                    </div>
-                                  }
-                                  @if (getMetaValue(row, 'autoshipAllocationPercent')) {
-                                    <div>
-                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Autoship Alloc.</span>
-                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ getMetaValue(row, 'autoshipAllocationPercent') }}%</p>
-                                    </div>
-                                  }
-                                  @if (getMetaValue(row, 'package')) {
-                                    <div>
-                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Package</span>
-                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ getMetaValue(row, 'package') | titlecase }}</p>
-                                    </div>
-                                  }
-                                  @if (getMetaValue(row, 'cdpaPercent')) {
-                                    <div>
-                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">CDPA %</span>
-                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ getMetaValue(row, 'cdpaPercent') }}%</p>
-                                    </div>
-                                  }
-                                  @if (getMetaValue(row, 'paymentType')) {
-                                    <div>
-                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Payment Type</span>
-                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ formatPurpose(getMetaValue(row, 'paymentType')) }}</p>
-                                    </div>
-                                  }
-                                  @if (row.displayCurrency && row.displayAmount !== undefined) {
-                                    <div>
-                                      <span class="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Display Amount</span>
-                                      <p class="text-gray-700 text-[11px] mt-0.5">{{ row.displayAmount }} {{ row.displayCurrency }}</p>
                                     </div>
                                   }
                                 </div>
@@ -408,15 +423,7 @@
                       }
                     </span>
                     @if (eaHasMore()) {
-                      <button
-                        pButton
-                        type="button"
-                        label="Load more"
-                        class="p-button-text p-button-sm"
-                        [loading]="eaLoading()"
-                        [disabled]="eaLoading()"
-                        (click)="loadMoreEarningsActivity()">
-                      </button>
+                      <button pButton type="button" label="Load more" class="p-button-text p-button-sm" [loading]="eaLoading()" [disabled]="eaLoading()" (click)="loadMoreEarningsActivity()"></button>
                     }
                   </div>
                 }
@@ -461,34 +468,107 @@
                 </div>
               </div>
             }
-
-            <!-- Activity Log - commented out until backend provides activity data -->
-            <!-- @if (activeTab() === 'activity') {
-              <div class="space-y-4">
-                @for (activity of u.activityLog; track activity.id) { ... }
-                @if (u.activityLog.length === 0) { ... }
-              </div>
-            } -->
           }
         </div>
       </div>
 
-      <!-- Right Space: Financial KPIs - Wallets commented out until backend provides wallet data -->
+      <!-- Right Sidebar: Wallets -->
       <div class="lg:col-span-4 space-y-6">
         @if (user(); as u) {
-          <!-- Wallet KPI Cards (Cash Wallet, Product Voucher) - commented out until backend provides wallet data -->
-          <!--
-          <div class="space-y-4">
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm ...">
-              <h4>Cash Wallet</h4>
-              <p>{{ formatCurrency(u.wallets.cash) }}</p>
+          @if (u.wallets.cash) {
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-wallet text-gray-400"></i>
+                  <h3 class="text-sm font-semibold text-gray-700">CASH</h3>
+                </div>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                      [class.bg-green-100]="u.wallets.cash.status === 'ACTIVE'"
+                      [class.text-green-800]="u.wallets.cash.status === 'ACTIVE'"
+                      [class.bg-red-100]="u.wallets.cash.status !== 'ACTIVE'"
+                      [class.text-red-800]="u.wallets.cash.status !== 'ACTIVE'">
+                  {{ u.wallets.cash.status }}
+                </span>
+              </div>
+              <p class="text-2xl font-bold text-gray-900 mb-4">{{ formatCurrency(u.wallets.cash.balance, u.wallets.cash.displayCurrency) }}</p>
+              <div class="flex gap-2">
+                <button pButton type="button" label="Adjust" icon="pi pi-pencil" class="p-button-outlined p-button-sm text-xs" (click)="openWalletDialog(u.wallets.cash!, 'CASH')"></button>
+              </div>
             </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm ...">
-              <h4>Product Voucher</h4>
-              <p>{{ formatCurrency(u.wallets.productVoucher) }}</p>
+          }
+
+          @if (u.wallets.registration) {
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-id-card text-gray-400"></i>
+                  <h3 class="text-sm font-semibold text-gray-700">Registration</h3>
+                </div>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                      [class.bg-green-100]="u.wallets.registration.status === 'ACTIVE'"
+                      [class.text-green-800]="u.wallets.registration.status === 'ACTIVE'"
+                      [class.bg-red-100]="u.wallets.registration.status !== 'ACTIVE'"
+                      [class.text-red-800]="u.wallets.registration.status !== 'ACTIVE'">
+                  {{ u.wallets.registration.status }}
+                </span>
+              </div>
+              <p class="text-2xl font-bold text-gray-900 mb-4">{{ formatCurrency(u.wallets.registration.balance, u.wallets.registration.displayCurrency) }}</p>
+              <div class="flex gap-2">
+                <button pButton type="button" label="Adjust" icon="pi pi-pencil" class="p-button-outlined p-button-sm text-xs" (click)="openWalletDialog(u.wallets.registration!, 'Registration')"></button>
+              </div>
             </div>
-          </div>
-          -->
+          }
+
+          @if (u.wallets.voucher) {
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-ticket text-gray-400"></i>
+                  <h3 class="text-sm font-semibold text-gray-700">Voucher</h3>
+                </div>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                      [class.bg-green-100]="u.wallets.voucher.status === 'ACTIVE'"
+                      [class.text-green-800]="u.wallets.voucher.status === 'ACTIVE'"
+                      [class.bg-red-100]="u.wallets.voucher.status !== 'ACTIVE'"
+                      [class.text-red-800]="u.wallets.voucher.status !== 'ACTIVE'">
+                  {{ u.wallets.voucher.status }}
+                </span>
+              </div>
+              <p class="text-2xl font-bold text-gray-900 mb-4">{{ formatCurrency(u.wallets.voucher.balance, u.wallets.voucher.displayCurrency) }}</p>
+              <div class="flex gap-2">
+                <button pButton type="button" label="Adjust" icon="pi pi-pencil" class="p-button-outlined p-button-sm text-xs" (click)="openWalletDialog(u.wallets.voucher!, 'Voucher')"></button>
+              </div>
+            </div>
+          }
+
+          @if (u.wallets.autoship) {
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-sync text-gray-400"></i>
+                  <h3 class="text-sm font-semibold text-gray-700">Autoship</h3>
+                </div>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                      [class.bg-green-100]="u.wallets.autoship.status === 'ACTIVE'"
+                      [class.text-green-800]="u.wallets.autoship.status === 'ACTIVE'"
+                      [class.bg-red-100]="u.wallets.autoship.status !== 'ACTIVE'"
+                      [class.text-red-800]="u.wallets.autoship.status !== 'ACTIVE'">
+                  {{ u.wallets.autoship.status }}
+                </span>
+              </div>
+              <p class="text-2xl font-bold text-gray-900 mb-4">{{ formatCurrency(u.wallets.autoship.balance, u.wallets.autoship.displayCurrency) }}</p>
+              <div class="flex gap-2">
+                <button pButton type="button" label="Adjust" icon="pi pi-pencil" class="p-button-outlined p-button-sm text-xs" (click)="openWalletDialog(u.wallets.autoship!, 'Autoship')"></button>
+              </div>
+            </div>
+          }
+
+          @if (!u.wallets.cash && !u.wallets.registration && !u.wallets.voucher && !u.wallets.autoship) {
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center">
+              <i class="pi pi-wallet text-gray-300 text-2xl mb-2 block"></i>
+              <p class="text-sm text-gray-500">No wallets found for this user.</p>
+            </div>
+          }
         }
       </div>
     </div>
@@ -497,16 +577,58 @@
 
 <!-- Action Confirmation Modal -->
 <app-confirmation-modal
-  [visible]="actionConfig().visible"
-  [title]="actionConfig().title"
-  [message]="actionConfig().message"
-  [icon]="actionConfig().icon"
-  [iconClass]="actionConfig().iconClass"
-  [confirmLabel]="actionConfig().confirmLabel"
-  [confirmClass]="actionConfig().confirmClass"
+  [visible]="confirmVisible()"
+  [title]="confirmTitle()"
+  [message]="confirmMessage()"
+  [icon]="confirmIcon()"
+  [iconClass]="confirmIconClass()"
+  [confirmLabel]="confirmLabel()"
+  [confirmClass]="confirmClass()"
   [loading]="actionLoading()"
-  [showReasonField]="actionConfig().showReasonField"
-  [reasonRequired]="actionConfig().reasonRequired"
-  (confirm)="onActionConfirm($event)"
-  (cancel)="onActionCancel()">
+  [showReasonField]="confirmShowReason()"
+  [reasonRequired]="confirmReasonRequired()"
+  (confirm)="onConfirmResult($event)"
+  (cancel)="onConfirmCancel()">
 </app-confirmation-modal>
+
+<!-- Fund CASH modal -->
+<app-fund-cash-modal
+  [(visible)]="fundModalVisible"
+  [userId]="user()?.id ?? ''"
+  [userName]="user()?.fullName ?? ''"
+  (confirmed)="onFundConfirmed($event)"
+  (cancelled)="onFundCancelled()">
+</app-fund-cash-modal>
+
+<!-- Activate registration modal -->
+<app-activate-registration-modal
+  [(visible)]="activateModalVisible"
+  [userName]="user()?.fullName ?? ''"
+  (confirmed)="onActivateConfirmed($event)"
+  (cancelled)="onActivateCancelled()">
+</app-activate-registration-modal>
+
+<!-- Upgrade package modal -->
+<app-upgrade-package-modal
+  [(visible)]="upgradeModalVisible"
+  [userName]="user()?.fullName ?? ''"
+  [currentPackage]="user()?.package ?? 'Nickel'"
+  (confirmed)="onUpgradeConfirmed($event)"
+  (cancelled)="onUpgradeCancelled()">
+</app-upgrade-package-modal>
+
+<!-- Credit volume modal -->
+<app-credit-volume-modal
+  [(visible)]="volumeModalVisible"
+  [userName]="user()?.fullName ?? ''"
+  (confirmed)="onVolumeConfirmed($event)"
+  (cancelled)="onVolumeCancelled()">
+</app-credit-volume-modal>
+
+<!-- Wallet detail dialog -->
+<app-wallet-detail-dialog
+  [(visible)]="walletDialogVisible"
+  [walletId]="selectedWalletId()"
+  [walletLabel]="selectedWalletLabel()"
+  (closed)="onWalletDialogClosed()">
+</app-wallet-detail-dialog>

@@ -148,7 +148,29 @@ export const routes: Routes = [
         path: 'notifications',
         canActivate: [permissionGuard],
         data: { feature: Feature.Notifications },
-        loadComponent: () => import('./features/notifications/notifications-broadcast.component').then(m => m.NotificationsBroadcastComponent)
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/notifications/announcements-list.component').then(
+                (m) => m.AnnouncementsListComponent
+              ),
+          },
+          {
+            path: 'create',
+            loadComponent: () =>
+              import('./features/notifications/announcement-create.component').then(
+                (m) => m.AnnouncementCreateComponent
+              ),
+          },
+          {
+            path: 'broadcast',
+            loadComponent: () =>
+              import('./features/notifications/notifications-broadcast.component').then(
+                (m) => m.NotificationsBroadcastComponent
+              ),
+          },
+        ],
       },
       {
         path: '',

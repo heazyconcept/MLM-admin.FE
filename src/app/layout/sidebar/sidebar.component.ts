@@ -72,6 +72,7 @@ export class SidebarComponent {
           feature: Feature.Products,
           submenu: [
             { label: 'Catalog', icon: 'pi pi-list', route: '/admin/products', feature: Feature.Products },
+            { label: 'Stock', icon: 'pi pi-box', route: '/admin/products/stock', feature: Feature.Products },
             { label: 'Categories', icon: 'pi pi-tags', route: '/admin/products/categories', feature: Feature.Products }
           ]
         },

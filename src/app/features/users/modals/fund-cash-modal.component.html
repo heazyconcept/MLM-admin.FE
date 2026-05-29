@@ -1,0 +1,63 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [header]="'Fund CASH wallet — ' + userName()"
+  [style]="{ width: '28rem' }"
+  (onHide)="onCancel()">
+  <div class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+      <p-inputNumber
+        [(ngModel)]="amount"
+        [min]="0"
+        [max]="1000000000"
+        [showButtons]="true"
+        [disabled]="submitting"
+        styleClass="w-full">
+      </p-inputNumber>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+      <p-select
+        [options]="currencyOptions"
+        [(ngModel)]="currency"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full"
+        [disabled]="submitting">
+      </p-select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+      <textarea
+        pTextarea
+        rows="3"
+        class="w-full"
+        [(ngModel)]="reason"
+        [disabled]="submitting"
+        placeholder="Offline bank transfer ref ... (min 10 chars)">
+      </textarea>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Cancel"
+      class="p-button-outlined"
+      [disabled]="submitting"
+      (click)="onCancel()">
+    </button>
+    <button
+      pButton
+      type="button"
+      label="Fund CASH wallet"
+      class="p-button-primary"
+      [disabled]="!amount || amount <= 0 || reason.trim().length < 10 || submitting"
+      [loading]="submitting"
+      (click)="onConfirm()">
+    </button>
+  </ng-template>
+</p-dialog>
