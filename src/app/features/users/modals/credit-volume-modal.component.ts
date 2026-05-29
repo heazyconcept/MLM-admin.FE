@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
@@ -17,7 +16,6 @@ import { CreditVolumePayload } from '../services/users.service';
     FormsModule,
     DialogModule,
     ButtonModule,
-    InputNumberModule,
     InputTextModule,
     TextareaModule,
     SelectModule,

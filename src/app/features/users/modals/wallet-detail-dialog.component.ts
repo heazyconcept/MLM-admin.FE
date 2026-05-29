@@ -42,7 +42,8 @@ export class WalletDetailDialogComponent implements OnInit, OnChanges {
   loading = signal(false);
 
   showAdjust = signal(false);
-  adjustAmount: number | null = null;
+  creditAmount: number | null = null;
+  debitAmount: number | null = null;
   adjustReason = '';
   adjusting = signal(false);
 
@@ -84,7 +85,8 @@ export class WalletDetailDialogComponent implements OnInit, OnChanges {
 
   openAdjust(): void {
     this.showAdjust.set(true);
-    this.adjustAmount = null;
+    this.creditAmount = null;
+    this.debitAmount = null;
     this.adjustReason = '';
   }
 
@@ -94,11 +96,13 @@ export class WalletDetailDialogComponent implements OnInit, OnChanges {
 
   confirmAdjust(): void {
     const id = this.walletId();
-    if (!id || !this.adjustAmount || this.adjustReason.trim().length < 10) return;
+    if (!id || this.adjustReason.trim().length < 10) return;
+    const amount = this.getAdjustmentAmount();
+    if (!amount) return;
 
     this.adjusting.set(true);
     this.walletService.adjustWallet(id, {
-      amount: this.adjustAmount,
+      amount,
       reason: this.adjustReason.trim(),
     }).subscribe({
       next: (balance) => {
@@ -120,6 +124,34 @@ export class WalletDetailDialogComponent implements OnInit, OnChanges {
         });
       },
     });
+  }
+
+  setCreditAmount(value: number | null): void {
+    this.creditAmount = value;
+    if (value) {
+      this.debitAmount = null;
+    }
+  }
+
+  setDebitAmount(value: number | null): void {
+    this.debitAmount = value;
+    if (value) {
+      this.creditAmount = null;
+    }
+  }
+
+  getAdjustmentAmount(): number | null {
+    if (this.creditAmount && this.creditAmount > 0) {
+      return this.creditAmount;
+    }
+    if (this.debitAmount && this.debitAmount > 0) {
+      return -this.debitAmount;
+    }
+    return null;
+  }
+
+  isAdjustDisabled(): boolean {
+    return !this.getAdjustmentAmount() || this.adjustReason.trim().length < 10 || this.adjusting();
   }
 
   formatDateTime(date: Date): string {

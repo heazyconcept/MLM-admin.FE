@@ -32,6 +32,7 @@ export interface User {
   role: UserRole;
   apiRole: 'USER' | 'ADMIN' | 'MERCHANT';
   registrationDate: Date;
+  referralCode?: string;
   upline?: string;
   downlinesCount: number;
   rank: string;
@@ -65,6 +66,7 @@ interface AdminUserApi {
   firstName?: string;
   lastName?: string;
   username?: string;
+  referralCode?: string;
   role: 'USER' | 'ADMIN' | 'MERCHANT';
   registrationPackage: 'NICKEL' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'RUBY' | 'DIAMOND';
   registrationCurrency: string;
@@ -306,6 +308,7 @@ export class UsersService {
       role: roleMap[apiUser.role] ?? 'User',
       apiRole: apiUser.role,
       registrationDate: new Date(apiUser.createdAt),
+      referralCode: apiUser.referralCode,
       upline: undefined,
       downlinesCount: apiUser.totalCpv ?? 0,
       rank: apiUser.isRegistrationPaid ? 'Active Member' : 'Pending Registration',
