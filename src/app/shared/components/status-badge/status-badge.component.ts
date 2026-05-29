@@ -1,19 +1,20 @@
 import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type BadgeStatus = 'Active' | 'Suspended' | 'Flagged' | 'Pending' | 'Success' | 'Successful' | 'Failed' | 'Approved' | 'Rejected' | 'Processing' | 'Paid' | 'Reversed' | 'Locked' | 'Frozen';
+export type BadgeStatus = 'Active' | 'Suspended' | 'Flagged' | 'Pending' | 'Success' | 'Successful' | 'Failed' | 'Approved' | 'Rejected' | 'Processing' | 'Paid' | 'Posted' | 'Reversed' | 'Locked' | 'Frozen';
 
 @Component({
   selector: 'app-status-badge',
+  standalone: true,
   imports: [CommonModule],
   template: `
     <span 
-      class="inline-flex items-center gap-1.5 rounded-full text-xs font-bold uppercase tracking-wider"
+      class="inline-flex items-center gap-1 rounded-full text-[10px] font-semibold tracking-wide"
       [class]="badgeClasses()"
-      [class.px-3]="!hideLabel()"
-      [class.py-1.5]="!hideLabel()"
-      [class.p-1.5]="hideLabel()">
-      <span class="w-1.5 h-1.5 rounded-full" [class]="dotClass()"></span>
+      [class.px-2.5]="!hideLabel()"
+      [class.py-1]="!hideLabel()"
+      [class.p-1]="hideLabel()">
+      <span class="w-1 h-1 rounded-full" [class]="dotClass()"></span>
       @if (!hideLabel()) {
         <span>{{ normalizedStatus() === 'Successful' ? 'Success' : normalizedStatus() }}</span>
       }
@@ -45,6 +46,7 @@ export class StatusBadgeComponent {
       'REJECTED': 'Rejected',
       'PROCESSING': 'Processing',
       'PAID': 'Paid',
+      'POSTED': 'Posted',
       'REVERSED': 'Reversed'
     };
     return map[upper] ?? (s as BadgeStatus);
@@ -64,6 +66,7 @@ export class StatusBadgeComponent {
       'Rejected': 'bg-rose-50 text-rose-700 border border-rose-200',
       'Processing': 'bg-purple-50 text-purple-700 border border-purple-200',
       'Paid': 'bg-teal-50 text-teal-700 border border-teal-200',
+      'Posted': 'bg-teal-50 text-teal-700 border border-teal-200',
       'Reversed': 'bg-gray-50 text-gray-700 border border-gray-300',
       'Locked': 'bg-rose-100 text-rose-800 border border-rose-300',
       'Frozen': 'bg-amber-100 text-amber-800 border border-amber-300'
@@ -85,6 +88,7 @@ export class StatusBadgeComponent {
       'Rejected': 'bg-rose-600',
       'Processing': 'bg-purple-600',
       'Paid': 'bg-teal-600',
+      'Posted': 'bg-teal-600',
       'Reversed': 'bg-gray-600',
       'Locked': 'bg-rose-600',
       'Frozen': 'bg-amber-600'

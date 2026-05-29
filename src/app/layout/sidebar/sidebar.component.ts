@@ -45,7 +45,21 @@ export class SidebarComponent {
       items: [
         { label: 'Dashboard', icon: 'pi pi-th-large', route: '/admin/dashboard', feature: Feature.Dashboard },
         { label: 'Users', icon: 'pi pi-users', route: '/admin/users', feature: Feature.Users },
-        { label: 'Earnings', icon: 'pi pi-dollar', route: '/admin/earnings', feature: Feature.Earnings },
+        {
+          label: 'Earnings Payouts',
+          icon: 'pi pi-percentage',
+          feature: Feature.ReportsAudit,
+          submenu: [
+            { label: 'All payouts', icon: 'pi pi-list', route: '/admin/reports/earnings', feature: Feature.ReportsAudit },
+            { label: 'Activation', icon: 'pi pi-bolt', route: '/admin/reports/earnings/activation', feature: Feature.ReportsAudit },
+            { label: 'Upgrade', icon: 'pi pi-level-up', route: '/admin/reports/earnings/upgrade', feature: Feature.ReportsAudit },
+            { label: 'Product purchase', icon: 'pi pi-shopping-cart', route: '/admin/reports/earnings/product-purchase', feature: Feature.ReportsAudit },
+            { label: 'PDPA', icon: 'pi pi-calendar', route: '/admin/reports/earnings/pdpa', feature: Feature.ReportsAudit },
+            { label: 'CDPA', icon: 'pi pi-calendar-plus', route: '/admin/reports/earnings/cdpa', feature: Feature.ReportsAudit },
+            { label: 'Bonuses', icon: 'pi pi-star', route: '/admin/reports/earnings/bonuses', feature: Feature.ReportsAudit },
+            { label: 'Admin adjustment', icon: 'pi pi-sliders-h', route: '/admin/reports/earnings/admin-adjustment', feature: Feature.ReportsAudit },
+          ]
+        },
         {
           label: 'Wallets',
           icon: 'pi pi-wallet',
@@ -93,6 +107,9 @@ export class SidebarComponent {
       title: 'REPORTS & AUDIT',
       items: [
         { label: 'Reports', icon: 'pi pi-file-edit', route: '/admin/reports', feature: Feature.ReportsAudit },
+        { label: 'Profit Reports', icon: 'pi pi-chart-line', route: '/admin/reports/profit', feature: Feature.ReportsAudit },
+        // { label: 'Earnings', icon: 'pi pi-dollar', route: '/admin/earnings', feature: Feature.Earnings },
+
         { label: 'Audit Logs', icon: 'pi pi-history', route: '/admin/audit', feature: Feature.ReportsAudit }
       ]
     },
