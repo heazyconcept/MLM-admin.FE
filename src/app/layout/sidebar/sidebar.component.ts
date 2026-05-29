@@ -65,7 +65,7 @@ export class SidebarComponent {
           icon: 'pi pi-wallet',
           feature: Feature.Wallets,
           submenu: [
-            { label: 'Overview', icon: 'pi pi-chart-bar', route: '/admin/wallets/overview', feature: Feature.Wallets },
+            // { label: 'Overview', icon: 'pi pi-chart-bar', route: '/admin/wallets/overview', feature: Feature.Wallets },
             { label: 'Wallet Types', icon: 'pi pi-wallet', route: '/admin/wallets/types', feature: Feature.Wallets },
             { label: 'All Wallets', icon: 'pi pi-list', route: '/admin/wallets', feature: Feature.Wallets }
           ]
@@ -106,7 +106,7 @@ export class SidebarComponent {
     {
       title: 'REPORTS & AUDIT',
       items: [
-        { label: 'Reports', icon: 'pi pi-file-edit', route: '/admin/reports', feature: Feature.ReportsAudit },
+          // { label: 'Reports', icon: 'pi pi-file-edit', route: '/admin/reports', feature: Feature.ReportsAudit },
         { label: 'Profit Reports', icon: 'pi pi-chart-line', route: '/admin/reports/profit', feature: Feature.ReportsAudit },
         // { label: 'Earnings', icon: 'pi pi-dollar', route: '/admin/earnings', feature: Feature.Earnings },
 
