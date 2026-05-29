@@ -20,10 +20,12 @@ describe('AppComponent', () => {
     expect(app.title).toEqual('mlm-admin.fe');
   });
 
-  it('should render title', () => {
+  it('should render app shell', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, mlm-admin.fe');
+    expect(compiled.querySelector('router-outlet')).toBeTruthy();
+    expect(compiled.querySelector('app-loading')).toBeTruthy();
+    expect(compiled.querySelector('app-modal')).toBeTruthy();
   });
 });

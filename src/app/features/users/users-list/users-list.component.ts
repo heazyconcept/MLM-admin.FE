@@ -281,8 +281,7 @@ export class UsersListComponent implements OnInit {
   }
 
   viewProfile(user: User): void {
-    this.selectedUser.set(user);
-    this.profileModalVisible.set(true);
+    this.router.navigate(['/admin/users', user.id]);
   }
 
   getActionMenuItems(user: User, menu: { hide: () => void }): MenuItem[] {
@@ -423,7 +422,7 @@ export class UsersListComponent implements OnInit {
 
     switch (action) {
       case 'suspend':
-        this.usersService.updateUserStatus(user.id, 'Suspended', result.reason || '').subscribe({
+        this.usersService.updateUserStatus(user.id, { isActive: false }).subscribe({
           next: () => {
             this.messageService.add({
               severity: 'success',
@@ -442,7 +441,7 @@ export class UsersListComponent implements OnInit {
         });
         break;
       case 'reactivate':
-        this.usersService.updateUserStatus(user.id, 'Active', '').subscribe({
+        this.usersService.updateUserStatus(user.id, { isActive: true }).subscribe({
           next: () => {
             this.messageService.add({
               severity: 'success',
@@ -461,7 +460,7 @@ export class UsersListComponent implements OnInit {
         });
         break;
       case 'flag':
-        this.usersService.updateUserStatus(user.id, 'Flagged', result.reason || '').subscribe({
+        this.usersService.updateUserStatus(user.id, { isActive: false }).subscribe({
           next: () => {
             this.messageService.add({
               severity: 'success',
@@ -480,7 +479,7 @@ export class UsersListComponent implements OnInit {
         });
         break;
       case 'unflag':
-        this.usersService.updateUserStatus(user.id, 'Active', '').subscribe({
+        this.usersService.updateUserStatus(user.id, { isActive: true }).subscribe({
           next: () => {
             this.messageService.add({
               severity: 'success',

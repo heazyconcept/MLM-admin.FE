@@ -1,0 +1,58 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [header]="'Activate registration — ' + userName()"
+  [style]="{ width: '28rem' }"
+  (onHide)="onCancel()">
+  <div class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Mode</label>
+      <p-select
+        [options]="modeOptions"
+        [(ngModel)]="mode"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full"
+        [disabled]="submitting">
+      </p-select>
+    </div>
+
+    @if (mode === 'WAIVE_PAYMENT') {
+      <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+        <p class="font-semibold">Complimentary activation</p>
+        <p class="mt-1">No registration wallet debit. The user will get full matrix/earnings/CPV access without payment.</p>
+      </div>
+    }
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+      <textarea
+        pTextarea
+        rows="3"
+        class="w-full"
+        [(ngModel)]="reason"
+        [disabled]="submitting"
+        placeholder="Support ticket #... (min 10 chars)">
+      </textarea>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Cancel"
+      class="p-button-outlined"
+      [disabled]="submitting"
+      (click)="onCancel()">
+    </button>
+    <button
+      pButton
+      type="button"
+      [label]="mode === 'WAIVE_PAYMENT' ? 'Waive & activate' : 'Activate registration'"
+      class="p-button-primary"
+      [disabled]="reason.trim().length < 10 || submitting"
+      [loading]="submitting"
+      (click)="onConfirm()">
+    </button>
+  </ng-template>
+</p-dialog>
