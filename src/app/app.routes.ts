@@ -86,6 +86,8 @@ export const routes: Routes = [
         data: { feature: Feature.Products },
         children: [
           { path: '', loadComponent: () => import('./features/products/list/product-list.component').then(m => m.ProductListComponent) },
+          { path: 'stock', loadComponent: () => import('./features/products/stock/product-stock-list.component').then(m => m.ProductStockListComponent) },
+          { path: 'stock/:id', loadComponent: () => import('./features/products/stock/product-stock-detail.component').then(m => m.ProductStockDetailComponent) },
           { path: 'categories', loadComponent: () => import('./features/products/categories/product-categories.component').then(m => m.ProductCategoriesComponent) },
           { path: ':id/edit', loadComponent: () => import('./features/products/details/product-edit.component').then(m => m.ProductEditComponent) }
         ]
