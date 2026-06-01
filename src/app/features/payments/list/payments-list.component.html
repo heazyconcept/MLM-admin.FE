@@ -173,7 +173,7 @@
           <!-- Amount → header[3] -->
           <td class="px-5 py-3.5 text-right w-[120px]">
             <span class="text-sm font-semibold text-mlm-text tabular-nums font-mono">
-              {{ row.amount | currency:'USD' }}
+              {{ row.amount | currency:(row.displayCurrency || row.currency || 'USD') }}
             </span>
           </td>
 

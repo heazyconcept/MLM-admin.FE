@@ -21,6 +21,7 @@ export interface Payment {
   purpose: PaymentPurpose;
   amount: number;
   currency: string;
+  displayCurrency?: string;
   method: string;
   status: PaymentStatus;
   createdAt: string;
@@ -37,6 +38,7 @@ interface AdminPaymentItem {
   userName?: string;
   amount: number;
   currency: string;
+  displayCurrency?: string;
   status: string;
   type?: string;
   provider?: string;
@@ -186,6 +188,7 @@ export class PaymentService {
       purpose,
       amount: item.amount,
       currency: item.currency,
+      displayCurrency: item.displayCurrency,
       method: item.provider || 'Unknown',
       status,
       createdAt: item.createdAt,

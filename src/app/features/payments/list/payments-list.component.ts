@@ -158,7 +158,7 @@ export class PaymentsListComponent implements OnInit {
         width: '140px',
         sortable: true,
         align: 'right',
-        formatter: (value: unknown, row: Payment) => `${row.currency} ${Number(value).toLocaleString()}`
+        formatter: (value: unknown, row: Payment) => `${row.displayCurrency || row.currency || 'USD'} ${Number(value).toLocaleString()}`
       },
       {
         field: 'method',
