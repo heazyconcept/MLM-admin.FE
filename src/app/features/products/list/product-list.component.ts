@@ -1,4 +1,11 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  ChangeDetectionStrategy,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AdminProductsService } from '../services/admin-products.service';
 import { Product, ProductStatus } from '../../../core/models/product.model';
@@ -22,11 +29,11 @@ import { TableConfig } from '../../../shared/components/data-table/data-table.ty
 @Component({
   selector: 'app-product-list',
   imports: [
-    CommonModule, 
-    TableModule, 
-    ButtonModule, 
-    InputTextModule, 
-    SelectModule, 
+    CommonModule,
+    TableModule,
+    ButtonModule,
+    InputTextModule,
+    SelectModule,
     TagModule,
     IconFieldModule,
     InputIconModule,
@@ -35,12 +42,12 @@ import { TableConfig } from '../../../shared/components/data-table/data-table.ty
     ToastModule,
     TooltipModule,
     DataTableComponent,
-    ConfirmDialogModule
+    ConfirmDialogModule,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './product-list.component.html',
   styleUrls: ['./product-list.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductListComponent implements OnInit {
   private adminProducts = inject(AdminProductsService);
@@ -54,7 +61,7 @@ export class ProductListComponent implements OnInit {
   loadingProducts = this.adminProducts.loadingProducts;
   loadingCategories = this.adminProducts.loadingCategories;
   loadError = this.adminProducts.error;
-  
+
   searchQuery = signal('');
   selectedCategory = signal<string | null>(null);
   selectedStatus = signal<ProductStatus | null>(null);
@@ -64,12 +71,12 @@ export class ProductListComponent implements OnInit {
     { label: 'All Statuses', value: null },
     { label: 'Draft', value: 'DRAFT' as ProductStatus },
     { label: 'Active', value: 'ACTIVE' as ProductStatus },
-    { label: 'Inactive', value: 'INACTIVE' as ProductStatus }
+    { label: 'Inactive', value: 'INACTIVE' as ProductStatus },
   ];
 
   categoryOptions = computed(() => [
     { label: 'All Categories', value: null },
-    ...this.categories().map(c => ({ label: c.name, value: c.id }))
+    ...this.categories().map((c) => ({ label: c.name, value: c.id })),
   ]);
 
   filteredProducts = computed(() => {
@@ -79,18 +86,19 @@ export class ProductListComponent implements OnInit {
     const status = this.selectedStatus();
 
     if (search) {
-      list = list.filter(p =>
-        p.name.toLowerCase().includes(search) ||
-        (p.sku && p.sku.toLowerCase().includes(search))
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(search) ||
+          (p.sku && p.sku.toLowerCase().includes(search)),
       );
     }
 
     if (cat) {
-      list = list.filter(p => p.categoryId === cat);
+      list = list.filter((p) => p.categoryId === cat);
     }
 
     if (status) {
-      list = list.filter(p => p.status === status);
+      list = list.filter((p) => p.status === status);
     }
 
     return list;
@@ -111,13 +119,26 @@ export class ProductListComponent implements OnInit {
     rows: 10,
     rowsPerPageOptions: [10, 25, 50],
     showCurrentPageReport: true,
-    currentPageReportTemplate: 'Showing {first} to {last} of {totalRecords} products',
+    currentPageReportTemplate:
+      'Showing {first} to {last} of {totalRecords} products',
     showGridlines: true,
     hoverable: true,
-    size: 'small'
+    size: 'small',
   });
 
-  tableHeaders = signal<string[]>(['Image', 'Product Info', 'Category', 'Base Price', 'Non-member Price', 'PV', 'CPV', 'Admin Pool', 'Status', 'Visibility', 'Actions']);
+  tableHeaders = signal<string[]>([
+    'Image',
+    'Product Info',
+    'Category',
+    'Base Price',
+    'Non-member Price',
+    'PV',
+    'CPV',
+    'Admin Pool',
+    'Status',
+    'Visibility',
+    'Actions',
+  ]);
 
   tableRows = signal(10);
   tableRowsPerPageOptions = signal([10, 25, 50]);
@@ -149,33 +170,37 @@ export class ProductListComponent implements OnInit {
       acceptIcon: 'none',
       rejectIcon: 'none',
       accept: () => {
-        this.adminProducts.updateProductStatus(product.id, 'INACTIVE').subscribe({
-          next: () => {
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Updated',
-              detail: 'Product set to inactive successfully'
-            });
-            this.adminProducts.loadProducts({ limit: 100, offset: 0 }).subscribe();
-          },
-          error: () => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Failed',
-              detail: 'Could not update product status.'
-            });
-          }
-        });
-      }
+        this.adminProducts
+          .updateProductStatus(product.id, 'INACTIVE')
+          .subscribe({
+            next: () => {
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Updated',
+                detail: 'Product set to inactive successfully',
+              });
+              this.adminProducts
+                .loadProducts({ limit: 100, offset: 0 })
+                .subscribe();
+            },
+            error: () => {
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Failed',
+                detail: 'Could not update product status.',
+              });
+            },
+          });
+      },
     });
   }
 
- getStatusClass(status: string): string {
-  const map: Record<string, string> = {
-    ACTIVE:   'bg-brand-green-light text-brand-green-dark',
-    DRAFT:    'bg-slate-100 text-slate-600',
-    INACTIVE: 'bg-mlm-red-50 text-mlm-red-700 border border-mlm-red-200',
-  };
-  return map[status?.toUpperCase()] ?? 'bg-slate-100 text-slate-500';
-}
+  getStatusClass(status: string): string {
+    const map: Record<string, string> = {
+      ACTIVE: 'bg-brand-green-light text-brand-green-dark',
+      DRAFT: 'bg-slate-100 text-slate-600',
+      INACTIVE: 'bg-mlm-red-50 text-mlm-red-700 border border-mlm-red-200',
+    };
+    return map[status?.toUpperCase()] ?? 'bg-slate-100 text-slate-500';
+  }
 }

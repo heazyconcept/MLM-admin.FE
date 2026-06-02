@@ -596,7 +596,7 @@
                 </p-inputNumber>
               </div>
 
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   [disabled]="!canSetPool() || settingPool()"
@@ -619,6 +619,18 @@
                     <i class="pi pi-spin pi-spinner text-[10px]"></i>
                   } @else {
                     Top-up
+                  }
+                </button>
+                <button
+                  type="button"
+                  [disabled]="!canDeductPool() || deductingPool()"
+                  (click)="onDeductPool()"
+                  class="h-9 rounded-lg text-xs font-semibold text-white bg-mlm-error border border-mlm-error hover:bg-mlm-red-700 hover:border-mlm-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
+                >
+                  @if (deductingPool()) {
+                    <i class="pi pi-spin pi-spinner text-[10px]"></i>
+                  } @else {
+                    Deduct
                   }
                 </button>
               </div>
