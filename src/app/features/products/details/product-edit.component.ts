@@ -60,10 +60,12 @@ export class ProductEditComponent implements OnInit {
   poolInput = signal<number | null>(null);
   settingPool = signal(false);
   toppingUpPool = signal(false);
+  deductingPool = signal(false);
   priceHistory = signal<ProductPrice[]>([]);
   loadingHistory = signal(false);
   canSetPool = computed(() => this.poolInput() != null && Math.trunc(Number(this.poolInput())) >= 0 && !this.settingPool());
   canTopUpPool = computed(() => this.poolInput() != null && Math.trunc(Number(this.poolInput())) > 0 && !this.toppingUpPool());
+  canDeductPool = computed(() => this.poolInput() != null && Math.trunc(Number(this.poolInput())) > 0 && !this.deductingPool());
 
   /** Whether the current price is scheduled (future effectiveFrom).
    *  A 5-minute buffer avoids false positives from client/server clock drift
@@ -326,6 +328,33 @@ export class ProductEditComponent implements OnInit {
           severity: 'error',
           summary: 'Top-up Failed',
           detail: err?.error?.message ?? 'Could not top up admin pool.'
+        });
+      }
+    });
+  }
+
+  onDeductPool(): void {
+    const id = this.productId();
+    const quantity = Math.max(0, Math.trunc(Number(this.poolInput() ?? 0)));
+    if (!id || quantity <= 0 || this.deductingPool()) return;
+
+    this.deductingPool.set(true);
+    this.adminProducts.deductProductPool(id, quantity).subscribe({
+      next: () => {
+        this.deductingPool.set(false);
+        this.poolInput.set(null);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Pool Deducted',
+          detail: 'Admin pool quantity has been decreased successfully.'
+        });
+      },
+      error: (err) => {
+        this.deductingPool.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Deduction Failed',
+          detail: err?.error?.message ?? 'Could not deduct from admin pool.'
         });
       }
     });
