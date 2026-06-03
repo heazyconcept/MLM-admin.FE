@@ -35,6 +35,9 @@ export interface Merchant {
   products: MerchantProduct[];
   createdAt: string;
   updatedAt: string;
+  businessName?: string;
+  phoneNumber?: string;
+  address?: string;
 }
 
 /** Query params for GET /admin/merchants */
@@ -209,6 +212,9 @@ export class MerchantService {
 
   /** Get display name from merchant user object */
   getMerchantDisplayName(merchant: Merchant): string {
+    if (merchant.businessName) {
+      return merchant.businessName;
+    }
     if (merchant.user?.username) {
       return merchant.user.username;
     }
