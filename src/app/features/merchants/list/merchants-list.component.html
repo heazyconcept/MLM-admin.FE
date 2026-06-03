@@ -155,9 +155,14 @@
               <span class="text-xs font-mono text-slate-500">{{ row.id | slice:0:8 }}...</span>
             </td>
 
-            <!-- Username -->
+            <!-- Business Name -->
             <td class="px-5 py-4">
-              <span class="font-medium text-slate-800">{{ row.user?.username || (row.user?.email ? row.user.email.split('@')[0] : 'N/A') }}</span>
+              <span class="font-medium text-slate-800">{{ row.businessName || 'N/A' }}</span>
+            </td>
+
+            <!-- Phone Number -->
+            <td class="px-5 py-4 text-sm text-slate-600">
+              {{ row.phoneNumber || 'N/A' }}
             </td>
 
             <!-- Type -->

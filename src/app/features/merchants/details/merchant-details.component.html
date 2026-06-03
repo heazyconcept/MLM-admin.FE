@@ -311,8 +311,18 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Merchant ID</p>
-              <p class="font-mono font-medium text-gray-900 text-sm">{{ m.id }}</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Business Name</p>
+              <p class="font-semibold text-gray-900">{{ m.businessName || 'N/A' }}</p>
+            </div>
+
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Phone Number</p>
+              <p class="font-medium text-gray-900">{{ m.phoneNumber || 'N/A' }}</p>
+            </div>
+
+            <div class="md:col-span-2">
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Address</p>
+              <p class="font-medium text-gray-900 text-sm">{{ m.address || 'N/A' }}</p>
             </div>
 
             <div>
@@ -328,39 +338,19 @@
               <app-status-badge [status]="getDisplayStatus(m.status)"></app-status-badge>
             </div>
 
+
+
             <div>
               <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Registration Date</p>
-              <p class="font-medium text-gray-900">{{ formatDate(m.createdAt) }}</p>
+              <p class="font-medium text-gray-900 text-sm">{{ formatDate(m.createdAt) }}</p>
             </div>
 
             @if (m.updatedAt) {
               <div>
                 <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Last Updated</p>
-                <p class="font-medium text-gray-900">{{ formatDate(m.updatedAt) }}</p>
+                <p class="font-medium text-gray-900 text-sm">{{ formatDate(m.updatedAt) }}</p>
               </div>
             }
-          </div>
-        </div>
-
-        <!-- Owner Details -->
-        <div class="bg-white border border-gray-200 rounded-xl p-8">
-          <h2 class="text-lg font-semibold text-gray-900 mb-6">Owner Details</h2>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Owner Name</p>
-              <p class="font-medium text-gray-900">{{ getDisplayName(m) }}</p>
-            </div>
-
-            <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">User ID</p>
-              <p class="font-mono font-medium text-gray-900 text-sm">{{ m.userId }}</p>
-            </div>
-
-            <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Email</p>
-              <p class="font-medium text-gray-900">{{ m.user.email }}</p>
-            </div>
           </div>
         </div>
 
@@ -600,18 +590,7 @@
           </div>
         </div>
 
-        <!-- Owner Details skeleton -->
-        <div class="bg-white border border-gray-200 rounded-xl p-8">
-          <div class="w-32 h-5 rounded bg-gray-200 mb-6"></div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            @for (i of [1,2,3]; track i) {
-              <div>
-                <div class="w-20 h-3 rounded bg-gray-100 mb-3"></div>
-                <div class="w-48 h-5 rounded bg-gray-200"></div>
-              </div>
-            }
-          </div>
-        </div>
+
 
         <!-- Service Areas skeleton -->
         <div class="bg-white border border-gray-200 rounded-xl p-8">
