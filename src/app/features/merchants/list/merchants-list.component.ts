@@ -55,7 +55,7 @@ export class MerchantsListComponent implements OnInit {
   ];
 
   tableHeaders = signal<string[]>([
-    'Merchant ID', 'Business Name', 'Phone Number', 'Type', 'Service Areas', 'Products', 'Status', 'Actions'
+    'Merchant ID', 'Username', 'Phone Number', 'Type', 'Service Areas', 'Products', 'Status', 'Actions'
   ]);
 
   /** Client-side search filter applied on top of API-filtered list */
@@ -64,8 +64,7 @@ export class MerchantsListComponent implements OnInit {
     const query = this.searchQuery().toLowerCase();
     if (query) {
       merchants = merchants.filter((m: Merchant) =>
-        this.merchantService.getMerchantDisplayName(m).toLowerCase().includes(query) ||
-        m.businessName?.toLowerCase().includes(query) ||
+        m.user?.username?.toLowerCase().includes(query) ||
         m.phoneNumber?.toLowerCase().includes(query) ||
         m.user?.email?.toLowerCase().includes(query) ||
         m.id.toLowerCase().includes(query)
