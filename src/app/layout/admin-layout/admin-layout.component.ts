@@ -13,9 +13,14 @@ import { HeaderComponent } from '../header/header.component';
 })
 export class AdminLayoutComponent {
   sidebarCollapsed = false;
+  mobileSidebarOpen = false;
 
-  onSidebarToggle(collapsed: boolean) {
-    this.sidebarCollapsed = collapsed;
+  toggleMobileSidebar() {
+    this.mobileSidebarOpen = !this.mobileSidebarOpen;
+  }
+
+  closeMobileSidebar() {
+    this.mobileSidebarOpen = false;
   }
 }
 

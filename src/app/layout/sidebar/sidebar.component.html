@@ -1,19 +1,29 @@
-<aside 
-  class="h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-300"
-  [class.w-64]="!collapsed()"
-  [class.w-20]="collapsed()">
-  
+<aside
+  class="sidebar-panel h-screen bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all duration-300
+         fixed md:static inset-y-0 left-0 z-40
+         -translate-x-full md:translate-x-0"
+  [class.translate-x-0]="mobileOpen()"
+  [class.collapsed]="collapsed()">
+
   <!-- Logo Section -->
   <div class="p-4 border-b border-gray-100 flex items-center justify-between">
     <div class="flex items-center gap-3">
       <img src="/assests/logo.png" alt="Logo" class="h-10 w-auto">
-      @if (!collapsed()) {
+      @if (!collapsed() || mobileOpen()) {
         <span class="font-semibold text-lg text-mlm-text">Segulah</span>
       }
     </div>
-    <button 
+    <button
+      type="button"
+      (click)="closeMobile()"
+      class="p-2 rounded-lg hover:bg-mlm-green-50 text-mlm-secondary transition-colors md:hidden"
+      aria-label="Close menu">
+      <i class="pi pi-times"></i>
+    </button>
+    <button
+      type="button"
       (click)="toggleCollapse()"
-      class="p-2 rounded-lg hover:bg-mlm-green-50 text-mlm-secondary transition-colors">
+      class="hidden md:block p-2 rounded-lg hover:bg-mlm-green-50 text-mlm-secondary transition-colors">
       <i class="pi" [class.pi-angle-left]="!collapsed()" [class.pi-angle-right]="collapsed()"></i>
     </button>
   </div>
@@ -22,7 +32,7 @@
   <nav class="flex-1 overflow-y-auto py-4 px-3">
     @for (section of filteredMenuSections(); track section.title) {
       <div class="mb-6">
-        @if (!collapsed()) {
+        @if (!collapsed() || mobileOpen()) {
           <h3 class="px-3 mb-2 text-xs font-medium text-mlm-secondary uppercase tracking-wider">
             {{ section.title }}
           </h3>
@@ -36,9 +46,9 @@
                   <button 
                     (click)="item.expanded = !item.expanded"
                     class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-mlm-text hover:bg-mlm-green-50 transition-colors"
-                    [class.justify-center]="collapsed()">
+                    [class.justify-center]="collapsed() && !mobileOpen()">
                     <i [class]="item.icon" class="text-lg"></i>
-                    @if (!collapsed()) {
+                    @if (!collapsed() || mobileOpen()) {
                       <span class="flex-1 text-left text-sm font-medium">{{ item.label }}</span>
                       <i class="pi text-xs transition-transform" 
                          [class.pi-chevron-down]="!item.expanded"
@@ -47,12 +57,13 @@
                   </button>
                   
                   <!-- Submenu -->
-                  @if (item.expanded && !collapsed()) {
+                  @if (item.expanded && (!collapsed() || mobileOpen())) {
                     <ul class="mt-1 ml-6 space-y-1">
                       @for (subitem of item.submenu; track subitem.label) {
                         <li>
-                          <a 
+                          <a
                             [routerLink]="subitem.route"
+                            (click)="onNavClick()"
                             routerLinkActive="bg-mlm-green-100 text-mlm-primary"
                             class="flex items-center gap-3 px-3 py-2 rounded-lg text-mlm-text hover:bg-mlm-green-50 transition-colors text-sm">
                             <i [class]="subitem.icon" class="text-base"></i>
@@ -64,13 +75,14 @@
                   }
                 </div>
               } @else if (item.route) {
-                <a 
+                <a
                   [routerLink]="item.route"
+                  (click)="onNavClick()"
                   routerLinkActive="bg-mlm-green-100 text-mlm-primary"
                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-mlm-text hover:bg-mlm-green-50 transition-colors group"
-                  [class.justify-center]="collapsed()">
+                  [class.justify-center]="collapsed() && !mobileOpen()">
                   <i [class]="item.icon" class="text-lg"></i>
-                  @if (!collapsed()) {
+                  @if (!collapsed() || mobileOpen()) {
                     <span class="flex-1 text-sm font-medium">{{ item.label }}</span>
                     @if (item.badge) {
                       <span class="px-2 py-0.5 text-xs font-medium bg-mlm-green-100 text-mlm-primary rounded-full">
@@ -80,12 +92,13 @@
                   }
                 </a>
               } @else {
-                <button 
-                  (click)="item.action?.()"
+                <button
+                  type="button"
+                  (click)="item.action?.(); onNavClick()"
                   class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-mlm-text hover:bg-mlm-green-50 transition-colors"
-                  [class.justify-center]="collapsed()">
+                  [class.justify-center]="collapsed() && !mobileOpen()">
                   <i [class]="item.icon" class="text-lg"></i>
-                  @if (!collapsed()) {
+                  @if (!collapsed() || mobileOpen()) {
                     <span class="flex-1 text-left text-sm font-medium">{{ item.label }}</span>
                   }
                 </button>

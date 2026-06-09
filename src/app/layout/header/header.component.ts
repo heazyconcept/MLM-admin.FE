@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -15,7 +15,9 @@ import { BadgeModule } from 'primeng/badge';
 export class HeaderComponent {
   userName = input('Admin User');
   userAvatar = input('');
-  
+
+  menuToggle = output<void>();
+
   notifications = 3;
   messages = 5;
 }

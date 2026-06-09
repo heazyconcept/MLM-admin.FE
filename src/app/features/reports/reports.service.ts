@@ -152,6 +152,95 @@ export interface EarningsTransactionsResponse {
   offset?: number;
 }
 
+export type CpvSource =
+  | 'REGISTRATION_PERSONAL_PV'
+  | 'DIRECT_REFERRAL_REGISTRATION'
+  | 'COMMUNITY_REGISTRATION_MATRIX'
+  | 'PRODUCT_PURCHASE_PV'
+  | 'DIRECT_REFERRAL_PRODUCT_PV'
+  | 'COMMUNITY_PRODUCT_MATRIX'
+  | 'ADMIN_CPV_ADJUSTMENT';
+
+export interface CpvTrendBucket {
+  date: string;
+  cpvGenerated: number;
+}
+
+export interface CpvSummaryResponse {
+  from?: string;
+  to?: string;
+  username?: string | null;
+  minTotalCpv?: number | null;
+  maxTotalCpv?: number | null;
+  totalCpvGenerated: number;
+  transactionCount: number;
+  byCpvSource: Record<string, number>;
+  trend: CpvTrendBucket[];
+}
+
+export interface CpvUserRow {
+  userId: string;
+  username: string;
+  email: string;
+  totalCpvGenerated: number;
+  transactionCount: number;
+  topSource?: CpvSource | string;
+  byCpvSource?: Record<string, number>;
+}
+
+export interface CpvUsersResponse {
+  items: CpvUserRow[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface CpvTransactionRow {
+  id: string;
+  occurredAt: string;
+  recipientUserId: string;
+  recipientUsername: string;
+  recipientEmail: string;
+  cpvSource: CpvSource | string;
+  amount: number;
+  sourceUserId?: string | null;
+  sourceUsername?: string | null;
+  reference?: string | null;
+  category?: string;
+}
+
+export interface CpvTransactionsResponse {
+  items: CpvTransactionRow[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface CpvSummaryParams {
+  from?: string;
+  to?: string;
+  username?: string;
+  minTotalCpv?: number;
+  maxTotalCpv?: number;
+}
+
+export interface CpvUsersParams extends CpvSummaryParams {
+  limit?: number;
+  offset?: number;
+}
+
+export interface CpvTransactionsParams {
+  from?: string;
+  to?: string;
+  username?: string;
+  amount?: number;
+  minAmount?: number;
+  maxAmount?: number;
+  cpvSource?: string;
+  limit?: number;
+  offset?: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -211,5 +300,23 @@ export class ReportsService {
     return this.api.get<EarningsTransactionsResponse>('admin/reports/earnings/transactions', params).pipe(
       catchError(() => of(null))
     );
+  }
+
+  getCpvSummary(params?: CpvSummaryParams): Observable<CpvSummaryResponse | null> {
+    return this.api
+      .get<CpvSummaryResponse>('admin/reports/cpv/summary', params as Record<string, unknown>)
+      .pipe(catchError(() => of(null)));
+  }
+
+  getCpvUsers(params?: CpvUsersParams): Observable<CpvUsersResponse | null> {
+    return this.api
+      .get<CpvUsersResponse>('admin/reports/cpv/users', params as Record<string, unknown>)
+      .pipe(catchError(() => of(null)));
+  }
+
+  getCpvTransactions(params?: CpvTransactionsParams): Observable<CpvTransactionsResponse | null> {
+    return this.api
+      .get<CpvTransactionsResponse>('admin/reports/cpv/transactions', params as Record<string, unknown>)
+      .pipe(catchError(() => of(null)));
   }
 }

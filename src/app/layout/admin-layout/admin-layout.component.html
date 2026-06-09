@@ -1,11 +1,22 @@
 <div class="flex h-screen bg-mlm-background overflow-hidden">
+  @if (mobileSidebarOpen) {
+    <div
+      class="fixed inset-0 bg-black/50 z-30 md:hidden"
+      (click)="closeMobileSidebar()"
+      aria-hidden="true">
+    </div>
+  }
+
   <!-- Sidebar -->
-  <app-sidebar [(collapsed)]="sidebarCollapsed"></app-sidebar>
+  <app-sidebar
+    [(collapsed)]="sidebarCollapsed"
+    [(mobileOpen)]="mobileSidebarOpen">
+  </app-sidebar>
 
   <!-- Main Content -->
-  <div class="flex-1 flex flex-col overflow-hidden">
+  <div class="flex-1 flex flex-col overflow-hidden min-w-0">
     <!-- Header -->
-    <app-header></app-header>
+    <app-header (menuToggle)="toggleMobileSidebar()"></app-header>
 
     <!-- Page Content -->
     <main class="flex-1 overflow-y-auto">

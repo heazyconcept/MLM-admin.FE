@@ -1,0 +1,86 @@
+<div class="min-h-screen bg-mlm-background p-4 md:p-6 lg:p-8 font-geist">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 md:mb-8">
+    <div class="min-w-0">
+      <button
+        type="button"
+        (click)="backToReport()"
+        class="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-mlm-secondary hover:text-mlm-text transition-colors">
+        <i class="pi pi-arrow-left text-xs"></i>
+        Back to CPV report
+      </button>
+      <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        CPV transaction ledger
+      </h1>
+      <p class="text-sm text-mlm-secondary">
+        @if (username()) {
+          Individual CPV credits for @{{ username() }}
+        } @else {
+          Individual CPV credits in the selected period
+        }
+      </p>
+    </div>
+    <button
+      (click)="reload()"
+      [disabled]="loading()"
+      class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
+             text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+             flex items-center justify-center gap-2 transition-colors duration-150
+             shrink-0 w-full sm:w-auto self-start">
+      <i class="pi pi-refresh text-xs" [class.pi-spin]="loading()"></i>
+      Refresh
+    </button>
+  </div>
+
+  @if (loadError()) {
+    <div class="mb-4 md:mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      {{ loadError() }}
+    </div>
+  }
+
+  <div class="bg-white rounded-xl md:rounded-2xl border border-slate-200 overflow-hidden cpv-table-wrap">
+    <app-data-table
+      [value]="transactions()"
+      [headers]="['Date', 'Recipient', 'Amount', 'Source', 'Triggered by', 'Reference']"
+      [loading]="loading()"
+      [lazy]="true"
+      [totalRecords]="totalRecords()"
+      [first]="tableFirst()"
+      [rows]="rows()"
+      [rowsPerPageOptions]="[25, 50, 100]"
+      (pageChange)="onPageChange($event)">
+
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
+            <span class="text-xs font-mono text-slate-400 tabular-nums">
+              {{ row.occurredAt | date:'MMM d, y' }}
+            </span>
+          </td>
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[160px]">
+            <p class="text-sm font-semibold text-mlm-text truncate max-w-[200px] sm:max-w-none">
+              @{{ row.recipientUsername }}
+            </p>
+            <p class="text-[11px] text-slate-400 truncate max-w-[200px] sm:max-w-none">{{ row.recipientEmail }}</p>
+          </td>
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap text-right">
+            <p class="text-sm font-semibold text-mlm-text tabular-nums">
+              {{ formatCpv(row.amount) }}
+            </p>
+          </td>
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[140px]">
+            <span class="text-xs text-mlm-secondary">{{ formatCpvSource(row.cpvSource) }}</span>
+          </td>
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
+            <span class="text-sm text-mlm-secondary">{{ formatTriggeredBy(row) }}</span>
+          </td>
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[140px]">
+            <span class="text-xs font-mono text-slate-400 break-all">
+              {{ row.reference || '—' }}
+            </span>
+          </td>
+        </tr>
+      </ng-template>
+
+    </app-data-table>
+  </div>
+</div>

@@ -1,0 +1,195 @@
+<div class="min-h-screen bg-mlm-background p-4 md:p-6 lg:p-8 font-geist">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 md:mb-8">
+    <div class="min-w-0">
+      <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        CPV Report
+      </h1>
+      <p class="text-sm text-mlm-secondary">
+        Audit how CPV was generated per member — totals, sources, and individual ledger credits.
+      </p>
+    </div>
+    <button
+      (click)="reloadAll()"
+      [disabled]="loadingSummary() || loadingUsers()"
+      class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
+             text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+             flex items-center justify-center gap-2 transition-colors duration-150
+             shrink-0 w-full sm:w-auto self-start">
+      <i class="pi pi-refresh text-xs" [class.pi-spin]="loadingSummary() || loadingUsers()"></i>
+      Refresh
+    </button>
+  </div>
+
+  @if (loadError()) {
+    <div class="mb-4 md:mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      {{ loadError() }}
+    </div>
+  }
+
+  <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-5 mb-4 md:mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-end gap-4">
+      <div class="flex flex-col gap-1 w-full lg:w-auto lg:flex-1 lg:max-w-xs">
+        <label class="text-sm font-medium text-gray-700">Date range</label>
+        <p-datepicker
+          [ngModel]="dateRange()"
+          (ngModelChange)="dateRange.set($event)"
+          selectionMode="range"
+          placeholder="From - To"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          styleClass="w-full"
+          inputStyleClass="w-full h-10 border-gray-300"
+          panelStyleClass="p-datepicker-premium">
+        </p-datepicker>
+      </div>
+
+      <div class="flex flex-col gap-1 w-full lg:w-auto lg:flex-1 lg:max-w-xs">
+        <label class="text-sm font-medium text-gray-700">Username</label>
+        <input
+          pInputText
+          type="text"
+          class="w-full h-10"
+          placeholder="e.g. johndoe"
+          [ngModel]="usernameInput()"
+          (ngModelChange)="usernameInput.set($event)" />
+      </div>
+
+      <div class="flex flex-col gap-1 w-full lg:w-auto lg:max-w-[10rem]">
+        <label class="text-sm font-medium text-gray-700">CPV number</label>
+        <p-inputnumber
+          [ngModel]="cpvNumberInput()"
+          (ngModelChange)="cpvNumberInput.set($event)"
+          placeholder="e.g. 500"
+          [min]="0"
+          [useGrouping]="false"
+          styleClass="w-full"
+          inputStyleClass="w-full h-10">
+        </p-inputnumber>
+          <!-- <p class="text-[11px] text-slate-400">
+            @if (isDrillDown()) {
+              Filters ledger by exact amount when username is set.
+            } @else {
+              Minimum total CPV in period for user rollup.
+            }
+          </p> -->
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
+        <button
+          pButton
+          label="Search"
+          icon="pi pi-search"
+          class="p-button-primary w-full sm:w-auto"
+          [disabled]="loadingSummary() || loadingUsers()"
+          [loading]="loadingSummary() || loadingUsers()"
+          (click)="search()">
+        </button>
+        <button
+          pButton
+          label="Clear"
+          class="p-button-outlined w-full sm:w-auto"
+          [disabled]="loadingSummary() || loadingUsers()"
+          (click)="clearFilters()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
+    @for (card of summaryCards(); track card.label) {
+      <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-5 md:py-5">
+        <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-2 md:mb-3">
+          {{ card.label }}
+        </p>
+        @if (loadingSummary()) {
+          <p class="text-2xl md:text-3xl font-bold text-slate-300 tracking-tight leading-none mb-2">...</p>
+        } @else {
+          <p class="text-2xl md:text-3xl font-bold text-mlm-text tracking-tight tabular-nums leading-none mb-2 break-words">
+            {{ formatCpv(card.value) }}
+          </p>
+        }
+        <p class="text-[11px] text-slate-400">{{ card.hint }}</p>
+      </div>
+    }
+  </div>
+
+    <!-- <div class="bg-white rounded-xl border border-slate-200 px-4 py-3 md:px-5 md:py-4 mb-4 md:mb-6">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">Breakdown by source</p>
+      @if (loadingSummary()) {
+        <p class="text-sm text-slate-400">Loading...</p>
+      } @else if (sourceChips().length === 0) {
+        <p class="text-sm text-slate-400">No CPV source data for the selected filters.</p>
+      } @else {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+          @for (chip of sourceChips(); track chip.key) {
+            <div class="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 min-w-0">
+              <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase truncate" [title]="chip.label">
+                {{ chip.label }}
+              </p>
+              <p class="text-sm font-semibold text-mlm-text tabular-nums">
+                {{ formatCpv(chip.amount) }} CPV
+              </p>
+            </div>
+          }
+        </div>
+      }
+    </div> -->
+
+  <div class="bg-white rounded-xl md:rounded-2xl border border-slate-200 overflow-hidden cpv-table-wrap">
+    <div class="px-4 py-3 md:px-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div>
+        <p class="text-sm font-semibold text-mlm-text">User rollup</p>
+        <p class="text-xs text-slate-400">Members with CPV generated in the selected period</p>
+      </div>
+      <button
+        pButton
+        label="View all ledger"
+        icon="pi pi-list"
+        class="p-button-outlined p-button-sm shrink-0 self-start sm:self-center"
+        (click)="viewAllLedger()">
+      </button>
+    </div>
+    <app-data-table
+      [value]="users()"
+      [headers]="['Username', 'Email', 'Total CPV', 'Transactions', 'Top source', 'Actions']"
+      [loading]="loadingUsers()"
+      [lazy]="true"
+      [totalRecords]="usersTotalRecords()"
+      [first]="usersTableFirst()"
+      [rows]="usersRows()"
+      [rowsPerPageOptions]="[25, 50, 100]"
+      (pageChange)="onUsersPageChange($event)">
+
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
+            <span class="text-sm font-semibold text-mlm-text">@{{ row.username }}</span>
+          </td>
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[160px]">
+            <span class="text-sm text-mlm-secondary truncate block max-w-[200px] sm:max-w-none">{{ row.email }}</span>
+          </td>
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap text-right">
+            <span class="text-sm font-semibold text-mlm-text tabular-nums">{{ formatCpv(row.totalCpvGenerated) }}</span>
+          </td>
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap text-right">
+            <span class="text-sm text-mlm-secondary tabular-nums">{{ row.transactionCount }}</span>
+          </td>
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[140px]">
+            <span class="text-xs text-mlm-secondary">{{ formatCpvSource(row.topSource) }}</span>
+          </td>
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
+            <button
+              pButton
+              label="View ledger"
+              icon="pi pi-list"
+              class="p-button-text p-button-sm"
+              (click)="viewUserLedger(row)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+
+    </app-data-table>
+  </div>
+</div>
