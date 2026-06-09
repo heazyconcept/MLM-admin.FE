@@ -15,6 +15,7 @@ import { PaginatorState } from 'primeng/paginator';
   selector: 'app-wallet-list',
   imports: [CommonModule, ButtonModule, TagModule, InputTextModule, TooltipModule, PaginatorModule, StatusBadgeComponent],
   templateUrl: './wallet-list.component.html',
+  styleUrls: ['./wallet-list.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WalletListComponent {

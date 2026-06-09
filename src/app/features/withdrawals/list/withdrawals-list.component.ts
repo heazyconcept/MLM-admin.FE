@@ -36,6 +36,7 @@ interface StatusOption {
   ],
   providers: [MessageService],
   templateUrl: './withdrawals-list.component.html',
+  styleUrls: ['./withdrawals-list.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WithdrawalsListComponent implements OnInit {

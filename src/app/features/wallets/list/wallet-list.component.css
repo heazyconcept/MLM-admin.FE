@@ -1,0 +1,41 @@
+:host {
+  display: block;
+}
+
+.wallets-table-wrap {
+  -webkit-overflow-scrolling: touch;
+}
+
+.wallets-table {
+  min-width: 52rem;
+}
+
+@media (max-width: 639px) {
+  .wallets-table thead > tr > th {
+    padding: 0.75rem;
+    font-size: 0.625rem;
+  }
+
+  .wallets-table tbody > tr > td {
+    padding: 0.75rem;
+  }
+
+  .wallets-paginator-wrap ::ng-deep .p-paginator {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 0;
+  }
+
+  .wallets-paginator-wrap ::ng-deep .p-paginator .p-paginator-current {
+    width: 100%;
+    text-align: center;
+    margin-right: 0;
+    order: -1;
+  }
+
+  .wallets-paginator-wrap ::ng-deep .p-paginator .p-paginator-pages {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

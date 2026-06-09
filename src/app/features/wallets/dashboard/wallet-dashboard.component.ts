@@ -9,6 +9,7 @@ import { ButtonModule } from 'primeng/button';
   selector: 'app-wallet-dashboard',
   imports: [CommonModule, ChartModule, RouterModule, ButtonModule],
   templateUrl: './wallet-dashboard.component.html',
+  styleUrls: ['./wallet-dashboard.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WalletDashboardComponent {

@@ -1,48 +1,50 @@
-<div class="p-6 bg-mlm-background min-h-full">
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h1 class="text-2xl font-semibold text-mlm-text mb-1">
+<div class="p-4 md:p-6 lg:p-8 bg-mlm-background min-h-full font-geist">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 md:mb-8">
+    <div class="min-w-0">
+      <h1 class="text-xl sm:text-2xl md:text-[26px] font-semibold text-mlm-text mb-1">
         Welcome back, {{ userName }}
       </h1>
       <p class="text-mlm-secondary text-sm">
         Here's what's happening with your network today.
       </p>
     </div>
-    <div class="flex items-center gap-4">
+    <div class="flex flex-col gap-3 w-full sm:w-auto shrink-0 self-start">
       <div class="flex items-center gap-2 text-sm text-mlm-secondary">
         <i class="pi pi-calendar"></i>
         <span>{{ formatDate(currentDate) }}</span>
       </div>
-      <button
-        pButton
-        type="button"
-        label="Refresh"
-        icon="pi pi-refresh"
-        class="p-button-outlined border-mlm-primary text-mlm-primary hover:bg-mlm-green-50"
-        [loading]="loading()"
-        [disabled]="loading()"
-        (click)="reload()">
-      </button>
-      <button
-        pButton
-        type="button"
-        label="Export Report"
-        icon="pi pi-download"
-        class="p-button-outlined border-mlm-primary text-mlm-primary hover:bg-mlm-green-50">
-      </button>
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <button
+          pButton
+          type="button"
+          label="Refresh"
+          icon="pi pi-refresh"
+          class="p-button-outlined border-mlm-primary text-mlm-primary hover:bg-mlm-green-50 w-full sm:w-auto"
+          [loading]="loading()"
+          [disabled]="loading()"
+          (click)="reload()">
+        </button>
+        <button
+          pButton
+          type="button"
+          label="Export Report"
+          icon="pi pi-download"
+          class="p-button-outlined border-mlm-primary text-mlm-primary hover:bg-mlm-green-50 w-full sm:w-auto">
+        </button>
+      </div>
     </div>
   </div>
 
   @if (loadError()) {
-    <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex items-center justify-between gap-4">
+    <div class="mb-4 md:mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <span>{{ loadError() }}</span>
-      <button pButton type="button" label="Retry" class="p-button-sm" (click)="reload()"></button>
+      <button pButton type="button" label="Retry" class="p-button-sm w-full sm:w-auto shrink-0" (click)="reload()"></button>
     </div>
   }
 
   <!-- Section 1: System Overview -->
-  <div class="mb-6">
-    <h2 class="text-lg font-semibold text-mlm-text mb-4">System overview</h2>
+  <div class="mb-4 md:mb-6">
+    <h2 class="text-base sm:text-lg font-semibold text-mlm-text mb-3 md:mb-4">System overview</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       @for (stat of systemStatsToShow(); track stat.title) {
         <app-stat-card
@@ -63,8 +65,8 @@
   </div>
 
   <!-- Section 2: Financial Snapshot -->
-  <div class="mb-6">
-    <h2 class="text-lg font-semibold text-mlm-text mb-4">Financial snapshot</h2>
+  <div class="mb-4 md:mb-6">
+    <h2 class="text-base sm:text-lg font-semibold text-mlm-text mb-3 md:mb-4">Financial snapshot</h2>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div class="lg:col-span-1 grid grid-cols-1 gap-4">
         @for (stat of financialStatsToShow(); track stat.title) {
@@ -93,9 +95,9 @@
   </div>
 
   <!-- Section 3: Operations + package + wallets -->
-  <div class="mb-8">
+  <div class="mb-6 md:mb-8">
     <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 mb-1">Operations</h2>
-    <p class="text-sm text-slate-400 mb-6">Counts and distribution</p>
+    <p class="text-sm text-slate-400 mb-4 md:mb-6">Counts and distribution</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
       @for (stat of userMetricsToShow(); track stat.title) {
         <app-stat-card
@@ -127,35 +129,35 @@
   </div>
 
   <!-- Section 5: Live Activity Feed -->
-  <div class="mb-8 mt-6">
-    <div class="flex items-center justify-between mb-4">
-      <div>
-        <h2 class="text-lg font-semibold text-mlm-text">Live activity feed</h2>
+  <div class="mb-6 md:mb-8 mt-4 md:mt-6">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+      <div class="min-w-0">
+        <h2 class="text-base sm:text-lg font-semibold text-mlm-text">Live activity feed</h2>
         <p class="text-sm text-mlm-secondary mt-0.5">Real-time ledger updates and per-product volume distribution</p>
       </div>
-      <button pButton type="button" icon="pi pi-refresh" class="p-button-text p-button-rounded p-button-secondary"
+      <button pButton type="button" icon="pi pi-refresh" class="p-button-text p-button-rounded p-button-secondary shrink-0 self-start"
         [loading]="activityLoading()" (click)="reload()">
       </button>
     </div>
 
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="bg-white rounded-xl md:rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       @if (activityLoading() && activity().length === 0) {
-        <div class="p-8 text-center text-gray-500 text-sm">Loading activity…</div>
+        <div class="p-6 md:p-8 text-center text-gray-500 text-sm">Loading activity…</div>
       } @else if (activity().length === 0) {
-        <div class="p-8 text-center text-gray-500 text-sm">No recent activity.</div>
+        <div class="p-6 md:p-8 text-center text-gray-500 text-sm">No recent activity.</div>
       } @else {
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
+        <div class="dashboard-activity-wrap overflow-x-auto">
+          <table class="w-full text-sm dashboard-activity-table">
             <thead>
               <tr class="border-b border-gray-200 bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-                <th class="px-4 py-3 w-[150px]">Date</th>
-                <th class="px-4 py-3 w-[90px]">Type</th>
-                <th class="px-4 py-3 w-[90px]">Direction</th>
-                <th class="px-4 py-3">Source</th>
-                <th class="px-4 py-3 w-[140px]">User</th>
-                <th class="px-4 py-3 w-[90px]">Wallet</th>
-                <th class="px-4 py-3 w-[130px] text-right">Amount</th>
-                <th class="px-4 py-3 w-[40px]"></th>
+                <th class="px-3 py-2.5 sm:px-4 sm:py-3 w-[130px] sm:w-[150px]">Date</th>
+                <th class="px-3 py-2.5 sm:px-4 sm:py-3 w-[80px] sm:w-[90px]">Type</th>
+                <th class="px-3 py-2.5 sm:px-4 sm:py-3 w-[80px] sm:w-[90px]">Direction</th>
+                <th class="px-3 py-2.5 sm:px-4 sm:py-3 min-w-[120px]">Source</th>
+                <th class="px-3 py-2.5 sm:px-4 sm:py-3 w-[120px] sm:w-[140px]">User</th>
+                <th class="px-3 py-2.5 sm:px-4 sm:py-3 w-[80px] sm:w-[90px]">Wallet</th>
+                <th class="px-3 py-2.5 sm:px-4 sm:py-3 w-[110px] sm:w-[130px] text-right">Amount</th>
+                <th class="px-2 py-2.5 sm:px-3 sm:py-3 w-[36px] sm:w-[40px]"></th>
               </tr>
             </thead>
             <tbody>
@@ -163,11 +165,11 @@
                 <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition-colors duration-100 cursor-pointer"
                   (click)="toggleExpandedRow(row)">
                   <!-- Date -->
-                  <td class="px-4 py-3 text-xs text-gray-600 tabular-nums whitespace-nowrap">
+                  <td class="px-3 py-2.5 sm:px-4 sm:py-3 text-xs text-gray-600 tabular-nums whitespace-nowrap">
                     {{ row.createdAt | date: 'MMM d, y HH:mm' }}
                   </td>
                   <!-- Type (Ledger/PV) -->
-                  <td class="px-4 py-3">
+                  <td class="px-3 py-2.5 sm:px-4 sm:py-3 whitespace-nowrap">
                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
                       [ngClass]="{
                         'bg-blue-50 text-blue-700 border border-blue-200': row.type === 'ledger',
@@ -177,7 +179,7 @@
                     </span>
                   </td>
                   <!-- Direction -->
-                  <td class="px-4 py-3">
+                  <td class="px-3 py-2.5 sm:px-4 sm:py-3 whitespace-nowrap">
                     @if (row.direction) {
                       <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
                         [ngClass]="{
@@ -193,7 +195,7 @@
                     }
                   </td>
                   <!-- Source (earning type label) -->
-                  <td class="px-4 py-3">
+                  <td class="px-3 py-2.5 sm:px-4 sm:py-3 min-w-[120px]">
                     <span class="text-xs font-medium text-gray-800">
                       {{ getSourceLabel(row) }}
                     </span>
@@ -202,13 +204,13 @@
                     }
                   </td>
                   <!-- User -->
-                  <td class="px-4 py-3">
-                    <span class="text-xs font-medium text-gray-700 truncate block max-w-[130px]" [title]="row.userId ?? ''">
+                  <td class="px-3 py-2.5 sm:px-4 sm:py-3">
+                    <span class="text-xs font-medium text-gray-700 truncate block max-w-[110px] sm:max-w-[130px]" [title]="row.userId ?? ''">
                       {{ getUserLabel(row) }}
                     </span>
                   </td>
                   <!-- Wallet -->
-                  <td class="px-4 py-3">
+                  <td class="px-3 py-2.5 sm:px-4 sm:py-3 whitespace-nowrap">
                     @if (row.walletType) {
                       <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide"
                         [ngClass]="{
@@ -222,7 +224,7 @@
                     }
                   </td>
                   <!-- Amount -->
-                  <td class="px-4 py-3 text-right tabular-nums whitespace-nowrap">
+                  <td class="px-3 py-2.5 sm:px-4 sm:py-3 text-right tabular-nums whitespace-nowrap">
                     <span class="text-sm font-semibold" [ngClass]="{
                       'text-emerald-600': row.direction === 'CREDIT',
                       'text-red-600': row.direction === 'DEBIT',
@@ -232,7 +234,7 @@
                     </span>
                   </td>
                   <!-- Expand Toggle -->
-                  <td class="px-3 py-3 text-center">
+                  <td class="px-2 py-2.5 sm:px-3 sm:py-3 text-center">
                     <i class="pi text-[10px] text-gray-400 transition-transform duration-150"
                       [class.pi-chevron-down]="!isRowExpanded(row)" [class.pi-chevron-up]="isRowExpanded(row)"></i>
                   </td>
@@ -240,10 +242,10 @@
                 <!-- Expanded Detail Row -->
                 @if (isRowExpanded(row)) {
                   <tr class="bg-gray-50/40 border-b border-gray-100">
-                    <td [attr.colspan]="8" class="px-6 py-4">
-                      <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden p-6 space-y-5">
+                    <td [attr.colspan]="8" class="px-3 py-3 sm:px-6 sm:py-4">
+                      <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden p-4 sm:p-6 space-y-4 sm:space-y-5">
                         <!-- Section Header -->
-                        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
                           <span class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
                             <span class="w-1.5 h-3 bg-blue-600 rounded-full"></span>
                             Ledger Details & Metadata
@@ -254,7 +256,7 @@
                         </div>
 
                         <!-- Side-by-Side Tables -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
                           <!-- Left Column: Core Fields -->
                           <div class="space-y-3">
                             <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Transaction Info</h5>
@@ -400,7 +402,7 @@
             </tbody>
           </table>
         </div>
-        <div class="p-4 border-t border-gray-100 flex justify-center">
+        <div class="p-3 sm:p-4 border-t border-gray-100 flex justify-center">
           <a routerLink="/admin/earnings/monitoring"
              class="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
              View full activity logs

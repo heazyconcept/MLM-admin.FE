@@ -1,4 +1,10 @@
-<p-dialog [visible]="visible()" [header]="'Adjust Funds - ' + (wallet()?.id || '')" [modal]="true" [style]="{width: '450px'}" (onHide)="close()">
+<p-dialog
+  [visible]="visible()"
+  [header]="'Adjust Funds - ' + (wallet()?.id || '')"
+  [modal]="true"
+  [style]="{ width: 'min(450px, 95vw)' }"
+  [breakpoints]="{ '640px': '95vw' }"
+  (onHide)="close()">
   @if (wallet(); as w) {
     <div class="space-y-6 pt-2">
        <!-- Type Selection -->
@@ -55,10 +61,11 @@
           </div>
 
           <!-- Actions -->
-          <div class="flex justify-end gap-3 mt-8">
-             <button type="button" pButton label="Cancel" class="p-button-text p-button-secondary" (click)="close()"></button>
-             <button type="submit" pButton [label]="'Confirm ' + type()" 
-                     [class]="type() === 'Credit' ? 'p-button-success' : 'p-button-danger'"
+          <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 mt-6 sm:mt-8">
+             <button type="button" pButton label="Cancel" class="p-button-text p-button-secondary w-full sm:w-auto" (click)="close()"></button>
+             <button type="submit" pButton [label]="'Confirm ' + type()"
+                     class="w-full sm:w-auto"
+                     [ngClass]="type() === 'Credit' ? 'p-button-success' : 'p-button-danger'"
                      [disabled]="form.invalid"></button>
           </div>
        </form>

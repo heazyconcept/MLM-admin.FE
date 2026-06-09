@@ -20,6 +20,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
   imports: [CommonModule, RouterModule, InfoBannerComponent, DataTableComponent, FundsAdjustmentModalComponent, WalletActionModalComponent, ButtonModule, TagModule, ToastModule, StatusBadgeComponent],
   providers: [MessageService],
   templateUrl: './wallet-details.component.html',
+  styleUrls: ['./wallet-details.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WalletDetailsComponent {
