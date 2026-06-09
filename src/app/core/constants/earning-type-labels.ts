@@ -18,11 +18,13 @@ export const EARNING_TYPE_LABELS: Record<string, string> = {
   MERCHANT_DELIVERY_BONUS: 'Merchant delivery commission',
 
   // ── PV / CPV sources (volume distribution) ──
+  REGISTRATION_PERSONAL_PV: 'Registration personal PV',
   PRODUCT_PURCHASE_PV: 'Personal product PV',
   DIRECT_REFERRAL_PRODUCT_PV: 'Direct referral product PV',
   COMMUNITY_PRODUCT_MATRIX: 'Community product CPV',
   DIRECT_REFERRAL_REGISTRATION: 'Direct referral registration PV',
   COMMUNITY_REGISTRATION_MATRIX: 'Community registration CPV',
+  ADMIN_CPV_ADJUSTMENT: 'Admin CPV adjustment',
 };
 
 /**

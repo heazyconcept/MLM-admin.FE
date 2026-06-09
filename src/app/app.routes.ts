@@ -126,6 +126,18 @@ export const routes: Routes = [
         loadComponent: () => import('./features/reports/earnings-payouts/earnings-payouts.component').then(m => m.EarningsPayoutsComponent)
       },
       {
+        path: 'reports/earnings/cpv/ledger',
+        canActivate: [permissionGuard],
+        data: { feature: Feature.ReportsAudit },
+        loadComponent: () => import('./features/reports/cpv-report/cpv-ledger.component').then(m => m.CpvLedgerComponent)
+      },
+      {
+        path: 'reports/earnings/cpv',
+        canActivate: [permissionGuard],
+        data: { feature: Feature.ReportsAudit },
+        loadComponent: () => import('./features/reports/cpv-report/cpv-report.component').then(m => m.CpvReportComponent)
+      },
+      {
         path: 'reports/earnings/:category',
         canActivate: [permissionGuard],
         data: { feature: Feature.ReportsAudit },

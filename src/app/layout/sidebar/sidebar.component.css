@@ -1,5 +1,18 @@
-/* Sidebar styles */
 :host {
   display: block;
+}
+
+.sidebar-panel {
+  width: 16rem;
+}
+
+@media (min-width: 768px) {
+  .sidebar-panel.collapsed {
+    width: 5rem;
+  }
+
+  .sidebar-panel:not(.collapsed) {
+    width: 16rem;
+  }
 }
 

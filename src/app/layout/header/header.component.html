@@ -1,7 +1,13 @@
-<header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+<header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6">
 
   <div class="flex items-center gap-4">
-    <!-- Search bar removed -->
+    <button
+      type="button"
+      class="p-2 rounded-lg hover:bg-mlm-green-50 text-mlm-secondary transition-colors md:hidden"
+      (click)="menuToggle.emit()"
+      aria-label="Open menu">
+      <i class="pi pi-bars text-lg"></i>
+    </button>
   </div>
 
   <!-- <div class="flex items-center gap-4">

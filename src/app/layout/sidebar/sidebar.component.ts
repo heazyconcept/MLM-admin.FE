@@ -38,6 +38,7 @@ export class SidebarComponent {
   private auth = inject(AuthService);
 
   collapsed = model(false);
+  mobileOpen = model(false);
 
   private menuSections: MenuSection[] = [
     {
@@ -58,6 +59,7 @@ export class SidebarComponent {
             { label: 'CDPA', icon: 'pi pi-calendar-plus', route: '/admin/reports/earnings/cdpa', feature: Feature.ReportsAudit },
             { label: 'Bonuses', icon: 'pi pi-star', route: '/admin/reports/earnings/bonuses', feature: Feature.ReportsAudit },
             { label: 'Admin adjustment', icon: 'pi pi-sliders-h', route: '/admin/reports/earnings/admin-adjustment', feature: Feature.ReportsAudit },
+            { label: 'CPV', icon: 'pi pi-chart-bar', route: '/admin/reports/earnings/cpv', feature: Feature.ReportsAudit },
           ]
         },
         {
@@ -136,6 +138,16 @@ export class SidebarComponent {
 
   toggleCollapse() {
     this.collapsed.update((v) => !v);
+  }
+
+  closeMobile() {
+    this.mobileOpen.set(false);
+  }
+
+  onNavClick() {
+    if (this.mobileOpen()) {
+      this.mobileOpen.set(false);
+    }
   }
 
   logout() {

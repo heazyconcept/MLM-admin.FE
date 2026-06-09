@@ -1,0 +1,46 @@
+:host {
+  display: block;
+}
+
+/* Ensure wide tables scroll horizontally on small screens */
+.earnings-table-wrap ::ng-deep .ui-clean-table .p-datatable-table {
+  min-width: 52rem;
+}
+
+.earnings-table-wrap ::ng-deep .ui-clean-table .p-datatable-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 639px) {
+  .earnings-table-wrap ::ng-deep .ui-clean-table .p-datatable-thead > tr > th {
+    padding: 0.75rem;
+    font-size: 0.625rem;
+  }
+
+  .earnings-table-wrap ::ng-deep .ui-clean-table .p-datatable-tbody > tr > td {
+    padding: 0.75rem;
+  }
+}
+
+/* Paginator wraps cleanly on narrow viewports */
+@media (max-width: 639px) {
+  .earnings-table-wrap ::ng-deep .p-paginator {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .earnings-table-wrap ::ng-deep .p-paginator .p-paginator-current {
+    width: 100%;
+    text-align: center;
+    margin-right: 0;
+    order: -1;
+  }
+
+  .earnings-table-wrap ::ng-deep .p-paginator .p-paginator-pages {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

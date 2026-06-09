@@ -1,7 +1,7 @@
-<div class="min-h-screen bg-mlm-background p-8">
-  <div class="flex items-start justify-between gap-4 mb-8">
-    <div>
-      <h1 class="text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+<div class="min-h-screen bg-mlm-background p-4 md:p-6 lg:p-8 font-geist">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 md:mb-8">
+    <div class="min-w-0">
+      <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
         Earnings Payouts
       </h1>
       <p class="text-sm text-mlm-secondary">
@@ -13,22 +13,23 @@
       [disabled]="loadingSummary() || loadingTransactions()"
       class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
              text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
-             flex items-center gap-2 transition-colors duration-150 shrink-0 mt-1">
+             flex items-center justify-center gap-2 transition-colors duration-150
+             shrink-0 w-full sm:w-auto self-start">
       <i class="pi pi-refresh text-xs" [class.pi-spin]="loadingSummary() || loadingTransactions()"></i>
       Refresh
     </button>
   </div>
 
   @if (loadError()) {
-    <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    <div class="mb-4 md:mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
       {{ loadError() }}
     </div>
   }
 
-  <!-- <div class="bg-white rounded-xl border border-slate-200 px-5 py-4 mb-6">
+  <!-- <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-5 mb-4 md:mb-6">
     <div class="flex flex-col lg:flex-row lg:items-end gap-4">
       @if (!isCategoryRoute()) {
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1 w-full lg:w-auto lg:flex-1 lg:max-w-xs">
           <label class="text-sm font-medium text-gray-700">Date range (optional)</label>
           <p-datepicker
             [ngModel]="dateRange()"
@@ -38,14 +39,14 @@
             [showIcon]="true"
             iconDisplay="input"
             appendTo="body"
-            styleClass="w-64"
+            styleClass="w-full"
             inputStyleClass="w-full h-10 border-gray-300"
             panelStyleClass="p-datepicker-premium">
           </p-datepicker>
         </div>
       }
 
-      <div class="flex flex-col gap-1">
+      <div class="flex flex-col gap-1 w-full lg:w-auto lg:max-w-xs">
         <label class="text-sm font-medium text-gray-700">Category</label>
         <p-select
           [options]="categoryOptions"
@@ -54,12 +55,12 @@
           optionLabel="label"
           optionValue="value"
           appendTo="body"
-          styleClass="w-56"
+          styleClass="w-full"
           placeholder="All categories">
         </p-select>
       </div>
 
-      <div class="flex flex-col gap-1">
+      <div class="flex flex-col gap-1 w-full lg:w-auto lg:max-w-xs">
         <label class="text-sm font-medium text-gray-700">Unit</label>
         <p-select
           [options]="unitOptions"
@@ -68,17 +69,17 @@
           optionLabel="label"
           optionValue="value"
           appendTo="body"
-          styleClass="w-48"
+          styleClass="w-full"
           placeholder="All units">
         </p-select>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
         <button
           pButton
           label="Apply"
           icon="pi pi-filter"
-          class="p-button-primary"
+          class="p-button-primary w-full sm:w-auto"
           [disabled]="loadingSummary() || loadingTransactions()"
           [loading]="loadingSummary() || loadingTransactions()"
           (click)="applyFilters()">
@@ -86,7 +87,7 @@
         <button
           pButton
           label="Clear"
-          class="p-button-outlined"
+          class="p-button-outlined w-full sm:w-auto"
           [disabled]="loadingSummary() || loadingTransactions()"
           (click)="clearFilters()">
         </button>
@@ -95,16 +96,16 @@
   </div> -->
 
   @if (!isCategoryRoute()) {
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
       @for (card of summaryCards(); track card.label) {
-        <div class="bg-white rounded-xl border border-slate-200 px-5 py-5">
-          <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-5 md:py-5">
+          <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-2 md:mb-3">
             {{ card.label }}
           </p>
           @if (loadingSummary()) {
-            <p class="text-3xl font-bold text-slate-300 tracking-tight leading-none mb-2">...</p>
+            <p class="text-2xl md:text-3xl font-bold text-slate-300 tracking-tight leading-none mb-2">...</p>
           } @else {
-            <p class="text-3xl font-bold text-mlm-text tracking-tight tabular-nums leading-none mb-2">
+            <p class="text-2xl md:text-3xl font-bold text-mlm-text tracking-tight tabular-nums leading-none mb-2 wrap-break-word">
               @if (card.isCurrency) {
                 {{ formatCash(card.value) }}
               } @else {
@@ -117,14 +118,14 @@
       }
     </div>
 
-    <div class="bg-white rounded-xl border border-slate-200 px-5 py-4 mb-6">
-      <div class="flex flex-wrap items-center gap-2">
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-3 md:px-5 md:py-4 mb-4 md:mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
         @for (chip of categoryChips(); track chip.key) {
-          <div class="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50">
-            <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
+          <div class="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 min-w-0">
+            <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase truncate">
               {{ formatCategory(chip.key) }}
             </p>
-            <p class="text-sm font-semibold text-mlm-text">
+            <p class="text-sm font-semibold text-mlm-text truncate">
               {{ formatCash(chip.cashPaid) }} cash
             </p>
             <p class="text-xs text-slate-400">
@@ -135,18 +136,18 @@
       </div>
     </div>
 
-    <div class="bg-white rounded-xl border border-slate-200 px-5 py-5 mb-6">
-      <div class="mb-4">
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-5 md:py-5 mb-4 md:mb-6">
+      <div class="mb-3 md:mb-4">
         <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">Trend</p>
         <p class="text-xs text-slate-400">Daily cash vs CPV payouts</p>
       </div>
-      <div class="h-[300px]">
+      <div class="relative h-[220px] sm:h-[260px] md:h-[300px] w-full overflow-hidden">
         <p-chart type="line" [data]="trendData" [options]="trendOptions" styleClass="h-full w-full"></p-chart>
       </div>
     </div>
   }
 
-  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+  <div class="bg-white rounded-xl md:rounded-2xl border border-slate-200 overflow-hidden earnings-table-wrap">
     <app-data-table
       [value]="transactions()"
       [headers]="['Date', 'Category', 'Unit', 'Recipient', 'Amount', 'Status', 'Reference']"
@@ -160,33 +161,33 @@
 
       <ng-template pTemplate="body" let-row>
         <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100">
-          <td class="px-5 py-3.5 w-[160px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
             <span class="text-xs font-mono text-slate-400 tabular-nums">
               {{ row.occurredAt | date:'MMM d, y' }}
             </span>
           </td>
-          <td class="px-5 py-3.5 w-[160px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
             <span class="text-xs font-semibold uppercase tracking-wide text-mlm-secondary">
               {{ formatCategory(row.category) }}
             </span>
           </td>
-          <td class="px-5 py-3.5 w-[110px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
             <span class="text-xs font-semibold uppercase tracking-wide text-mlm-text">
               {{ formatUnit(row.unit) }}
             </span>
           </td>
-          <td class="px-5 py-3.5 min-w-[200px]">
-            <p class="text-sm font-semibold text-mlm-text">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[160px]">
+            <p class="text-sm font-semibold text-mlm-text truncate max-w-[200px] sm:max-w-none">
               {{ row.recipientName || 'Unknown user' }}
             </p>
-            <p class="text-[11px] text-slate-400">{{ row.recipientEmail || row.recipientUserId }}</p>
+            <p class="text-[11px] text-slate-400 truncate max-w-[200px] sm:max-w-none">{{ row.recipientEmail || row.recipientUserId }}</p>
           </td>
-          <td class="px-5 py-3.5 w-[160px] text-right">
-            <p class="text-sm font-semibold text-mlm-text">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap text-right">
+            <p class="text-sm font-semibold text-mlm-text tabular-nums">
               {{ formatAmount(row) }}
             </p>
           </td>
-          <td class="px-5 py-3.5 w-[140px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
             @if (row.status || row.earningType || row.cpvSource) {
               <app-status-badge
                 [status]="formatStatusLabel(row.status || row.earningType || row.cpvSource)">
@@ -195,7 +196,7 @@
               <span class="text-xs text-slate-400">—</span>
             }
           </td>
-          <td class="px-5 py-3.5 min-w-[220px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[140px]">
             <span class="text-xs font-mono text-slate-400 break-all">
               {{ row.reference || '—' }}
             </span>
