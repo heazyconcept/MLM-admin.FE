@@ -25,6 +25,7 @@ import { AdminFundingModalComponent, AdminFundingPayload } from '../modals/admin
     AdminFundingModalComponent
   ],
   templateUrl: './payments-list.component.html',
+  styleUrls: ['./payments-list.component.css'],
   providers: [MessageService],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

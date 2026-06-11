@@ -1,22 +1,22 @@
-<div class="p-6 md:p-8 2xl:p-10 font-geist min-h-screen bg-mlm-background">
+<div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
   <p-toast></p-toast>
 
   <!-- ── Header ── -->
-  <div class="flex items-start justify-between gap-4 mb-8">
-    <div>
-      <h1 class="text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 md:mb-8">
+    <div class="min-w-0">
+      <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
         Payments Management
       </h1>
       <p class="text-sm text-mlm-secondary">Monitor and manage all system-wide financial inflows</p>
     </div>
 
-    <div class="flex items-center gap-2.5 shrink-0 mt-1">
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0 self-start">
       <button
         (click)="openFundingModal()"
         class="h-9 px-4 rounded-lg text-sm font-semibold text-white
                bg-mlm-primary border border-mlm-primary
                hover:bg-brand-green-dark hover:border-brand-green-dark
-               flex items-center gap-2 transition-colors duration-150">
+               flex items-center justify-center gap-2 transition-colors duration-150 w-full sm:w-auto">
         <i class="pi pi-plus text-xs"></i>
         Admin Fund User
       </button>
@@ -24,7 +24,7 @@
         (click)="onExport()"
         class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
                text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
-               flex items-center gap-2 transition-colors duration-150">
+               flex items-center justify-center gap-2 transition-colors duration-150 w-full sm:w-auto">
         <i class="pi pi-download text-xs"></i>
         Export
       </button>
@@ -32,15 +32,14 @@
   </div>
 
   <!-- ── Stats Cards ── -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
 
-    <!-- Success Rate -->
-    <div class="bg-white rounded-xl border border-slate-200 px-6 py-5
-                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-6 md:py-5
+                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200 sm:col-span-2 md:col-span-1">
       <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
         Success Rate
       </p>
-      <p class="text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2">
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2">
         {{ stats().successRate }}%
       </p>
       <p class="text-xs font-medium text-mlm-primary flex items-center gap-1">
@@ -49,25 +48,23 @@
       </p>
     </div>
 
-    <!-- Pending Confirmation -->
-    <div class="bg-white rounded-xl border border-slate-200 px-6 py-5
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-6 md:py-5
                 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
       <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
         Pending Confirmation
       </p>
-      <p class="text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2">
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2">
         {{ stats().totalPending }}
       </p>
       <p class="text-xs font-medium text-mlm-warning">Requires manual verification</p>
     </div>
 
-    <!-- Total Volume -->
-    <div class="bg-white rounded-xl border border-slate-200 px-6 py-5
-                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-6 md:py-5
+                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200 sm:col-span-2 md:col-span-1">
       <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
         Total Volume
       </p>
-      <p class="text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2 tabular-nums">
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2 tabular-nums break-words">
         {{ stats().totalVolume | currency:'USD':'symbol':'1.0-0' }}
       </p>
       <p class="text-xs text-slate-400">Trailing all-time volume</p>
@@ -79,11 +76,10 @@
   <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
 
     <!-- Filter Bar -->
-    <div class="px-5 py-4 border-b border-slate-100">
-      <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+    <div class="px-4 py-4 md:px-5 border-b border-slate-100">
+      <div class="flex flex-col gap-3">
 
-        <!-- Search -->
-        <div class="relative flex-1 max-w-xs">
+        <div class="relative w-full sm:max-w-xs">
           <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2
                     text-slate-400 text-xs pointer-events-none"></i>
           <input
@@ -96,14 +92,13 @@
                    focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
         </div>
 
-        <!-- Filters -->
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center gap-2">
 
           <select
             [formControl]="selectedStatusControl"
             class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text
                    bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary
-                   transition appearance-none pr-8 w-36">
+                   transition appearance-none pr-8 w-full sm:w-36">
             @for (option of statusOptions; track option.value) {
               <option [value]="option.value">{{ option.label }}</option>
             }
@@ -113,33 +108,32 @@
             [formControl]="selectedMethodControl"
             class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text
                    bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary
-                   transition appearance-none pr-8 w-36">
+                   transition appearance-none pr-8 w-full sm:w-36">
             @for (option of methodOptions; track option.value) {
               <option [value]="option.value">{{ option.label }}</option>
             }
           </select>
 
-          <!-- Date range -->
-          <div class="flex items-center gap-2">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:col-span-2 lg:col-span-1">
             <input
               type="date"
               [formControl]="fromDateControl"
               class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text
-                     bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
-            <span class="text-xs text-slate-400">to</span>
+                     bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary transition w-full sm:w-auto" />
+            <span class="text-xs text-slate-400 text-center sm:px-0">to</span>
             <input
               type="date"
               [formControl]="toDateControl"
               class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text
-                     bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
+                     bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary transition w-full sm:w-auto" />
           </div>
 
         </div>
       </div>
     </div>
 
-    <!-- Table — 7 <td> matching 7 headers:
-         PAYMENT ID · USER · PURPOSE · AMOUNT · METHOD · STATUS · DATE -->
+    <!-- Table -->
+    <div class="payments-table-wrap">
     <app-data-table
       [value]="filteredPayments()"
       [headers]="tableHeaders()"
@@ -148,21 +142,18 @@
       <ng-template pTemplate="body" let-row>
         <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100">
 
-          <!-- Payment ID → header[0] -->
-          <td class="px-5 py-3.5 w-[140px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[120px] sm:w-[140px] whitespace-nowrap">
             <span class="text-[11px] font-mono text-slate-400">
               {{ row.id | slice:0:10 }}…
             </span>
           </td>
 
-          <!-- User → header[1] -->
-          <td class="px-5 py-3.5 min-w-[160px]">
-            <p class="text-sm font-semibold text-mlm-text leading-tight">{{ row.userName }}</p>
-            <p class="text-[11px] font-mono text-slate-400 mt-0.5">{{ row.userEmail }}</p>
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[140px]">
+            <p class="text-sm font-semibold text-mlm-text leading-tight truncate">{{ row.userName }}</p>
+            <p class="text-[11px] font-mono text-slate-400 mt-0.5 truncate max-w-[160px] sm:max-w-none">{{ row.userEmail }}</p>
           </td>
 
-          <!-- Purpose → header[2] -->
-          <td class="px-5 py-3.5">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
             <span
               class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
               [class]="getPurposeClass(row.purpose)">
@@ -170,27 +161,23 @@
             </span>
           </td>
 
-          <!-- Amount → header[3] -->
-          <td class="px-5 py-3.5 text-right w-[120px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-right w-[110px] sm:w-[120px] whitespace-nowrap">
             <span class="text-sm font-semibold text-mlm-text tabular-nums font-mono">
               {{ row.amount | currency:(row.displayCurrency || row.currency || 'USD') }}
             </span>
           </td>
 
-          <!-- Method → header[4] -->
-          <td class="px-5 py-3.5 w-[120px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[100px] sm:w-[120px] whitespace-nowrap">
             <span class="text-xs font-medium text-slate-600 capitalize">
               {{ row.method }}
             </span>
           </td>
 
-          <!-- Status → header[5] -->
-          <td class="px-5 py-3.5 w-[120px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[100px] sm:w-[120px] whitespace-nowrap">
             <app-status-badge [status]="row.status"></app-status-badge>
           </td>
 
-          <!-- Date → header[6] -->
-          <td class="px-5 py-3.5 w-[140px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[110px] sm:w-[140px] whitespace-nowrap">
             <span class="text-xs font-mono text-slate-400 tabular-nums">
               {{ row.createdAt | date:'M/d/yyyy' }}
             </span>
@@ -200,10 +187,10 @@
       </ng-template>
 
     </app-data-table>
+    </div>
 
   </div>
 
-  <!-- Funding Modal -->
   <app-admin-funding-modal
     [visible]="fundingModalVisible()"
     (confirmed)="handleFundingConfirmed($event)"

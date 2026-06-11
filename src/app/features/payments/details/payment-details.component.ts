@@ -24,6 +24,7 @@ import { MessageService } from 'primeng/api';
   ],
   providers: [MessageService],
   templateUrl: './payment-details.component.html',
+  styleUrls: ['./payment-details.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PaymentDetailsComponent implements OnInit {

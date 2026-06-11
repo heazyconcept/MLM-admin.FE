@@ -1,142 +1,298 @@
 <p-toast></p-toast>
 
-<div class="space-y-6">
-  <div>
-    <h2 class="text-xl font-semibold text-gray-900">CPV Rules Configuration</h2>
-    <p class="text-sm text-gray-500 mt-1">Manage CPV rules using threshold, reward type, reward amount, and optional material description.</p>
+<div class="cpv-page min-h-screen bg-mlm-background p-4 md:p-6 lg:p-8">
+  <!-- Page Header -->
+  <div class="cpv-header">
+    <div class="min-w-0">
+      <h1 class="cpv-header__title">CPV Rules Configuration</h1>
+      <p class="cpv-header__subtitle">
+        Manage CPV milestone rules — thresholds, reward types, amounts, and optional material descriptions.
+      </p>
+    </div>
+    <div class="cpv-header__actions">
+      @if (canEdit() && !editMode()) {
+        <button
+          pButton
+          type="button"
+          icon="pi pi-pencil"
+          label="Edit Rules"
+          class="p-button-sm p-button-outlined"
+          (click)="startEditMode()">
+        </button>
+      }
+    </div>
   </div>
 
+  <!-- Error alert -->
   @if (error()) {
-    <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+    <div class="cpv-error">
+      <i class="pi pi-exclamation-triangle" style="margin-right: 0.5rem;"></i>
       {{ error() }}
     </div>
   }
 
-  <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-      <h3 class="font-semibold text-gray-900">Rules (Full Replacement)</h3>
-      @if (canEdit() && !editMode()) {
-        <button pButton type="button" icon="pi pi-pencil" label="Enable Edit Mode" class="p-button-sm p-button-outlined" (click)="startEditMode()"></button>
-      } @else if (canEdit() && editMode()) {
-        <div class="flex items-center gap-2">
-          <button pButton type="button" icon="pi pi-plus" label="Add Rule" class="p-button-sm p-button-outlined" (click)="addRule()"></button>
-          <button pButton type="button" icon="pi pi-times" label="Exit Edit" class="p-button-sm p-button-secondary p-button-text" (click)="cancelChanges()"></button>
+  <!-- Rules Card -->
+  <div class="cpv-card">
+    <div class="cpv-card__header">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <h3 class="cpv-card__header-title">Milestone Rules</h3>
+        @if (editMode()) {
+          <span class="cpv-badge-edit">
+            <i class="pi pi-pencil" style="font-size: 0.625rem;"></i>
+            Editing
+          </span>
+        }
+      </div>
+      @if (canEdit() && editMode()) {
+        <div class="cpv-card__header-actions">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-plus"
+            label="Add Rule"
+            class="p-button-sm p-button-outlined"
+            (click)="addRule()">
+          </button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-times"
+            label="Cancel"
+            class="p-button-sm p-button-secondary p-button-text"
+            (click)="cancelChanges()">
+          </button>
         </div>
       }
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
-          <tr>
-            <th class="px-4 py-3 text-left">Threshold</th>
-            <th class="px-4 py-3 text-left">Reward Type</th>
-            <th class="px-4 py-3 text-left">Reward Amount</th>
-            <th class="px-4 py-3 text-left">Material Description</th>
-            @if (canEdit() && editMode()) {
-              <th class="px-4 py-3 text-right">Action</th>
-            }
-          </tr>
-        </thead>
-        <tbody>
-          @for (rule of editableRules(); track $index) {
-            <tr class="border-t border-gray-100">
-              <td class="px-4 py-3">
-                @if (canEdit() && editMode()) {
-                  <p-inputNumber
-                    [ngModel]="rule.threshold"
-                    (ngModelChange)="updateRuleField($index, 'threshold', $event ?? 0)"
-                    [min]="1"
-                    [useGrouping]="false"
-                    styleClass="w-32 p-inputtext-sm">
-                  </p-inputNumber>
-                } @else {
-                  {{ rule.threshold }}
-                }
-              </td>
-              <td class="px-4 py-3">
-                @if (canEdit() && editMode()) {
-                  <select
-                    [ngModel]="rule.rewardType"
-                    (ngModelChange)="updateRuleField($index, 'rewardType', $event)"
-                    class="w-36 p-2 border border-gray-300 rounded-lg text-sm">
-                    @for (type of rewardTypeOptions; track type) {
-                      <option [value]="type">{{ type }}</option>
-                    }
-                  </select>
-                } @else {
-                  {{ rule.rewardType }}
-                }
-              </td>
-              <td class="px-4 py-3">
-                @if (canEdit() && editMode()) {
-                  <p-inputNumber
-                    [ngModel]="rule.rewardAmount"
-                    (ngModelChange)="updateRuleField($index, 'rewardAmount', $event ?? 0)"
-                    mode="decimal"
-                    [min]="0.01"
-                    [minFractionDigits]="0"
-                    [maxFractionDigits]="2"
-                    [useGrouping]="false"
-                    styleClass="w-36 p-inputtext-sm">
-                  </p-inputNumber>
-                } @else {
-                  {{ rule.rewardAmount }}
-                }
-              </td>
-              <td class="px-4 py-3">
-                @if (canEdit() && editMode()) {
-                  <input
-                    [ngModel]="rule.materialDescription"
-                    (ngModelChange)="updateRuleField($index, 'materialDescription', $event)"
-                    placeholder="Optional"
-                    class="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                  />
-                } @else {
-                  {{ rule.materialDescription || '—' }}
-                }
-              </td>
+    @if (loading()) {
+      <div class="cpv-loading">
+        <i class="pi pi-spin pi-spinner"></i>
+        Loading rules…
+      </div>
+    } @else {
+      <!-- Desktop table view -->
+      <div class="cpv-table-wrap">
+        <table class="cpv-table">
+          <thead>
+            <tr>
+              <th>Threshold</th>
+              <th>Reward Type</th>
+              <th>Reward Amount</th>
+              <th>Material Description</th>
               @if (canEdit() && editMode()) {
-                <td class="px-4 py-3 text-right">
-                  <button
-                    pButton
-                    type="button"
-                    icon="pi pi-trash"
-                    class="p-button-rounded p-button-text p-button-danger"
-                    [disabled]="editableRules().length === 1"
-                    (click)="removeRule($index)">
-                  </button>
-                </td>
+                <th style="text-align: right;">Action</th>
               }
             </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            @for (rule of editableRules(); track $index) {
+              <tr>
+                <td>
+                  @if (canEdit() && editMode()) {
+                    <p-inputNumber
+                      [ngModel]="rule.threshold"
+                      (ngModelChange)="updateRuleField($index, 'threshold', $event ?? 0)"
+                      [min]="1"
+                      [useGrouping]="false"
+                      styleClass="cpv-input-threshold p-inputtext-sm">
+                    </p-inputNumber>
+                  } @else {
+                    <span class="font-semibold tabular-nums">{{ rule.threshold }}</span>
+                  }
+                </td>
+                <td>
+                  @if (canEdit() && editMode()) {
+                    <select
+                      [ngModel]="rule.rewardType"
+                      (ngModelChange)="updateRuleField($index, 'rewardType', $event)"
+                      class="cpv-select">
+                      @for (type of rewardTypeOptions; track type) {
+                        <option [value]="type">{{ type }}</option>
+                      }
+                    </select>
+                  } @else {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700">
+                      {{ rule.rewardType }}
+                    </span>
+                  }
+                </td>
+                <td>
+                  @if (canEdit() && editMode()) {
+                    <p-inputNumber
+                      [ngModel]="rule.rewardAmount"
+                      (ngModelChange)="updateRuleField($index, 'rewardAmount', $event ?? 0)"
+                      mode="decimal"
+                      [min]="0.01"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
+                      [useGrouping]="false"
+                      styleClass="cpv-input-amount p-inputtext-sm">
+                    </p-inputNumber>
+                  } @else {
+                    <span class="tabular-nums">{{ rule.rewardAmount }}</span>
+                  }
+                </td>
+                <td>
+                  @if (canEdit() && editMode()) {
+                    <input
+                      [ngModel]="rule.materialDescription"
+                      (ngModelChange)="updateRuleField($index, 'materialDescription', $event)"
+                      placeholder="Optional"
+                      class="cpv-text-input"
+                    />
+                  } @else {
+                    <span class="text-mlm-secondary">{{ rule.materialDescription || '—' }}</span>
+                  }
+                </td>
+                @if (canEdit() && editMode()) {
+                  <td class="cell-action">
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-trash"
+                      class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                      [disabled]="editableRules().length === 1"
+                      (click)="removeRule($index)">
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
 
+      <!-- Mobile card view -->
+      <div class="cpv-rule-cards">
+        @for (rule of editableRules(); track $index) {
+          <div class="cpv-rule-card">
+            <div class="cpv-rule-card__field">
+              <span class="cpv-rule-card__label">Threshold</span>
+              @if (canEdit() && editMode()) {
+                <p-inputNumber
+                  [ngModel]="rule.threshold"
+                  (ngModelChange)="updateRuleField($index, 'threshold', $event ?? 0)"
+                  [min]="1"
+                  [useGrouping]="false"
+                  styleClass="p-inputtext-sm">
+                </p-inputNumber>
+              } @else {
+                <span class="cpv-rule-card__value tabular-nums">{{ rule.threshold }}</span>
+              }
+            </div>
+
+            <div class="cpv-rule-card__field">
+              <span class="cpv-rule-card__label">Reward Type</span>
+              @if (canEdit() && editMode()) {
+                <select
+                  [ngModel]="rule.rewardType"
+                  (ngModelChange)="updateRuleField($index, 'rewardType', $event)"
+                  class="cpv-select">
+                  @for (type of rewardTypeOptions; track type) {
+                    <option [value]="type">{{ type }}</option>
+                  }
+                </select>
+              } @else {
+                <span class="cpv-rule-card__value">{{ rule.rewardType }}</span>
+              }
+            </div>
+
+            <div class="cpv-rule-card__field">
+              <span class="cpv-rule-card__label">Reward Amount</span>
+              @if (canEdit() && editMode()) {
+                <p-inputNumber
+                  [ngModel]="rule.rewardAmount"
+                  (ngModelChange)="updateRuleField($index, 'rewardAmount', $event ?? 0)"
+                  mode="decimal"
+                  [min]="0.01"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="2"
+                  [useGrouping]="false"
+                  styleClass="p-inputtext-sm">
+                </p-inputNumber>
+              } @else {
+                <span class="cpv-rule-card__value tabular-nums">{{ rule.rewardAmount }}</span>
+              }
+            </div>
+
+            <div class="cpv-rule-card__field">
+              <span class="cpv-rule-card__label">Material</span>
+              @if (canEdit() && editMode()) {
+                <input
+                  [ngModel]="rule.materialDescription"
+                  (ngModelChange)="updateRuleField($index, 'materialDescription', $event)"
+                  placeholder="Optional"
+                  class="cpv-text-input"
+                />
+              } @else {
+                <span class="cpv-rule-card__value">{{ rule.materialDescription || '—' }}</span>
+              }
+            </div>
+
+            @if (canEdit() && editMode()) {
+              <div class="cpv-rule-card__actions">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  label="Remove"
+                  class="p-button-text p-button-danger p-button-sm"
+                  [disabled]="editableRules().length === 1"
+                  (click)="removeRule($index)">
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Save/Reset footer (edit mode only) -->
     @if (canEdit() && editMode()) {
-      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
-        <p class="text-xs text-gray-500">Saving replaces all existing CPV rules.</p>
-        <div class="flex gap-2">
-          <button pButton type="button" label="Reset" class="p-button-text p-button-secondary" [disabled]="saving()" (click)="cancelChanges()"></button>
-          <button pButton type="button" label="Save All" [loading]="saving()" [disabled]="saving() || hasInvalidRules()" (click)="saveAll()"></button>
+      <div class="cpv-card__footer">
+        <p class="cpv-card__footer-hint">
+          <i class="pi pi-info-circle" style="margin-right: 0.25rem;"></i>
+          Saving will replace all existing CPV rules.
+        </p>
+        <div class="cpv-card__footer-actions">
+          <button
+            pButton
+            type="button"
+            label="Reset"
+            class="p-button-text p-button-secondary"
+            [disabled]="saving()"
+            (click)="cancelChanges()">
+          </button>
+          <button
+            pButton
+            type="button"
+            label="Save All Rules"
+            icon="pi pi-check"
+            [loading]="saving()"
+            [disabled]="saving() || hasInvalidRules()"
+            (click)="saveAll()">
+          </button>
         </div>
       </div>
     }
   </div>
 
+  <!-- API Preview -->
   @if (rules().length > 0) {
-    <div class="bg-white border border-gray-200 rounded-xl p-5">
-      <h3 class="font-semibold text-gray-900 mb-3">Display Preview From API</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+    <div class="cpv-preview">
+      <h3 class="cpv-preview__title">
+        <i class="pi pi-eye" style="margin-right: 0.375rem; font-size: 0.875rem;"></i>
+        Active Rules Preview
+      </h3>
+      <div class="cpv-preview__grid">
         @for (rule of rules(); track rule.id) {
-          <div class="border border-gray-100 rounded-lg p-3 bg-gray-50">
-            <div class="font-semibold text-gray-900">{{ rule.name || (rule.threshold + ' CPVs') }}</div>
-            <div class="text-gray-600">Reward: {{ rule.reward || rule.rewardAmount }}</div>
+          <div class="cpv-preview__item">
+            <p class="cpv-preview__item-name">{{ rule.name || (rule.threshold + ' CPVs') }}</p>
+            <p class="cpv-preview__item-reward">Reward: {{ rule.reward || rule.rewardAmount }}</p>
           </div>
         }
       </div>
     </div>
   }
-
 </div>
