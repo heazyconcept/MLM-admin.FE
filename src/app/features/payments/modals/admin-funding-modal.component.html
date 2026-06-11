@@ -4,7 +4,8 @@
   header="Admin Funding"
   [draggable]="false"
   [resizable]="false"
-  [style]="{ width: '480px' }"
+  [style]="{ width: 'min(480px, 95vw)' }"
+  [breakpoints]="{ '640px': '95vw' }"
   styleClass="modern-dialog"
   (onHide)="onCancel()"
 >
@@ -22,7 +23,7 @@
       />
     </div>
 
-    <div class="grid grid-cols-2 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div class="space-y-2">
         <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">
           Amount <span class="text-red-500">*</span>
@@ -94,19 +95,19 @@
       ></textarea>
     </div>
 
-    <div class="flex gap-3 mt-2">
+    <div class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 mt-2">
       <button
         pButton
         type="button"
         label="Cancel"
-        class="p-button-outlined p-button-secondary flex-1"
+        class="p-button-outlined p-button-secondary flex-1 w-full sm:w-auto"
         (click)="onCancel()"
       ></button>
       <button
         pButton
         type="button"
         label="Fund User"
-        class="p-button-success flex-1"
+        class="p-button-success flex-1 w-full sm:w-auto"
         [disabled]="!isValid"
         (click)="onConfirm()"
       ></button>

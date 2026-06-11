@@ -1,11 +1,11 @@
 <p-toast></p-toast>
 
-<div class="p-8 font-geist min-h-screen bg-mlm-background">
+<div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
 
   <!-- ── Header ── -->
-  <div class="flex items-start justify-between gap-4 mb-8">
-    <div>
-      <h1 class="text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 md:mb-8">
+    <div class="min-w-0">
+      <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
         User Management
       </h1>
       <p class="text-sm text-mlm-secondary">View and manage all registered users</p>
@@ -15,7 +15,8 @@
       (click)="onExport()"
       class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
              text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
-             flex items-center gap-2 transition-colors duration-150 shrink-0 mt-1">
+             flex items-center justify-center gap-2 transition-colors duration-150
+             shrink-0 w-full sm:w-auto self-start">
       <i class="pi pi-download text-xs"></i>
       Export
     </button>
@@ -25,76 +26,73 @@
   <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
 
     <!-- Filter Bar -->
-    <div class="px-5 py-4 border-b border-slate-100">
-      <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+    <div class="px-4 py-4 md:px-5 border-b border-slate-100">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center gap-2 sm:gap-3">
 
-        <!-- Search removed -->
+        <p-select
+          [options]="statusOptions"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="statusFilter.set($event); onServerFilterChange()"
+          placeholder="All Statuses"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="!h-9 !text-sm !rounded-lg !border-slate-200 w-full sm:w-36">
+        </p-select>
 
-        <!-- Filters -->
-        <div class="flex flex-wrap items-center gap-2">
+        <p-select
+          [options]="packageOptions"
+          [ngModel]="packageFilter()"
+          (ngModelChange)="packageFilter.set($event); onServerFilterChange()"
+          placeholder="All Packages"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="!h-9 !text-sm !rounded-lg !border-slate-200 w-full sm:w-36">
+        </p-select>
 
-          <p-select
-            [options]="statusOptions"
-            [ngModel]="statusFilter()"
-            (ngModelChange)="statusFilter.set($event); onServerFilterChange()"
-            placeholder="All Statuses"
-            optionLabel="label"
-            optionValue="value"
-            appendTo="body"
-            styleClass="!h-9 !text-sm !rounded-lg !border-slate-200 w-36">
-          </p-select>
+        <p-select
+          [options]="roleOptions"
+          [ngModel]="roleFilter()"
+          (ngModelChange)="roleFilter.set($event)"
+          placeholder="All Roles"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="!h-9 !text-sm !rounded-lg !border-slate-200 w-full sm:w-32">
+        </p-select>
 
-          <p-select
-            [options]="packageOptions"
-            [ngModel]="packageFilter()"
-            (ngModelChange)="packageFilter.set($event); onServerFilterChange()"
-            placeholder="All Packages"
-            optionLabel="label"
-            optionValue="value"
-            appendTo="body"
-            styleClass="!h-9 !text-sm !rounded-lg !border-slate-200 w-36">
-          </p-select>
+        <p-datepicker
+          [ngModel]="dateRange()"
+          (ngModelChange)="dateRange.set($event)"
+          selectionMode="range"
+          placeholder="Joined date range"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          styleClass="w-full sm:w-auto"
+          inputStyleClass="h-9 text-sm border-slate-200 rounded-lg w-full sm:w-48">
+        </p-datepicker>
 
-          <p-select
-            [options]="roleOptions"
-            [ngModel]="roleFilter()"
-            (ngModelChange)="roleFilter.set($event)"
-            placeholder="All Roles"
-            optionLabel="label"
-            optionValue="value"
-            appendTo="body"
-            styleClass="!h-9 !text-sm !rounded-lg !border-slate-200 w-32">
-          </p-select>
+        <div class="h-5 w-px bg-slate-200 mx-1 hidden lg:block"></div>
 
-          <p-datepicker
-            [ngModel]="dateRange()"
-            (ngModelChange)="dateRange.set($event)"
-            selectionMode="range"
-            placeholder="Joined date range"
-            [showIcon]="true"
-            iconDisplay="input"
-            appendTo="body"
-            inputStyleClass="h-9 text-sm border-slate-200 rounded-lg w-48">
-          </p-datepicker>
+        <button
+          (click)="clearFilters()"
+          pTooltip="Clear filters"
+          tooltipPosition="top"
+          class="w-9 h-9 flex items-center justify-center rounded-lg
+                 border border-slate-200 text-slate-400
+                 hover:border-slate-300 hover:text-mlm-text
+                 transition-colors duration-150
+                 self-start sm:col-span-2 lg:col-span-1">
+          <i class="pi pi-filter-slash text-xs"></i>
+        </button>
 
-          <div class="h-5 w-px bg-slate-200 mx-1 hidden sm:block"></div>
-
-          <button
-            (click)="clearFilters()"
-            pTooltip="Clear filters"
-            tooltipPosition="top"
-            class="w-9 h-9 flex items-center justify-center rounded-lg
-                   border border-slate-200 text-slate-400
-                   hover:border-slate-300 hover:text-mlm-text
-                   transition-colors duration-150">
-            <i class="pi pi-filter-slash text-xs"></i>
-          </button>
-
-        </div>
       </div>
     </div>
 
     <!-- Table — 7 <td> matching 7 headers: User · Username · Role · Package · Status · Joined · Actions -->
+    <div class="users-table-wrap">
     <app-data-table
       [value]="filteredUsers()"
       [headers]="tableHeaders()"
@@ -112,30 +110,30 @@
             (click)="viewProfile(row)">
 
           <!-- User → columns[1] field: 'fullName' -->
-          <td class="px-5 py-3.5 min-w-[180px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[160px]">
             <p class="text-sm font-semibold text-mlm-text leading-tight">
               {{ row.fullName || 'None' }}
             </p>
-            <p class="text-[11px] font-mono text-slate-400 mt-0.5">
+            <p class="text-[11px] font-mono text-slate-400 mt-0.5 truncate max-w-[180px] sm:max-w-none">
               {{ row.email }}
             </p>
           </td>
 
           <!-- Username → columns[2] field: 'username' -->
-          <td class="px-5 py-3.5">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
             <span class="text-sm text-mlm-secondary">&#64;{{ row.username }}</span>
           </td>
 
           <!-- Role → columns[3] field: 'role' -->
-          <td class="px-5 py-3.5 w-[120px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[100px] sm:w-[120px]">
             <span class="text-sm text-mlm-secondary">{{ row.role || 'None' }}</span>
           </td>
 
           <!-- Package → columns[4] field: 'package' -->
-          <td class="px-5 py-3.5 w-[130px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[110px] sm:w-[130px]">
             <span
               class="inline-flex items-center px-2.5 py-0.5 rounded-md
-                     text-[11px] font-semibold tracking-wide uppercase"
+                     text-[11px] font-semibold tracking-wide uppercase whitespace-nowrap"
               [style.background-color]="getPackageColor(row.package) + '18'"
               [style.color]="getPackageColor(row.package)">
               {{ row.package }}
@@ -143,19 +141,19 @@
           </td>
 
           <!-- Status → columns[5] field: 'status' -->
-          <td class="px-5 py-3.5 w-[130px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[110px] sm:w-[130px]">
             <app-status-badge [status]="row.status"></app-status-badge>
           </td>
 
           <!-- Joined → columns[6] field: 'registrationDate' (not createdAt) -->
-          <td class="px-5 py-3.5 w-[160px]">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[120px] sm:w-[160px] whitespace-nowrap">
             <span class="text-xs font-mono text-slate-400 tabular-nums">
               {{ row.registrationDate | date:'MMM d, y' }}
             </span>
           </td>
 
           <!-- Actions → columns[7] field: 'actions' -->
-          <td class="px-5 py-3.5 w-[120px] text-center">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[100px] sm:w-[120px] text-center whitespace-nowrap">
             <button
               type="button"
               pButton
@@ -172,6 +170,7 @@
       </ng-template>
 
     </app-data-table>
+    </div>
 
   </div>
 </div>

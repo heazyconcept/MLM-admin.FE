@@ -1,10 +1,10 @@
 @if (payment(); as p) {
-  <div class="min-h-screen bg-gray-50">
-    <div class="w-full px-6 md:px-8 2xl:px-12 py-6">
+  <div class="min-h-screen bg-gray-50 font-geist">
+    <div class="w-full px-4 py-5 sm:px-6 md:px-8 2xl:px-12 sm:py-6">
     <p-toast></p-toast>
 
     @if (isViewOnly()) {
-      <div class="mb-6">
+      <div class="mb-4 md:mb-6">
         <app-info-banner
           message="You have view-only access. Contact an administrator for changes."
           type="info">
@@ -21,36 +21,36 @@
     </app-payment-action-modal>
 
     <!-- Header -->
-    <div class="mb-8">
+    <div class="mb-6 md:mb-8">
       <div class="flex items-center gap-3 text-xs text-gray-400 mb-2">
         <button
           [routerLink]="['/admin/payments']"
-          class="p-2 rounded-md hover:bg-gray-100">
+          class="p-2 rounded-md hover:bg-gray-100 shrink-0">
           <i class="pi pi-arrow-left"></i>
         </button>
         Back to payments
       </div>
 
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-semibold text-gray-900">
-            Payment Transaction <span class="text-gray-400">#{{ p.id }}</span>
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 break-words">
+            Payment Transaction <span class="text-gray-400 text-base sm:text-xl">#{{ p.id }}</span>
           </h1>
-          <p class="text-sm text-gray-500">
+          <p class="text-sm text-gray-500 mt-1">
             Received {{ p.date | date:'medium' }}
           </p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto shrink-0">
           <app-status-badge [status]="p.status"></app-status-badge>
 
-          <div class="flex gap-2">
+          <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
             @if (canPerformPaymentActions() && canFlag) {
               <button
                 pButton
                 label="Flag"
                 icon="pi pi-flag"
-                class="p-button-outlined p-button-warning"
+                class="p-button-outlined p-button-warning w-full sm:w-auto"
                 (click)="onFlag()">
               </button>
             }
@@ -60,7 +60,7 @@
                 pButton
                 label="Fail"
                 icon="pi pi-times"
-                class="p-button-outlined p-button-danger"
+                class="p-button-outlined p-button-danger w-full sm:w-auto"
                 (click)="onMarkFailed()">
               </button>
             }
@@ -70,7 +70,7 @@
                 pButton
                 label="Confirm Successful"
                 icon="pi pi-check"
-                class="p-button-success"
+                class="p-button-success w-full sm:w-auto"
                 (click)="onMarkSuccessful()">
               </button>
             }
@@ -80,7 +80,7 @@
                 pButton
                 label="Reverse"
                 icon="pi pi-refresh"
-                class="p-button-danger p-button-outlined"
+                class="p-button-danger p-button-outlined w-full sm:w-auto"
                 (click)="onReverse()">
               </button>
             }
@@ -90,29 +90,28 @@
     </div>
 
     <!-- Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 2xl:gap-10">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 2xl:gap-10">
 
       <!-- MAIN COLUMN -->
-      <div class="lg:col-span-8 space-y-8">
+      <div class="lg:col-span-8 space-y-5 md:space-y-8 order-2 lg:order-1">
 
-        <!-- Amount & Purpose Hero -->
-        <div class="bg-white border border-gray-200 rounded-xl p-8 relative overflow-hidden">
+        <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 md:p-8 relative overflow-hidden">
           <div class="relative z-10">
             <p class="text-xs uppercase tracking-widest text-gray-400 mb-2">
               Payment Amount
             </p>
-            <div class="flex items-baseline gap-4">
-              <p class="text-4xl font-bold text-gray-900">
+            <div class="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4">
+              <p class="text-3xl sm:text-4xl font-bold text-gray-900 break-words">
                 {{ p.amount | currency:p.currency }}
               </p>
-              <span 
-                class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border"
+              <span
+                class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border self-start"
                 [class]="getPurposeClass(p.purpose)">
                 {{ p.purpose }}
               </span>
             </div>
-            
-            <div class="mt-8 grid grid-cols-3 gap-8">
+
+            <div class="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8">
               <div>
                 <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Method</p>
                 <div class="flex items-center gap-2">
@@ -132,40 +131,38 @@
           </div>
         </div>
 
-        <!-- User Information -->
-        <div class="bg-white border border-gray-200 rounded-xl p-6">
+        <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
           <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <i class="pi pi-user text-gray-400"></i>
             User Information
           </h3>
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-600">
+          <div class="flex items-center gap-4 min-w-0">
+            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-600 shrink-0">
               {{ p.userName.charAt(0) }}
             </div>
-            <div>
-              <p class="font-medium text-gray-900">{{ p.userName }}</p>
-              <p class="text-sm text-gray-500">{{ p.userEmail }}</p>
-              <p class="text-xs text-gray-400 mt-1">User ID: {{ p.userId }}</p>
+            <div class="min-w-0">
+              <p class="font-medium text-gray-900 truncate">{{ p.userName }}</p>
+              <p class="text-sm text-gray-500 truncate">{{ p.userEmail }}</p>
+              <p class="text-xs text-gray-400 mt-1 truncate">User ID: {{ p.userId }}</p>
             </div>
           </div>
         </div>
 
-        <!-- Proof of Payment (if applicable) -->
         @if (p.method === 'Bank Transfer' || p.proofUrl) {
-          <div class="bg-white border border-gray-200 rounded-xl p-6">
+          <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
             <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <i class="pi pi-image text-gray-400"></i>
               Payment Proof / Documentation
             </h3>
-            <div class="aspect-video bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center group cursor-pointer hover:bg-gray-100 transition-colors">
-              <i class="pi pi-file-pdf text-4xl text-gray-300 group-hover:scale-110 transition-transform"></i>
+            <div class="aspect-video bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center group cursor-pointer hover:bg-gray-100 transition-colors p-4 text-center">
+              <i class="pi pi-file-pdf text-3xl sm:text-4xl text-gray-300 group-hover:scale-110 transition-transform"></i>
               <p class="text-sm text-gray-500 mt-3 font-medium">Click to view proof document</p>
               <p class="text-xs text-gray-400 mt-1">Format: JPG, PDF · Size: 1.2MB</p>
             </div>
             @if (p.notes) {
-              <div class="mt-6 p-4 bg-blue-50/50 rounded-xl border border-blue-100/50">
+              <div class="mt-4 sm:mt-6 p-4 bg-blue-50/50 rounded-xl border border-blue-100/50">
                 <p class="text-xs font-bold text-blue-800 uppercase tracking-widest mb-2">Internal Notes</p>
-                <p class="text-sm text-blue-900 italic font-medium">"{{ p.notes }}"</p>
+                <p class="text-sm text-blue-900 italic font-medium break-words">"{{ p.notes }}"</p>
               </div>
             }
           </div>
@@ -173,34 +170,33 @@
       </div>
 
       <!-- SIDE RAIL -->
-      <div class="lg:col-span-4">
-        <div class="bg-white border border-gray-200 rounded-xl p-6 sticky top-6">
-          <h3 class="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-2">
+      <div class="lg:col-span-4 order-1 lg:order-2">
+        <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 lg:sticky lg:top-6">
+          <h3 class="text-sm font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
             <i class="pi pi-clock text-gray-400"></i>
             Status History
           </h3>
 
-          <div class="space-y-8 relative before:absolute before:inset-y-0 before:left-3 before:w-px before:bg-gray-100">
+          <div class="space-y-6 sm:space-y-8 relative before:absolute before:inset-y-0 before:left-3 before:w-px before:bg-gray-100">
             @for (history of statusHistory(); track $index) {
               <div class="relative pl-8">
-                <!-- Dot -->
-                <div 
+                <div
                   class="absolute left-0 top-1 w-6 h-6 -ml-px rounded-full border-4 border-white shadow-sm flex items-center justify-center z-10"
                   [class.bg-green-500]="history.status === 'Successful'"
                   [class.bg-red-500]="history.status === 'Failed' || history.status === 'Reversed'"
                   [class.bg-orange-500]="history.status === 'Pending'">
                 </div>
-                
-                <div>
-                  <div class="flex items-center justify-between mb-1">
+
+                <div class="min-w-0">
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-2 mb-1">
                     <p class="text-sm font-semibold text-gray-900">{{ history.status }}</p>
                     <span class="text-[10px] font-bold text-gray-400 uppercase">{{ history.timestamp | date:'shortTime' }}</span>
                   </div>
-                  <p class="text-xs text-gray-500">
+                  <p class="text-xs text-gray-500 break-words">
                     {{ history.admin }} · {{ history.timestamp | date:'mediumDate' }}
                   </p>
                   @if (history.reason) {
-                    <div class="mt-2 bg-gray-50 p-2 rounded text-[11px] text-gray-600 italic border border-gray-100">
+                    <div class="mt-2 bg-gray-50 p-2 rounded text-[11px] text-gray-600 italic border border-gray-100 break-words">
                       {{ history.reason }}
                     </div>
                   }
@@ -215,12 +211,12 @@
     </div>
   </div>
 } @else {
-  <div class="h-[80vh] flex flex-col items-center justify-center text-center p-8">
-    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-      <i class="pi pi-search text-3xl text-gray-300"></i>
+  <div class="h-[80vh] flex flex-col items-center justify-center text-center p-4 sm:p-8">
+    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 sm:mb-6">
+      <i class="pi pi-search text-2xl sm:text-3xl text-gray-300"></i>
     </div>
-    <h2 class="text-xl font-semibold text-gray-900">Transaction Not Found</h2>
-    <p class="text-gray-500 mt-2 max-w-xs">The payment ID was not found in our records or may have been removed.</p>
-    <button pButton label="Back to Payments" icon="pi pi-arrow-left" [routerLink]="['/admin/payments']" class="p-button-text mt-6"></button>
+    <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Transaction Not Found</h2>
+    <p class="text-gray-500 mt-2 max-w-xs text-sm">The payment ID was not found in our records or may have been removed.</p>
+    <button pButton label="Back to Payments" icon="pi pi-arrow-left" [routerLink]="['/admin/payments']" class="p-button-text mt-6 w-full sm:w-auto"></button>
   </div>
 }

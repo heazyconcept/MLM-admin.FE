@@ -1,4 +1,10 @@
-<p-dialog [visible]="visible()" [header]="action() + ' Wallet'" [modal]="true" [style]="{width: '450px'}" (onHide)="close()">
+<p-dialog
+  [visible]="visible()"
+  [header]="action() + ' Wallet'"
+  [modal]="true"
+  [style]="{ width: 'min(450px, 95vw)' }"
+  [breakpoints]="{ '640px': '95vw' }"
+  (onHide)="close()">
   @if (wallet(); as w) {
     <div class="space-y-4 pt-2 text-center">
        <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto text-red-600 mb-4">
@@ -17,10 +23,11 @@
          }
        </p>
 
-       <div class="flex justify-center gap-3 mt-8">
-         <button pButton label="Cancel" class="p-button-text p-button-secondary" (click)="close()"></button>
-         <button pButton [label]="'Confirm ' + action()" 
-                 [class]="action() === 'Lock' ? 'p-button-danger' : 'p-button-success'"
+       <div class="flex flex-col-reverse sm:flex-row sm:justify-center gap-2 sm:gap-3 mt-6 sm:mt-8">
+         <button pButton label="Cancel" class="p-button-text p-button-secondary w-full sm:w-auto" (click)="close()"></button>
+         <button pButton [label]="'Confirm ' + action()"
+                 class="w-full sm:w-auto"
+                 [ngClass]="action() === 'Lock' ? 'p-button-danger' : 'p-button-success'"
                  (click)="confirm()"></button>
        </div>
     </div>

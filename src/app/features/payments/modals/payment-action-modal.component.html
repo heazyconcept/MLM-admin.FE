@@ -4,7 +4,8 @@
   [header]="title"
   [draggable]="false" 
   [resizable]="false"
-  [style]="{ width: '450px' }"
+  [style]="{ width: 'min(450px, 95vw)' }"
+  [breakpoints]="{ '640px': '95vw' }"
   styleClass="modern-dialog"
   (onHide)="onCancel()">
   
@@ -84,18 +85,18 @@
     }
 
     <!-- Action Buttons -->
-    <div class="flex gap-3 mt-2">
-      <button 
-        pButton 
-        label="Cancel" 
-        class="p-button-outlined p-button-secondary flex-1"
+    <div class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 mt-2">
+      <button
+        pButton
+        label="Cancel"
+        class="p-button-outlined p-button-secondary flex-1 w-full sm:w-auto"
         (click)="onCancel()">
       </button>
-      <button 
-        pButton 
-        [label]="action() === 'ConfirmSuccess' ? 'Confirm Payment' : 'Submit Action'" 
-        [class]="action() === 'ConfirmSuccess' ? 'p-button-success' : (action() === 'Flag' ? 'p-button-warning' : 'p-button-danger')"
-        class="flex-1"
+      <button
+        pButton
+        [label]="action() === 'ConfirmSuccess' ? 'Confirm Payment' : 'Submit Action'"
+        class="flex-1 w-full sm:w-auto"
+        [ngClass]="action() === 'ConfirmSuccess' ? 'p-button-success' : (action() === 'Flag' ? 'p-button-warning' : 'p-button-danger')"
         [disabled]="confirmDisabled"
         (click)="onConfirm()">
       </button>

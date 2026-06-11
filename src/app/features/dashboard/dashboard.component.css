@@ -3,3 +3,17 @@
   height: 100%;
 }
 
+/* Horizontal scroll for activity table on small screens */
+.dashboard-activity-wrap {
+  -webkit-overflow-scrolling: touch;
+}
+
+.dashboard-activity-table {
+  min-width: 52rem;
+}
+
+@media (max-width: 639px) {
+  .dashboard-activity-table thead > tr > th {
+    font-size: 0.625rem;
+  }
+}

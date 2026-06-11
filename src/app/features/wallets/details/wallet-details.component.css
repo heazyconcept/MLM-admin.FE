@@ -1,0 +1,42 @@
+:host {
+  display: block;
+}
+
+.wallet-ledger-wrap ::ng-deep .ui-clean-table .p-datatable-table {
+  min-width: 40rem;
+}
+
+.wallet-ledger-wrap ::ng-deep .ui-clean-table .p-datatable-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 639px) {
+  .wallet-ledger-wrap ::ng-deep .ui-clean-table .p-datatable-thead > tr > th {
+    padding: 0.75rem;
+    font-size: 0.625rem;
+  }
+
+  .wallet-ledger-wrap ::ng-deep .ui-clean-table .p-datatable-tbody > tr > td {
+    padding: 0.75rem;
+  }
+
+  .wallet-ledger-wrap ::ng-deep .p-paginator {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .wallet-ledger-wrap ::ng-deep .p-paginator .p-paginator-current {
+    width: 100%;
+    text-align: center;
+    margin-right: 0;
+    order: -1;
+  }
+
+  .wallet-ledger-wrap ::ng-deep .p-paginator .p-paginator-pages {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

@@ -21,6 +21,7 @@ interface EditableCpvRule {
   imports: [CommonModule, FormsModule, ButtonModule, InputNumberModule, ToastModule],
   providers: [MessageService],
   templateUrl: './cpv-configuration.component.html',
+  styleUrls: ['./cpv-configuration.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CpvConfigurationComponent implements OnInit {
