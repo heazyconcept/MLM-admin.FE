@@ -91,7 +91,7 @@
       </div>
     </div>
 
-    <!-- Table — 7 <td> matching 7 headers: User · Username · Role · Package · Status · Joined · Actions -->
+    <!-- Table — 7 <td> matching 7 headers: Username · Referrer · Upline · Package · Status · Joined · Actions -->
     <div class="users-table-wrap">
     <app-data-table
       [value]="filteredUsers()"
@@ -109,27 +109,35 @@
                    transition-colors duration-100 cursor-pointer"
             (click)="viewProfile(row)">
 
-          <!-- User → columns[1] field: 'fullName' -->
+          <!-- Username (primary) + email -->
           <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[160px]">
             <p class="text-sm font-semibold text-mlm-text leading-tight">
-              {{ row.fullName || 'None' }}
+              &#64;{{ row.username }}
             </p>
             <p class="text-[11px] font-mono text-slate-400 mt-0.5 truncate max-w-[180px] sm:max-w-none">
               {{ row.email }}
             </p>
           </td>
 
-          <!-- Username → columns[2] field: 'username' -->
+          <!-- Referrer (who referred this user) — awaiting backend -->
           <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
-            <span class="text-sm text-mlm-secondary">&#64;{{ row.username }}</span>
+            @if (row.referrerUsername) {
+              <span class="text-sm text-mlm-text font-medium">&#64;{{ row.referrerUsername }}</span>
+            } @else {
+              <span class="text-xs text-slate-300 italic">—</span>
+            }
           </td>
 
-          <!-- Role → columns[3] field: 'role' -->
-          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[100px] sm:w-[120px]">
-            <span class="text-sm text-mlm-secondary">{{ row.role || 'None' }}</span>
+          <!-- Upline — awaiting backend -->
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
+            @if (row.uplineUsername) {
+              <span class="text-sm text-mlm-text font-medium">&#64;{{ row.uplineUsername }}</span>
+            } @else {
+              <span class="text-xs text-slate-300 italic">—</span>
+            }
           </td>
 
-          <!-- Package → columns[4] field: 'package' -->
+          <!-- Package -->
           <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[110px] sm:w-[130px]">
             <span
               class="inline-flex items-center px-2.5 py-0.5 rounded-md
@@ -140,19 +148,19 @@
             </span>
           </td>
 
-          <!-- Status → columns[5] field: 'status' -->
+          <!-- Status -->
           <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[110px] sm:w-[130px]">
             <app-status-badge [status]="row.status"></app-status-badge>
           </td>
 
-          <!-- Joined → columns[6] field: 'registrationDate' (not createdAt) -->
+          <!-- Joined -->
           <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[120px] sm:w-[160px] whitespace-nowrap">
             <span class="text-xs font-mono text-slate-400 tabular-nums">
               {{ row.registrationDate | date:'MMM d, y' }}
             </span>
           </td>
 
-          <!-- Actions → columns[7] field: 'actions' -->
+          <!-- Actions -->
           <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[100px] sm:w-[120px] text-center whitespace-nowrap">
             <button
               type="button"

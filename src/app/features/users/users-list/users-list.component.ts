@@ -120,9 +120,9 @@ export class UsersListComponent implements OnInit {
 
   // Table configurations
   columns = signal<TableColumn<User>[]>([
-    { field: 'fullName', header: 'Full Name' },
-    { field: 'username', header: 'Username', class: 'text-sm text-gray-600' },
-    { field: 'role', header: 'Role', width: '120px', align: 'center' },
+    { field: 'username', header: 'Username' },
+    { field: 'referrerUsername', header: 'Referrer' },
+    { field: 'uplineUsername', header: 'Upline' },
     { field: 'package', header: 'Package', width: '130px', align: 'center' },
     { field: 'status', header: 'Status', width: '130px', align: 'center' },
     {
