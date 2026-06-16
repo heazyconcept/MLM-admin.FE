@@ -94,7 +94,18 @@ export class UsersListComponent implements OnInit {
 
     if (status === 'Flagged') {
       result = result.filter((u) => u.status === 'Flagged');
+    } else if (status === 'Registered') {
+      result = result.filter((u) => u.status === 'Registered');
+    } else if (status === 'Activated') {
+      result = result.filter((u) => u.status === 'Activated');
+    } else if (status === 'Active') {
+      result = result.filter((u) => u.status === 'Active');
+    } else if (status === 'Inactive') {
+      result = result.filter((u) => u.status === 'Inactive');
+    } else if (status === 'Suspended') {
+      result = result.filter((u) => u.status === 'Suspended');
     }
+
     if (range && range.length === 2 && range[0] && range[1]) {
       const start = new Date(range[0]);
       const end = new Date(range[1]);
@@ -178,7 +189,10 @@ export class UsersListComponent implements OnInit {
   // Filter options
   statusOptions = [
     { label: 'All Statuses', value: '' },
+    { label: 'Registered', value: 'Registered' },
+    { label: 'Activated', value: 'Activated' },
     { label: 'Active', value: 'Active' },
+    { label: 'Inactive', value: 'Inactive' },
     { label: 'Suspended', value: 'Suspended' },
     { label: 'Flagged', value: 'Flagged' }
   ];
@@ -207,10 +221,14 @@ export class UsersListComponent implements OnInit {
   private serverQuery(): UsersListQuery {
     const q: UsersListQuery = {};
     const status = this.statusFilter();
-    if (status === 'Active') {
-      q.isActive = true;
-    } else if (status === 'Suspended') {
+    if (status === 'Suspended') {
       q.isActive = false;
+    } else if (status === 'Registered') {
+      q.isActive = true;
+      q.isRegistrationPaid = false;
+    } else if (status === 'Activated' || status === 'Active' || status === 'Inactive') {
+      q.isActive = true;
+      q.isRegistrationPaid = true;
     }
     const pkg = this.packageFilter();
     if (pkg) {

@@ -95,6 +95,7 @@
                       (ngModelChange)="updateRuleField($index, 'threshold', $event ?? 0)"
                       [min]="1"
                       [useGrouping]="false"
+                      ariaLabel="Threshold"
                       styleClass="cpv-input-threshold p-inputtext-sm">
                     </p-inputNumber>
                   } @else {
@@ -106,7 +107,8 @@
                     <select
                       [ngModel]="rule.rewardType"
                       (ngModelChange)="updateRuleField($index, 'rewardType', $event)"
-                      class="cpv-select">
+                      class="cpv-select"
+                      aria-label="Reward Type">
                       @for (type of rewardTypeOptions; track type) {
                         <option [value]="type">{{ type }}</option>
                       }
@@ -119,28 +121,38 @@
                 </td>
                 <td>
                   @if (canEdit() && editMode()) {
-                    <p-inputNumber
-                      [ngModel]="rule.rewardAmount"
-                      (ngModelChange)="updateRuleField($index, 'rewardAmount', $event ?? 0)"
-                      mode="decimal"
-                      [min]="0.01"
-                      [minFractionDigits]="0"
-                      [maxFractionDigits]="2"
-                      [useGrouping]="false"
-                      styleClass="cpv-input-amount p-inputtext-sm">
-                    </p-inputNumber>
+                    @if (rule.rewardType === 'MATERIAL') {
+                      <span class="text-slate-400 font-semibold">—</span>
+                    } @else {
+                      <p-inputNumber
+                        [ngModel]="rule.rewardAmount"
+                        (ngModelChange)="updateRuleField($index, 'rewardAmount', $event ?? 0)"
+                        mode="decimal"
+                        [min]="0"
+                        [minFractionDigits]="0"
+                        [maxFractionDigits]="2"
+                        [useGrouping]="false"
+                        ariaLabel="Reward Amount"
+                        styleClass="cpv-input-amount p-inputtext-sm">
+                      </p-inputNumber>
+                    }
                   } @else {
-                    <span class="tabular-nums">{{ rule.rewardAmount }}</span>
+                    <span class="tabular-nums">{{ rule.rewardType === 'MATERIAL' ? '—' : rule.rewardAmount }}</span>
                   }
                 </td>
                 <td>
                   @if (canEdit() && editMode()) {
-                    <input
-                      [ngModel]="rule.materialDescription"
-                      (ngModelChange)="updateRuleField($index, 'materialDescription', $event)"
-                      placeholder="Optional"
-                      class="cpv-text-input"
-                    />
+                    @if (rule.rewardType === 'CASH') {
+                      <span class="text-slate-400 font-semibold">—</span>
+                    } @else {
+                      <input
+                        [ngModel]="rule.materialDescription"
+                        (ngModelChange)="updateRuleField($index, 'materialDescription', $event)"
+                        placeholder="Optional"
+                        aria-label="Material Description"
+                        class="cpv-text-input"
+                      />
+                    }
                   } @else {
                     <span class="text-mlm-secondary">{{ rule.materialDescription || '—' }}</span>
                   }
@@ -175,6 +187,7 @@
                   (ngModelChange)="updateRuleField($index, 'threshold', $event ?? 0)"
                   [min]="1"
                   [useGrouping]="false"
+                  ariaLabel="Threshold"
                   styleClass="p-inputtext-sm">
                 </p-inputNumber>
               } @else {
@@ -188,7 +201,8 @@
                 <select
                   [ngModel]="rule.rewardType"
                   (ngModelChange)="updateRuleField($index, 'rewardType', $event)"
-                  class="cpv-select">
+                  class="cpv-select"
+                  aria-label="Reward Type">
                   @for (type of rewardTypeOptions; track type) {
                     <option [value]="type">{{ type }}</option>
                   }
@@ -201,30 +215,40 @@
             <div class="cpv-rule-card__field">
               <span class="cpv-rule-card__label">Reward Amount</span>
               @if (canEdit() && editMode()) {
-                <p-inputNumber
-                  [ngModel]="rule.rewardAmount"
-                  (ngModelChange)="updateRuleField($index, 'rewardAmount', $event ?? 0)"
-                  mode="decimal"
-                  [min]="0.01"
-                  [minFractionDigits]="0"
-                  [maxFractionDigits]="2"
-                  [useGrouping]="false"
-                  styleClass="p-inputtext-sm">
-                </p-inputNumber>
+                @if (rule.rewardType === 'MATERIAL') {
+                  <span class="text-slate-400 font-semibold py-1.5">—</span>
+                } @else {
+                  <p-inputNumber
+                    [ngModel]="rule.rewardAmount"
+                    (ngModelChange)="updateRuleField($index, 'rewardAmount', $event ?? 0)"
+                    mode="decimal"
+                    [min]="0"
+                    [minFractionDigits]="0"
+                    [maxFractionDigits]="2"
+                    [useGrouping]="false"
+                    ariaLabel="Reward Amount"
+                    styleClass="p-inputtext-sm">
+                  </p-inputNumber>
+                }
               } @else {
-                <span class="cpv-rule-card__value tabular-nums">{{ rule.rewardAmount }}</span>
+                <span class="cpv-rule-card__value tabular-nums">{{ rule.rewardType === 'MATERIAL' ? '—' : rule.rewardAmount }}</span>
               }
             </div>
 
             <div class="cpv-rule-card__field">
               <span class="cpv-rule-card__label">Material</span>
               @if (canEdit() && editMode()) {
-                <input
-                  [ngModel]="rule.materialDescription"
-                  (ngModelChange)="updateRuleField($index, 'materialDescription', $event)"
-                  placeholder="Optional"
-                  class="cpv-text-input"
-                />
+                @if (rule.rewardType === 'CASH') {
+                  <span class="text-slate-400 font-semibold py-1.5">—</span>
+                } @else {
+                  <input
+                    [ngModel]="rule.materialDescription"
+                    (ngModelChange)="updateRuleField($index, 'materialDescription', $event)"
+                    placeholder="Optional"
+                    aria-label="Material Description"
+                    class="cpv-text-input"
+                  />
+                }
               } @else {
                 <span class="cpv-rule-card__value">{{ rule.materialDescription || '—' }}</span>
               }

@@ -47,12 +47,7 @@
               </span>
               <!-- Activation badge -->
               @if (user(); as u) {
-                <span class="text-[10px] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-md"
-                      [ngClass]="u.isRegistrationPaid
-                        ? 'bg-brand-green-light text-brand-green-dark'
-                        : 'bg-amber-50 text-amber-700 border border-amber-200'">
-                  {{ u.isRegistrationPaid ? 'Activated' : 'Pending activation' }}
-                </span>
+                <app-status-badge [status]="u.status"></app-status-badge>
               }
             </div>
             <div class="flex items-center gap-2 mt-1">
@@ -272,12 +267,7 @@
                   <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
                     Platform Activation
                   </p>
-                  <span class="inline-flex items-center gap-1.5 text-xs font-semibold"
-                        [ngClass]="u.isRegistrationPaid ? 'text-mlm-primary' : 'text-mlm-warning'">
-                    <span class="w-1.5 h-1.5 rounded-full"
-                          [ngClass]="u.isRegistrationPaid ? 'bg-mlm-primary' : 'bg-mlm-warning'"></span>
-                    {{ u.isRegistrationPaid ? 'Activated' : 'Pending activation' }}
-                  </span>
+                  <app-status-badge [status]="u.status"></app-status-badge>
                 </div>
 
               </div>
