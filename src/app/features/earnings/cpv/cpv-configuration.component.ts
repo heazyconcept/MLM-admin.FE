@@ -37,7 +37,7 @@ export class CpvConfigurationComponent implements OnInit {
   editMode = signal<boolean>(false);
   saving = signal<boolean>(false);
 
-  rewardTypeOptions = ['CASH', 'PRODUCT', 'VOUCHER', 'BONUS'];
+  rewardTypeOptions = ['CASH', 'MATERIAL', 'BOTH', 'PRODUCT', 'VOUCHER', 'BONUS'];
 
   canEdit = computed(
     () => this.permission.canEdit(Feature.Earnings) && this.permission.canPerform(Action.UpdateEarningsConfig)
@@ -93,7 +93,21 @@ export class CpvConfigurationComponent implements OnInit {
     }
 
     this.editableRules.update((rules) =>
-      rules.map((rule, idx) => (idx === index ? { ...rule, [field]: value } : rule))
+      rules.map((rule, idx) => {
+        if (idx !== index) {
+          return rule;
+        }
+        const updated = { ...rule, [field]: value };
+        if (field === 'rewardType') {
+          const newType = String(value).toUpperCase();
+          if (newType === 'CASH') {
+            updated.materialDescription = null;
+          } else if (newType === 'MATERIAL') {
+            updated.rewardAmount = 0;
+          }
+        }
+        return updated;
+      })
     );
   }
 
@@ -106,9 +120,21 @@ export class CpvConfigurationComponent implements OnInit {
   }
 
   isValidRule(rule: EditableCpvRule): boolean {
-    return Number(rule.threshold) > 0
-      && !!rule.rewardType?.trim()
-      && Number(rule.rewardAmount) > 0;
+    const thresholdValid = Number(rule.threshold) > 0;
+    const typeValid = !!rule.rewardType?.trim();
+    if (!thresholdValid || !typeValid) {
+      return false;
+    }
+
+    const type = rule.rewardType.toUpperCase();
+    if (type === 'CASH') {
+      return Number(rule.rewardAmount) > 0;
+    } else if (type === 'MATERIAL') {
+      return !!rule.materialDescription?.trim();
+    } else if (type === 'BOTH') {
+      return Number(rule.rewardAmount) > 0 && !!rule.materialDescription?.trim();
+    }
+    return Number(rule.rewardAmount) > 0 || !!rule.materialDescription?.trim();
   }
 
   saveAll(): void {

@@ -1,7 +1,7 @@
 import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type BadgeStatus = 'Active' | 'Suspended' | 'Flagged' | 'Pending' | 'Success' | 'Successful' | 'Failed' | 'Approved' | 'Rejected' | 'Processing' | 'Paid' | 'Posted' | 'Reversed' | 'Locked' | 'Frozen';
+export type BadgeStatus = 'Active' | 'Suspended' | 'Flagged' | 'Pending' | 'Success' | 'Successful' | 'Failed' | 'Approved' | 'Rejected' | 'Processing' | 'Paid' | 'Posted' | 'Reversed' | 'Locked' | 'Frozen' | 'Registered' | 'Activated' | 'Inactive';
 
 @Component({
   selector: 'app-status-badge',
@@ -9,14 +9,14 @@ export type BadgeStatus = 'Active' | 'Suspended' | 'Flagged' | 'Pending' | 'Succ
   imports: [CommonModule],
   template: `
     <span 
-      class="inline-flex items-center gap-1 rounded-full text-[10px] font-semibold tracking-wide"
+      class="inline-flex items-center gap-1 rounded-full text-[10px] font-semibold tracking-wide whitespace-nowrap"
       [class]="badgeClasses()"
       [class.px-2.5]="!hideLabel()"
       [class.py-1]="!hideLabel()"
       [class.p-1]="hideLabel()">
       <span class="w-1 h-1 rounded-full" [class]="dotClass()"></span>
       @if (!hideLabel()) {
-        <span>{{ normalizedStatus() === 'Successful' ? 'Success' : normalizedStatus() }}</span>
+        <span>{{ displayLabel() }}</span>
       }
     </span>
   `,
@@ -27,6 +27,16 @@ export class StatusBadgeComponent {
   // Accepts either a known BadgeStatus or any backend status string.
   status = input<BadgeStatus | string>('Active');
   hideLabel = input<boolean>(false);
+
+  displayLabel = computed(() => {
+    const s = this.normalizedStatus();
+    if (s === 'Registered') return 'Registered User';
+    if (s === 'Activated') return 'Activated User';
+    if (s === 'Active') return 'Active User';
+    if (s === 'Inactive') return 'Inactive User';
+    if (s === 'Successful') return 'Success';
+    return s;
+  });
 
   normalizedStatus = computed(() => {
     const s = String(this.status() ?? '').trim();
@@ -47,7 +57,10 @@ export class StatusBadgeComponent {
       'PROCESSING': 'Processing',
       'PAID': 'Paid',
       'POSTED': 'Posted',
-      'REVERSED': 'Reversed'
+      'REVERSED': 'Reversed',
+      'REGISTERED': 'Registered',
+      'ACTIVATED': 'Activated',
+      'INACTIVE': 'Inactive'
     };
     return map[upper] ?? (s as BadgeStatus);
   });
@@ -69,7 +82,10 @@ export class StatusBadgeComponent {
       'Posted': 'bg-teal-50 text-teal-700 border border-teal-200',
       'Reversed': 'bg-gray-50 text-gray-700 border border-gray-300',
       'Locked': 'bg-rose-100 text-rose-800 border border-rose-300',
-      'Frozen': 'bg-amber-100 text-amber-800 border border-amber-300'
+      'Frozen': 'bg-amber-100 text-amber-800 border border-amber-300',
+      'Registered': 'bg-gray-100 text-gray-700 border border-gray-200',
+      'Activated': 'bg-blue-50 text-blue-700 border border-blue-200',
+      'Inactive': 'bg-orange-50 text-orange-700 border border-orange-200'
     };
     return classes[s] ?? classes['Active'];
   });
@@ -91,7 +107,10 @@ export class StatusBadgeComponent {
       'Posted': 'bg-teal-600',
       'Reversed': 'bg-gray-600',
       'Locked': 'bg-rose-600',
-      'Frozen': 'bg-amber-600'
+      'Frozen': 'bg-amber-600',
+      'Registered': 'bg-gray-500',
+      'Activated': 'bg-blue-600',
+      'Inactive': 'bg-orange-600'
     };
     return classes[s] ?? classes['Active'];
   });

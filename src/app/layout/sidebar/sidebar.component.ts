@@ -124,7 +124,7 @@ export class SidebarComponent {
           ],
         },
         {
-          label: 'CPV Config',
+          label: 'CPV Milestones',
           icon: 'pi pi-chart-bar',
           route: '/admin/cpv-config',
           feature: Feature.Earnings,
@@ -242,12 +242,12 @@ export class SidebarComponent {
           route: '/admin/reports/profit',
           feature: Feature.ReportsAudit,
         },
-          // {
-          //   label: 'Earnings',
-          //   icon: 'pi pi-dollar',
-          //   route: '/admin/earnings',
-          //   feature: Feature.Earnings,
-          // },
+        // {
+        //   label: 'Earnings',
+        //   icon: 'pi pi-dollar',
+        //   route: '/admin/earnings',
+        //   feature: Feature.Earnings,
+        // },
 
         {
           label: 'Audit Logs',

@@ -12,6 +12,7 @@ import { PermissionService } from '../../../core/services/permission.service';
 import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
+import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { UsersService, User, UserWallet, FundCASHWalletPayload, ActivateRegistrationPayload, UpgradePackagePayload, CreditVolumePayload, UpdateUserStatusPayload } from '../services/users.service';
 import { WalletService } from '../../wallets/services/wallet.service';
 import {
@@ -48,6 +49,7 @@ import { WalletDetailDialogComponent } from '../modals/wallet-detail-dialog.comp
     UpgradePackageModalComponent,
     CreditVolumeModalComponent,
     WalletDetailDialogComponent,
+    StatusBadgeComponent,
   ],
   providers: [MessageService],
   templateUrl: './user-details.component.html',

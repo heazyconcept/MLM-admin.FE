@@ -2,7 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 
-export type UserStatus = 'Active' | 'Suspended' | 'Flagged';
+export type UserStatus = 'Active' | 'Suspended' | 'Flagged' | 'Registered' | 'Activated' | 'Inactive';
 export type UserPackage = 'Nickel' | 'Silver' | 'Gold' | 'Platinum' | 'Ruby' | 'Diamond';
 export type UserRole = 'User' | 'Merchant';
 
@@ -42,6 +42,7 @@ export interface User {
   isRegistrationPaid: boolean;
   wallets: UserWallets;
   activityLog: ActivityLogItem[];
+  directReferralsCount?: number;
 }
 
 export interface ActivityLogItem {
@@ -79,6 +80,7 @@ interface AdminUserApi {
   createdAt: string;
   totalCpv?: number;
   wallets?: Record<string, { walletId: string; balance: number; displayCurrency: string; status: string }>;
+  directReferralsCount?: number;
 }
 
 interface AdminUsersListResponse {
@@ -254,7 +256,21 @@ export class UsersService {
       DIAMOND: 'Diamond'
     };
 
-    const status: UserStatus = apiUser.isActive ? 'Active' : 'Suspended';
+    let status: UserStatus;
+    if (!apiUser.isActive) {
+      status = 'Suspended';
+    } else if (!apiUser.isRegistrationPaid) {
+      status = 'Registered';
+    } else {
+      const referrals = apiUser.directReferralsCount;
+      if (referrals === undefined || referrals === null) {
+        status = 'Activated';
+      } else if (referrals >= 3) {
+        status = 'Active';
+      } else {
+        status = 'Inactive';
+      }
+    }
 
     const roleMap: Record<string, UserRole> = {
       USER: 'User',
@@ -321,7 +337,8 @@ export class UsersService {
       isActive: apiUser.isActive,
       isRegistrationPaid: apiUser.isRegistrationPaid,
       wallets,
-      activityLog: []
+      activityLog: [],
+      directReferralsCount: apiUser.directReferralsCount
     };
   }
 }
