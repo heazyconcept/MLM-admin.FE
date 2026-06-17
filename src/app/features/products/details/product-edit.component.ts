@@ -77,8 +77,8 @@ export class ProductEditComponent implements OnInit {
     return new Date(price.effectiveFrom).getTime() > Date.now() + BUFFER_MS;
   });
 
-  /** Whether the product can be activated right now */
-  canActivate = computed(() => {
+  /** Whether the product has an active price right now (not scheduled in the future) */
+  hasActivePrice = computed(() => {
     const p = this.product();
     if (!p?.currentPrice) return false;
     return !this.priceIsScheduled();
@@ -175,6 +175,29 @@ export class ProductEditComponent implements OnInit {
     }
   }
 
+  private patchPriceForm(price: ProductPrice) {
+    const effectiveFromDate = price.effectiveFrom;
+    let effectiveFromFormatted = '';
+    if (effectiveFromDate) {
+      const date = new Date(effectiveFromDate);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      effectiveFromFormatted = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    this.priceForm.patchValue({
+      basePrice: price.basePrice,
+      nonMemberBasePrice: price.nonMemberBasePrice,
+      pv: price.pv,
+      directReferralPv: price.directReferralPv ?? 0,
+      cpv: price.cpv,
+      effectiveFrom: effectiveFromFormatted
+    });
+  }
+
   private patchFormFromProduct(p: Product) {
     this.productForm.patchValue({
       name: p.name,
@@ -187,28 +210,8 @@ export class ProductEditComponent implements OnInit {
       status: p.status
     });
 
-    // Prefill price form if current price exists
     if (p.currentPrice) {
-      const effectiveFromDate = p.currentPrice.effectiveFrom;
-      let effectiveFromFormatted = '';
-      if (effectiveFromDate) {
-        const date = new Date(effectiveFromDate);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        effectiveFromFormatted = `${year}-${month}-${day}T${hours}:${minutes}`;
-      }
-
-      this.priceForm.patchValue({
-        basePrice: p.currentPrice.basePrice,
-        nonMemberBasePrice: p.currentPrice.nonMemberBasePrice,
-        pv: p.currentPrice.pv,
-        directReferralPv: p.currentPrice.directReferralPv ?? 0,
-        cpv: p.currentPrice.cpv,
-        effectiveFrom: effectiveFromFormatted
-      });
+      this.patchPriceForm(p.currentPrice);
     }
   }
 
@@ -226,18 +229,6 @@ export class ProductEditComponent implements OnInit {
             severity: 'warn',
             summary: 'Price Required',
             detail: 'Set a product price before activating this product.'
-          });
-          return;
-        }
-        if (this.priceIsScheduled()) {
-          const effectiveFrom = this.product()!.currentPrice!.effectiveFrom;
-          const date = new Date(effectiveFrom).toLocaleDateString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
-          });
-          this.messageService.add({
-            severity: 'warn',
-            summary: 'Scheduled Price',
-            detail: `The current price is scheduled for ${date}. The product cannot be activated until that date. Set a price without a future date to activate immediately.`
           });
           return;
         }
@@ -376,18 +367,6 @@ export class ProductEditComponent implements OnInit {
         });
         return;
       }
-      if (this.priceIsScheduled()) {
-        const effectiveFrom = this.product()!.currentPrice!.effectiveFrom;
-        const date = new Date(effectiveFrom).toLocaleDateString('en-US', {
-          month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
-        this.messageService.add({
-          severity: 'warn',
-          summary: 'Scheduled Price',
-          detail: `The current price is scheduled for ${date}. The product cannot be activated until that date. Set a price without a future date to activate immediately.`
-        });
-        return;
-      }
     }
 
     this.isUpdatingStatus.set(true);
@@ -482,6 +461,19 @@ export class ProductEditComponent implements OnInit {
       next: (rows) => {
         this.priceHistory.set(rows);
         this.loadingHistory.set(false);
+
+        // If the product currently has no active price, find the latest price from history
+        // and prefill the price form and update the local product signal.
+        const currentProd = this.product();
+        if (currentProd && !currentProd.currentPrice && rows.length > 0) {
+          // Sort by effectiveFrom DESC to find the latest set price
+          const sorted = [...rows].sort((a, b) => new Date(b.effectiveFrom).getTime() - new Date(a.effectiveFrom).getTime());
+          const latestPrice = sorted[0];
+          if (latestPrice) {
+            this.patchPriceForm(latestPrice);
+            this.adminProducts.updateLocalProductPrice(productId, latestPrice);
+          }
+        }
       },
       error: () => {
         this.priceHistory.set([]);

@@ -341,6 +341,13 @@ export class AdminProductsService {
       .put<AdminProductDto>(`admin/products/${encodeURIComponent(id)}`, dto)
       .pipe(
         map((p) => this.mapProductDtoToProduct(p)),
+        map((updated) => {
+          const existing = this.products().find((x) => x.id === id);
+          if (existing && !updated.currentPrice && existing.currentPrice) {
+            return { ...updated, currentPrice: existing.currentPrice };
+          }
+          return updated;
+        }),
         tap((updated) => {
           this.products.update((list) =>
             list.map((p) => (p.id === id ? updated : p)),
@@ -356,12 +363,25 @@ export class AdminProductsService {
       })
       .pipe(
         map((p) => this.mapProductDtoToProduct(p)),
-        tap(() => {
+        map((updated) => {
+          const existing = this.products().find((x) => x.id === id);
+          if (existing && !updated.currentPrice && existing.currentPrice) {
+            return { ...updated, currentPrice: existing.currentPrice };
+          }
+          return updated;
+        }),
+        tap((updated) => {
           this.products.update((list) =>
-            list.map((p) => (p.id === id ? { ...p, status } : p)),
+            list.map((p) => (p.id === id ? updated : p)),
           );
         }),
       );
+  }
+
+  updateLocalProductPrice(productId: string, price: ProductPrice): void {
+    this.products.update((list) =>
+      list.map((p) => (p.id === productId ? { ...p, currentPrice: price } : p)),
+    );
   }
 
   setProductPrice(

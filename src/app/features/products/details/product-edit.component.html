@@ -352,7 +352,7 @@
 
                 @if (
                   productForm.get("status")?.value === "ACTIVE" &&
-                  !canActivate()
+                  !hasActivePrice()
                 ) {
                   <div
                     class="flex items-start gap-3 p-4 bg-mlm-warning/10 border border-mlm-warning/30 rounded-lg max-w-md"
@@ -373,12 +373,11 @@
                           Price is scheduled
                         </p>
                         <p class="text-xs text-amber-700 mt-0.5">
-                          Activates on
+                          Price becomes active on
                           {{
                             product()?.currentPrice?.effectiveFrom
                               | date: "mediumDate"
-                          }}. To activate now, set a price without an effective
-                          date.
+                          }}. To make the price active immediately, set a price without a future date.
                         </p>
                       }
                     </div>
