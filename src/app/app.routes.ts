@@ -1,6 +1,10 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { permissionGuard } from './core/guards/permission.guard';
+import {
+  blockUntilPasswordChangedGuard,
+  changePasswordPageGuard,
+} from './core/guards/password-change.guard';
 import { Feature } from './core/models/admin-permission.model';
 
 export const routes: Routes = [
@@ -9,9 +13,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent)
   },
   {
+    path: 'change-password',
+    canActivate: [authGuard, changePasswordPageGuard],
+    loadComponent: () => import('./features/auth/change-password/change-password.component').then(m => m.ChangePasswordComponent)
+  },
+  {
     path: 'admin',
     loadComponent: () => import('./layout/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
-    canActivate: [authGuard],
+    canActivate: [authGuard, blockUntilPasswordChangedGuard],
     children: [
       {
         path: 'access-restricted',
@@ -209,6 +218,19 @@ export const routes: Routes = [
               ),
           },
         ],
+      },
+      {
+        path: 'admin-management',
+        canActivate: [permissionGuard],
+        data: { feature: Feature.AdminManagement },
+        loadComponent: () => import('./features/admin-management/layout/admin-management-layout.component').then(m => m.AdminManagementLayoutComponent),
+        children: [
+          { path: '', redirectTo: 'permissions', pathMatch: 'full' },
+          { path: 'permissions', loadComponent: () => import('./features/admin-management/permissions/permissions-list.component').then(m => m.PermissionsListComponent) },
+          { path: 'roles', loadComponent: () => import('./features/admin-management/roles/roles-list.component').then(m => m.RolesListComponent) },
+          { path: 'user-groups', loadComponent: () => import('./features/admin-management/user-groups/user-groups-list.component').then(m => m.UserGroupsListComponent) },
+          { path: 'admin-users', loadComponent: () => import('./features/admin-management/admin-users/admin-users-list.component').then(m => m.AdminUsersListComponent) },
+        ]
       },
       {
         path: '',

@@ -45,8 +45,9 @@
         <div class="flex items-center gap-3">
           <app-status-badge [status]="w.status"></app-status-badge>
 
-          @if (canPerformWithdrawalActions() && canReject()) {
+          @if (canReject()) {
             <button
+              *hasPermission="'withdrawals.approve'"
               pButton
               label="Reject"
               icon="pi pi-times"
@@ -55,8 +56,9 @@
             </button>
           }
 
-          @if (canPerformWithdrawalActions() && canApprove()) {
+          @if (canApprove()) {
             <button
+              *hasPermission="'withdrawals.approve'"
               pButton
               label="Approve"
               icon="pi pi-check"
@@ -65,11 +67,12 @@
             </button>
           }
 
-          @if (canPerformWithdrawalActions() && canMarkPaid()) {
-            <button 
-              pButton 
-              label="Mark Paid" 
-              icon="pi pi-money-bill" 
+          @if (canMarkPaid()) {
+            <button
+              *hasPermission="'withdrawals.process'"
+              pButton
+              label="Mark Paid"
+              icon="pi pi-money-bill"
               class="p-button-success p-button-outlined"
               (click)="onMarkPaid()">
             </button>

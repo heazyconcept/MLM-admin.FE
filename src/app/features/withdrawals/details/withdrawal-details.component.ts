@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { WithdrawalService } from '../services/withdrawal.service';
 import { PermissionService } from '../../../core/services/permission.service';
-import { Feature, Action } from '../../../core/models/admin-permission.model';
+import { Feature } from '../../../core/models/admin-permission.model';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { WithdrawalActionModalComponent, ActionType } from '../modals/withdrawal-action-modal.component';
 import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 
 @Component({
   selector: 'app-withdrawal-details',
@@ -20,7 +21,8 @@ import { ToastModule } from 'primeng/toast';
     InfoBannerComponent,
     WithdrawalActionModalComponent,
     ButtonModule,
-    ToastModule
+    ToastModule,
+    HasPermissionDirective,
   ],
   providers: [MessageService],
   templateUrl: './withdrawal-details.component.html',
@@ -33,10 +35,12 @@ export class WithdrawalDetailsComponent {
   private messageService = inject(MessageService);
   protected permission = inject(PermissionService);
 
-  canPerformWithdrawalActions = computed(
-    () => this.permission.canEdit(Feature.Withdrawals) && this.permission.canPerform(Action.ApproveWithdrawal)
+  hasWithdrawalActions = computed(() =>
+    this.permission.hasAnyPermission('withdrawals.approve', 'withdrawals.process')
   );
-  isViewOnly = computed(() => !this.permission.canEdit(Feature.Withdrawals));
+  isViewOnly = computed(
+    () => this.permission.hasAccess(Feature.Withdrawals) && !this.hasWithdrawalActions()
+  );
 
   withdrawalId = signal<string | null>(this.route.snapshot.paramMap.get('id'));
 
