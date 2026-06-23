@@ -1,149 +1,52 @@
 /**
- * Permission matrix from admin-navigation-permission-matrix.md
- * Maps AdminRole x Feature to AccessLevel and AdminRole x Action to boolean
+ * Dynamic RBAC permission mappings.
+ * Permission keys are seeded by the backend — see BACKEND_RBAC_API.md.
+ *
+ * @deprecated FEATURE_ACCESS_MATRIX and ACTION_PERMISSION_MATRIX — legacy mock role
+ * matrices replaced by login effectivePermissions. Kept for reference only.
  */
 
-import { AdminRole, Feature, Action, AccessLevel } from '../models/admin-permission.model';
+import { Feature, Action } from '../models/admin-permission.model';
 
-/** Role-based feature access: full | view | none */
-export const FEATURE_ACCESS_MATRIX: Record<AdminRole, Record<Feature, AccessLevel>> = {
-  [AdminRole.SuperAdmin]: {
-    [Feature.Dashboard]: 'full',
-    [Feature.Users]: 'full',
-    [Feature.Earnings]: 'full',
-    [Feature.Wallets]: 'full',
-    [Feature.Withdrawals]: 'full',
-    [Feature.Payments]: 'full',
-    [Feature.Products]: 'full',
-    [Feature.OrdersLogistics]: 'full',
-    [Feature.Merchants]: 'full',
-    [Feature.Notifications]: 'full',
-    [Feature.ReportsAudit]: 'full',
-    [Feature.SystemConfig]: 'full'
-  },
-  [AdminRole.FinanceAdmin]: {
-    [Feature.Dashboard]: 'full',
-    [Feature.Users]: 'none',
-    [Feature.Earnings]: 'view',
-    [Feature.Wallets]: 'full',
-    [Feature.Withdrawals]: 'full',
-    [Feature.Payments]: 'full',
-    [Feature.Products]: 'none',
-    [Feature.OrdersLogistics]: 'none',
-    [Feature.Merchants]: 'none',
-    [Feature.Notifications]: 'none',
-    [Feature.ReportsAudit]: 'view',
-    [Feature.SystemConfig]: 'none'
-  },
-  [AdminRole.OperationsAdmin]: {
-    [Feature.Dashboard]: 'full',
-    [Feature.Users]: 'none',
-    [Feature.Earnings]: 'none',
-    [Feature.Wallets]: 'none',
-    [Feature.Withdrawals]: 'none',
-    [Feature.Payments]: 'none',
-    [Feature.Products]: 'none',
-    [Feature.OrdersLogistics]: 'full',
-    [Feature.Merchants]: 'full',
-    [Feature.Notifications]: 'none',
-    [Feature.ReportsAudit]: 'view',
-    [Feature.SystemConfig]: 'none'
-  },
-  [AdminRole.SupportAdmin]: {
-    [Feature.Dashboard]: 'full',
-    [Feature.Users]: 'full',
-    [Feature.Earnings]: 'none',
-    [Feature.Wallets]: 'none',
-    [Feature.Withdrawals]: 'none',
-    [Feature.Payments]: 'none',
-    [Feature.Products]: 'none',
-    [Feature.OrdersLogistics]: 'none',
-    [Feature.Merchants]: 'none',
-    [Feature.Notifications]: 'full',
-    [Feature.ReportsAudit]: 'view',
-    [Feature.SystemConfig]: 'none'
-  },
-  [AdminRole.ReadOnlyAdmin]: {
-    [Feature.Dashboard]: 'full',
-    [Feature.Users]: 'view',
-    [Feature.Earnings]: 'view',
-    [Feature.Wallets]: 'view',
-    [Feature.Withdrawals]: 'view',
-    [Feature.Payments]: 'view',
-    [Feature.Products]: 'view',
-    [Feature.OrdersLogistics]: 'view',
-    [Feature.Merchants]: 'view',
-    [Feature.Notifications]: 'view',
-    [Feature.ReportsAudit]: 'view',
-    [Feature.SystemConfig]: 'view'
-  }
+/** Minimum view permission required to access a feature route */
+export const FEATURE_MIN_VIEW_PERMISSION: Record<Feature, string> = {
+  [Feature.Dashboard]: 'dashboard.view',
+  [Feature.Users]: 'users.view',
+  [Feature.Earnings]: 'earnings.view',
+  [Feature.Wallets]: 'wallets.view',
+  [Feature.Withdrawals]: 'withdrawals.view',
+  [Feature.Payments]: 'payments.view',
+  [Feature.Products]: 'products.view',
+  [Feature.OrdersLogistics]: 'orders.view',
+  [Feature.Merchants]: 'merchants.view',
+  [Feature.Notifications]: 'notifications.view',
+  [Feature.ReportsAudit]: 'reports.view',
+  [Feature.SystemConfig]: 'system.view',
+  [Feature.AdminManagement]: 'admin_management.view',
 };
 
-/** Role-based action permission: true = can perform */
-export const ACTION_PERMISSION_MATRIX: Record<AdminRole, Record<Action, boolean>> = {
-  [AdminRole.SuperAdmin]: {
-    [Action.ApproveWithdrawal]: true,
-    [Action.ManualWalletAdjustment]: true,
-    [Action.MarkPaymentSuccessful]: true,
-    [Action.UpdateOrderStatus]: true,
-    [Action.AssignMerchant]: true,
-    [Action.ApproveMerchant]: true,
-    [Action.SuspendUser]: true,
-    [Action.ResetUserPassword]: true,
-    [Action.UpdateEarningsConfig]: true,
-    [Action.ChangeSystemConfig]: true,
-    [Action.ToggleFeatures]: true
-  },
-  [AdminRole.FinanceAdmin]: {
-    [Action.ApproveWithdrawal]: true,
-    [Action.ManualWalletAdjustment]: true,
-    [Action.MarkPaymentSuccessful]: true,
-    [Action.UpdateOrderStatus]: false,
-    [Action.AssignMerchant]: false,
-    [Action.ApproveMerchant]: false,
-    [Action.SuspendUser]: false,
-    [Action.ResetUserPassword]: false,
-    [Action.UpdateEarningsConfig]: false,
-    [Action.ChangeSystemConfig]: false,
-    [Action.ToggleFeatures]: false
-  },
-  [AdminRole.OperationsAdmin]: {
-    [Action.ApproveWithdrawal]: false,
-    [Action.ManualWalletAdjustment]: false,
-    [Action.MarkPaymentSuccessful]: false,
-    [Action.UpdateOrderStatus]: true,
-    [Action.AssignMerchant]: true,
-    [Action.ApproveMerchant]: true,
-    [Action.SuspendUser]: false,
-    [Action.ResetUserPassword]: false,
-    [Action.UpdateEarningsConfig]: false,
-    [Action.ChangeSystemConfig]: false,
-    [Action.ToggleFeatures]: false
-  },
-  [AdminRole.SupportAdmin]: {
-    [Action.ApproveWithdrawal]: false,
-    [Action.ManualWalletAdjustment]: false,
-    [Action.MarkPaymentSuccessful]: false,
-    [Action.UpdateOrderStatus]: false,
-    [Action.AssignMerchant]: false,
-    [Action.ApproveMerchant]: false,
-    [Action.SuspendUser]: true,
-    [Action.ResetUserPassword]: true,
-    [Action.UpdateEarningsConfig]: false,
-    [Action.ChangeSystemConfig]: false,
-    [Action.ToggleFeatures]: false
-  },
-  [AdminRole.ReadOnlyAdmin]: {
-    [Action.ApproveWithdrawal]: false,
-    [Action.ManualWalletAdjustment]: false,
-    [Action.MarkPaymentSuccessful]: false,
-    [Action.UpdateOrderStatus]: false,
-    [Action.AssignMerchant]: false,
-    [Action.ApproveMerchant]: false,
-    [Action.SuspendUser]: false,
-    [Action.ResetUserPassword]: false,
-    [Action.UpdateEarningsConfig]: false,
-    [Action.ChangeSystemConfig]: false,
-    [Action.ToggleFeatures]: false
-  }
+/** Maps legacy Action enum values to backend permission keys */
+export const ACTION_TO_PERMISSION_KEY: Record<Action, string | string[]> = {
+  [Action.ApproveWithdrawal]: 'withdrawals.approve',
+  [Action.ManualWalletAdjustment]: 'wallets.adjust_funds',
+  [Action.MarkPaymentSuccessful]: 'payments.mark_successful',
+  [Action.UpdateOrderStatus]: 'orders.update_status',
+  [Action.AssignMerchant]: 'merchants.assign',
+  [Action.ApproveMerchant]: 'merchants.approve',
+  [Action.SuspendUser]: 'users.suspend',
+  [Action.ResetUserPassword]: 'users.reset_password',
+  [Action.UpdateEarningsConfig]: [
+    'earnings.configure_packages',
+    'earnings.configure_bonuses',
+    'earnings.configure_ranking',
+    'earnings.configure_cpv',
+  ],
+  [Action.ChangeSystemConfig]: [
+    'system.edit_general',
+    'system.edit_financial',
+    'system.edit_currency',
+    'system.edit_thresholds',
+    'system.edit_api',
+  ],
+  [Action.ToggleFeatures]: 'system.toggle_features',
 };

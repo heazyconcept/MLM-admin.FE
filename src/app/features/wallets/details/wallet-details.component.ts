@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { WalletService, Wallet, LedgerEntry } from '../services/wallet.service';
 import { PermissionService } from '../../../core/services/permission.service';
-import { Feature, Action } from '../../../core/models/admin-permission.model';
+import { Feature } from '../../../core/models/admin-permission.model';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 import { TableColumn, TableConfig } from '../../../shared/components/data-table/data-table.types';
@@ -14,10 +14,11 @@ import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 
 @Component({
   selector: 'app-wallet-details',
-  imports: [CommonModule, RouterModule, InfoBannerComponent, DataTableComponent, FundsAdjustmentModalComponent, WalletActionModalComponent, ButtonModule, TagModule, ToastModule, StatusBadgeComponent],
+  imports: [CommonModule, RouterModule, InfoBannerComponent, DataTableComponent, FundsAdjustmentModalComponent, WalletActionModalComponent, ButtonModule, TagModule, ToastModule, StatusBadgeComponent, HasPermissionDirective],
   providers: [MessageService],
   templateUrl: './wallet-details.component.html',
   styleUrls: ['./wallet-details.component.css'],
@@ -29,10 +30,12 @@ export class WalletDetailsComponent {
   private messageService = inject(MessageService);
   protected permission = inject(PermissionService);
 
-  canPerformWalletActions = computed(
-    () => this.permission.canEdit(Feature.Wallets) && this.permission.canPerform(Action.ManualWalletAdjustment)
+  hasWalletActions = computed(() =>
+    this.permission.hasAnyPermission('wallets.adjust_funds', 'users.lock_wallet')
   );
-  isViewOnly = computed(() => !this.permission.canEdit(Feature.Wallets));
+  isViewOnly = computed(
+    () => this.permission.hasAccess(Feature.Wallets) && !this.hasWalletActions()
+  );
 
   walletId = signal<string>(this.route.snapshot.paramMap.get('id') || '');
   

@@ -18,6 +18,7 @@ interface MenuItem {
   icon: string;
   route?: string;
   feature?: Feature;
+  permissionKey?: string;
   badge?: number;
   action?: () => void;
   submenu?: MenuItem[];
@@ -55,71 +56,74 @@ export class SidebarComponent {
           icon: 'pi pi-th-large',
           route: '/admin/dashboard',
           feature: Feature.Dashboard,
+          permissionKey: 'dashboard.view',
         },
         {
           label: 'Users',
           icon: 'pi pi-users',
           route: '/admin/users',
           feature: Feature.Users,
+          permissionKey: 'users.view',
         },
         {
           label: 'Earnings Payouts',
           icon: 'pi pi-percentage',
           feature: Feature.ReportsAudit,
+          permissionKey: 'reports.earnings_payouts',
           submenu: [
             {
               label: 'All payouts',
               icon: 'pi pi-list',
               route: '/admin/reports/earnings',
-              feature: Feature.ReportsAudit,
+              permissionKey: 'reports.earnings_payouts',
             },
             {
               label: 'Activation',
               icon: 'pi pi-bolt',
               route: '/admin/reports/earnings/activation',
-              feature: Feature.ReportsAudit,
+              permissionKey: 'reports.earnings_payouts',
             },
             {
               label: 'Upgrade',
               icon: 'pi pi-level-up',
               route: '/admin/reports/earnings/upgrade',
-              feature: Feature.ReportsAudit,
+              permissionKey: 'reports.earnings_payouts',
             },
             {
               label: 'Product purchase',
               icon: 'pi pi-shopping-cart',
               route: '/admin/reports/earnings/product-purchase',
-              feature: Feature.ReportsAudit,
+              permissionKey: 'reports.earnings_payouts',
             },
             {
               label: 'PDPA',
               icon: 'pi pi-calendar',
               route: '/admin/reports/earnings/pdpa',
-              feature: Feature.ReportsAudit,
+              permissionKey: 'reports.earnings_payouts',
             },
             {
               label: 'CDPA',
               icon: 'pi pi-calendar-plus',
               route: '/admin/reports/earnings/cdpa',
-              feature: Feature.ReportsAudit,
+              permissionKey: 'reports.earnings_payouts',
             },
             {
               label: 'Bonuses',
               icon: 'pi pi-star',
               route: '/admin/reports/earnings/bonuses',
-              feature: Feature.ReportsAudit,
+              permissionKey: 'reports.earnings_payouts',
             },
             {
               label: 'Admin adjustment',
               icon: 'pi pi-sliders-h',
               route: '/admin/reports/earnings/admin-adjustment',
-              feature: Feature.ReportsAudit,
+              permissionKey: 'reports.earnings_payouts',
             },
             {
               label: 'CPV',
               icon: 'pi pi-chart-bar',
               route: '/admin/reports/earnings/cpv',
-              feature: Feature.ReportsAudit,
+              permissionKey: 'reports.cpv',
             },
           ],
         },
@@ -128,24 +132,25 @@ export class SidebarComponent {
           icon: 'pi pi-chart-bar',
           route: '/admin/cpv-config',
           feature: Feature.Earnings,
+          permissionKey: 'earnings.configure_cpv',
         },
         {
           label: 'Wallets',
           icon: 'pi pi-wallet',
           feature: Feature.Wallets,
+          permissionKey: 'wallets.view',
           submenu: [
-            // { label: 'Overview', icon: 'pi pi-chart-bar', route: '/admin/wallets/overview', feature: Feature.Wallets },
             {
               label: 'Wallet Types',
               icon: 'pi pi-wallet',
               route: '/admin/wallets/types',
-              feature: Feature.Wallets,
+              permissionKey: 'wallets.view',
             },
             {
               label: 'All Wallets',
               icon: 'pi pi-list',
               route: '/admin/wallets',
-              feature: Feature.Wallets,
+              permissionKey: 'wallets.view',
             },
           ],
         },
@@ -153,18 +158,19 @@ export class SidebarComponent {
           label: 'Withdrawals',
           icon: 'pi pi-money-bill',
           feature: Feature.Withdrawals,
+          permissionKey: 'withdrawals.view',
           submenu: [
             {
               label: 'All Requests',
               icon: 'pi pi-list',
               route: '/admin/withdrawals',
-              feature: Feature.Withdrawals,
+              permissionKey: 'withdrawals.view',
             },
             {
               label: 'Pending',
               icon: 'pi pi-clock',
               route: '/admin/withdrawals/pending',
-              feature: Feature.Withdrawals,
+              permissionKey: 'withdrawals.view',
             },
           ],
         },
@@ -173,29 +179,31 @@ export class SidebarComponent {
           icon: 'pi pi-credit-card',
           route: '/admin/payments',
           feature: Feature.Payments,
+          permissionKey: 'payments.view',
         },
         {
           label: 'Products',
           icon: 'pi pi-shopping-bag',
           feature: Feature.Products,
+          permissionKey: 'products.view',
           submenu: [
             {
               label: 'Catalog',
               icon: 'pi pi-list',
               route: '/admin/products',
-              feature: Feature.Products,
+              permissionKey: 'products.view',
             },
             {
               label: 'Stock',
               icon: 'pi pi-box',
               route: '/admin/products/stock',
-              feature: Feature.Products,
+              permissionKey: 'products.manage_stock',
             },
             {
               label: 'Categories',
               icon: 'pi pi-tags',
               route: '/admin/products/categories',
-              feature: Feature.Products,
+              permissionKey: 'products.manage_categories',
             },
           ],
         },
@@ -204,23 +212,25 @@ export class SidebarComponent {
           icon: 'pi pi-credit-card',
           route: '/admin/orders',
           feature: Feature.OrdersLogistics,
+          permissionKey: 'orders.view',
         },
         {
           label: 'Merchants',
           icon: 'pi pi-truck',
           feature: Feature.Merchants,
+          permissionKey: 'merchants.view',
           submenu: [
             {
               label: 'All Merchants',
               icon: 'pi pi-list',
               route: '/admin/merchants',
-              feature: Feature.Merchants,
+              permissionKey: 'merchants.view',
             },
             {
               label: 'Category Config',
               icon: 'pi pi-sliders-h',
               route: '/admin/merchants/category-config',
-              feature: Feature.Merchants,
+              permissionKey: 'merchants.configure_categories',
             },
           ],
         },
@@ -229,38 +239,58 @@ export class SidebarComponent {
           icon: 'pi pi-bell',
           route: '/admin/notifications',
           feature: Feature.Notifications,
+          permissionKey: 'notifications.view',
         },
       ],
     },
     {
       title: 'REPORTS & AUDIT',
       items: [
-        // { label: 'Reports', icon: 'pi pi-file-edit', route: '/admin/reports', feature: Feature.ReportsAudit },
         {
           label: 'Profit Reports',
           icon: 'pi pi-chart-line',
           route: '/admin/reports/profit',
           feature: Feature.ReportsAudit,
+          permissionKey: 'reports.profit',
         },
-        // {
-        //   label: 'Earnings',
-        //   icon: 'pi pi-dollar',
-        //   route: '/admin/earnings',
-        //   feature: Feature.Earnings,
-        // },
-
         {
           label: 'Audit Logs',
           icon: 'pi pi-history',
           route: '/admin/audit',
           feature: Feature.ReportsAudit,
+          permissionKey: 'audit.view_logs',
         },
       ],
     },
     {
       title: 'GENERAL',
       items: [
-        // { label: 'System Configuration', icon: 'pi pi-cog', route: '/admin/system', feature: Feature.SystemConfig },
+        {
+          label: 'Admin Management',
+          icon: 'pi pi-shield',
+          feature: Feature.AdminManagement,
+          permissionKey: 'admin_management.view',
+          submenu: [
+            {
+              label: 'Roles & Permissions',
+              icon: 'pi pi-id-card',
+              route: '/admin/admin-management/roles',
+              permissionKey: 'admin_management.manage_roles',
+            },
+            {
+              label: 'User Groups',
+              icon: 'pi pi-sitemap',
+              route: '/admin/admin-management/user-groups',
+              permissionKey: 'admin_management.manage_groups',
+            },
+            {
+              label: 'Admin Users',
+              icon: 'pi pi-users',
+              route: '/admin/admin-management/admin-users',
+              permissionKey: 'admin_management.manage_users',
+            },
+          ],
+        },
         {
           label: 'Log out',
           icon: 'pi pi-sign-out',
@@ -270,17 +300,48 @@ export class SidebarComponent {
     },
   ];
 
-  filteredMenuSections = computed(() => {
-    return this.menuSections
+  filteredMenuSections = computed(() =>
+    this.menuSections
       .map((section) => ({
         ...section,
-        items: section.items.filter((item) => {
-          if (!item.feature) return true;
-          return this.permission.hasAccess(item.feature);
-        }),
+        items: section.items
+          .map((item) => this.filterMenuItem(item))
+          .filter((item): item is MenuItem => item !== null),
       }))
-      .filter((section) => section.items.length > 0);
-  });
+      .filter((section) => section.items.length > 0)
+  );
+
+  private filterMenuItem(item: MenuItem): MenuItem | null {
+    if (item.submenu?.length) {
+      const submenu = item.submenu
+        .map((child) => this.filterMenuItem(child))
+        .filter((child): child is MenuItem => child !== null);
+
+      if (submenu.length === 0) {
+        return null;
+      }
+
+      return { ...item, submenu };
+    }
+
+    return this.isMenuItemVisible(item) ? item : null;
+  }
+
+  private isMenuItemVisible(item: MenuItem): boolean {
+    if (item.action && !item.feature && !item.permissionKey) {
+      return true;
+    }
+
+    if (item.permissionKey) {
+      return this.permission.hasPermission(item.permissionKey);
+    }
+
+    if (item.feature) {
+      return this.permission.hasAccess(item.feature);
+    }
+
+    return true;
+  }
 
   toggleCollapse() {
     this.collapsed.update((v) => !v);

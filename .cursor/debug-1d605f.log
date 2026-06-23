@@ -1,0 +1,3 @@
+{"sessionId":"1d605f","location":"auth.service.ts:setMustChangePassword","message":"mustChangePassword flag updated","data":{"required":true,"previous":true},"timestamp":1782216441788,"hypothesisId":"H-C"}
+{"sessionId":"1d605f","location":"login.component.ts:onSubmit","message":"redirecting to change-password after login","data":{"mustChangePassword":true},"timestamp":1782216441789,"hypothesisId":"H-A"}
+{"sessionId":"1d605f","location":"auth.service.ts:login","message":"login response mustChangePassword","data":{"apiMustChangePassword":true,"hasUser":true,"storedBefore":true},"timestamp":1782216441786,"hypothesisId":"H-A"}

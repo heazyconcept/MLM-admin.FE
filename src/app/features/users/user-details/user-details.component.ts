@@ -9,7 +9,7 @@ import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { PermissionService } from '../../../core/services/permission.service';
-import { Feature, Action } from '../../../core/models/admin-permission.model';
+import { Feature } from '../../../core/models/admin-permission.model';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
@@ -64,14 +64,24 @@ export class UserDetailsComponent implements OnInit {
   private messageService = inject(MessageService);
   protected permission = inject(PermissionService);
 
-  canEdit = computed(() => this.permission.canEdit(Feature.Users));
-  canSuspendUser = computed(
-    () => this.permission.canEdit(Feature.Users) && this.permission.canPerform(Action.SuspendUser)
+  hasUserActions = computed(() =>
+    this.permission.hasAnyPermission(
+      'users.activate_registration',
+      'users.upgrade_package',
+      'users.fund_cash',
+      'users.credit_volume',
+      'users.lock_wallet',
+      'users.suspend',
+      'users.reset_password',
+      'users.impersonate',
+      'users.wallet_adjust'
+    )
   );
-  canResetPassword = computed(
-    () => this.permission.canEdit(Feature.Users) && this.permission.canPerform(Action.ResetUserPassword)
+  canSuspendUser = computed(() => this.permission.hasPermission('users.suspend'));
+  canResetPassword = computed(() => this.permission.hasPermission('users.reset_password'));
+  isViewOnly = computed(
+    () => this.permission.hasAccess(Feature.Users) && !this.hasUserActions()
   );
-  isViewOnly = computed(() => !this.permission.canEdit(Feature.Users));
 
   user = signal<User | null>(null);
   activeTab = signal('basic');
@@ -270,7 +280,7 @@ export class UserDetailsComponent implements OnInit {
 
   toggleCashLock(): void {
     const u = this.user();
-    if (!u || !this.canEdit()) return;
+    if (!u || !this.hasUserActions()) return;
     const cash = u.wallets.cash;
     if (!cash) return;
     if (cash.status === 'ACTIVE') {

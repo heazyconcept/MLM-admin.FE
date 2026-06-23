@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { PaymentService } from '../services/payment.service';
 import { PermissionService } from '../../../core/services/permission.service';
-import { Feature, Action } from '../../../core/models/admin-permission.model';
+import { Feature } from '../../../core/models/admin-permission.model';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { PaymentActionModalComponent, PaymentActionType } from '../modals/payment-action-modal.component';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 
 @Component({
   selector: 'app-payment-details',
@@ -20,7 +21,8 @@ import { MessageService } from 'primeng/api';
     InfoBannerComponent,
     PaymentActionModalComponent,
     ButtonModule,
-    ToastModule
+    ToastModule,
+    HasPermissionDirective,
   ],
   providers: [MessageService],
   templateUrl: './payment-details.component.html',
@@ -33,10 +35,12 @@ export class PaymentDetailsComponent implements OnInit {
   private messageService = inject(MessageService);
   protected permission = inject(PermissionService);
 
-  canPerformPaymentActions = computed(
-    () => this.permission.canEdit(Feature.Payments) && this.permission.canPerform(Action.MarkPaymentSuccessful)
+  canMarkPaymentSuccessful = computed(() =>
+    this.permission.hasPermission('payments.mark_successful')
   );
-  isViewOnly = computed(() => !this.permission.canEdit(Feature.Payments));
+  isViewOnly = computed(
+    () => this.permission.hasAccess(Feature.Payments) && !this.canMarkPaymentSuccessful()
+  );
 
   paymentId = signal<string | null>(null);
   

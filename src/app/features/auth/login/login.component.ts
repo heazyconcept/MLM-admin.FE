@@ -51,6 +51,12 @@ export class LoginComponent {
       this.authService.login(username, password).subscribe({
         next: () => {
           this.isLoading = false;
+
+          if (this.authService.mustChangePassword()) {
+            this.router.navigate(['/change-password']);
+            return;
+          }
+
           this.modalService.open('success', 'Login Successful', 'You have successfully signed in to your account.');
           setTimeout(() => {
             this.router.navigate(['/admin/dashboard']);
