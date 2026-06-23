@@ -1,5 +1,8 @@
 /**
  * Admin permission types aligned with admin-navigation-permission-matrix.md
+ *
+ * NOTE: AdminRole enum is kept for legacy display only.
+ * Permission checks use dynamic RBAC keys from login effectivePermissions via PermissionService.
  */
 
 export enum AdminRole {
@@ -22,7 +25,8 @@ export enum Feature {
   Merchants = 'Merchants',
   Notifications = 'Notifications',
   ReportsAudit = 'ReportsAudit',
-  SystemConfig = 'SystemConfig'
+  SystemConfig = 'SystemConfig',
+  AdminManagement = 'AdminManagement'
 }
 
 export enum Action {

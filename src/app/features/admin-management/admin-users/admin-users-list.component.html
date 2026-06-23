@@ -1,0 +1,261 @@
+<p-toast></p-toast>
+
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-lg font-bold text-gray-900">Admin Users</h2>
+      <p class="text-sm text-gray-500 mt-0.5">
+        {{ filteredUsers().length }} admin{{ filteredUsers().length !== 1 ? 's' : '' }} registered
+      </p>
+    </div>
+    <button
+      (click)="openCreate()"
+      class="h-9 px-4 rounded-lg text-sm font-semibold text-white
+             bg-mlm-primary border border-mlm-primary
+             hover:bg-brand-green-dark hover:border-brand-green-dark
+             flex items-center gap-2 transition-colors duration-150">
+      <i class="pi pi-user-plus text-xs"></i>
+      Create Admin User
+    </button>
+  </div>
+
+  <!-- Search -->
+  <div class="relative">
+    <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+    <input
+      pInputText
+      type="text"
+      [ngModel]="searchQuery()"
+      (ngModelChange)="searchQuery.set($event)"
+      placeholder="Search by name, email, or group..."
+      class="h-9 pl-9 pr-4 text-sm rounded-lg border-gray-200 w-96" />
+  </div>
+
+  <!-- Users Table -->
+  @if (loading()) {
+    <div class="flex items-center justify-center py-16">
+      <i class="pi pi-spin pi-spinner text-2xl text-gray-400"></i>
+    </div>
+  } @else if (filteredUsers().length === 0) {
+    <div class="flex flex-col items-center justify-center py-16 text-gray-400">
+      <i class="pi pi-users text-4xl mb-3"></i>
+      <p class="text-sm font-medium">No admin users found</p>
+      <p class="text-xs mt-1">Create your first admin user to get started</p>
+    </div>
+  } @else {
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 bg-gray-50/60">
+            <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-400">User</th>
+            <th class="px-5 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-400">Groups</th>
+            <th class="px-5 py-3 text-center text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-400 w-28">Status</th>
+            <th class="px-5 py-3 text-center text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-400 w-36">Last Login</th>
+            <th class="px-5 py-3 text-center text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-400 w-32">Permissions</th>
+            <th class="px-5 py-3 text-center text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-400 w-28">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of filteredUsers(); track user.id) {
+            <tr class="border-b border-gray-100 hover:bg-gray-50/60 transition-colors duration-100">
+              <!-- User Info -->
+              <td class="px-5 py-3.5">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                       [class.bg-emerald-100]="user.isActive"
+                       [class.bg-gray-100]="!user.isActive">
+                    <span class="text-sm font-bold"
+                          [class.text-emerald-600]="user.isActive"
+                          [class.text-gray-400]="!user.isActive">
+                      {{ user.fullName.charAt(0) }}
+                    </span>
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-gray-900">{{ user.fullName }}</p>
+                    <p class="text-xs text-gray-400">{{ user.email }}</p>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Groups -->
+              <td class="px-5 py-3.5">
+                <div class="flex flex-wrap gap-1">
+                  @for (group of user.groups; track group.id) {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border bg-gray-100 text-gray-700 border-gray-200">
+                      {{ group.name }}
+                    </span>
+                  }
+                  @if (user.groups.length === 0) {
+                    <span class="text-xs text-gray-300 italic">No group</span>
+                  }
+                </div>
+              </td>
+
+              <!-- Status -->
+              <td class="px-5 py-3.5 text-center">
+                <span class="inline-flex items-center gap-1.5 text-xs font-semibold"
+                      [class.text-emerald-600]="user.isActive"
+                      [class.text-red-500]="!user.isActive">
+                  <span class="w-1.5 h-1.5 rounded-full"
+                        [class.bg-emerald-500]="user.isActive"
+                        [class.bg-red-500]="!user.isActive"></span>
+                  {{ user.isActive ? 'Active' : 'Inactive' }}
+                </span>
+                @if (user.mustChangePassword) {
+                  <p class="text-[9px] text-amber-600 font-medium mt-0.5">Must change password</p>
+                }
+              </td>
+
+              <!-- Last Login -->
+              <td class="px-5 py-3.5 text-center">
+                <span class="text-xs text-gray-500 font-mono">
+                  {{ formatDate(user.lastLogin) }}
+                </span>
+              </td>
+
+              <!-- Permissions Count -->
+              <td class="px-5 py-3.5 text-center">
+                <button
+                  (click)="openDetail(user)"
+                  class="text-xs font-semibold text-mlm-primary hover:text-brand-green-dark
+                         transition-colors cursor-pointer">
+                  {{ user.effectivePermissions.length }} perms
+                </button>
+              </td>
+
+              <!-- Actions -->
+              <td class="px-5 py-3.5 text-center">
+                <div class="flex items-center justify-center gap-1">
+                  <button
+                    (click)="openEdit(user)"
+                    pTooltip="Edit"
+                    tooltipPosition="top"
+                    class="w-7 h-7 rounded-md flex items-center justify-center
+                           text-gray-400 hover:text-mlm-primary hover:bg-mlm-green-50
+                           transition-colors duration-150">
+                    <i class="pi pi-pencil text-xs"></i>
+                  </button>
+                  @if (user.isActive) {
+                    <button
+                      (click)="showAction('deactivate', user)"
+                      pTooltip="Deactivate"
+                      tooltipPosition="top"
+                      class="w-7 h-7 rounded-md flex items-center justify-center
+                             text-gray-400 hover:text-red-500 hover:bg-red-50
+                             transition-colors duration-150">
+                      <i class="pi pi-ban text-xs"></i>
+                    </button>
+                  } @else {
+                    <button
+                      (click)="showAction('activate', user)"
+                      pTooltip="Activate"
+                      tooltipPosition="top"
+                      class="w-7 h-7 rounded-md flex items-center justify-center
+                             text-gray-400 hover:text-emerald-500 hover:bg-emerald-50
+                             transition-colors duration-150">
+                      <i class="pi pi-check-circle text-xs"></i>
+                    </button>
+                  }
+                  <button
+                    (click)="showAction('resetPassword', user)"
+                    pTooltip="Reset Password"
+                    tooltipPosition="top"
+                    class="w-7 h-7 rounded-md flex items-center justify-center
+                           text-gray-400 hover:text-blue-500 hover:bg-blue-50
+                           transition-colors duration-150">
+                    <i class="pi pi-key text-xs"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Create/Edit Form -->
+@if (formVisible()) {
+  <app-admin-user-form
+    [user]="editingUser()"
+    [availableGroups]="groups()"
+    (save)="onFormSave()"
+    (cancel)="onFormCancel()">
+  </app-admin-user-form>
+}
+
+<!-- Action Confirmation -->
+<app-confirmation-modal
+  [visible]="actionConfirmVisible()"
+  [title]="getActionTitle()"
+  [message]="getActionMessage()"
+  [icon]="getActionIcon()"
+  [iconClass]="getActionIconClass()"
+  [confirmLabel]="getActionLabel()"
+  [confirmClass]="getActionClass()"
+  [loading]="actionLoading()"
+  (confirm)="onActionConfirm($event)"
+  (cancel)="onActionCancel()">
+</app-confirmation-modal>
+
+<!-- Permission Detail Drawer -->
+@if (detailVisible() && detailUser()) {
+  <div class="fixed inset-0 z-50 flex items-stretch bg-black/40 backdrop-blur-sm"
+       (click)="closeDetail()">
+    <div class="ml-auto w-full max-w-lg bg-white shadow-2xl flex flex-col"
+         style="animation: slideIn 0.3s ease-out"
+         (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between shrink-0">
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">{{ detailUser()!.fullName }}</h2>
+          <p class="text-xs text-gray-400">Effective permissions from assigned groups</p>
+        </div>
+        <button
+          (click)="closeDetail()"
+          class="w-8 h-8 rounded-lg flex items-center justify-center
+                 text-gray-400 hover:text-gray-600 hover:bg-gray-100
+                 transition-colors duration-150">
+          <i class="pi pi-times text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="flex-1 overflow-y-auto px-6 py-5">
+        <!-- Groups -->
+        <div class="mb-5">
+          <p class="text-[10px] font-semibold tracking-[0.12em] text-gray-400 uppercase mb-2">Groups</p>
+          <div class="flex flex-wrap gap-1.5">
+            @for (group of detailUser()!.groups; track group.id) {
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border bg-gray-100 text-gray-700 border-gray-200">
+                {{ group.name }}
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Permissions List -->
+        <div>
+          <p class="text-[10px] font-semibold tracking-[0.12em] text-gray-400 uppercase mb-2">
+            {{ detailUser()!.effectivePermissions.length }} Permissions
+          </p>
+          <div class="space-y-1">
+            @for (key of detailUser()!.effectivePermissions; track key) {
+              <div class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-50">
+                <i class="pi pi-check text-[10px] text-emerald-500"></i>
+                <code class="text-xs font-mono text-gray-600">{{ key }}</code>
+              </div>
+            }
+            @if (detailUser()!.effectivePermissions.length === 0) {
+              <p class="text-sm text-gray-400 py-4 text-center">No permissions assigned</p>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}

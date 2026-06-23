@@ -1,0 +1,91 @@
+<div class="space-y-6">
+
+  <!-- Header Bar -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-lg font-bold text-gray-900">Permissions Registry</h2>
+      <p class="text-sm text-gray-500 mt-0.5">
+        {{ filteredCount() }} of {{ totalCount() }} permissions
+      </p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex items-center gap-3 flex-wrap">
+    <div class="relative">
+      <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+      <input
+        pInputText
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Search permissions..."
+        class="h-9 pl-9 pr-4 text-sm rounded-lg border-gray-200 w-72" />
+    </div>
+    <p-select
+      [options]="moduleOptions"
+      [ngModel]="moduleFilter()"
+      (ngModelChange)="moduleFilter.set($event)"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Filter by module"
+      styleClass="h-9 text-sm w-48">
+    </p-select>
+  </div>
+
+  <!-- Permission Groups -->
+  @if (loading()) {
+    <div class="flex items-center justify-center py-16">
+      <i class="pi pi-spin pi-spinner text-2xl text-gray-400"></i>
+    </div>
+  } @else if (filteredGroups().length === 0) {
+    <div class="flex flex-col items-center justify-center py-16 text-gray-400">
+      <i class="pi pi-search text-3xl mb-3"></i>
+      <p class="text-sm">No permissions match your filter</p>
+    </div>
+  } @else {
+    @for (group of filteredGroups(); track group.module) {
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <!-- Module Header -->
+        <div class="px-5 py-3.5 bg-gray-50/80 border-b border-gray-100 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-mlm-primary"></span>
+            <h3 class="text-sm font-semibold text-gray-900">{{ group.module }}</h3>
+          </div>
+          <span class="text-xs font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+            {{ group.permissions.length }} permissions
+          </span>
+        </div>
+
+        <!-- Permissions Table -->
+        <div class="divide-y divide-gray-100">
+          @for (perm of group.permissions; track perm.key) {
+            <div class="flex items-center gap-4 px-5 py-3 hover:bg-gray-50/60 transition-colors duration-100">
+              <!-- Label -->
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900 truncate">{{ perm.label }}</p>
+                @if (perm.description) {
+                  <p class="text-xs text-gray-500 mt-0.5 truncate">{{ perm.description }}</p>
+                }
+              </div>
+
+              <!-- Type Badge -->
+              <div class="shrink-0">
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
+                  [class.bg-blue-50]="perm.type === 'view'"
+                  [class.text-blue-700]="perm.type === 'view'"
+                  [class.border-blue-200]="perm.type === 'view'"
+                  [class.bg-amber-50]="perm.type === 'action'"
+                  [class.text-amber-700]="perm.type === 'action'"
+                  [class.border-amber-200]="perm.type === 'action'">
+                  {{ perm.type }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

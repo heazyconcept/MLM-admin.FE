@@ -13,7 +13,7 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
     return true;
   }
 
-  if (permission.hasAccess(feature)) {
+  if (permission.hasMinViewAccess(feature)) {
     return true;
   }
 

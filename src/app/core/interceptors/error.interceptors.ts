@@ -1,33 +1,50 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { ModalService } from '../services/modal.service';
+import { AuthService } from '../services/auth.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const modalService = inject(ModalService);
+  const authService = inject(AuthService);
+  const router = inject(Router);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      let errorMessage = 'An unknown error occurred!';
-      
       if (error.error instanceof ErrorEvent) {
-        // Client-side error
-        errorMessage = `Error: ${error.error.message}`;
-      } else {
-        // Server-side error
-        // Skip 401 errors - auth interceptor handles token refresh and retry
-        // Only authInterceptor should show logout modal on terminal 401
-        if (error.status === 401) {
-          return throwError(() => error);
-        } else if (error.status === 403) {
-          errorMessage = 'You do not have permission to perform this action.';
-        } else if (error.status === 404) {
-          errorMessage = 'Resource not found.';
-        } else if (error.status >= 500) {
-          errorMessage = 'Server error. Please try again later.';
-        } else if (error.error && error.error.message) {
-            errorMessage = error.error.message;
+        modalService.open('error', 'Error', `Error: ${error.error.message}`);
+        return throwError(() => error);
+      }
+
+      if (error.status === 401) {
+        return throwError(() => error);
+      }
+
+      if (authService.isPasswordChangeRequiredError(error)) {
+        authService.setMustChangePassword(true);
+        if (!router.url.startsWith('/change-password')) {
+          router.navigate(['/change-password']);
         }
+        return throwError(() => error);
+      }
+
+      if (req.url.includes('users/me/password')) {
+        return throwError(() => error);
+      }
+
+      let errorMessage = 'An unknown error occurred!';
+
+      if (error.status === 403) {
+        errorMessage = 'You do not have permission to perform this action.';
+      } else if (error.status === 404) {
+        errorMessage = 'Resource not found.';
+      } else if (error.status >= 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (error.error && error.error.message) {
+        errorMessage = Array.isArray(error.error.message)
+          ? error.error.message.join(', ')
+          : error.error.message;
       }
 
       modalService.open('error', 'Error', errorMessage);

@@ -1,0 +1,149 @@
+<p-toast></p-toast>
+
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-lg font-bold text-gray-900">User Groups</h2>
+      <p class="text-sm text-gray-500 mt-0.5">
+        Assign roles to groups, then assign admin users to groups
+      </p>
+    </div>
+    <button
+      (click)="openCreate()"
+      class="h-9 px-4 rounded-lg text-sm font-semibold text-white
+             bg-mlm-primary border border-mlm-primary
+             hover:bg-brand-green-dark hover:border-brand-green-dark
+             flex items-center gap-2 transition-colors duration-150">
+      <i class="pi pi-plus text-xs"></i>
+      Create Group
+    </button>
+  </div>
+
+  <!-- Search -->
+  <div class="relative">
+    <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+    <input
+      pInputText
+      type="text"
+      [ngModel]="searchQuery()"
+      (ngModelChange)="searchQuery.set($event)"
+      placeholder="Search groups..."
+      class="h-9 pl-9 pr-4 text-sm rounded-lg border-gray-200 w-80" />
+  </div>
+
+  <!-- Groups Grid -->
+  @if (loading()) {
+    <div class="flex items-center justify-center py-16">
+      <i class="pi pi-spin pi-spinner text-2xl text-gray-400"></i>
+    </div>
+  } @else if (filteredGroups().length === 0) {
+    <div class="flex flex-col items-center justify-center py-16 text-gray-400">
+      <i class="pi pi-sitemap text-4xl mb-3"></i>
+      <p class="text-sm font-medium">No user groups found</p>
+      <p class="text-xs mt-1">Create your first group to organize admin roles</p>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      @for (group of filteredGroups(); track group.id) {
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden
+                    hover:shadow-md hover:border-gray-300 transition-all duration-200 group">
+
+          <div class="p-5">
+            <!-- Title Row -->
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div>
+                  <h3 class="text-sm font-bold text-gray-900">{{ group.name }}</h3>
+                  @if (group.isSystemGroup) {
+                    <span class="text-[9px] font-bold uppercase tracking-widest text-emerald-600">Protected</span>
+                  }
+                </div>
+              </div>
+
+              @if (!group.isSystemGroup) {
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    (click)="openEdit(group)"
+                    pTooltip="Edit"
+                    tooltipPosition="top"
+                    class="w-7 h-7 rounded-md flex items-center justify-center
+                           text-gray-400 hover:text-mlm-primary hover:bg-mlm-green-50
+                           transition-colors duration-150">
+                    <i class="pi pi-pencil text-xs"></i>
+                  </button>
+                  <button
+                    (click)="confirmDelete(group)"
+                    pTooltip="Delete"
+                    tooltipPosition="top"
+                    class="w-7 h-7 rounded-md flex items-center justify-center
+                           text-gray-400 hover:text-red-500 hover:bg-red-50
+                           transition-colors duration-150">
+                    <i class="pi pi-trash text-xs"></i>
+                  </button>
+                </div>
+              }
+            </div>
+
+            <!-- Description -->
+            <p class="text-xs text-gray-500 mb-4 line-clamp-2">{{ group.description }}</p>
+
+            <!-- Roles Pills -->
+            <div class="flex flex-wrap gap-1.5 mb-4">
+              @for (role of group.roles; track role.id) {
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md
+                             text-[10px] font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                  {{ role.name }}
+                </span>
+              }
+              @if (group.roles.length === 0) {
+                <span class="text-xs text-gray-400 italic">No roles assigned</span>
+              }
+            </div>
+
+            <!-- Stats -->
+            <div class="flex items-center gap-4 pt-3 border-t border-gray-100">
+              <div class="flex items-center gap-1.5 text-xs text-gray-400">
+                <i class="pi pi-id-card text-[10px]"></i>
+                <span class="font-medium">{{ group.roles.length }}</span> roles
+              </div>
+              <div class="flex items-center gap-1.5 text-xs text-gray-400">
+                <i class="pi pi-key text-[10px]"></i>
+                <span class="font-medium">{{ getGroupPermissionCount(group) }}</span> permissions
+              </div>
+              <div class="flex items-center gap-1.5 text-xs text-gray-400">
+                <i class="pi pi-users text-[10px]"></i>
+                <span class="font-medium">{{ group.memberCount }}</span> members
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- User Group Form Modal -->
+@if (formVisible()) {
+  <app-user-group-form
+    [group]="editingGroup()"
+    [availableRoles]="roles()"
+    (save)="onFormSave()"
+    (cancel)="onFormCancel()">
+  </app-user-group-form>
+}
+
+<!-- Delete Confirmation -->
+<app-confirmation-modal
+  [visible]="deleteConfirmVisible()"
+  title="Delete User Group"
+  [message]="'Are you sure you want to delete the group \'' + (deletingGroup()?.name || '') + '\'? Members will be unassigned.'"
+  icon="pi pi-trash"
+  iconClass="text-red-500"
+  confirmLabel="Delete Group"
+  confirmClass="p-button-danger"
+  [loading]="deleteLoading()"
+  (confirm)="onDeleteConfirm($event)"
+  (cancel)="onDeleteCancel()">
+</app-confirmation-modal>

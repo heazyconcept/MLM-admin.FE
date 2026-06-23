@@ -62,12 +62,11 @@
         </div>
 
         <!-- Right: actions — grouped by type -->
-        @if (canEdit()) {
+        @if (hasUserActions()) {
           @if (user(); as u) {
             <div class="flex items-center gap-2 flex-wrap shrink-0 pt-0.5">
 
-              <!-- Activation — only when not yet paid -->
-              @if (!u.isRegistrationPaid) {
+              @if (!u.isRegistrationPaid && permission.hasPermission('users.activate_registration')) {
                 <button
                   (click)="openActivateModal()"
                   class="h-9 px-4 rounded-lg text-sm font-semibold text-white
@@ -79,8 +78,7 @@
                 </button>
               }
 
-              <!-- Upgrade — only when activated -->
-              @if (u.isRegistrationPaid) {
+              @if (u.isRegistrationPaid && permission.hasPermission('users.upgrade_package')) {
                 <button
                   (click)="openUpgradeModal()"
                   class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
@@ -91,7 +89,7 @@
                 </button>
               }
 
-              <!-- Fund CASH -->
+              @if (permission.hasPermission('users.fund_cash')) {
               <button
                 (click)="openFundModal()"
                 class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
@@ -100,8 +98,9 @@
                 <i class="pi pi-wallet text-xs"></i>
                 Fund CASH
               </button>
+              }
 
-              <!-- Credit volume -->
+              @if (permission.hasPermission('users.credit_volume')) {
               <button
                 (click)="openVolumeModal()"
                 class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
@@ -110,12 +109,11 @@
                 <i class="pi pi-chart-bar text-xs"></i>
                 Credit volume
               </button>
+              }
 
-              <!-- Divider -->
               <div class="h-5 w-px bg-slate-200 mx-1"></div>
 
-              <!-- Lock/Unlock CASH — outlined danger/success -->
-              @if (u.wallets.cash) {
+              @if (u.wallets.cash && permission.hasPermission('users.lock_wallet')) {
                 <button
                   (click)="toggleCashLock()"
                   class="h-9 px-4 rounded-lg border text-sm font-semibold

@@ -45,7 +45,7 @@
           <app-status-badge [status]="p.status"></app-status-badge>
 
           <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
-            @if (canPerformPaymentActions() && canFlag) {
+            @if (canFlag) {
               <button
                 pButton
                 label="Flag"
@@ -55,7 +55,7 @@
               </button>
             }
 
-            @if (canPerformPaymentActions() && canFail) {
+            @if (canFail) {
               <button
                 pButton
                 label="Fail"
@@ -65,8 +65,9 @@
               </button>
             }
 
-            @if (canPerformPaymentActions() && canConfirmSuccessful) {
+            @if (canConfirmSuccessful) {
               <button
+                *hasPermission="'payments.mark_successful'"
                 pButton
                 label="Confirm Successful"
                 icon="pi pi-check"
@@ -75,7 +76,7 @@
               </button>
             }
 
-            @if (canPerformPaymentActions() && canReverse) {
+            @if (canReverse) {
               <button
                 pButton
                 label="Reverse"
