@@ -5,7 +5,7 @@
         Profit & Revenue Reports
       </h1>
       <p class="text-sm text-mlm-secondary">
-        Summary and transaction view across registrations, upgrades, products, and autoships.
+        Summary and transaction view across registrations, upgrades, products, autoships, and admin fees.
       </p>
     </div>
     <button
@@ -96,23 +96,38 @@
     }
   </div>
 
-    <!-- <div class="bg-white rounded-xl border border-slate-200 px-5 py-4 mb-6">
-      <div class="flex flex-wrap items-center gap-2">
+  <div class="bg-white rounded-xl border border-slate-200 px-5 py-4 mb-6">
+    <div class="mb-3">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">Category breakdown</p>
+      <p class="text-xs text-slate-400">Revenue and profit by stream — margins calculated by the backend</p>
+    </div>
+    @if (loadingSummary()) {
+      <p class="text-sm text-slate-400">Loading categories...</p>
+    } @else if (categoryChips().length === 0) {
+      <p class="text-sm text-slate-400">No category data for the selected range.</p>
+    } @else {
+      <div class="flex flex-wrap items-stretch gap-2">
         @for (chip of categoryChips(); track chip.key) {
-          <div class="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50">
-            <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
-              {{ formatCategory(chip.key) }}
+          <div class="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 min-w-[180px]">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
+                {{ chip.label }}
+              </p>
+              <span class="text-[10px] font-semibold text-mlm-primary bg-mlm-green-50 px-1.5 py-0.5 rounded">
+                {{ chip.marginLabel }}
+              </span>
+            </div>
+            <p class="text-sm font-semibold text-mlm-text tabular-nums">
+              {{ formatCurrency(chip.revenue) }} revenue
             </p>
-            <p class="text-sm font-semibold text-mlm-text">
-              {{ formatCurrency(chip.revenueUsd) }} revenue
-            </p>
-            <p class="text-xs text-slate-400">
-              {{ formatCurrency(chip.profitUsd) }} profit · {{ chip.transactionCount }} txns
+            <p class="text-xs text-slate-400 tabular-nums">
+              {{ formatCurrency(chip.profit) }} profit · {{ chip.transactionCount }} txns
             </p>
           </div>
         }
       </div>
-    </div> -->
+    }
+  </div>
 
   <div class="bg-white rounded-xl border border-slate-200 px-5 py-5 mb-6">
     <div class="mb-4">
@@ -150,9 +165,11 @@
           </td>
           <td class="px-5 py-3.5 min-w-[200px]">
             <p class="text-sm font-semibold text-mlm-text">
-              {{ row.userName || 'Unknown user' }}
+              {{ formatUserPrimary(row) }}
             </p>
-            <p class="text-[11px] text-slate-400">{{ row.userEmail || row.userId }}</p>
+            @if (formatUserSecondary(row)) {
+              <p class="text-[11px] text-slate-400">{{ formatUserSecondary(row) }}</p>
+            }
           </td>
           <td class="px-5 py-3.5 w-[160px] text-right">
             <p class="text-sm font-semibold text-mlm-text">{{ formatRowAmount(row) }}</p>
