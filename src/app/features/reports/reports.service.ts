@@ -33,7 +33,19 @@ export type ProfitCategory =
   | 'REGISTRATION'
   | 'UPGRADE'
   | 'PRODUCT_PURCHASE'
-  | 'AUTOSHIP';
+  | 'AUTOSHIP'
+  | 'ADMIN_FEE';
+
+export type ProfitSourceEntity = 'ledger' | 'payment' | 'order' | 'admin_fee';
+
+/** Backend margin rates — for labels/tooltips only; display API profit values */
+export const PROFIT_MARGIN_LABELS: Record<ProfitCategory, string> = {
+  REGISTRATION: '10%',
+  UPGRADE: '10%',
+  PRODUCT_PURCHASE: '20%',
+  AUTOSHIP: '10%',
+  ADMIN_FEE: '50%',
+};
 
 export interface ProfitSummaryCategory {
   revenueUsd?: number;
@@ -55,16 +67,16 @@ export interface ProfitSummaryResponse {
   from?: string;
   currency?: string;
   to?: string;
-  totalRevenueUsd: number;
-  totalProfitUsd: number;
-  totalAdminFeesUsd: number;
-  totalAutoshipChargesUsd: number;
+  totalRevenueUsd?: number;
+  totalProfitUsd?: number;
+  totalAdminFeesUsd?: number;
+  totalAutoshipChargesUsd?: number;
   totalRevenue?: number;
   totalProfit?: number;
   totalAdminFees?: number;
   totalAutoshipCharges?: number;
   byCategory: Record<ProfitCategory, ProfitSummaryCategory>;
-  adminFeesByType?: Record<string, number>;
+  adminFeesByType?: { REGISTRATION: number; AUTOSHIP: number };
   trend: ProfitTrendBucket[];
 }
 
@@ -75,12 +87,14 @@ export interface ProfitTransactionRow {
   userId?: string;
   userEmail?: string;
   userName?: string;
-  amountUsd: number;
+  amount?: number;
+  amountUsd?: number;
   displayAmount?: number;
   displayCurrency?: string;
-  profitUsd: number;
+  profit?: number;
+  profitUsd?: number;
   reference?: string;
-  sourceEntity?: string;
+  sourceEntity?: ProfitSourceEntity;
   metadata?: Record<string, unknown>;
 }
 

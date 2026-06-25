@@ -19,8 +19,25 @@ import {
   ProfitCategory,
   ProfitSummaryResponse,
   ProfitTransactionRow,
+  PROFIT_MARGIN_LABELS,
   ReportsService,
 } from '../reports.service';
+
+const CATEGORY_DISPLAY_ORDER: ProfitCategory[] = [
+  'REGISTRATION',
+  'UPGRADE',
+  'PRODUCT_PURCHASE',
+  'AUTOSHIP',
+  'ADMIN_FEE',
+];
+
+const CATEGORY_LABELS: Record<ProfitCategory, string> = {
+  REGISTRATION: 'Registration',
+  UPGRADE: 'Upgrade',
+  PRODUCT_PURCHASE: 'Product purchase',
+  AUTOSHIP: 'Autoship',
+  ADMIN_FEE: 'Admin fee',
+};
 
 interface CategoryOption {
   label: string;
@@ -70,6 +87,7 @@ export class ProfitReportsComponent implements OnInit {
     { label: 'Upgrade', value: 'UPGRADE' },
     { label: 'Product purchase', value: 'PRODUCT_PURCHASE' },
     { label: 'Autoship', value: 'AUTOSHIP' },
+    { label: 'Admin fee', value: 'ADMIN_FEE' },
   ];
 
   summaryCards = computed(() => {
@@ -83,17 +101,17 @@ export class ProfitReportsComponent implements OnInit {
       {
         label: 'Total profit',
         value: data?.totalProfit ?? data?.totalProfitUsd ?? 0,
-        hint: 'Admin fees + autoship charges',
+        hint: 'Sum of category profits (fixed margins)',
       },
       {
         label: 'Admin fees',
         value: data?.totalAdminFees ?? data?.totalAdminFeesUsd ?? 0,
-        hint: 'Registration + autoship fees',
+        hint: 'Informational — registration + autoship fee totals',
       },
       {
         label: 'Autoship charges',
         value: data?.totalAutoshipCharges ?? data?.totalAutoshipChargesUsd ?? 0,
-        hint: 'Monthly autoship totals',
+        hint: 'Informational — net autoship debits only',
       },
     ];
   });
@@ -101,16 +119,18 @@ export class ProfitReportsComponent implements OnInit {
   categoryChips = computed(() => {
     const data = this.summary();
     if (!data?.byCategory) return [];
-    const entries = Object.entries(data.byCategory) as [
-      ProfitCategory,
-      { revenue?: number; revenueUsd?: number; profit?: number; profitUsd?: number; transactionCount: number }
-    ][];
-    return entries.map(([key, value]) => ({
-      key,
-      revenueUsd: value.revenue ?? value.revenueUsd ?? 0,
-      profitUsd: value.profit ?? value.profitUsd ?? 0,
-      transactionCount: value.transactionCount,
-    }));
+
+    return CATEGORY_DISPLAY_ORDER.filter((key) => data.byCategory[key]).map((key) => {
+      const value = data.byCategory[key];
+      return {
+        key,
+        label: CATEGORY_LABELS[key],
+        marginLabel: PROFIT_MARGIN_LABELS[key],
+        revenue: value.revenue ?? value.revenueUsd ?? 0,
+        profit: value.profit ?? value.profitUsd ?? 0,
+        transactionCount: value.transactionCount,
+      };
+    });
   });
 
   ngOnInit(): void {
@@ -265,14 +285,14 @@ export class ProfitReportsComponent implements OnInit {
       datasets: [
         {
           label: 'Revenue',
-          data: res.trend.map((b) => Number((b as any).revenue ?? (b as any).revenueUsd) || 0),
+          data: res.trend.map((b) => Number(b.revenue ?? b.revenueUsd) || 0),
           borderColor: primary,
           backgroundColor: 'rgba(22, 163, 74, 0.2)',
           tension: 0.3,
         },
         {
           label: 'Profit',
-          data: res.trend.map((b) => Number((b as any).profit ?? (b as any).profitUsd) || 0),
+          data: res.trend.map((b) => Number(b.profit ?? b.profitUsd) || 0),
           borderColor: '#0ea5e9',
           backgroundColor: 'rgba(14, 165, 233, 0.2)',
           tension: 0.3,
@@ -307,17 +327,34 @@ export class ProfitReportsComponent implements OnInit {
     }
     // prefer amount fields returned by backend, fall back to USD amount
     const cur = this.summary()?.currency || 'NGN';
-    const amt = (row as any).amount ?? row.amountUsd ?? 0;
+    const amt = row.amount ?? row.amountUsd ?? 0;
     return this.formatCurrency(amt, cur);
   }
 
   formatRowProfit(row: ProfitTransactionRow): string {
     const cur = this.summary()?.currency || 'NGN';
-    const p = (row as any).profit ?? row.profitUsd ?? 0;
+    const p = row.profit ?? row.profitUsd ?? 0;
     return this.formatCurrency(p, cur);
   }
 
-  formatCategory(value: string): string {
+  formatCategory(value: ProfitCategory | string): string {
+    if (value in CATEGORY_LABELS) {
+      return CATEGORY_LABELS[value as ProfitCategory];
+    }
     return value.replace(/_/g, ' ');
+  }
+
+  formatUserPrimary(row: ProfitTransactionRow): string {
+    return row.userName || row.userEmail || row.userId || 'System / admin fee';
+  }
+
+  formatUserSecondary(row: ProfitTransactionRow): string {
+    if (row.userName && row.userEmail) {
+      return row.userEmail;
+    }
+    if (row.userId && (row.userName || row.userEmail)) {
+      return row.userId;
+    }
+    return '';
   }
 }
