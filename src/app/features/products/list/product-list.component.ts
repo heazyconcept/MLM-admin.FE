@@ -63,6 +63,7 @@ export class ProductListComponent implements OnInit {
   loadError = this.adminProducts.error;
 
   searchQuery = signal('');
+  searchVal = signal('');
   selectedCategory = signal<string | null>(null);
   selectedStatus = signal<ProductStatus | null>(null);
   showDrawer = signal(false);
@@ -107,6 +108,10 @@ export class ProductListComponent implements OnInit {
   ngOnInit(): void {
     this.adminProducts.loadCategories().subscribe();
     this.adminProducts.loadProducts({ limit: 100, offset: 0 }).subscribe();
+  }
+
+  onSearch(): void {
+    this.searchQuery.set(this.searchVal().trim());
   }
 
   onRefresh(): void {

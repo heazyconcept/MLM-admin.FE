@@ -33,6 +33,7 @@ export class AdminUsersListComponent implements OnInit {
   groups = signal<UserGroup[]>([]);
   loading = signal(false);
   searchQuery = signal('');
+  searchVal = signal('');
 
   // Form state
   formVisible = signal(false);
@@ -82,6 +83,10 @@ export class AdminUsersListComponent implements OnInit {
       next: (res) => this.groups.set(res.data),
       error: () => this.groups.set(this.getDemoGroups()),
     });
+  }
+
+  onSearch(): void {
+    this.searchQuery.set(this.searchVal().trim());
   }
 
   openCreate(): void {

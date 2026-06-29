@@ -33,6 +33,7 @@ export class UserGroupsListComponent implements OnInit {
   roles = signal<Role[]>([]);
   loading = signal(false);
   searchQuery = signal('');
+  searchVal = signal('');
 
   // Form state
   formVisible = signal(false);
@@ -77,6 +78,10 @@ export class UserGroupsListComponent implements OnInit {
       next: (res) => this.roles.set(res.data),
       error: () => this.roles.set(this.getDemoRoles()),
     });
+  }
+
+  onSearch(): void {
+    this.searchQuery.set(this.searchVal().trim());
   }
 
   openCreate(): void {

@@ -11,16 +11,25 @@
   <!-- Filters -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-xl border border-slate-200">
     <!-- Search -->
-    <div class="col-span-1 md:col-span-2">
-      <p-iconfield iconPosition="left">
+    <div class="col-span-1 md:col-span-2 flex gap-2">
+      <p-iconfield iconPosition="left" class="flex-1">
         <p-inputicon class="pi pi-search"></p-inputicon>
         <input
           type="text"
           pInputText
+          [ngModel]="searchVal()"
+          (ngModelChange)="searchVal.set($event)"
+          (keydown.enter)="onSearch()"
           placeholder="Search by Order ID, customer, or product..."
-          class="w-full"
-          (input)="onSearch($event)" />
+          class="w-full h-9 text-sm" />
       </p-iconfield>
+      <button
+        (click)="onSearch()"
+        class="h-9 px-4 rounded-lg bg-mlm-primary hover:bg-brand-green-dark text-white text-sm font-semibold
+               flex items-center justify-center gap-2 transition-colors duration-150 border border-mlm-primary hover:border-brand-green-dark shrink-0">
+        <i class="pi pi-search text-xs"></i>
+        Search
+      </button>
     </div>
 
     <!-- Status Filter -->
@@ -122,7 +131,7 @@
             <!-- Customer Column -->
             <td class="px-5 py-4">
               <div class="flex flex-col">
-                <span class="font-medium text-slate-800">{{ getOrderCustomerName(row) }}</span>
+                <span class="font-medium text-slate-800">{{ getOrderCustomerUsername(row) }}</span>
               </div>
             </td>
 

@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 // PrimeNG
@@ -23,6 +23,7 @@ import { DataTableComponent } from '../../../shared/components/data-table/data-t
   selector: 'app-order-list',
   imports: [
     CommonModule,
+    FormsModule,
     ReactiveFormsModule,
     TableModule,
     ButtonModule,
@@ -51,6 +52,7 @@ export class OrderListComponent implements OnInit {
 
   // Filter controls
   searchQuery = signal('');
+  searchVal = signal('');
   selectedStatusControl = new FormControl<string>('all');
   selectedFulfilmentControl = new FormControl<string>('all');
   selectedCustomerTypeControl = new FormControl<string>('all');
@@ -137,9 +139,8 @@ export class OrderListComponent implements OnInit {
     this.loadOrders();
   }
 
-  onSearch(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.searchQuery.set(value);
+  onSearch(): void {
+    this.searchQuery.set(this.searchVal().trim());
   }
 
   onRefresh(): void {

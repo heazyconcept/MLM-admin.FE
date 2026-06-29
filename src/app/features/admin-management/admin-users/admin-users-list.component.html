@@ -22,15 +22,25 @@
   </div>
 
   <!-- Search -->
-  <div class="relative">
-    <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-    <input
-      pInputText
-      type="text"
-      [ngModel]="searchQuery()"
-      (ngModelChange)="searchQuery.set($event)"
-      placeholder="Search by name, email, or group..."
-      class="h-9 pl-9 pr-4 text-sm rounded-lg border-gray-200 w-96" />
+  <div class="flex items-center gap-2">
+    <div class="relative flex-1 max-w-sm">
+      <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+      <input
+        pInputText
+        type="text"
+        [ngModel]="searchVal()"
+        (ngModelChange)="searchVal.set($event)"
+        (keydown.enter)="onSearch()"
+        placeholder="Search by name, email, or group..."
+        class="w-full h-9 pl-9 pr-4 text-sm rounded-lg border-gray-200" />
+    </div>
+    <button
+      (click)="onSearch()"
+      class="h-9 px-4 rounded-lg bg-mlm-primary hover:bg-brand-green-dark text-white text-sm font-semibold
+             flex items-center justify-center gap-2 transition-colors duration-150 border border-mlm-primary hover:border-brand-green-dark shrink-0">
+      <i class="pi pi-search text-xs"></i>
+      Search
+    </button>
   </div>
 
   <!-- Users Table -->
