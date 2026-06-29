@@ -76,6 +76,7 @@ export class UsersListComponent implements OnInit {
   pageRows = signal(20);
 
   // Filter signals
+  searchVal = signal('');
   statusFilter = signal('');
   packageFilter = signal('');
   roleFilter = signal('');
@@ -280,6 +281,10 @@ export class UsersListComponent implements OnInit {
     this.loadUsers();
   }
 
+  onSearch(): void {
+    this.globalFilter.set(this.searchVal().trim());
+  }
+
   onExport(): void {
     this.messageService.add({
       severity: 'info',
@@ -290,6 +295,7 @@ export class UsersListComponent implements OnInit {
 
   clearFilters(): void {
     this.globalFilter.set('');
+    this.searchVal.set('');
     this.statusFilter.set('');
     this.packageFilter.set('');
     this.roleFilter.set('');

@@ -93,6 +93,10 @@ export class MerchantCategoryConfigService {
                       body.registrationFeeNGN !== undefined
                         ? body.registrationFeeNGN
                         : c.registrationFeeNGN,
+                    registrationPV:
+                      body.registrationPV !== undefined
+                        ? body.registrationPV
+                        : c.registrationPV,
                     onboardingItems:
                       body.onboardingItems !== undefined
                         ? body.onboardingItems ?? []

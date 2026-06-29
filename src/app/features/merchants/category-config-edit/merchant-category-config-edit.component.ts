@@ -112,6 +112,7 @@ export class MerchantCategoryConfigEditComponent implements OnInit {
       deliveryCommissionPct: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
       productCommissionPct: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
       registrationFeeNGN: [null as number | null],
+      registrationPV: [null as number | null, [Validators.min(0)]],
       onboardingItems: this.fb.array([]),
     });
   }
@@ -136,6 +137,7 @@ export class MerchantCategoryConfigEditComponent implements OnInit {
       registrationFeeNGN: cfg.registrationFeeNGN != null
         ? Number(cfg.registrationFeeNGN).toLocaleString('en-US')
         : null,
+      registrationPV: cfg.registrationPV,
     });
 
     // Clear and rebuild onboarding items
@@ -182,6 +184,7 @@ export class MerchantCategoryConfigEditComponent implements OnInit {
       deliveryCommissionPct: value.deliveryCommissionPct,
       productCommissionPct: value.productCommissionPct,
       registrationFeeNGN: parsedFee != null && !isNaN(parsedFee) ? parsedFee : null,
+      registrationPV: value.registrationPV != null && value.registrationPV !== '' ? Number(value.registrationPV) : null,
       onboardingItems: value.onboardingItems?.map((item: OnboardingItem) => ({
         productId: item.productId,
         quantity: item.quantity,
