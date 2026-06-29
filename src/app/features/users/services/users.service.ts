@@ -98,6 +98,7 @@ export interface UsersListQuery {
   isRegistrationPaid?: boolean;
   isActive?: boolean;
   role?: 'USER' | 'MERCHANT' | 'ADMIN';
+  search?: string;
 }
 
 export interface UsersListResult {

@@ -5,6 +5,8 @@ import {
   computed,
   ChangeDetectionStrategy,
   OnInit,
+  effect,
+  untracked,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AdminProductsService } from '../services/admin-products.service';
@@ -55,6 +57,26 @@ export class ProductListComponent implements OnInit {
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
 
+  constructor() {
+    effect(() => {
+      const search = this.searchQuery();
+      const cat = this.selectedCategory();
+      const status = this.selectedStatus();
+
+      untracked(() => {
+        this.adminProducts
+          .loadProducts({
+            limit: 100,
+            offset: 0,
+            search: search || undefined,
+            categoryId: cat || undefined,
+            status: status || undefined,
+          })
+          .subscribe();
+      });
+    });
+  }
+
   // State: use API-backed list when available
   products = this.adminProducts.products;
   categories = this.adminProducts.categories;
@@ -81,33 +103,11 @@ export class ProductListComponent implements OnInit {
   ]);
 
   filteredProducts = computed(() => {
-    let list = this.products();
-    const search = this.searchQuery().toLowerCase();
-    const cat = this.selectedCategory();
-    const status = this.selectedStatus();
-
-    if (search) {
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(search) ||
-          (p.sku && p.sku.toLowerCase().includes(search)),
-      );
-    }
-
-    if (cat) {
-      list = list.filter((p) => p.categoryId === cat);
-    }
-
-    if (status) {
-      list = list.filter((p) => p.status === status);
-    }
-
-    return list;
+    return this.products();
   });
 
   ngOnInit(): void {
     this.adminProducts.loadCategories().subscribe();
-    this.adminProducts.loadProducts({ limit: 100, offset: 0 }).subscribe();
   }
 
   onSearch(): void {
@@ -116,7 +116,13 @@ export class ProductListComponent implements OnInit {
 
   onRefresh(): void {
     this.adminProducts.loadCategories().subscribe();
-    this.adminProducts.loadProducts({ limit: 100, offset: 0 }).subscribe();
+    this.adminProducts.loadProducts({
+      limit: 100,
+      offset: 0,
+      search: this.searchQuery() || undefined,
+      categoryId: this.selectedCategory() || undefined,
+      status: this.selectedStatus() || undefined
+    }).subscribe();
   }
 
   tableConfig = signal<TableConfig>({

@@ -70,26 +70,12 @@ export class PaymentsListComponent implements OnInit {
 
   filteredPayments = computed(() => {
     let requests = this.payments();
-    const selectedStatus = this.selectedStatusControl.value || 'all';
     const selectedMethod = this.selectedMethodControl.value || 'all';
-    
-     if (selectedStatus !== 'all') {
-      requests = requests.filter(r => r.status === selectedStatus);
-    }
 
     if (selectedMethod !== 'all') {
       requests = requests.filter(r => r.method === selectedMethod);
     }
-    
-    const query = this.searchQuery().toLowerCase();
-    if (query) {
-      requests = requests.filter(r => 
-        r.userName.toLowerCase().includes(query) ||
-        r.id.toLowerCase().includes(query) ||
-        r.userEmail.toLowerCase().includes(query)
-      );
-    }
-    
+
     return requests;
   });
 
@@ -209,9 +195,17 @@ export class PaymentsListComponent implements OnInit {
     const toDateStr = this.toDateControl.value;
     const fromDate = fromDateStr ? new Date(fromDateStr) : undefined;
     const toDate = toDateStr ? new Date(toDateStr) : undefined;
+    const search = this.searchQuery();
 
     this.tableLoading.set(true);
-    this.paymentService.loadFromApi({ status, fromDate, toDate, limit: 50, offset: 0 }).subscribe({
+    this.paymentService.loadFromApi({
+      status,
+      fromDate,
+      toDate,
+      search: search || undefined,
+      limit: 50,
+      offset: 0
+    }).subscribe({
       next: () => this.tableLoading.set(false),
       error: () => this.tableLoading.set(false)
     });
@@ -252,6 +246,7 @@ export class PaymentsListComponent implements OnInit {
 
   onSearch() {
     this.searchQuery.set(this.searchVal().trim());
+    this.fetchPayments();
   }
 
   onExport() {

@@ -87,6 +87,7 @@ export interface AdminOrderFilters {
   toDate?: string;
   limit?: number;
   offset?: number;
+  search?: string;
 }
 
 // ── API response for order list ────────────────────────────────

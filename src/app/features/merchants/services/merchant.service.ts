@@ -47,6 +47,7 @@ export interface AdminMerchantFilters {
   userId?: string;
   limit?: number;
   offset?: number;
+  search?: string;
 }
 
 // API response DTOs
@@ -107,6 +108,7 @@ export class MerchantService {
     if (filters?.userId) params['userId'] = filters.userId;
     if (filters?.limit != null) params['limit'] = filters.limit;
     if (filters?.offset != null) params['offset'] = filters.offset;
+    if (filters?.search) params['search'] = filters.search;
 
     return this.api.get<AdminMerchantsListResponse>('admin/merchants', params).pipe(
       map(res => {

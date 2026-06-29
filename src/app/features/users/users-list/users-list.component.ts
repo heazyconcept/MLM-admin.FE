@@ -91,7 +91,6 @@ export class UsersListComponent implements OnInit {
     let result = this.users();
     const status = this.statusFilter();
     const range = this.dateRange();
-    const search = this.globalFilter().toLowerCase();
 
     if (status === 'Flagged') {
       result = result.filter((u) => u.status === 'Flagged');
@@ -117,14 +116,6 @@ export class UsersListComponent implements OnInit {
         const regDate = new Date(u.registrationDate);
         return regDate >= start && regDate <= end;
       });
-    }
-    if (search) {
-      result = result.filter(u =>
-        (u.fullName || '').toLowerCase().includes(search) ||
-        (u.email || '').toLowerCase().includes(search) ||
-        (u.username || '').toLowerCase().includes(search) ||
-        (u.id || '').toLowerCase().includes(search)
-      );
     }
 
     return result;
@@ -241,6 +232,10 @@ export class UsersListComponent implements OnInit {
     } else if (role === 'Merchant') {
       q.role = 'MERCHANT';
     }
+    const search = this.globalFilter();
+    if (search) {
+      q.search = search;
+    }
     return q;
   }
 
@@ -283,6 +278,7 @@ export class UsersListComponent implements OnInit {
 
   onSearch(): void {
     this.globalFilter.set(this.searchVal().trim());
+    this.onServerFilterChange();
   }
 
   onExport(): void {

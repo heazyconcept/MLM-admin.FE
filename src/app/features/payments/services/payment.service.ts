@@ -63,8 +63,12 @@ export class PaymentService {
 
   readonly payments = computed(() => this.paymentsSignal());
 
-  loadFromApi(options?: { status?: PaymentStatus; userId?: string; fromDate?: Date; toDate?: Date; limit?: number; offset?: number }): Observable<Payment[]> {
+  loadFromApi(options?: { status?: PaymentStatus; userId?: string; fromDate?: Date; toDate?: Date; search?: string; limit?: number; offset?: number }): Observable<Payment[]> {
     const params: Record<string, unknown> = {};
+
+    if (options?.search) {
+      params['search'] = options.search;
+    }
 
     if (options?.status && options.status !== 'Reversed') {
       const statusMap: Record<PaymentStatus, string> = {

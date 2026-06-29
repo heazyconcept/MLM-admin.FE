@@ -72,18 +72,7 @@ export class WithdrawalsListComponent implements OnInit {
   actionModalType = signal<ActionType | null>(null);
 
   filteredWithdrawals = computed(() => {
-    let requests = this.withdrawalService.withdrawals();
-
-    const query = this.searchQuery().toLowerCase();
-    if (query) {
-      requests = requests.filter(r => 
-        r.userName.toLowerCase().includes(query) ||
-        r.id.toLowerCase().includes(query) ||
-        r.userEmail.toLowerCase().includes(query)
-      );
-    }
-    
-    return requests;
+    return this.withdrawalService.withdrawals();
   });
 
   stats = computed(() => {
@@ -205,6 +194,8 @@ export class WithdrawalsListComponent implements OnInit {
 
   onSearch() {
     this.searchQuery.set(this.searchVal().trim());
+    this.firstRecord.set(0);
+    this.fetchWithdrawals(0, this.rowsPerPage());
   }
 
   onPageChange(event: TablePageEvent): void {
@@ -234,6 +225,7 @@ export class WithdrawalsListComponent implements OnInit {
     this.tableLoading.set(true);
     this.withdrawalService.loadFromApi({
       status: this.toApiStatus(this.selectedStatusControl.value),
+      search: this.searchQuery() || undefined,
       limit,
       offset
     }).subscribe({
