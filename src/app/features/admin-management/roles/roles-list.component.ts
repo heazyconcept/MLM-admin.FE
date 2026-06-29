@@ -34,6 +34,7 @@ export class RolesListComponent implements OnInit {
   roles = signal<Role[]>([]);
   loading = signal(false);
   searchQuery = signal('');
+  searchVal = signal('');
 
   // Role builder state
   builderVisible = signal(false);
@@ -71,6 +72,10 @@ export class RolesListComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  onSearch(): void {
+    this.searchQuery.set(this.searchVal().trim());
   }
 
   openCreateBuilder(): void {

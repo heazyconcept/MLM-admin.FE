@@ -1,7 +1,7 @@
 import { Component, inject, computed, signal, ChangeDetectionStrategy, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { PaymentService, Payment, PaymentStatus, PaymentPurpose } from '../services/payment.service';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 import { TableColumn, TableConfig, TableAction } from '../../../shared/components/data-table/data-table.types';
@@ -16,6 +16,7 @@ import { AdminFundingModalComponent, AdminFundingPayload } from '../modals/admin
   imports: [
     CommonModule,
     RouterModule,
+    FormsModule,
     ReactiveFormsModule,
     DataTableComponent,
 
@@ -45,6 +46,7 @@ export class PaymentsListComponent implements OnInit {
   selectedStatusControl = new FormControl('all');
   selectedMethodControl = new FormControl('all');
   searchQuery = signal<string>('');
+  searchVal = signal<string>('');
 
   statusOptions = [
     { label: 'All Statuses', value: 'all' },
@@ -248,9 +250,8 @@ export class PaymentsListComponent implements OnInit {
     this.router.navigate(['/admin/payments', payment.id]);
   }
 
-  onSearch(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
-    this.searchQuery.set(value);
+  onSearch() {
+    this.searchQuery.set(this.searchVal().trim());
   }
 
   onExport() {

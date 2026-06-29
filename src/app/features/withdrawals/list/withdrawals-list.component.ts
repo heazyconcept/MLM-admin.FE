@@ -9,7 +9,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { TablePageEvent } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -30,6 +30,7 @@ interface StatusOption {
     SelectModule,
     ButtonModule,
     InputTextModule,
+    FormsModule,
     ReactiveFormsModule,
     ToastModule,
     WithdrawalActionModalComponent
@@ -55,6 +56,7 @@ export class WithdrawalsListComponent implements OnInit {
   
   selectedStatusControl = new FormControl('all');
   searchQuery = signal<string>('');
+  searchVal = signal<string>('');
 
   statusOptions: StatusOption[] = [
     { label: 'All Statuses', value: 'all' },
@@ -201,9 +203,8 @@ export class WithdrawalsListComponent implements OnInit {
     this.router.navigate(['/admin/withdrawals', withdrawal.id]);
   }
 
-  onSearch(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
-    this.searchQuery.set(value);
+  onSearch() {
+    this.searchQuery.set(this.searchVal().trim());
   }
 
   onPageChange(event: TablePageEvent): void {

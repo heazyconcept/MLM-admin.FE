@@ -25,6 +25,7 @@ export class PermissionsListComponent implements OnInit {
   permissions = signal<Permission[]>([]);
   loading = signal(false);
   searchQuery = signal('');
+  searchVal = signal('');
   moduleFilter = signal('');
 
   moduleOptions = [
@@ -83,5 +84,9 @@ export class PermissionsListComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  onSearch(): void {
+    this.searchQuery.set(this.searchVal().trim());
   }
 }

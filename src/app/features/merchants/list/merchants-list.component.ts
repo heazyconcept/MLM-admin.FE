@@ -5,7 +5,7 @@ import { MerchantService, Merchant, MerchantStatus, MerchantType, AdminMerchantF
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ButtonModule } from 'primeng/button';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface FilterOption {
@@ -21,6 +21,7 @@ interface FilterOption {
     DataTableComponent,
     StatusBadgeComponent,
     ButtonModule,
+    FormsModule,
     ReactiveFormsModule
   ],
   templateUrl: './merchants-list.component.html',
@@ -40,6 +41,7 @@ export class MerchantsListComponent implements OnInit {
   selectedStatusControl = new FormControl<string>('all');
   selectedTypeControl = new FormControl<string>('all');
   searchQuery = signal<string>('');
+  searchVal = signal<string>('');
 
   statusOptions: FilterOption[] = [
     { label: 'All Statuses', value: 'all' },
@@ -118,9 +120,8 @@ export class MerchantsListComponent implements OnInit {
     this.router.navigate(['/admin/merchants', merchant.id]);
   }
 
-  onSearch(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
-    this.searchQuery.set(value);
+  onSearch() {
+    this.searchQuery.set(this.searchVal().trim());
   }
 
   onExport() {
