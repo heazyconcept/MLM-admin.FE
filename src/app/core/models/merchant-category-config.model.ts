@@ -13,6 +13,7 @@ export interface MerchantCategoryConfig {
   productCommissionPct: number;
   registrationFeeUsd: number | null;
   registrationFeeNGN: number | null;
+  registrationPV: number | null;
   onboardingProductId: string | null;
   onboardingQuantity: number | null;
   onboardingItems: OnboardingItem[];
@@ -22,6 +23,7 @@ export interface UpdateMerchantCategoryConfigBody {
   deliveryCommissionPct: number;
   productCommissionPct: number;
   registrationFeeNGN?: number | null;
+  registrationPV?: number | null;
   onboardingItems?: OnboardingItem[] | null;
   onboardingProductId?: string | null;
   onboardingQuantity?: number | null;

@@ -123,18 +123,29 @@
               </div>
             </div>
 
-            <!-- Registration Fee -->
-            <div class="border-t border-slate-100 pt-4">
-              <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
-                Registration Fee
-              </p>
-              <div class="flex items-baseline justify-between">
-                <span class="text-xs text-slate-400">NGN</span>
-                <span class="text-2xl font-bold tracking-tight"
-                      [class.text-mlm-text]="config.registrationFeeNGN !== null"
-                      [class.text-slate-300]="config.registrationFeeNGN === null">
-                  {{ formatFee(config.registrationFeeNGN) }}
-                </span>
+            <!-- Registration Fee & PV -->
+            <div class="border-t border-slate-100 pt-4 grid grid-cols-2 gap-2.5">
+              <div>
+                <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+                  Registration Fee
+                </p>
+                <div class="flex items-baseline">
+                  <span class="text-xl font-bold tracking-tight"
+                        [class.text-mlm-text]="config.registrationFeeNGN !== null"
+                        [class.text-slate-300]="config.registrationFeeNGN === null">
+                    {{ formatFee(config.registrationFeeNGN) }}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+                  Registration PV
+                </p>
+                <div class="flex items-baseline">
+                  <span class="text-xl font-bold tracking-tight text-mlm-text">
+                    {{ formatPV(config.registrationPV, config.merchantType) }}
+                  </span>
+                </div>
               </div>
             </div>
 

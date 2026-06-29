@@ -147,6 +147,19 @@ getAccentStripClass(type: string): string {
     return `₦${fee.toLocaleString()}`;
   }
 
+  formatPV(pv: number | null, type: MerchantCategoryType): string {
+    if (pv === null) {
+      const defaults: Record<MerchantCategoryType, number> = {
+        REGIONAL: 100,
+        NATIONAL: 320,
+        GLOBAL: 1200,
+      };
+      const def = defaults[type] ?? 0;
+      return `${def.toLocaleString()} (Default)`;
+    }
+    return pv.toLocaleString();
+  }
+
   formatPct(value: number): string {
     return `${value}%`;
   }

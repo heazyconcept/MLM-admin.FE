@@ -134,37 +134,69 @@
             </div>
           </div>
 
-          <!-- ── Section: Registration Fee ── -->
+          <!-- ── Section: Registration Fee & PV ── -->
           <div class="px-6 py-6 border-t border-slate-100">
-            <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1">
-              Registration Fee
-            </p>
-            <p class="text-xs text-slate-400 mb-5">
-              Amount in NGN (₦). Leave empty to fall back to the system default for this merchant type.
-            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
-            <div class="max-w-[200px]">
-              <label for="registrationFeeNGN"
-                     class="block text-xs font-medium text-slate-600 mb-1.5">
-                Fee (NGN)
-              </label>
-              <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2
-                             text-xs font-semibold text-slate-400 pointer-events-none">
-                    ₦
-                </span>
-                <input
-                  id="registrationFeeNGN"
-                  type="text"
-                  inputmode="numeric"
-                  formControlName="registrationFeeNGN"
-                  [readonly]="isViewOnly()"
-                  (input)="formatRegistrationFeeInput($event)"
-                  class="w-full h-10 pl-7 pr-3 rounded-lg border border-slate-200 text-sm
-                         text-mlm-text bg-white placeholder:text-slate-300
-                         focus:outline-none focus:ring-2 focus:ring-mlm-primary transition"
-                  placeholder="600" />
+              <!-- Registration Fee -->
+              <div>
+                <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1">
+                  Registration Fee
+                </p>
+                <p class="text-xs text-slate-400 mb-4">
+                  Amount in NGN (₦). Leave empty to fall back to the system default for this merchant type.
+                </p>
+                <div class="relative max-w-[200px]">
+                  <label for="registrationFeeNGN"
+                         class="block text-xs font-medium text-slate-600 mb-1.5">
+                    Fee (NGN)
+                  </label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2
+                                 text-xs font-semibold text-slate-400 pointer-events-none">
+                        ₦
+                    </span>
+                    <input
+                      id="registrationFeeNGN"
+                      type="text"
+                      inputmode="numeric"
+                      formControlName="registrationFeeNGN"
+                      [readonly]="isViewOnly()"
+                      (input)="formatRegistrationFeeInput($event)"
+                      class="w-full h-10 pl-7 pr-3 rounded-lg border border-slate-200 text-sm
+                             text-mlm-text bg-white placeholder:text-slate-300
+                             focus:outline-none focus:ring-2 focus:ring-mlm-primary transition"
+                      placeholder="600" />
+                  </div>
+                </div>
               </div>
+
+              <!-- Instant Registration PV -->
+              <div>
+                <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1">
+                  Instant Registration PV
+                </p>
+                <p class="text-xs text-slate-400 mb-4">
+                  PV credited to the merchant upon approval. Leave empty to use default (Regional: 100, National: 320, Global: 1,200).
+                </p>
+                <div class="relative max-w-[200px]">
+                  <label for="registrationPV"
+                         class="block text-xs font-medium text-slate-600 mb-1.5">
+                    Registration PV
+                  </label>
+                  <input
+                    id="registrationPV"
+                    type="number"
+                    formControlName="registrationPV"
+                    [readonly]="isViewOnly()"
+                    min="0"
+                    class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm
+                           text-mlm-text bg-white placeholder:text-slate-300
+                           focus:outline-none focus:ring-2 focus:ring-mlm-primary transition"
+                    placeholder="e.g. 100" />
+                </div>
+              </div>
+
             </div>
           </div>
 
