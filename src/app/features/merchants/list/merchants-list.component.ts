@@ -60,19 +60,8 @@ export class MerchantsListComponent implements OnInit {
     'Merchant ID', 'Username', 'Phone Number', 'Type', 'Service Areas', 'Products', 'Status', 'Actions'
   ]);
 
-  /** Client-side search filter applied on top of API-filtered list */
   filteredMerchants = computed(() => {
-    let merchants = this.merchantService.merchants();
-    const query = this.searchQuery().toLowerCase();
-    if (query) {
-      merchants = merchants.filter((m: Merchant) =>
-        m.user?.username?.toLowerCase().includes(query) ||
-        m.phoneNumber?.toLowerCase().includes(query) ||
-        m.user?.email?.toLowerCase().includes(query) ||
-        m.id.toLowerCase().includes(query)
-      );
-    }
-    return merchants;
+    return this.merchantService.merchants();
   });
 
   stats = computed(() => ({
@@ -91,6 +80,10 @@ export class MerchantsListComponent implements OnInit {
     }
     if (type && type !== 'all') {
       filters.type = type as MerchantType;
+    }
+    const search = this.searchQuery();
+    if (search) {
+      filters.search = search;
     }
     return filters;
   }
@@ -122,6 +115,7 @@ export class MerchantsListComponent implements OnInit {
 
   onSearch() {
     this.searchQuery.set(this.searchVal().trim());
+    this.loadMerchants();
   }
 
   onExport() {

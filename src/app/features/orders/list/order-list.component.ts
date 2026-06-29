@@ -85,21 +85,8 @@ export class OrderListComponent implements OnInit {
     { label: 'Non-member', value: 'NON_MEMBER' },
   ];
 
-  // Client-side search filter on top of API results
   filteredOrders = computed(() => {
-    let list = this.orders();
-    const search = this.searchQuery().toLowerCase();
-    if (search) {
-      list = list.filter(
-        (o) =>
-          o.id.toLowerCase().includes(search) ||
-          this.ordersService.getOrderCustomerName(o).toLowerCase().includes(search) ||
-          this.ordersService.getOrderCustomerEmail(o).toLowerCase().includes(search) ||
-          this.ordersService.getOrderCustomerUsername(o).toLowerCase().includes(search) ||
-          o.items.some((i) => i.productName.toLowerCase().includes(search))
-      );
-    }
-    return list;
+    return this.orders();
   });
 
   // Table config
@@ -141,6 +128,7 @@ export class OrderListComponent implements OnInit {
 
   onSearch(): void {
     this.searchQuery.set(this.searchVal().trim());
+    this.loadOrders();
   }
 
   onRefresh(): void {
@@ -197,6 +185,9 @@ export class OrderListComponent implements OnInit {
 
     const to = this.toDateControl.value;
     if (to) filters.toDate = to.toISOString();
+
+    const search = this.searchQuery();
+    if (search) filters.search = search;
 
     return filters;
   }

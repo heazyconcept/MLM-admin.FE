@@ -35,6 +35,7 @@ export interface WithdrawalListQuery {
   toDate?: string;
   limit?: number;
   offset?: number;
+  search?: string;
 }
 
 export interface StatusHistory {
@@ -94,6 +95,7 @@ export class WithdrawalService {
       userId: query.userId,
       fromDate: query.fromDate,
       toDate: query.toDate,
+      search: query.search,
       limit,
       offset
     }).pipe(

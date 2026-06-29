@@ -61,6 +61,7 @@ export interface AdminProductListParams {
   status?: ProductStatus;
   limit?: number;
   offset?: number;
+  search?: string;
 }
 
 export interface AdminProductPriceDto {
@@ -139,6 +140,7 @@ export class AdminProductsService {
     if (params.status) query['status'] = params.status;
     if (params.limit != null) query['limit'] = params.limit;
     if (params.offset != null) query['offset'] = params.offset;
+    if (params.search) query['search'] = params.search;
 
     return this.api
       .get<

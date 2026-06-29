@@ -61,6 +61,7 @@ export class AdminOrdersService {
     if (filters?.toDate) params['toDate'] = filters.toDate;
     if (filters?.limit != null) params['limit'] = filters.limit;
     if (filters?.offset != null) params['offset'] = filters.offset;
+    if (filters?.search) params['search'] = filters.search;
 
     return this.api.get<AdminOrdersListResponse>('admin/orders', params).pipe(
       map((res) => {
