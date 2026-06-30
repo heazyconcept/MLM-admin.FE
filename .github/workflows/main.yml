@@ -67,9 +67,9 @@ jobs:
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
-          server: ftp.segulah.ng
-          username: devopsadmin@segulahglobal-herbal.com
-          password: Gx0hSO7zGcO3Sg9n
+          server: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USERNAME }}
+          password: ${{ secrets.CPANEL_PASSWORD }}
           protocol: ftps
           local-dir: dist/mlm-admin.fe/browser/
           server-dir: /
