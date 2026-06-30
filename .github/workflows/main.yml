@@ -70,6 +70,7 @@ jobs:
           server: ftp.segulah.ng
           username: devopsadmin@segulahglobal-herbal.com
           password: Gx0hSO7zGcO3Sg9n
+          protocol: ftps
           local-dir: dist/mlm-admin.fe/browser/
           server-dir: /
           exclude: |
