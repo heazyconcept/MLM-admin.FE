@@ -1,0 +1,80 @@
+<p-toast></p-toast>
+
+<div class="bg-white rounded-xl border border-gray-200 p-6 space-y-6" [formGroup]="form">
+  <div class="flex items-center justify-between">
+    <h2 class="text-lg font-semibold text-gray-900">Company Bank Account</h2>
+    @if (loading()) {
+      <i class="pi pi-spin pi-spinner text-gray-400"></i>
+    }
+  </div>
+
+  <p class="text-xs text-gray-500 -mt-2">
+    These details are displayed to users who choose offline bank transfer for registration payment.
+  </p>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div>
+      <label class="text-sm font-medium text-gray-700">Bank Name</label>
+      <input
+        type="text"
+        formControlName="bankName"
+        placeholder="e.g. Zenith Bank"
+        [attr.disabled]="!canEdit() ? true : null"
+        class="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 text-sm text-gray-900
+               bg-white placeholder:text-gray-400
+               focus:outline-none focus:ring-2 focus:ring-mlm-primary transition
+               disabled:bg-gray-50 disabled:text-gray-500" />
+    </div>
+
+    <div>
+      <label class="text-sm font-medium text-gray-700">Account Number</label>
+      <input
+        type="text"
+        formControlName="accountNumber"
+        placeholder="e.g. 1234567890"
+        [attr.disabled]="!canEdit() ? true : null"
+        class="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 text-sm text-gray-900
+               bg-white placeholder:text-gray-400 font-mono
+               focus:outline-none focus:ring-2 focus:ring-mlm-primary transition
+               disabled:bg-gray-50 disabled:text-gray-500" />
+    </div>
+
+    <div>
+      <label class="text-sm font-medium text-gray-700">Account Name</label>
+      <input
+        type="text"
+        formControlName="accountName"
+        placeholder="e.g. Segulah Global"
+        [attr.disabled]="!canEdit() ? true : null"
+        class="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 text-sm text-gray-900
+               bg-white placeholder:text-gray-400
+               focus:outline-none focus:ring-2 focus:ring-mlm-primary transition
+               disabled:bg-gray-50 disabled:text-gray-500" />
+    </div>
+  </div>
+
+  @if (canEdit()) {
+    <div class="flex justify-end pt-4">
+      <button
+        pButton
+        label="Save"
+        icon="pi pi-check"
+        class="p-button-primary"
+        [disabled]="!isDirty() || form.invalid || saving()"
+        [loading]="saving()"
+        (click)="onSaveClick()">
+      </button>
+    </div>
+  }
+</div>
+
+<app-confirmation-modal
+  [visible]="confirmVisible()"
+  (visibleChange)="confirmVisible.set(false)"
+  title="Update Bank Account"
+  message="Are you sure you want to update the company bank account details? Users will see the new details immediately."
+  confirmLabel="Save"
+  cancelLabel="Cancel"
+  (confirm)="onConfirm($event)"
+  (cancel)="onCancelConfirm()">
+</app-confirmation-modal>

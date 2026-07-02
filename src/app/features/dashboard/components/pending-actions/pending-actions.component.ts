@@ -9,7 +9,7 @@ import { DataTableComponent } from '../../../../shared/components/data-table/dat
 import { TableColumn, TableConfig } from '../../../../shared/components/data-table/data-table.types';
 
 export interface PendingAction {
-  type: 'withdrawals' | 'merchants' | 'payments' | 'compliance';
+  type: 'withdrawals' | 'merchants' | 'payments' | 'compliance' | 'manual-payments';
   label: string;
   count: number;
   icon: string;

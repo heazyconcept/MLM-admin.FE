@@ -3,6 +3,11 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MerchantService, Merchant, MerchantStatus } from '../services/merchant.service';
+import {
+  MerchantAllocationService,
+  MerchantAllocation,
+  AllocationStatus,
+} from '../services/merchant-allocation.service';
 import { AdminProductsService } from '../../products/services/admin-products.service';
 import { Product } from '../../../core/models/product.model';
 import { MerchantCategoryConfigService } from '../services/merchant-category-config.service';
@@ -11,6 +16,7 @@ import { PermissionService } from '../../../core/services/permission.service';
 import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
@@ -25,6 +31,7 @@ import { MessageService } from 'primeng/api';
     FormsModule,
     StatusBadgeComponent,
     ConfirmationModalComponent,
+    HasPermissionDirective,
     ButtonModule,
     ToastModule,
     TooltipModule,
@@ -36,6 +43,7 @@ import { MessageService } from 'primeng/api';
 })
 export class MerchantDetailsComponent implements OnInit {
   private merchantService = inject(MerchantService);
+  private allocationService = inject(MerchantAllocationService);
   private productService = inject(AdminProductsService);
   private categoryConfigService = inject(MerchantCategoryConfigService);
   private route = inject(ActivatedRoute);
@@ -59,6 +67,9 @@ export class MerchantDetailsComponent implements OnInit {
   showRefillModal = signal(false);
   showAssignProductModal = signal(false);
   showRemoveProductModal = signal(false);
+  showDispatchModal = signal(false);
+  showInTransitModal = signal(false);
+  showDeliveredModal = signal(false);
 
   // Action loading states
   approveLoading = signal(false);
@@ -68,6 +79,15 @@ export class MerchantDetailsComponent implements OnInit {
   refillLoading = signal(false);
   assignProductLoading = signal(false);
   removeProductLoading = signal(false);
+  dispatchLoading = signal(false);
+  statusUpdateLoading = signal(false);
+
+  // Allocations
+  allocations = signal<MerchantAllocation[]>([]);
+  allocationsLoading = signal(false);
+  selectedAllocation = signal<MerchantAllocation | null>(null);
+  dispatchNotes = signal('');
+  trackingReference = signal('');
 
   // Product management state
   selectedProduct = signal<Product | null>(null);
@@ -158,6 +178,7 @@ export class MerchantDetailsComponent implements OnInit {
         this.loading.set(false);
         if (m) {
           this.merchant.set(m);
+          this.loadAllocations(id);
         } else {
           this.messageService.add({
             severity: 'error',
@@ -177,6 +198,163 @@ export class MerchantDetailsComponent implements OnInit {
       if (m) {
         this.merchant.set(m);
       }
+    });
+    this.loadAllocations(id);
+  }
+
+  private loadAllocations(merchantId: string): void {
+    this.allocationsLoading.set(true);
+    this.allocationService.getAllocations(merchantId).subscribe({
+      next: (rows) => {
+        this.allocations.set(rows);
+        this.allocationsLoading.set(false);
+      },
+      error: () => {
+        this.allocations.set([]);
+        this.allocationsLoading.set(false);
+      },
+    });
+  }
+
+  // Allocation actions
+  onDispatch(allocation: MerchantAllocation): void {
+    this.selectedAllocation.set(allocation);
+    this.dispatchNotes.set('');
+    this.trackingReference.set('');
+    this.showDispatchModal.set(true);
+  }
+
+  onMarkInTransit(allocation: MerchantAllocation): void {
+    this.selectedAllocation.set(allocation);
+    this.showInTransitModal.set(true);
+  }
+
+  onMarkDelivered(allocation: MerchantAllocation): void {
+    this.selectedAllocation.set(allocation);
+    this.showDeliveredModal.set(true);
+  }
+
+  handleDispatchConfirm(): void {
+    const merchantId = this.merchant()?.id;
+    const allocation = this.selectedAllocation();
+    if (!merchantId || !allocation) return;
+
+    this.dispatchLoading.set(true);
+    this.allocationService
+      .dispatchAllocation(merchantId, allocation.id, {
+        dispatchNotes: this.dispatchNotes().trim() || undefined,
+        trackingReference: this.trackingReference().trim() || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.dispatchLoading.set(false);
+          this.showDispatchModal.set(false);
+          this.selectedAllocation.set(null);
+          this.loadAllocations(merchantId);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Stock Dispatched',
+            detail: `${allocation.productName} has been dispatched to the merchant.`,
+          });
+        },
+        error: (err) => {
+          this.dispatchLoading.set(false);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Dispatch Failed',
+            detail: err?.error?.message ?? 'Failed to dispatch allocation',
+          });
+        },
+      });
+  }
+
+  handleInTransitConfirm(event: { confirmed: boolean }): void {
+    if (event.confirmed) {
+      this.updateAllocationStatus('IN_TRANSIT');
+    }
+    this.showInTransitModal.set(false);
+  }
+
+  handleDeliveredConfirm(event: { confirmed: boolean }): void {
+    if (event.confirmed) {
+      this.updateAllocationStatus('DELIVERED');
+    }
+    this.showDeliveredModal.set(false);
+  }
+
+  private updateAllocationStatus(status: 'IN_TRANSIT' | 'DELIVERED'): void {
+    const merchantId = this.merchant()?.id;
+    const allocation = this.selectedAllocation();
+    if (!merchantId || !allocation) return;
+
+    this.statusUpdateLoading.set(true);
+    this.allocationService.updateAllocationStatus(merchantId, allocation.id, status).subscribe({
+      next: () => {
+        this.statusUpdateLoading.set(false);
+        this.selectedAllocation.set(null);
+        this.loadAllocations(merchantId);
+        const label = status === 'IN_TRANSIT' ? 'In Transit' : 'Delivered';
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Status Updated',
+          detail: `Allocation marked as ${label}.`,
+        });
+      },
+      error: (err) => {
+        this.statusUpdateLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Update Failed',
+          detail: err?.error?.message ?? 'Failed to update allocation status',
+        });
+      },
+    });
+  }
+
+  handleDispatchCancel(): void {
+    this.showDispatchModal.set(false);
+    this.selectedAllocation.set(null);
+    this.dispatchNotes.set('');
+    this.trackingReference.set('');
+  }
+
+  canDispatch(allocation: MerchantAllocation): boolean {
+    return allocation.status === 'PENDING';
+  }
+
+  canMarkInTransit(allocation: MerchantAllocation): boolean {
+    return allocation.status === 'DISPATCHED';
+  }
+
+  canMarkDelivered(allocation: MerchantAllocation): boolean {
+    return allocation.status === 'IN_TRANSIT';
+  }
+
+  getAllocationStatusLabel(status: AllocationStatus): string {
+    return this.allocationService.getAllocationStatusLabel(status);
+  }
+
+  getAllocationStatusClass(status: AllocationStatus): string {
+    const map: Record<AllocationStatus, string> = {
+      PENDING: 'bg-amber-50 text-amber-700 border-amber-200',
+      DISPATCHED: 'bg-blue-50 text-blue-700 border-blue-200',
+      IN_TRANSIT: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      DELIVERED: 'bg-purple-50 text-purple-700 border-purple-200',
+      RECEIVED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      ACCEPTED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      CANCELLED: 'bg-gray-50 text-gray-500 border-gray-200',
+    };
+    return map[status] ?? 'bg-gray-50 text-gray-500 border-gray-200';
+  }
+
+  formatAllocationDate(dateStr: string | null): string {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 
@@ -349,6 +527,7 @@ export class MerchantDetailsComponent implements OnInit {
                 ? `Refill created ${allocationsCount} allocation(s)`
                 : (res?.message ?? 'Merchant refill completed successfully')
             });
+            this.loadAllocations(id);
           },
           error: (err) => {
             this.refillLoading.set(false);

@@ -165,7 +165,8 @@ export class DashboardComponent implements OnInit {
     const openTasks =
       (s.pendingWithdrawalsCount ?? 0) +
       (s.initiatedPaymentsCount ?? 0) +
-      (s.pendingIdentityCount ?? 0);
+      (s.pendingIdentityCount ?? 0) +
+      (s.pendingManualRegistrationPaymentsCount ?? 0);
 
     this.systemStats.set([
       {
@@ -364,6 +365,15 @@ export class DashboardComponent implements OnInit {
         iconBg: 'bg-mlm-blue-100',
         iconColor: 'text-mlm-blue-600',
         urgency: 'medium'
+      },
+      {
+        type: 'manual-payments',
+        label: 'Manual registration payments',
+        count: s.pendingManualRegistrationPaymentsCount ?? 0,
+        icon: 'pi pi-file-edit',
+        iconBg: 'bg-mlm-primary/10',
+        iconColor: 'text-mlm-primary',
+        urgency: 'high'
       },
       {
         type: 'compliance',
