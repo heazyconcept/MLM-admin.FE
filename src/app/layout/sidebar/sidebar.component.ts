@@ -182,6 +182,13 @@ export class SidebarComponent {
           permissionKey: 'payments.view',
         },
         {
+          label: 'Manual Payments',
+          icon: 'pi pi-file-edit',
+          route: '/admin/payments/manual',
+          feature: Feature.Payments,
+          permissionKey: 'payments.view',
+        },
+        {
           label: 'Products',
           icon: 'pi pi-shopping-bag',
           feature: Feature.Products,
@@ -231,6 +238,12 @@ export class SidebarComponent {
               icon: 'pi pi-sliders-h',
               route: '/admin/merchants/category-config',
               permissionKey: 'merchants.configure_categories',
+            },
+            {
+              label: 'Stock Disputes',
+              icon: 'pi pi-exclamation-circle',
+              route: '/admin/merchants/stock-disputes',
+              permissionKey: 'merchants.view',
             },
           ],
         },

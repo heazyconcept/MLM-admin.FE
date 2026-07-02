@@ -15,6 +15,7 @@ export interface AdminDashboardSummary {
   pendingWithdrawalsCount: number;
   initiatedPaymentsCount: number;
   pendingIdentityCount: number;
+  pendingManualRegistrationPaymentsCount?: number;
   packageDistribution: Record<string, number>;
   revenueTrend: RevenueTrendPoint[];
   wallets: Record<string, number>;

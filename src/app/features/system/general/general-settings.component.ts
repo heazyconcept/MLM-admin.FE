@@ -17,6 +17,7 @@ import { InfoBannerComponent } from '../../../shared/components/info-banner/info
 import { ConfigInputComponent } from '../../../shared/components/config-input/config-input.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { SystemConfigService } from '../services/system-config.service';
+import { CompanyBankAccountComponent } from './company-bank-account.component';
 
 @Component({
   selector: 'app-general-settings',
@@ -29,6 +30,7 @@ import { SystemConfigService } from '../services/system-config.service';
     InfoBannerComponent,
     ConfigInputComponent,
     ConfirmationModalComponent,
+    CompanyBankAccountComponent,
   ],
   templateUrl: './general-settings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,0 +1,290 @@
+@if (payment(); as p) {
+  <div class="min-h-screen bg-gray-50 font-geist">
+    <div class="w-full px-4 py-5 sm:px-6 md:px-8 2xl:px-12 sm:py-6">
+    <p-toast></p-toast>
+
+    @if (isViewOnly()) {
+      <div class="mb-4 md:mb-6">
+        <app-info-banner
+          message="You have view-only access. Contact an administrator to approve or reject."
+          type="info">
+        </app-info-banner>
+      </div>
+    }
+
+    <app-manual-payment-reject-modal
+      [visible]="showRejectModal()"
+      [payment]="p"
+      (confirmed)="handleRejectConfirmed($event)"
+      (cancelled)="handleRejectCancelled()">
+    </app-manual-payment-reject-modal>
+
+    <!-- Header -->
+    <div class="mb-6 md:mb-8">
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-2">
+        <button
+          [routerLink]="['/admin/payments/manual']"
+          class="p-2 rounded-md hover:bg-gray-100 shrink-0">
+          <i class="pi pi-arrow-left"></i>
+        </button>
+        Back to manual payments
+      </div>
+
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 break-words">
+            Manual Payment <span class="text-gray-400 text-base sm:text-xl">#{{ p.id | slice:0:12 }}</span>
+          </h1>
+          <p class="text-sm text-gray-500 mt-1">
+            Submitted {{ p.createdAt | date:'medium' }}
+          </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto shrink-0">
+          <app-status-badge [status]="statusDisplay()"></app-status-badge>
+
+          @if (isPending()) {
+            <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+              <button
+                *hasPermission="'payments.mark_successful'"
+                pButton
+                label="Reject"
+                icon="pi pi-times"
+                class="p-button-outlined p-button-danger w-full sm:w-auto"
+                [disabled]="actionLoading()"
+                (click)="onRejectClick()">
+              </button>
+
+              <button
+                *hasPermission="'payments.mark_successful'"
+                pButton
+                label="Approve & Activate"
+                icon="pi pi-check"
+                class="p-button-success w-full sm:w-auto"
+                [disabled]="actionLoading()"
+                (click)="onApprove()">
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 2xl:gap-10">
+
+      <!-- MAIN COLUMN -->
+      <div class="lg:col-span-8 space-y-5 md:space-y-8 order-2 lg:order-1">
+
+        <!-- Amount Card -->
+        <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 md:p-8 relative overflow-hidden">
+          <div class="relative z-10">
+            <p class="text-xs uppercase tracking-widest text-gray-400 mb-2">
+              Registration Amount
+            </p>
+            <div class="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4">
+              <p class="text-3xl sm:text-4xl font-bold text-gray-900 break-words">
+                {{ p.amount | currency:(p.currency || 'NGN') }}
+              </p>
+              <span
+                class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border bg-blue-50 text-blue-700 border-blue-100 self-start">
+                {{ formatPackage(p.packageId) }}
+              </span>
+            </div>
+
+            <div class="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8">
+              <div>
+                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Currency</p>
+                <p class="font-semibold text-gray-700">{{ p.currency }}</p>
+              </div>
+              <div>
+                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Method</p>
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-building text-gray-400 text-xs"></i>
+                  <p class="font-semibold text-gray-700">Bank Transfer</p>
+                </div>
+              </div>
+              <div>
+                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Depositor Name</p>
+                <p class="font-semibold text-gray-700">{{ p.depositorName }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Information -->
+        <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
+          <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="pi pi-user text-gray-400"></i>
+            User Information
+          </h3>
+          <div class="flex items-center gap-4 min-w-0">
+            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-600 shrink-0">
+              {{ (p.user?.username || p.userName || p.user?.email || p.userEmail || '?').charAt(0) | uppercase }}
+            </div>
+            <div class="min-w-0">
+              <p class="font-medium text-gray-900 truncate">{{ p.user?.username || p.userName || '—' }}</p>
+              <p class="text-sm text-gray-500 truncate">{{ p.user?.email || p.userEmail || '—' }}</p>
+              <p class="text-xs text-gray-400 mt-1 truncate">User ID: {{ p.userId }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Evidence / Proof -->
+        <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
+          <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="pi pi-image text-gray-400"></i>
+            Payment Evidence
+          </h3>
+
+          @if (p.evidenceUrl) {
+            @if (isImageUrl(p.evidenceUrl)) {
+              <div class="rounded-xl border border-gray-200 overflow-hidden bg-gray-50">
+                <img
+                  [src]="p.evidenceUrl"
+                  alt="Payment evidence"
+                  class="w-full max-h-[500px] object-contain" />
+              </div>
+            } @else {
+              <a
+                [href]="p.evidenceUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200 hover:bg-gray-100 transition-colors">
+                <i class="pi pi-file-pdf text-3xl text-red-400"></i>
+                <div>
+                  <p class="text-sm font-medium text-gray-700">View Evidence Document</p>
+                  <p class="text-xs text-gray-400 mt-0.5">Opens in a new tab</p>
+                </div>
+                <i class="pi pi-external-link text-gray-400 ml-auto"></i>
+              </a>
+            }
+          } @else {
+            <div class="aspect-video bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center p-4 text-center">
+              <i class="pi pi-file text-3xl text-gray-300"></i>
+              <p class="text-sm text-gray-500 mt-3 font-medium">No evidence uploaded</p>
+            </div>
+          }
+        </div>
+
+        <!-- Rejection Reason (if rejected) -->
+        @if (p.status === 'REJECTED' && p.rejectionReason) {
+          <div class="bg-white border border-red-200 rounded-xl p-4 sm:p-6">
+            <h3 class="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-times-circle text-red-400"></i>
+              Rejection Reason
+            </h3>
+            <div class="p-4 bg-red-50/50 rounded-xl border border-red-100/50">
+              <p class="text-sm text-red-900 font-medium break-words">{{ p.rejectionReason }}</p>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- SIDE RAIL -->
+      <div class="lg:col-span-4 order-1 lg:order-2">
+        <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 lg:sticky lg:top-6">
+          <h3 class="text-sm font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
+            <i class="pi pi-clock text-gray-400"></i>
+            Submission Timeline
+          </h3>
+
+          <div class="space-y-6 sm:space-y-8 relative before:absolute before:inset-y-0 before:left-3 before:w-px before:bg-gray-100">
+
+            <!-- Submitted -->
+            <div class="relative pl-8">
+              <div
+                class="absolute left-0 top-1 w-6 h-6 -ml-px rounded-full border-4 border-white shadow-sm flex items-center justify-center z-10 bg-blue-500">
+              </div>
+              <div class="min-w-0">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-2 mb-1">
+                  <p class="text-sm font-semibold text-gray-900">Submitted</p>
+                  <span class="text-[10px] font-bold text-gray-400 uppercase">{{ p.createdAt | date:'shortTime' }}</span>
+                </div>
+                <p class="text-xs text-gray-500 break-words">
+                  {{ p.depositorName }} · {{ p.createdAt | date:'mediumDate' }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Reviewed (if applicable) -->
+            @if (p.reviewedAt) {
+              <div class="relative pl-8">
+                <div
+                  class="absolute left-0 top-1 w-6 h-6 -ml-px rounded-full border-4 border-white shadow-sm flex items-center justify-center z-10"
+                  [class.bg-green-500]="p.status === 'APPROVED'"
+                  [class.bg-red-500]="p.status === 'REJECTED'">
+                </div>
+                <div class="min-w-0">
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-2 mb-1">
+                    <p class="text-sm font-semibold text-gray-900">{{ p.status === 'APPROVED' ? 'Approved' : 'Rejected' }}</p>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">{{ p.reviewedAt | date:'shortTime' }}</span>
+                  </div>
+                  <p class="text-xs text-gray-500 break-words">
+                    Admin · {{ p.reviewedAt | date:'mediumDate' }}
+                  </p>
+                </div>
+              </div>
+            }
+
+            <!-- Pending indicator -->
+            @if (p.status === 'PENDING') {
+              <div class="relative pl-8">
+                <div
+                  class="absolute left-0 top-1 w-6 h-6 -ml-px rounded-full border-4 border-white shadow-sm flex items-center justify-center z-10 bg-orange-500 animate-pulse">
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-gray-900">Awaiting Review</p>
+                  <p class="text-xs text-gray-500">This submission is pending admin review</p>
+                </div>
+              </div>
+            }
+
+          </div>
+        </div>
+
+        <!-- Submission Details Card -->
+        <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 mt-5">
+          <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="pi pi-info-circle text-gray-400"></i>
+            Details
+          </h3>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-400 font-medium">Submission ID</span>
+              <span class="text-xs font-mono text-gray-600 truncate ml-2 max-w-[180px]">{{ p.id }}</span>
+            </div>
+            @if (p.paymentId) {
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-400 font-medium">Payment ID</span>
+                <span class="text-xs font-mono text-gray-600 truncate ml-2 max-w-[180px]">{{ p.paymentId }}</span>
+              </div>
+            }
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-400 font-medium">Updated</span>
+              <span class="text-xs text-gray-600">{{ p.updatedAt | date:'medium' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    </div>
+  </div>
+} @else if (loading()) {
+  <div class="h-[80vh] flex items-center justify-center">
+    <div class="flex flex-col items-center gap-3">
+      <i class="pi pi-spin pi-spinner text-3xl text-gray-300"></i>
+      <p class="text-sm text-gray-500">Loading submission details…</p>
+    </div>
+  </div>
+} @else {
+  <div class="h-[80vh] flex flex-col items-center justify-center text-center p-4 sm:p-8">
+    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 sm:mb-6">
+      <i class="pi pi-search text-2xl sm:text-3xl text-gray-300"></i>
+    </div>
+    <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Submission Not Found</h2>
+    <p class="text-gray-500 mt-2 max-w-xs text-sm">The submission ID was not found or may have been removed.</p>
+    <button pButton label="Back to Manual Payments" icon="pi pi-arrow-left" [routerLink]="['/admin/payments/manual']" class="p-button-text mt-6 w-full sm:w-auto"></button>
+  </div>
+}

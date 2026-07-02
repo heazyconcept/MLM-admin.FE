@@ -247,6 +247,8 @@ export const ALL_PERMISSION_KEYS: Permission[] = [
   { id: 'p-38', key: 'merchants.approve', label: 'Approve Merchant', module: 'Merchants', type: 'action' },
   { id: 'p-39', key: 'merchants.assign', label: 'Assign Merchant', module: 'Merchants', type: 'action' },
   { id: 'p-40', key: 'merchants.configure_categories', label: 'Configure Categories', module: 'Merchants', type: 'action' },
+  { id: 'p-61', key: 'merchants.dispatch_stock', label: 'Dispatch Merchant Stock', module: 'Merchants', type: 'action' },
+  { id: 'p-62', key: 'merchants.resolve_stock_dispute', label: 'Resolve Stock Dispute', module: 'Merchants', type: 'action' },
 
   // Notifications
   { id: 'p-41', key: 'notifications.view', label: 'View Announcements', module: 'Notifications', type: 'view' },

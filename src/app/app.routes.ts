@@ -82,6 +82,8 @@ export const routes: Routes = [
         data: { feature: Feature.Payments },
         children: [
           { path: '', loadComponent: () => import('./features/payments/list/payments-list.component').then(m => m.PaymentsListComponent) },
+          { path: 'manual', loadComponent: () => import('./features/payments/manual/manual-payments-list.component').then(m => m.ManualPaymentsListComponent) },
+          { path: 'manual/:id', loadComponent: () => import('./features/payments/manual/manual-payment-detail.component').then(m => m.ManualPaymentDetailComponent) },
           { path: ':id', loadComponent: () => import('./features/payments/details/payment-details.component').then(m => m.PaymentDetailsComponent) }
         ]
       },
@@ -188,6 +190,7 @@ export const routes: Routes = [
           { path: '', loadComponent: () => import('./features/merchants/list/merchants-list.component').then(m => m.MerchantsListComponent) },
           { path: 'category-config', loadComponent: () => import('./features/merchants/category-config/merchant-category-config-list.component').then(m => m.MerchantCategoryConfigListComponent) },
           { path: 'category-config/:type', loadComponent: () => import('./features/merchants/category-config-edit/merchant-category-config-edit.component').then(m => m.MerchantCategoryConfigEditComponent) },
+          { path: 'stock-disputes', loadComponent: () => import('./features/merchants/stock-disputes/stock-disputes-list.component').then(m => m.StockDisputesListComponent) },
           { path: ':id', loadComponent: () => import('./features/merchants/details/merchant-details.component').then(m => m.MerchantDetailsComponent) }
         ]
       },
