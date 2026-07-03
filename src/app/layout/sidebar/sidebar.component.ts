@@ -217,9 +217,22 @@ export class SidebarComponent {
         {
           label: 'Orders',
           icon: 'pi pi-credit-card',
-          route: '/admin/orders',
           feature: Feature.OrdersLogistics,
           permissionKey: 'orders.view',
+          submenu: [
+            {
+              label: 'All Orders',
+              icon: 'pi pi-list',
+              route: '/admin/orders',
+              permissionKey: 'orders.view',
+            },
+            {
+              label: 'Order Disputes',
+              icon: 'pi pi-exclamation-circle',
+              route: '/admin/orders/disputes',
+              permissionKey: 'orders.view',
+            },
+          ],
         },
         {
           label: 'Merchants',

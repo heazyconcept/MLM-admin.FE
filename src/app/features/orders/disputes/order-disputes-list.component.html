@@ -1,0 +1,231 @@
+<div class="min-h-screen bg-mlm-background font-geist p-4 md:p-6 lg:p-8">
+  <p-toast></p-toast>
+
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 md:mb-8">
+    <div class="min-w-0">
+      <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        Order Disputes
+      </h1>
+      <p class="text-sm text-mlm-sercondary">Mediate customer pickup disputes and resolve order outcomes</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+    <div
+      class="bg-white rounded-xl border px-4 py-4 md:px-5 md:py-5 transition-shadow duration-200 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+      [class]="stats().open > 0 ? 'border-red-200' : 'border-slate-200'">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">Open Disputes</p>
+      <p
+        class="text-3xl md:text-4xl font-bold tracking-tight leading-none mb-2 tabular-nums"
+        [class]="stats().open > 0 ? 'text-red-600' : 'text-mlm-text'">
+        {{ stats().open }}
+      </p>
+      <p class="text-xs text-slate-400">{{ stats().open > 0 ? 'Requires mediation' : 'All clear' }}</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-5 md:py-5 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">Resolved</p>
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2 tabular-nums">
+        {{ stats().resolved }}
+      </p>
+      <p class="text-xs text-slate-400">Admin decisions recorded</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-5 md:py-5 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">Total</p>
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2 tabular-nums">
+        {{ stats().total }}
+      </p>
+      <p class="text-xs text-slate-400">All disputes in view</p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div class="px-4 py-4 md:px-5 border-b border-slate-100">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+        <select
+          [formControl]="selectedStatusControl"
+          class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary transition appearance-none w-full sm:w-44 shrink-0">
+          @for (option of statusOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+
+        <div class="flex items-center gap-2 w-full sm:flex-1 sm:max-w-md">
+          <div class="relative flex-1">
+            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none" aria-hidden="true"></i>
+            <input
+              type="text"
+              [ngModel]="merchantIdFilter()"
+              (ngModelChange)="merchantIdFilter.set($event)"
+              (keydown.enter)="onSearch()"
+              placeholder="Filter by merchant ID…"
+              class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
+          </div>
+          <button
+            type="button"
+            (click)="onSearch()"
+            class="h-9 px-4 rounded-lg bg-mlm-primary hover:bg-brand-green-dark text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors duration-150 border border-mlm-primary hover:border-brand-green-dark shrink-0">
+            <i class="pi pi-search text-xs" aria-hidden="true"></i>
+            Search
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <app-data-table
+      [value]="disputes()"
+      [headers]="tableHeaders()"
+      [loading]="tableLoading()"
+      [lazy]="true"
+      [rows]="rowsPerPage()"
+      [first]="firstRecord()"
+      [totalRecords]="totalRecords()"
+      (pageChange)="onPageChange($event)">
+
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition">
+          <td class="py-3 px-4">
+            <a
+              [routerLink]="['/admin/orders', row.orderId]"
+              class="text-sm font-medium text-mlm-primary hover:underline font-mono">
+              {{ row.orderId | slice:0:8 }}…
+            </a>
+          </td>
+          <td class="py-3 px-4 text-sm text-mlm-text">{{ getCustomerDisplay(row) }}</td>
+          <td class="py-3 px-4 text-sm text-mlm-text">{{ getMerchantDisplay(row) }}</td>
+          <td class="py-3 px-4 text-sm text-mlm-text max-w-[200px] truncate" [title]="row.reason">{{ row.reason }}</td>
+          <td class="py-3 px-4">
+            <span
+              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border"
+              [class]="getDisputeStatusClass(row.status)">
+              {{ getDisputeStatusLabel(row.status) }}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-xs text-slate-500">{{ formatDate(row.createdAt) }}</td>
+          <td class="py-3 px-4">
+            <div class="flex items-center gap-1 flex-wrap">
+              <button
+                type="button"
+                pButton
+                icon="pi pi-eye"
+                class="p-button-text p-button-sm"
+                aria-label="View evidence"
+                (click)="onViewEvidence(row)">
+              </button>
+              @if (canResolve(row)) {
+                <button
+                  *hasPermission="'orders.resolve_dispute'"
+                  type="button"
+                  pButton
+                  label="Favor Merchant"
+                  class="p-button-outlined p-button-sm"
+                  (click)="onFavorMerchant(row)">
+                </button>
+                <button
+                  *hasPermission="'orders.resolve_dispute'"
+                  type="button"
+                  pButton
+                  label="Favor Customer"
+                  class="p-button-outlined p-button-sm p-button-danger"
+                  (click)="onFavorCustomer(row)">
+                </button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </app-data-table>
+  </div>
+
+  <p-dialog
+    [visible]="showEvidenceModal()"
+    [modal]="true"
+    [style]="{ width: '560px' }"
+    [draggable]="false"
+    [resizable]="false"
+    header="Dispute Evidence"
+    (onHide)="closeEvidenceModal()">
+
+    @if (selectedDispute(); as dispute) {
+      <div class="space-y-4">
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Reason</p>
+          <p class="text-sm text-gray-900">{{ dispute.reason }}</p>
+        </div>
+
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Customer</p>
+          <p class="text-sm text-gray-900">{{ getCustomerDisplay(dispute) }}</p>
+        </div>
+
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Merchant</p>
+          <p class="text-sm text-gray-900">{{ getMerchantDisplay(dispute) }}</p>
+        </div>
+
+        @if (dispute.customerNotes) {
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Customer Notes</p>
+            <p class="text-sm text-gray-700 bg-gray-50 rounded-lg p-3 border border-gray-100">{{ dispute.customerNotes }}</p>
+          </div>
+        }
+
+        @if (dispute.evidenceUrls && dispute.evidenceUrls.length > 0) {
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Evidence Files</p>
+            <div class="grid grid-cols-2 gap-2">
+              @for (url of dispute.evidenceUrls; track url) {
+                @if (isImageUrl(url)) {
+                  <a [href]="url" target="_blank" rel="noopener noreferrer" class="block rounded-lg overflow-hidden border border-gray-200 hover:border-indigo-300 transition">
+                    <img [src]="url" [alt]="'Evidence for dispute ' + dispute.id" class="w-full h-32 object-cover" />
+                  </a>
+                } @else {
+                  <a
+                    [href]="url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-indigo-300 transition text-sm text-indigo-600">
+                    <i class="pi pi-file-pdf text-lg" aria-hidden="true"></i>
+                    <span class="truncate">View document</span>
+                  </a>
+                }
+              }
+            </div>
+          </div>
+        } @else {
+          <p class="text-sm text-gray-400 italic">No evidence files attached</p>
+        }
+      </div>
+    }
+  </p-dialog>
+
+  <app-confirmation-modal
+    [visible]="showFavorMerchantModal()"
+    title="Favor Merchant"
+    message="The order will be marked COMPLETED. The customer keeps the goods as-is. Add admin notes for the record."
+    confirmLabel="Complete Order"
+    confirmClass="p-button-success"
+    cancelLabel="Cancel"
+    [showReasonField]="true"
+    reasonPlaceholder="Optional admin notes..."
+    [loading]="actionLoading()"
+    (confirm)="handleFavorMerchantConfirm($event)"
+    (cancel)="showFavorMerchantModal.set(false)">
+  </app-confirmation-modal>
+
+  <app-confirmation-modal
+    [visible]="showFavorCustomerModal()"
+    title="Favor Customer"
+    message="The order will be CANCELLED. Handle any refund offline. Add admin notes explaining the decision."
+    confirmLabel="Cancel Order"
+    confirmClass="p-button-danger"
+    cancelLabel="Back"
+    [showReasonField]="true"
+    [reasonRequired]="true"
+    reasonPlaceholder="Explain why the customer is favored..."
+    [loading]="actionLoading()"
+    (confirm)="handleFavorCustomerConfirm($event)"
+    (cancel)="showFavorCustomerModal.set(false)">
+  </app-confirmation-modal>
+</div>

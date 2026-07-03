@@ -68,9 +68,13 @@ export class OrderListComponent implements OnInit {
     { label: 'Approved', value: 'APPROVED' },
     { label: 'Assigned to Merchant', value: 'ASSIGNED_TO_MERCHANT' },
     { label: 'Ready for Pickup', value: 'READY_FOR_PICKUP' },
+    { label: 'Picked Up', value: 'PICKED_UP' },
     { label: 'Delivery Requested', value: 'OFFLINE_DELIVERY_REQUESTED' },
     { label: 'Fulfilled', value: 'FULFILLED' },
     { label: 'Delivered', value: 'DELIVERED' },
+    { label: 'Completed', value: 'COMPLETED' },
+    { label: 'Cancelled', value: 'CANCELLED' },
+    { label: 'Failed', value: 'FAILED' },
   ];
 
   fulfilmentOptions = [
@@ -94,6 +98,7 @@ export class OrderListComponent implements OnInit {
     'Customer',
     'Amount',
     'Fulfilment',
+    'Batch',
     'Customer Type',
     'Status',
     'Date',
