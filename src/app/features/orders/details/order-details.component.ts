@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -26,6 +26,7 @@ import { StockRefreshService } from '../../products/services/stock-refresh.servi
   selector: 'app-order-details',
   imports: [
     CommonModule,
+    RouterModule,
     FormsModule,
     InfoBannerComponent,
     StatusBadgeComponent,
@@ -82,6 +83,30 @@ export class OrderDetailsComponent implements OnInit {
 
   // Is this a home delivery order?
   isHomeDelivery = computed(() => this.order()?.fulfilmentMode === 'OFFLINE_DELIVERY');
+
+  isPickup = computed(() => this.order()?.fulfilmentMode === 'PICKUP');
+
+  hasOpenDispute = computed(() => {
+    const o = this.order();
+    return !!o?.dispute && o.dispute.status === 'OPEN';
+  });
+
+  showDisputePendingBanner = computed(() => {
+    const o = this.order();
+    return o?.status === 'PICKED_UP' && this.hasOpenDispute();
+  });
+
+  showDisputeResolvedBanner = computed(() => {
+    const o = this.order();
+    if (!o?.dispute || o.dispute.status === 'OPEN') return false;
+    return o.status === 'COMPLETED' || o.status === 'CANCELLED';
+  });
+
+  showPickupHandoff = computed(() => {
+    const o = this.order();
+    if (!o || o.fulfilmentMode !== 'PICKUP') return false;
+    return ['ASSIGNED_TO_MERCHANT', 'READY_FOR_PICKUP', 'PICKED_UP', 'COMPLETED', 'CANCELLED'].includes(o.status);
+  });
 
   // Can assign? Only for PICKUP orders now, based on user instruction
   canShowAssign = computed(() => {
@@ -343,5 +368,12 @@ export class OrderDetailsComponent implements OnInit {
     if (!o?.assignedMerchantId) return 'Not assigned';
     const merchant = this.merchants().find((m) => m.id === o.assignedMerchantId);
     return merchant ? this.merchantService.getMerchantDisplayName(merchant) : o.assignedMerchantId;
+  }
+
+  getSelectedMerchantName(): string {
+    const o = this.order();
+    if (!o?.selectedMerchantId) return 'Not selected';
+    const merchant = this.merchants().find((m) => m.id === o.selectedMerchantId);
+    return merchant ? this.merchantService.getMerchantDisplayName(merchant) : o.selectedMerchantId;
   }
 }

@@ -240,6 +240,7 @@ export const ALL_PERMISSION_KEYS: Permission[] = [
   { id: 'p-33', key: 'orders.view_details', label: 'View Order Details', module: 'Orders', type: 'view' },
   { id: 'p-34', key: 'orders.update_status', label: 'Update Order Status', module: 'Orders', type: 'action' },
   { id: 'p-35', key: 'orders.configure_logistics', label: 'Configure Logistics', module: 'Orders', type: 'action' },
+  { id: 'p-63', key: 'orders.resolve_dispute', label: 'Resolve Order Dispute', module: 'Orders', type: 'action' },
 
   // Merchants
   { id: 'p-36', key: 'merchants.view', label: 'View Merchants', module: 'Merchants', type: 'view' },

@@ -115,6 +115,7 @@ export const routes: Routes = [
         data: { feature: Feature.OrdersLogistics },
         children: [
           { path: '', loadComponent: () => import('./features/orders/list/order-list.component').then(m => m.OrderListComponent) },
+          { path: 'disputes', loadComponent: () => import('./features/orders/disputes/order-disputes-list.component').then(m => m.OrderDisputesListComponent) },
           { path: ':id', loadComponent: () => import('./features/orders/details/order-details.component').then(m => m.OrderDetailsComponent) }
         ]
       },

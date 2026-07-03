@@ -49,7 +49,7 @@
                   [pTooltip]="o.id" tooltipPosition="bottom">
               {{ o.id | slice:0:8 }}…
             </span>
-            <app-status-badge [status]="o.status"></app-status-badge>
+            <app-status-badge [status]="getStatusLabel(o.status)"></app-status-badge>
           </div>
           <p class="text-xs text-slate-400 mt-0.5">
             Placed {{ o.createdAt | date:'MMM d, y · h:mm a' }}
@@ -71,6 +71,42 @@
           message="You have view-only access. Contact an administrator for changes."
           type="info">
         </app-info-banner>
+      </div>
+    }
+
+    @if (showDisputePendingBanner()) {
+      <div class="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+        <div class="flex items-start gap-3">
+          <i class="pi pi-exclamation-triangle text-red-600 text-lg mt-0.5" aria-hidden="true"></i>
+          <div class="flex-1">
+            <h4 class="font-semibold text-red-900 mb-1">Open Pickup Dispute</h4>
+            <p class="text-sm text-red-700 mb-2">
+              Customer confirmation is blocked until an admin resolves this dispute.
+            </p>
+            <a
+              [routerLink]="['/admin/orders/disputes']"
+              class="text-sm font-semibold text-red-800 hover:text-red-900 underline">
+              Go to Order Disputes inbox
+            </a>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (showDisputeResolvedBanner()) {
+      <div class="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+        <div class="flex items-start gap-3">
+          <i class="pi pi-check-circle text-emerald-600 text-lg mt-0.5" aria-hidden="true"></i>
+          <div>
+            <h4 class="font-semibold text-emerald-900 mb-1">Dispute Resolved</h4>
+            <p class="text-sm text-emerald-700">
+              Order status: {{ getStatusLabel(o.status) }}.
+              @if (o.dispute) {
+                Dispute {{ o.dispute.status | lowercase }}.
+              }
+            </p>
+          </div>
+        </div>
       </div>
     }
 
@@ -189,7 +225,7 @@
                 <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-2">
                   Selected Merchant
                 </p>
-                <p class="text-sm text-mlm-text">{{ o.selectedMerchantId || 'Not selected' }}</p>
+                <p class="text-sm text-mlm-text">{{ getSelectedMerchantName() }}</p>
               </div>
               @if (o.merchantRoute) {
                 <div>
@@ -237,8 +273,63 @@
                 <p class="text-sm text-mlm-text">{{ o.receivedAt | date:'MMM d, y · h:mm a' }}</p>
               </div>
             }
+
+            @if (isPickup() && o.pickedUpAt) {
+              <div>
+                <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-2">
+                  Picked Up At
+                </p>
+                <p class="text-sm text-mlm-text">{{ o.pickedUpAt | date:'MMM d, y · h:mm a' }}</p>
+              </div>
+            }
+
+            @if (o.completedAt) {
+              <div>
+                <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-2">
+                  Completed At
+                </p>
+                <p class="text-sm text-mlm-text">{{ o.completedAt | date:'MMM d, y · h:mm a' }}</p>
+              </div>
+            }
           </div>
         </div>
+
+        @if (showPickupHandoff()) {
+          <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-100">
+              <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-0.5">
+                Pickup Handoff
+              </p>
+              <p class="text-xs text-slate-400">
+                Merchant marks picked up; customer confirms receipt or opens a dispute.
+              </p>
+            </div>
+            <div class="px-6 py-5">
+              <div class="flex flex-wrap gap-2">
+                <span
+                  class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border"
+                  [class]="o.status === 'ASSIGNED_TO_MERCHANT' || o.status === 'READY_FOR_PICKUP' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-400 border-slate-200'">
+                  Awaiting pickup
+                </span>
+                <span
+                  class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border"
+                  [class]="o.status === 'PICKED_UP' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-50 text-slate-400 border-slate-200'">
+                  Picked up
+                </span>
+                <span
+                  class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border"
+                  [class]="o.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'">
+                  Completed
+                </span>
+              </div>
+              @if (hasOpenDispute()) {
+                <p class="text-xs text-red-600 mt-3 font-medium">
+                  Open dispute — awaiting admin resolution.
+                </p>
+              }
+            </div>
+          </div>
+        }
 
         <!-- ── Assign Merchant ── -->
         @if (canShowAssign()) {
@@ -545,6 +636,15 @@
               {{ o.id | slice:0:8 }}…
             </span>
           </div>
+          @if (o.checkoutBatchId) {
+            <div class="flex justify-between items-baseline">
+              <span class="text-[10px] text-slate-400">Checkout Batch</span>
+              <span class="text-[11px] font-mono text-slate-500"
+                    [pTooltip]="o.checkoutBatchId" tooltipPosition="left">
+                {{ o.checkoutBatchId | slice:0:8 }}…
+              </span>
+            </div>
+          }
           <div class="flex justify-between items-baseline">
             <span class="text-[10px] text-slate-400">Currency</span>
             <span class="text-[11px] font-mono font-semibold text-mlm-text">{{ o.currency }}</span>

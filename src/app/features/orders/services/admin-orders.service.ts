@@ -215,9 +215,13 @@ export class AdminOrdersService {
       APPROVED: 'Approved',
       ASSIGNED_TO_MERCHANT: 'Assigned to Merchant',
       READY_FOR_PICKUP: 'Ready for Pickup',
+      PICKED_UP: 'Picked Up',
       OFFLINE_DELIVERY_REQUESTED: 'Delivery Requested',
       FULFILLED: 'Fulfilled',
       DELIVERED: 'Delivered',
+      COMPLETED: 'Completed',
+      CANCELLED: 'Cancelled',
+      FAILED: 'Failed',
     };
     return labels[status] ?? status;
   }
@@ -226,15 +230,20 @@ export class AdminOrdersService {
     switch (status) {
       case 'DELIVERED':
       case 'FULFILLED':
+      case 'COMPLETED':
         return 'success';
       case 'APPROVED':
       case 'PAID':
         return 'info';
       case 'ASSIGNED_TO_MERCHANT':
       case 'READY_FOR_PICKUP':
+      case 'PICKED_UP':
         return 'warn';
       case 'OFFLINE_DELIVERY_REQUESTED':
         return 'contrast';
+      case 'CANCELLED':
+      case 'FAILED':
+        return 'danger';
       case 'PENDING':
       case 'CREATED':
         return 'secondary';
