@@ -68,11 +68,11 @@ export class PaymentDetailsComponent implements OnInit {
   }
 
   get canConfirmSuccessful(): boolean {
-    return this.payment()?.status === 'Pending';
+    return this.payment()?.status === 'Initiated';
   }
 
   get canFail(): boolean {
-    return this.payment()?.status === 'Pending';
+    return this.payment()?.status === 'Initiated';
   }
 
   get canReverse(): boolean {

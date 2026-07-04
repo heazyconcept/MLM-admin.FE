@@ -485,15 +485,7 @@
               <span class="inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
                 {{ m.products.length }}
               </span>
-              @if (canApproveMerchant() && m.status === 'ACTIVE') {
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-                  (click)="onAssignProduct()">
-                  <i class="pi pi-plus text-xs"></i>
-                  <span>Assign Product</span>
-                </button>
-              }
+
             </div>
           </div>
 
