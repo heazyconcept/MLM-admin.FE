@@ -3,7 +3,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-export type PaymentStatus = 'Pending' | 'Successful' | 'Failed' | 'Reversed';
+export type PaymentStatus = 'Initiated' | 'Successful' | 'Failed' | 'Reversed';
 export type PaymentPurpose = 'Registration' | 'Funding' | 'Upgrade';
 
 export interface PaymentStatusHistory {
@@ -60,8 +60,10 @@ export class PaymentService {
   private readonly api = inject(ApiService);
 
   private paymentsSignal = signal<Payment[]>([]);
+  private totalRecordsSignal = signal<number>(0);
 
   readonly payments = computed(() => this.paymentsSignal());
+  readonly totalRecords = computed(() => this.totalRecordsSignal());
 
   loadFromApi(options?: { status?: PaymentStatus; userId?: string; fromDate?: Date; toDate?: Date; search?: string; limit?: number; offset?: number }): Observable<Payment[]> {
     const params: Record<string, unknown> = {};
@@ -72,7 +74,7 @@ export class PaymentService {
 
     if (options?.status && options.status !== 'Reversed') {
       const statusMap: Record<PaymentStatus, string> = {
-        Pending: 'INITIATED',
+        Initiated: 'INITIATED',
         Successful: 'SUCCESS',
         Failed: 'FAILED',
         Reversed: ''
@@ -105,10 +107,17 @@ export class PaymentService {
 
     return this.api.get<AdminPaymentsResponse | AdminPaymentItem[]>('admin/payments', params).pipe(
       map(response => {
-        const raw = response as { items?: AdminPaymentItem[]; data?: AdminPaymentItem[] };
+        const raw = response as { items?: AdminPaymentItem[]; data?: AdminPaymentItem[]; total?: number };
         const items = Array.isArray(response) ? response : raw.items ?? raw.data ?? [];
         const mapped = items.map(p => this.mapAdminPayment(p));
         this.paymentsSignal.set(mapped);
+        
+        if (raw.total !== undefined) {
+          this.totalRecordsSignal.set(raw.total);
+        } else {
+          this.totalRecordsSignal.set(mapped.length);
+        }
+        
         return mapped;
       })
     );
@@ -162,7 +171,7 @@ export class PaymentService {
 
   private mapAdminPayment(item: AdminPaymentItem): Payment {
     const statusMap: Record<string, PaymentStatus> = {
-      INITIATED: 'Pending',
+      INITIATED: 'Initiated',
       SUCCESS: 'Successful',
       FAILED: 'Failed',
       REVERSED: 'Reversed'
@@ -175,7 +184,7 @@ export class PaymentService {
       ADMIN_FUNDING: 'Funding'
     };
 
-    const status = statusMap[item.status] ?? 'Pending';
+    const status = statusMap[item.status] ?? 'Initiated';
     const typeKey = (item.type || '').toUpperCase();
     const purpose = purposeMap[typeKey] ?? 'Funding';
 

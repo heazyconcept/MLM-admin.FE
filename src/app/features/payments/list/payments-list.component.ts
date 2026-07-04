@@ -10,6 +10,7 @@ import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { AdminFundingModalComponent, AdminFundingPayload } from '../modals/admin-funding-modal.component';
+import { TablePageEvent } from 'primeng/table';
 
 @Component({
   selector: 'app-payments-list',
@@ -40,6 +41,7 @@ export class PaymentsListComponent implements OnInit {
   @ViewChild('status', { static: true }) statusTemplate!: TemplateRef<unknown>;
 
   payments = this.paymentService.payments;
+  totalRecords = this.paymentService.totalRecords;
   tableLoading = signal(false);
   fundingModalVisible = signal(false);
   
@@ -47,13 +49,15 @@ export class PaymentsListComponent implements OnInit {
   selectedMethodControl = new FormControl('all');
   searchQuery = signal<string>('');
   searchVal = signal<string>('');
+  
+  offset = signal<number>(0);
+  limit = signal<number>(100);
 
   statusOptions = [
     { label: 'All Statuses', value: 'all' },
-    { label: 'Pending', value: 'Pending' },
+    { label: 'Initiated', value: 'Initiated' },
     { label: 'Successful', value: 'Successful' },
-    { label: 'Failed', value: 'Failed' },
-    { label: 'Reversed', value: 'Reversed' }
+    { label: 'Failed', value: 'Failed' }
   ];
 
   methodOptions = [
@@ -82,12 +86,15 @@ export class PaymentsListComponent implements OnInit {
   stats = computed(() => {
     const all = this.payments();
     const successful = all.filter(p => p.status === 'Successful').length;
-    const pending = all.filter(p => p.status === 'Pending').length;
+    const initiated = all.filter(p => p.status === 'Initiated').length;
+    const failed = all.filter(p => p.status === 'Failed').length;
     const totalVolume = all.reduce((sum, p) => sum + p.amount, 0);
 
     return {
       successRate: all.length > 0 ? Math.round((successful / all.length) * 100) : 0,
-      totalPending: pending,
+      totalSuccessful: successful,
+      totalInitiated: initiated,
+      totalFailed: failed,
       totalVolume: totalVolume
     };
   });
@@ -117,7 +124,7 @@ export class PaymentsListComponent implements OnInit {
     // Check for query params
     this.route.queryParams.subscribe(params => {
       if (params['status']) {
-        this.selectedStatusControl.setValue(params['status']);
+        this.selectedStatusControl.setValue(params['status'], { emitEvent: false });
       }
       this.fetchPayments();
     });
@@ -175,14 +182,17 @@ export class PaymentsListComponent implements OnInit {
     ]);
 
     this.selectedStatusControl.valueChanges.subscribe(() => {
+      this.offset.set(0);
       this.fetchPayments();
     });
 
     this.fromDateControl.valueChanges.subscribe(() => {
+      this.offset.set(0);
       this.fetchPayments();
     });
 
     this.toDateControl.valueChanges.subscribe(() => {
+      this.offset.set(0);
       this.fetchPayments();
     });
   }
@@ -203,12 +213,18 @@ export class PaymentsListComponent implements OnInit {
       fromDate,
       toDate,
       search: search || undefined,
-      limit: 50,
-      offset: 0
+      limit: this.limit(),
+      offset: this.offset()
     }).subscribe({
       next: () => this.tableLoading.set(false),
       error: () => this.tableLoading.set(false)
     });
+  }
+
+  onPageChange(event: TablePageEvent) {
+    this.offset.set(event.first);
+    this.limit.set(event.rows);
+    this.fetchPayments();
   }
 
   openFundingModal(): void {
@@ -245,6 +261,7 @@ export class PaymentsListComponent implements OnInit {
   }
 
   onSearch() {
+    this.offset.set(0);
     this.searchQuery.set(this.searchVal().trim());
     this.fetchPayments();
   }

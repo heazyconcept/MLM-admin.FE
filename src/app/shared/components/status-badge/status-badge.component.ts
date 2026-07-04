@@ -1,7 +1,7 @@
 import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type BadgeStatus = 'Active' | 'Suspended' | 'Flagged' | 'Pending' | 'Success' | 'Successful' | 'Failed' | 'Approved' | 'Rejected' | 'Processing' | 'Paid' | 'Posted' | 'Reversed' | 'Locked' | 'Frozen' | 'Registered' | 'Activated' | 'Inactive';
+export type BadgeStatus = 'Active' | 'Suspended' | 'Flagged' | 'Pending' | 'Initiated' | 'Success' | 'Successful' | 'Failed' | 'Approved' | 'Rejected' | 'Processing' | 'Paid' | 'Posted' | 'Reversed' | 'Locked' | 'Frozen' | 'Registered' | 'Activated' | 'Inactive';
 
 @Component({
   selector: 'app-status-badge',
@@ -49,6 +49,7 @@ export class StatusBadgeComponent {
       'SUSPENDED': 'Suspended',
       'FLAGGED': 'Flagged',
       'PENDING': 'Pending',
+      'INITIATED': 'Initiated',
       'SUCCESS': 'Success',
       'SUCCESSFUL': 'Successful',
       'FAILED': 'Failed',
@@ -72,6 +73,7 @@ export class StatusBadgeComponent {
       'Suspended': 'bg-red-50 text-red-700 border border-red-200',
       'Flagged': 'bg-amber-50 text-amber-700 border border-amber-200',
       'Pending': 'bg-orange-50 text-orange-700 border border-orange-200',
+      'Initiated': 'bg-orange-50 text-orange-700 border border-orange-200',
       'Success': 'bg-green-50 text-green-700 border border-green-200',
       'Successful': 'bg-green-50 text-green-700 border border-green-200',
       'Failed': 'bg-red-50 text-red-700 border border-red-200',
@@ -97,6 +99,7 @@ export class StatusBadgeComponent {
       'Suspended': 'bg-red-600',
       'Flagged': 'bg-amber-600',
       'Pending': 'bg-orange-600',
+      'Initiated': 'bg-orange-600',
       'Success': 'bg-green-600',
       'Successful': 'bg-green-600',
       'Failed': 'bg-red-600',

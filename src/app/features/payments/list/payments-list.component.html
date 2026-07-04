@@ -51,10 +51,10 @@
     <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-6 md:py-5
                 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
       <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
-        Pending Confirmation
+        Initiated Payments
       </p>
       <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2">
-        {{ stats().totalPending }}
+        {{ stats().totalInitiated }}
       </p>
       <p class="text-xs font-medium text-mlm-warning">Requires manual verification</p>
     </div>
@@ -143,11 +143,23 @@
     </div>
 
     <!-- Table -->
+    <div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex flex-wrap items-center gap-4 text-xs font-medium">
+      <span class="text-slate-500">Total Records: <span class="font-bold text-slate-700">{{ totalRecords() }}</span></span>
+      <div class="w-px h-3 bg-slate-300"></div>
+      <span class="text-emerald-600">Successful: <span class="font-bold">{{ stats().totalSuccessful }}</span></span>
+      <span class="text-amber-500">Initiated: <span class="font-bold">{{ stats().totalInitiated }}</span></span>
+      <span class="text-rose-500">Failed: <span class="font-bold">{{ stats().totalFailed }}</span></span>
+    </div>
     <div class="payments-table-wrap">
     <app-data-table
       [value]="filteredPayments()"
       [headers]="tableHeaders()"
-      [loading]="tableLoading()">
+      [loading]="tableLoading()"
+      [lazy]="true"
+      [totalRecords]="totalRecords()"
+      [first]="offset()"
+      [rows]="limit()"
+      (pageChange)="onPageChange($event)">
 
       <ng-template pTemplate="body" let-row>
         <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100">
