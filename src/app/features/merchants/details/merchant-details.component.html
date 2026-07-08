@@ -313,9 +313,13 @@
           <div class="flex items-start gap-3">
             <i class="pi pi-exclamation-triangle text-amber-600 text-lg mt-0.5"></i>
             <div class="w-full">
-              <h4 class="font-semibold text-amber-900 mb-2">Insufficient Admin Pool Stock</h4>
+              <h4 class="font-semibold text-amber-900 mb-2">Low Admin Pool Stock</h4>
               <p class="text-sm text-amber-800 mb-3">
-                Approve and refill actions are blocked until required onboarding pool stock is available.
+                @if (canApprove()) {
+                  Onboarding pool stock is below the configured requirement. You can still approve this merchant who has paid — top up stock when you are ready to fulfill allocations.
+                } @else {
+                  Refill is blocked until required onboarding pool stock is available.
+                }
               </p>
               <div class="space-y-1.5">
                 @for (row of poolShortages(); track row.productId) {
@@ -352,7 +356,7 @@
               [label]="approveLoading() ? 'Approving...' : 'Approve'"
               [icon]="approveLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
               class="p-button-success"
-              [disabled]="approveLoading() || isPoolBlockingApprove()"
+              [disabled]="approveLoading()"
               (click)="onApprove()">
             </button>
           }
