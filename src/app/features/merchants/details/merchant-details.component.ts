@@ -146,7 +146,6 @@ export class MerchantDetailsComponent implements OnInit {
 
   hasPoolShortage = computed(() => this.poolShortages().length > 0);
   canPrecheckPool = computed(() => !!this.merchantCategoryType());
-  isPoolBlockingApprove = computed(() => this.canApprove() && this.canPrecheckPool() && this.hasPoolShortage());
   isPoolBlockingRefill = computed(() => this.canRefill() && this.canPrecheckPool() && this.hasPoolShortage());
 
   // Computed
@@ -360,14 +359,6 @@ export class MerchantDetailsComponent implements OnInit {
 
   // Action openers
   onApprove() {
-    if (this.isPoolBlockingApprove()) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Insufficient Admin Pool',
-        detail: 'Top up admin pool stock for onboarding products before approving this merchant.'
-      });
-      return;
-    }
     this.showApproveModal.set(true);
   }
   onReject() { this.showRejectModal.set(true); }
