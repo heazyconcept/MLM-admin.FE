@@ -31,8 +31,16 @@ interface AdminWalletLedgerEntryDto {
   source: string;
   earningType: string | null;
   reference: string | null;
+  canUndo?: boolean;
   metadata?: Record<string, unknown>;
   createdAt: string;
+}
+
+export interface AdminUndoAdjustmentResponse {
+  message: string;
+  reversalReference: string;
+  balance: number;
+  displayCurrency: string;
 }
 
 // Detail response from `GET /admin/wallets/:id`
@@ -83,6 +91,9 @@ export interface LedgerEntry {
   reason: string;
   timestamp: Date;
   reference?: string;
+  source?: string;
+  direction?: 'CREDIT' | 'DEBIT';
+  canUndo?: boolean;
 }
 
 @Injectable({
@@ -206,6 +217,16 @@ export class WalletService {
   }
 
   /**
+   * Undo an admin credit via `POST /admin/wallets/adjustments/:reference/undo`.
+   */
+  undoAdjustment(reference: string, payload: { reason: string }): Observable<AdminUndoAdjustmentResponse> {
+    return this.api.post<AdminUndoAdjustmentResponse>(
+      `admin/wallets/adjustments/${reference}/undo`,
+      payload
+    );
+  }
+
+  /**
    * Aggregate wallet balances per wallet type from `GET /admin/wallets/summary`.
    */
   getWalletSummary(): Observable<Record<string, number>> {
@@ -260,7 +281,8 @@ export class WalletService {
   }
 
   private mapLedgerEntry(dto: AdminWalletLedgerEntryDto, walletId?: string): LedgerEntry {
-    const type = dto.direction?.toUpperCase() === 'CREDIT' ? 'Credit' : 'Debit';
+    const direction = dto.direction?.toUpperCase() === 'CREDIT' ? 'CREDIT' : 'DEBIT';
+    const type = direction === 'CREDIT' ? 'Credit' : 'Debit';
     const reasonParts = [dto.source, dto.earningType].filter(Boolean);
     const reason = reasonParts.length > 0
       ? reasonParts.join(' · ')
@@ -273,7 +295,10 @@ export class WalletService {
       amount: dto.amount,
       reason,
       timestamp: new Date(dto.createdAt),
-      reference: dto.reference ?? undefined
+      reference: dto.reference ?? undefined,
+      source: dto.source,
+      direction,
+      canUndo: dto.canUndo === true,
     };
   }
 }

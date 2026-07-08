@@ -13,7 +13,7 @@ import { Feature } from '../../../core/models/admin-permission.model';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
-import { UsersService, User, UserWallet, FundCASHWalletPayload, ActivateRegistrationPayload, UpgradePackagePayload, CreditVolumePayload, UpdateUserStatusPayload } from '../services/users.service';
+import { UsersService, User, UserWallet, AdminFundWalletType, ActivateRegistrationPayload, UpgradePackagePayload, CreditVolumePayload, UpdateUserStatusPayload } from '../services/users.service';
 import { WalletService } from '../../wallets/services/wallet.service';
 import {
   EarningsService,
@@ -24,11 +24,10 @@ import {
   userEarningsActivityTrackId,
 } from '../../earnings/services/earnings.service';
 import { getEarningTypeLabel } from '../../../core/constants/earning-type-labels';
-import { FundCashModalComponent } from '../modals/fund-cash-modal.component';
+import { FundsAdjustmentModalComponent } from '../../wallets/modals/funds-adjustment-modal.component';
 import { ActivateRegistrationModalComponent } from '../modals/activate-registration-modal.component';
 import { UpgradePackageModalComponent } from '../modals/upgrade-package-modal.component';
 import { CreditVolumeModalComponent } from '../modals/credit-volume-modal.component';
-import { WalletDetailDialogComponent } from '../modals/wallet-detail-dialog.component';
 
 @Component({
   selector: 'app-user-details',
@@ -44,11 +43,10 @@ import { WalletDetailDialogComponent } from '../modals/wallet-detail-dialog.comp
     TooltipModule,
     InfoBannerComponent,
     ConfirmationModalComponent,
-    FundCashModalComponent,
+    FundsAdjustmentModalComponent,
     ActivateRegistrationModalComponent,
     UpgradePackageModalComponent,
     CreditVolumeModalComponent,
-    WalletDetailDialogComponent,
     StatusBadgeComponent,
   ],
   providers: [MessageService],
@@ -68,7 +66,7 @@ export class UserDetailsComponent implements OnInit {
     this.permission.hasAnyPermission(
       'users.activate_registration',
       'users.upgrade_package',
-      'users.fund_cash',
+      'wallets.adjust_funds',
       'users.credit_volume',
       'users.lock_wallet',
       'users.suspend',
@@ -88,13 +86,11 @@ export class UserDetailsComponent implements OnInit {
   actionLoading = signal(false);
 
   /** Modal visibility signals */
-  fundModalVisible = signal(false);
+  adjustFundsModalVisible = signal(false);
+  selectedFundWalletType = signal<AdminFundWalletType | undefined>(undefined);
   activateModalVisible = signal(false);
   upgradeModalVisible = signal(false);
   volumeModalVisible = signal(false);
-  walletDialogVisible = signal(false);
-  selectedWalletId = signal('');
-  selectedWalletLabel = signal('');
 
   /** Confirmation modal state */
   confirmAction = signal('');
@@ -333,24 +329,21 @@ export class UserDetailsComponent implements OnInit {
 
   /** ────────── Modal handlers ────────── */
 
-  /** Fund CASH wallet */
-  openFundModal(): void {
-    this.fundModalVisible.set(true);
+  /** Adjust funds (fund wallet with type picker) */
+  openAdjustFundsModal(walletType?: AdminFundWalletType): void {
+    this.selectedFundWalletType.set(walletType);
+    this.adjustFundsModalVisible.set(true);
   }
 
-  onFundConfirmed(payload: FundCASHWalletPayload): void {
-    this.usersService.fundCASHWallet(payload).subscribe({
-      next: () => {
-        this.fundModalVisible.set(false);
-        this.messageService.add({ severity: 'success', summary: 'Funded', detail: 'CASH wallet credited.' });
-        this.reloadUser();
-      },
-      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Funding failed.' }),
-    });
+  onAdjustFundsComplete(): void {
+    this.adjustFundsModalVisible.set(false);
+    this.selectedFundWalletType.set(undefined);
+    this.reloadUser();
   }
 
-  onFundCancelled(): void {
-    this.fundModalVisible.set(false);
+  onAdjustFundsCancelled(): void {
+    this.adjustFundsModalVisible.set(false);
+    this.selectedFundWalletType.set(undefined);
   }
 
   /** Activate registration */
@@ -422,18 +415,6 @@ export class UserDetailsComponent implements OnInit {
 
   onVolumeCancelled(): void {
     this.volumeModalVisible.set(false);
-  }
-
-  /** Wallet detail dialog */
-  openWalletDialog(wallet: UserWallet, label: string): void {
-    this.selectedWalletId.set(wallet.walletId);
-    this.selectedWalletLabel.set(label);
-    this.walletDialogVisible.set(true);
-  }
-
-  onWalletDialogClosed(): void {
-    this.walletDialogVisible.set(false);
-    this.reloadUser();
   }
 
   /** ────────── Existing helpers (kept for compatibility) ────────── */

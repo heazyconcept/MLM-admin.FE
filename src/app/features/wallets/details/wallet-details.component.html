@@ -173,7 +173,19 @@
                       {{ entry.timestamp | date:'MMM d, y' }}
                     </span>
                   </td>
-  
+
+                  <td class="px-3 py-2.5 sm:px-5 sm:py-3.5 w-[90px] sm:w-[100px] text-right whitespace-nowrap">
+                    @if (entry.canUndo) {
+                      <button
+                        *hasPermission="'wallets.adjust_funds'"
+                        type="button"
+                        (click)="openUndo(entry)"
+                        class="text-xs font-semibold text-mlm-error hover:text-mlm-red-700 transition-colors">
+                        Undo
+                      </button>
+                    }
+                  </td>
+
                 </tr>
               </ng-template>
   
@@ -251,6 +263,7 @@
       [visible]="showAdjustmentModal()"
       (visibleChange)="showAdjustmentModal.set($event)"
       [wallet]="wallet() ?? undefined"
+      [contextWallets]="fundContextWallets()"
       (adjusted)="onAdjustmentComplete()">
     </app-funds-adjustment-modal>
   
@@ -261,6 +274,23 @@
       [action]="pendingAction()"
       (confirmed)="confirmAction()">
     </app-wallet-action-modal>
+
+    <app-confirmation-modal
+      [visible]="showUndoModal()"
+      (visibleChange)="showUndoModal.set($event)"
+      title="Undo wallet credit"
+      message="This will reverse the selected admin credit. The wallet balance will be reduced by the credited amount."
+      icon="pi pi-undo"
+      iconClass="text-mlm-error"
+      confirmLabel="Undo credit"
+      confirmClass="p-button-danger"
+      [loading]="undoLoading()"
+      [showReasonField]="true"
+      [reasonRequired]="true"
+      reasonPlaceholder="Why are you undoing this credit? (min 10 chars)"
+      (confirm)="onUndoConfirm($event)"
+      (cancel)="onUndoCancel()">
+    </app-confirmation-modal>
   
   </div>
   

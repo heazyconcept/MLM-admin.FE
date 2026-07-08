@@ -1,74 +1,91 @@
 <p-dialog
   [visible]="visible()"
-  [header]="'Adjust Funds - ' + (wallet()?.id || '')"
+  [header]="dialogHeader()"
   [modal]="true"
   [style]="{ width: 'min(450px, 95vw)' }"
   [breakpoints]="{ '640px': '95vw' }"
-  (onHide)="close()">
-  @if (wallet(); as w) {
-    <div class="space-y-6 pt-2">
-       <!-- Type Selection -->
-       <div class="flex gap-4 p-1 bg-gray-100 rounded-lg">
-          <button class="flex-1 py-2 rounded-md font-medium text-sm transition-colors"
-                  [class.bg-white]="type() === 'Credit'"
-                  [class.shadow-sm]="type() === 'Credit'"
-                  [class.text-green-600]="type() === 'Credit'"
-                  (click)="type.set('Credit')">
-             Credit (+)
-          </button>
-          <button class="flex-1 py-2 rounded-md font-medium text-sm transition-colors"
-                  [class.bg-white]="type() === 'Debit'"
-                  [class.shadow-sm]="type() === 'Debit'"
-                  [class.text-red-600]="type() === 'Debit'"
-                  (click)="type.set('Debit')">
-             Debit (-)
-          </button>
-       </div>
+  (onHide)="onDialogHide()">
 
-       <!-- Form -->
-       <form [formGroup]="form" (ngSubmit)="submit()">
-          <div class="space-y-4">
-             <!-- Amount -->
-             <div class="space-y-1">
-               <label class="text-sm font-bold text-gray-700">Amount ({{ w.displayCurrency }})</label>
-                <p-inputNumber formControlName="amount" 
-                               [mode]="'currency'" 
-                               [currency]="w.displayCurrency" 
-                               [min]="0"
-                               styleClass="w-full"
-                               class="w-full block"></p-inputNumber>
-             </div>
+  @if (isUserMode() || wallet()) {
+    <form [formGroup]="fundForm" (ngSubmit)="submitFund()" class="space-y-4 pt-2">
+      <p class="text-sm text-mlm-secondary">
+        Credit a wallet for this user. Select the wallet type and enter a positive amount.
+      </p>
 
-             <!-- Reason -->
-             <div class="space-y-1">
-                <label class="text-sm font-bold text-gray-700">Reason / Reference</label>
-                <textarea pInputTextarea formControlName="reason" rows="3" class="w-full" placeholder="e.g. Correction for transaction #123"></textarea>
-                <small class="text-gray-500">A clear reason is required for audit logs.</small>
-             </div>
-             
-             <!-- Warning -->
-             @if (type() === 'Credit') {
-               <div class="p-3 bg-blue-50 text-blue-700 text-xs rounded-lg flex gap-2">
-                 <i class="pi pi-info-circle mt-0.5"></i>
-                 <span>This will increase the user's balance. Ensure this is a valid compensating entry.</span>
-               </div>
-             } @else {
-               <div class="p-3 bg-red-50 text-red-700 text-xs rounded-lg flex gap-2">
-                 <i class="pi pi-exclamation-triangle mt-0.5"></i>
-                 <span>This will deduct funds from the user's balance. Action cannot be undone.</span>
-               </div>
-             }
-          </div>
+      <div>
+        <label for="adjust-wallet-type" class="block text-sm font-medium text-gray-700 mb-1">Wallet type</label>
+        <p-select
+          inputId="adjust-wallet-type"
+          formControlName="walletType"
+          [options]="walletTypeOptions()"
+          optionLabel="label"
+          optionValue="value"
+          optionDisabled="disabled"
+          styleClass="w-full"
+          [disabled]="submitting()"
+          placeholder="Select wallet type">
+        </p-select>
+      </div>
 
-          <!-- Actions -->
-          <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 mt-6 sm:mt-8">
-             <button type="button" pButton label="Cancel" class="p-button-text p-button-secondary w-full sm:w-auto" (click)="close()"></button>
-             <button type="submit" pButton [label]="'Confirm ' + type()"
-                     class="w-full sm:w-auto"
-                     [ngClass]="type() === 'Credit' ? 'p-button-success' : 'p-button-danger'"
-                     [disabled]="form.invalid"></button>
-          </div>
-       </form>
-    </div>
+      <div>
+        <label for="adjust-wallet-amount" class="block text-sm font-medium text-gray-700 mb-1">
+          Amount ({{ selectedCurrency() }})
+        </label>
+        <p-inputNumber
+          inputId="adjust-wallet-amount"
+          formControlName="amount"
+          [min]="0.01"
+          [showButtons]="true"
+          [disabled]="submitting()"
+          styleClass="w-full">
+        </p-inputNumber>
+      </div>
+
+      <div>
+        <label for="adjust-wallet-reason" class="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+        <textarea
+          pTextarea
+          id="adjust-wallet-reason"
+          rows="3"
+          class="w-full"
+          formControlName="reason"
+          [disabled]="submitting()"
+          placeholder="Offline bank transfer ref ... (min 10 chars)">
+        </textarea>
+        @if (fundForm.controls.reason.touched && fundForm.controls.reason.hasError('minlength')) {
+          <p class="text-xs text-mlm-error mt-1">Reason must be at least 10 characters.</p>
+        }
+      </div>
+
+      <div class="p-3 bg-blue-50 text-blue-700 text-xs rounded-lg flex gap-2">
+        <i class="pi pi-info-circle mt-0.5"></i>
+        <span>
+          @if (isWalletDetailMode()) {
+            This will credit the selected wallet. Eligible credits can be undone from the ledger below.
+          } @else {
+            This will credit the selected wallet. Eligible credits can be undone from the ledger.
+          }
+        </span>
+      </div>
+
+      <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 mt-2">
+        <button
+          type="button"
+          pButton
+          label="Cancel"
+          class="p-button-text p-button-secondary w-full sm:w-auto"
+          [disabled]="submitting()"
+          (click)="close()">
+        </button>
+        <button
+          type="submit"
+          pButton
+          label="Confirm credit"
+          class="p-button-success w-full sm:w-auto"
+          [disabled]="fundForm.invalid || submitting()"
+          [loading]="submitting()">
+        </button>
+      </div>
+    </form>
   }
 </p-dialog>

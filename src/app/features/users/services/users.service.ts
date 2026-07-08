@@ -160,12 +160,21 @@ export interface CreditVolumeResponse {
   message: string;
 }
 
-/** POST /admin/payments/fund */
-export interface FundCASHWalletPayload {
-  userId: string;
+export type AdminFundWalletType = 'REGISTRATION' | 'CASH' | 'VOUCHER' | 'AUTOSHIP';
+
+export interface AdminFundWalletRequest {
+  walletType: AdminFundWalletType;
   amount: number;
-  currency: string;
   reason: string;
+}
+
+export interface AdminFundWalletResponse {
+  message: string;
+  reference: string;
+  walletId: string;
+  walletType: string;
+  balance: number;
+  displayCurrency: 'NGN' | 'USD';
 }
 
 /** PUT /admin/users/:id/status */
@@ -218,9 +227,9 @@ export class UsersService {
     return this.api.post<CreditVolumeResponse>(`admin/users/${userId}/volume/credit`, payload);
   }
 
-  /** POST /admin/payments/fund */
-  fundCASHWallet(payload: FundCASHWalletPayload): Observable<void> {
-    return this.api.post<void>('admin/payments/fund', payload);
+  /** POST /admin/users/:userId/wallets/fund */
+  fundWallet(userId: string, payload: AdminFundWalletRequest): Observable<AdminFundWalletResponse> {
+    return this.api.post<AdminFundWalletResponse>(`admin/users/${userId}/wallets/fund`, payload);
   }
 
   /** PUT /admin/users/:id/cash-wallet/lock */
