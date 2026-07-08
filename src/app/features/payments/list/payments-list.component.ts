@@ -9,7 +9,6 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { AdminFundingModalComponent, AdminFundingPayload } from '../modals/admin-funding-modal.component';
 import { TablePageEvent } from 'primeng/table';
 
 @Component({
@@ -20,11 +19,9 @@ import { TablePageEvent } from 'primeng/table';
     FormsModule,
     ReactiveFormsModule,
     DataTableComponent,
-
     StatusBadgeComponent,
     ButtonModule,
     ToastModule,
-    AdminFundingModalComponent
   ],
   templateUrl: './payments-list.component.html',
   styleUrls: ['./payments-list.component.css'],
@@ -43,7 +40,6 @@ export class PaymentsListComponent implements OnInit {
   payments = this.paymentService.payments;
   totalRecords = this.paymentService.totalRecords;
   tableLoading = signal(false);
-  fundingModalVisible = signal(false);
   
   selectedStatusControl = new FormControl('all');
   selectedMethodControl = new FormControl('all');
@@ -225,35 +221,6 @@ export class PaymentsListComponent implements OnInit {
     this.offset.set(event.first);
     this.limit.set(event.rows);
     this.fetchPayments();
-  }
-
-  openFundingModal(): void {
-    this.fundingModalVisible.set(true);
-  }
-
-  handleFundingConfirmed(payload: AdminFundingPayload): void {
-    this.paymentService.adminFundUser(payload).subscribe({
-      next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Funding Successful',
-          detail: `Funded user ${payload.userId} with ${payload.currency} ${payload.amount}`
-        });
-        this.fundingModalVisible.set(false);
-        this.fetchPayments();
-      },
-      error: () => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Funding Failed',
-          detail: 'Unable to complete admin funding. Please try again.'
-        });
-      }
-    });
-  }
-
-  handleFundingCancelled(): void {
-    this.fundingModalVisible.set(false);
   }
 
   viewDetails(payment: Payment) {

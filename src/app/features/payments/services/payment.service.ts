@@ -144,10 +144,6 @@ export class PaymentService {
     return this.api.post<unknown>(`admin/payments/${id}/flag`, { reason });
   }
 
-  adminFundUser(body: { userId: string; amount: number; currency: string; provider: string; reference?: string; notes?: string }): Observable<void> {
-    return this.api.post<void>('admin/payments/fund', body);
-  }
-
   updateStatus(id: string, status: PaymentStatus, admin: string, reason?: string) {
     this.paymentsSignal.update(payments => {
       return payments.map(p => {

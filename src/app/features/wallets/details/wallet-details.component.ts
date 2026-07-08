@@ -9,6 +9,7 @@ import { DataTableComponent } from '../../../shared/components/data-table/data-t
 import { TableColumn, TableConfig } from '../../../shared/components/data-table/data-table.types';
 import { FundsAdjustmentModalComponent } from '../modals/funds-adjustment-modal.component';
 import { WalletActionModalComponent } from '../modals/wallet-action-modal.component';
+import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
@@ -18,7 +19,7 @@ import { HasPermissionDirective } from '../../../shared/directives/has-permissio
 
 @Component({
   selector: 'app-wallet-details',
-  imports: [CommonModule, RouterModule, InfoBannerComponent, DataTableComponent, FundsAdjustmentModalComponent, WalletActionModalComponent, ButtonModule, TagModule, ToastModule, StatusBadgeComponent, HasPermissionDirective],
+  imports: [CommonModule, RouterModule, InfoBannerComponent, DataTableComponent, FundsAdjustmentModalComponent, WalletActionModalComponent, ConfirmationModalComponent, ButtonModule, TagModule, ToastModule, StatusBadgeComponent, HasPermissionDirective],
   providers: [MessageService],
   templateUrl: './wallet-details.component.html',
   styleUrls: ['./wallet-details.component.css'],
@@ -41,13 +42,14 @@ export class WalletDetailsComponent {
   
   wallet = signal<Wallet | null>(null);
   ledger = signal<LedgerEntry[]>([]);
+  /** Stable list for Adjust Funds dropdown (updated when wallets load). */
+  fundContextWallets = signal<Wallet[]>([]);
 
   /** Other wallets for the same user (excluding the current wallet). */
   siblingWallets = computed(() => {
     const current = this.wallet();
     if (!current) return [];
-    const byUser = this.walletService.getWalletsByUserId(current.userId);
-    return byUser.filter(w => w.id !== current.id);
+    return this.fundContextWallets().filter(w => w.id !== current.id);
   });
 
   loading = signal(false);
@@ -77,6 +79,12 @@ export class WalletDetailsComponent {
         hour: '2-digit',
         minute: '2-digit'
       })
+    },
+    {
+      field: 'id',
+      header: 'Actions',
+      width: '100px',
+      align: 'right',
     }
   ]);
 
@@ -85,6 +93,9 @@ export class WalletDetailsComponent {
   // Modal state
   showAdjustmentModal = signal(false);
   showActionModal = signal(false);
+  showUndoModal = signal(false);
+  pendingUndoReference = signal('');
+  undoLoading = signal(false);
   pendingAction = signal<'Lock' | 'Unlock'>('Lock');
 
   tableConfig = signal<TableConfig>({
@@ -115,9 +126,12 @@ export class WalletDetailsComponent {
       next: ({ wallet, ledger }) => {
         this.wallet.set(wallet);
         this.ledger.set(ledger);
+        this.fundContextWallets.set([wallet]);
         this.loading.set(false);
-        // Load same user's wallets so siblingWallets has data
-        this.walletService.listWallets({ userId: wallet.userId, limit: 50 }).subscribe();
+        this.walletService.listWallets({ userId: wallet.userId, limit: 50 }).subscribe((wallets) => {
+          const merged = wallets.some(w => w.id === wallet.id) ? wallets : [wallet, ...wallets];
+          this.fundContextWallets.set(merged);
+        });
       },
       error: () => {
         this.loading.set(false);
@@ -173,19 +187,77 @@ export class WalletDetailsComponent {
   }
 
   onAdjustmentComplete() {
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Adjustment Complete',
-      detail: 'Wallet balance has been updated'
-    });
-    const id = this.walletId();
-    if (id) {
-      this.walletService.getWalletById(id).subscribe({
-        next: ({ wallet, ledger }) => {
-          this.wallet.set(wallet);
-          this.ledger.set(ledger);
-        }
-      });
+    this.refreshWallet();
+  }
+
+  openUndo(entry: LedgerEntry): void {
+    if (!entry.reference || !entry.canUndo) return;
+    this.pendingUndoReference.set(entry.reference);
+    this.showUndoModal.set(true);
+  }
+
+  onUndoConfirm(result: ConfirmationResult): void {
+    if (!result.confirmed) {
+      this.showUndoModal.set(false);
+      return;
     }
+    const reason = (result.reason ?? '').trim();
+    if (reason.length < 10) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Reason required',
+        detail: 'Please provide a reason of at least 10 characters.',
+      });
+      return;
+    }
+
+    const reference = this.pendingUndoReference();
+    if (!reference) return;
+
+    this.undoLoading.set(true);
+    this.walletService.undoAdjustment(reference, { reason }).subscribe({
+      next: (res) => {
+        this.undoLoading.set(false);
+        this.showUndoModal.set(false);
+        this.pendingUndoReference.set('');
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Undo complete',
+          detail: `${res.message} New balance: ${res.displayCurrency} ${res.balance.toLocaleString()}`,
+        });
+        this.refreshWallet();
+      },
+      error: (err) => {
+        this.undoLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Undo failed',
+          detail: err?.error?.message || 'Could not undo this adjustment.',
+        });
+      },
+    });
+  }
+
+  onUndoCancel(): void {
+    this.showUndoModal.set(false);
+    this.pendingUndoReference.set('');
+  }
+
+  private refreshWallet(): void {
+    const id = this.walletId();
+    if (!id) return;
+    this.walletService.getWalletById(id).subscribe({
+      next: ({ wallet, ledger }) => {
+        this.wallet.set(wallet);
+        this.ledger.set(ledger);
+        this.fundContextWallets.update((wallets) => {
+          const idx = wallets.findIndex(w => w.id === wallet.id);
+          if (idx === -1) return wallets;
+          const next = [...wallets];
+          next[idx] = wallet;
+          return next;
+        });
+      },
+    });
   }
 }

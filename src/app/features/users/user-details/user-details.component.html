@@ -89,14 +89,14 @@
                 </button>
               }
 
-              @if (permission.hasPermission('users.fund_cash')) {
+              @if (permission.hasPermission('wallets.adjust_funds')) {
               <button
-                (click)="openFundModal()"
+                (click)="openAdjustFundsModal()"
                 class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
                        text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
                        flex items-center gap-2 transition-colors duration-150">
-                <i class="pi pi-wallet text-xs"></i>
-                Fund CASH
+                <i class="pi pi-plus-minus text-xs"></i>
+                Adjust Funds
               </button>
               }
 
@@ -595,13 +595,25 @@
                   <p class="text-xl font-bold text-mlm-text tabular-nums mb-3">
                     {{ formatCurrency(u.wallets.cash.balance, u.wallets.cash.displayCurrency) }}
                   </p>
-                  <button
-                    (click)="openWalletDialog(u.wallets.cash, 'CASH')"
-                    class="h-7 px-3 rounded-md border border-slate-200 text-xs font-medium
-                           text-mlm-secondary hover:border-slate-300 hover:text-mlm-text
-                           transition-colors duration-150">
-                    Adjust
-                  </button>
+                  <div class="flex items-center gap-2">
+                    @if (permission.hasPermission('wallets.adjust_funds')) {
+                      <button
+                        type="button"
+                        (click)="openAdjustFundsModal('CASH')"
+                        class="h-7 px-3 rounded-md border border-slate-200 text-xs font-medium
+                               text-mlm-secondary hover:border-slate-300 hover:text-mlm-text
+                               transition-colors duration-150">
+                        Adjust Funds
+                      </button>
+                    }
+                    <a
+                      [routerLink]="['/admin/wallets', u.wallets.cash.walletId]"
+                      class="h-7 px-3 rounded-md text-xs font-medium text-mlm-primary
+                             hover:text-brand-green-dark transition-colors duration-150
+                             inline-flex items-center">
+                      View
+                    </a>
+                  </div>
                 </div>
               }
 
@@ -618,13 +630,25 @@
                   <p class="text-xl font-bold text-mlm-text tabular-nums mb-3">
                     {{ formatCurrency(u.wallets.registration.balance, u.wallets.registration.displayCurrency) }}
                   </p>
-                  <button
-                    (click)="openWalletDialog(u.wallets.registration, 'Registration')"
-                    class="h-7 px-3 rounded-md border border-slate-200 text-xs font-medium
-                           text-mlm-secondary hover:border-slate-300 hover:text-mlm-text
-                           transition-colors duration-150">
-                    Adjust
-                  </button>
+                  <div class="flex items-center gap-2">
+                    @if (permission.hasPermission('wallets.adjust_funds')) {
+                      <button
+                        type="button"
+                        (click)="openAdjustFundsModal('REGISTRATION')"
+                        class="h-7 px-3 rounded-md border border-slate-200 text-xs font-medium
+                               text-mlm-secondary hover:border-slate-300 hover:text-mlm-text
+                               transition-colors duration-150">
+                        Adjust Funds
+                      </button>
+                    }
+                    <a
+                      [routerLink]="['/admin/wallets', u.wallets.registration.walletId]"
+                      class="h-7 px-3 rounded-md text-xs font-medium text-mlm-primary
+                             hover:text-brand-green-dark transition-colors duration-150
+                             inline-flex items-center">
+                      View
+                    </a>
+                  </div>
                 </div>
               }
 
@@ -641,13 +665,25 @@
                   <p class="text-xl font-bold text-mlm-text tabular-nums mb-3">
                     {{ formatCurrency(u.wallets.voucher.balance, u.wallets.voucher.displayCurrency) }}
                   </p>
-                  <button
-                    (click)="openWalletDialog(u.wallets.voucher, 'Voucher')"
-                    class="h-7 px-3 rounded-md border border-slate-200 text-xs font-medium
-                           text-mlm-secondary hover:border-slate-300 hover:text-mlm-text
-                           transition-colors duration-150">
-                    Adjust
-                  </button>
+                  <div class="flex items-center gap-2">
+                    @if (permission.hasPermission('wallets.adjust_funds')) {
+                      <button
+                        type="button"
+                        (click)="openAdjustFundsModal('VOUCHER')"
+                        class="h-7 px-3 rounded-md border border-slate-200 text-xs font-medium
+                               text-mlm-secondary hover:border-slate-300 hover:text-mlm-text
+                               transition-colors duration-150">
+                        Adjust Funds
+                      </button>
+                    }
+                    <a
+                      [routerLink]="['/admin/wallets', u.wallets.voucher.walletId]"
+                      class="h-7 px-3 rounded-md text-xs font-medium text-mlm-primary
+                             hover:text-brand-green-dark transition-colors duration-150
+                             inline-flex items-center">
+                      View
+                    </a>
+                  </div>
                 </div>
               }
 
@@ -664,13 +700,25 @@
                   <p class="text-xl font-bold text-mlm-text tabular-nums mb-3">
                     {{ formatCurrency(u.wallets.autoship.balance, u.wallets.autoship.displayCurrency) }}
                   </p>
-                  <button
-                    (click)="openWalletDialog(u.wallets.autoship, 'Autoship')"
-                    class="h-7 px-3 rounded-md border border-slate-200 text-xs font-medium
-                           text-mlm-secondary hover:border-slate-300 hover:text-mlm-text
-                           transition-colors duration-150">
-                    Adjust
-                  </button>
+                  <div class="flex items-center gap-2">
+                    @if (permission.hasPermission('wallets.adjust_funds')) {
+                      <button
+                        type="button"
+                        (click)="openAdjustFundsModal('AUTOSHIP')"
+                        class="h-7 px-3 rounded-md border border-slate-200 text-xs font-medium
+                               text-mlm-secondary hover:border-slate-300 hover:text-mlm-text
+                               transition-colors duration-150">
+                        Adjust Funds
+                      </button>
+                    }
+                    <a
+                      [routerLink]="['/admin/wallets', u.wallets.autoship.walletId]"
+                      class="h-7 px-3 rounded-md text-xs font-medium text-mlm-primary
+                             hover:text-brand-green-dark transition-colors duration-150
+                             inline-flex items-center">
+                      View
+                    </a>
+                  </div>
                 </div>
               }
 
@@ -733,13 +781,15 @@
   (cancel)="onConfirmCancel()">
 </app-confirmation-modal>
 
-<app-fund-cash-modal
-  [(visible)]="fundModalVisible"
+<app-funds-adjustment-modal
+  [visible]="adjustFundsModalVisible()"
+  (visibleChange)="adjustFundsModalVisible.set($event)"
   [userId]="user()?.id ?? ''"
   [userName]="user()?.fullName ?? ''"
-  (confirmed)="onFundConfirmed($event)"
-  (cancelled)="onFundCancelled()">
-</app-fund-cash-modal>
+  [userWallets]="user()?.wallets"
+  [initialWalletType]="selectedFundWalletType()"
+  (adjusted)="onAdjustFundsComplete()">
+</app-funds-adjustment-modal>
 
 <app-activate-registration-modal
   [(visible)]="activateModalVisible"
@@ -762,10 +812,3 @@
   (confirmed)="onVolumeConfirmed($event)"
   (cancelled)="onVolumeCancelled()">
 </app-credit-volume-modal>
-
-<app-wallet-detail-dialog
-  [(visible)]="walletDialogVisible"
-  [walletId]="selectedWalletId()"
-  [walletLabel]="selectedWalletLabel()"
-  (closed)="onWalletDialogClosed()">
-</app-wallet-detail-dialog>
