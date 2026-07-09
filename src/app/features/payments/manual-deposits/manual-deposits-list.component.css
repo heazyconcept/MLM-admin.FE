@@ -1,0 +1,3 @@
+.manual-deposits-table-wrap :host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  white-space: nowrap;
+}

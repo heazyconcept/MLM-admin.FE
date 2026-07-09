@@ -4,7 +4,7 @@ import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
-import { ManualRegistrationPayment } from '../services/manual-payment.service';
+import { RejectableSubmission } from '../models/rejectable-submission.model';
 
 @Component({
   selector: 'app-manual-payment-reject-modal',
@@ -20,7 +20,8 @@ import { ManualRegistrationPayment } from '../services/manual-payment.service';
 })
 export class ManualPaymentRejectModalComponent {
   visible = input<boolean>(false);
-  payment = input<ManualRegistrationPayment | null>(null);
+  submission = input<RejectableSubmission | null>(null);
+  header = input<string>('Reject Manual Payment');
 
   confirmed = output<string>();
   cancelled = output<void>();

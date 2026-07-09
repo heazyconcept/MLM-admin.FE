@@ -84,6 +84,8 @@ export const routes: Routes = [
           { path: '', loadComponent: () => import('./features/payments/list/payments-list.component').then(m => m.PaymentsListComponent) },
           { path: 'manual', loadComponent: () => import('./features/payments/manual/manual-payments-list.component').then(m => m.ManualPaymentsListComponent) },
           { path: 'manual/:id', loadComponent: () => import('./features/payments/manual/manual-payment-detail.component').then(m => m.ManualPaymentDetailComponent) },
+          { path: 'manual-deposits', loadComponent: () => import('./features/payments/manual-deposits/manual-deposits-list.component').then(m => m.ManualDepositsListComponent) },
+          { path: 'manual-deposits/:id', loadComponent: () => import('./features/payments/manual-deposits/manual-deposit-detail.component').then(m => m.ManualDepositDetailComponent) },
           { path: ':id', loadComponent: () => import('./features/payments/details/payment-details.component').then(m => m.PaymentDetailsComponent) }
         ]
       },

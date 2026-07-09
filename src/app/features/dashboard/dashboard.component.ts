@@ -166,7 +166,8 @@ export class DashboardComponent implements OnInit {
       (s.pendingWithdrawalsCount ?? 0) +
       (s.initiatedPaymentsCount ?? 0) +
       (s.pendingIdentityCount ?? 0) +
-      (s.pendingManualRegistrationPaymentsCount ?? 0);
+      (s.pendingManualRegistrationPaymentsCount ?? 0) +
+      (s.pendingManualDepositsCount ?? 0);
 
     this.systemStats.set([
       {
@@ -371,6 +372,15 @@ export class DashboardComponent implements OnInit {
         label: 'Manual registration payments',
         count: s.pendingManualRegistrationPaymentsCount ?? 0,
         icon: 'pi pi-file-edit',
+        iconBg: 'bg-mlm-primary/10',
+        iconColor: 'text-mlm-primary',
+        urgency: 'high'
+      },
+      {
+        type: 'manual-deposits',
+        label: 'Manual wallet deposits',
+        count: s.pendingManualDepositsCount ?? 0,
+        icon: 'pi pi-wallet',
         iconBg: 'bg-mlm-primary/10',
         iconColor: 'text-mlm-primary',
         urgency: 'high'

@@ -41,7 +41,7 @@
         class="w-full"
         [(ngModel)]="reason"
         [disabled]="submitting"
-        placeholder="Approved upgrade ... (min 10 chars)">
+        placeholder="Brief reason (optional)">
       </textarea>
     </div>
   </div>
@@ -59,7 +59,7 @@
       type="button"
       label="Upgrade package"
       class="p-button-primary"
-      [disabled]="!targetPackage || reason.trim().length < 10 || submitting"
+      [disabled]="!targetPackage || submitting"
       [loading]="submitting"
       (click)="onConfirm()">
     </button>
