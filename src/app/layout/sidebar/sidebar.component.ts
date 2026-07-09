@@ -61,9 +61,22 @@ export class SidebarComponent {
         {
           label: 'Users',
           icon: 'pi pi-users',
-          route: '/admin/users',
           feature: Feature.Users,
           permissionKey: 'users.view',
+          submenu: [
+            {
+              label: 'All Users',
+              icon: 'pi pi-list',
+              route: '/admin/users',
+              permissionKey: 'users.view',
+            },
+            {
+              label: 'Package Upgrades',
+              icon: 'pi pi-level-up',
+              route: '/admin/users/package-upgrades',
+              permissionKey: 'users.view',
+            },
+          ],
         },
         {
           label: 'Earnings Payouts',

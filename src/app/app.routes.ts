@@ -39,6 +39,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/users/users-list/users-list.component').then(m => m.UsersListComponent)
       },
       {
+        path: 'users/package-upgrades',
+        canActivate: [permissionGuard],
+        data: { feature: Feature.Users },
+        loadComponent: () => import('./features/users/package-upgrades/package-upgrades-list.component').then(m => m.PackageUpgradesListComponent)
+      },
+      {
         path: 'users/:id',
         canActivate: [permissionGuard],
         data: { feature: Feature.Users },
