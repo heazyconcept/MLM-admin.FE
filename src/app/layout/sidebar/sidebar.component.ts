@@ -260,9 +260,15 @@ export class SidebarComponent {
               permissionKey: 'merchants.configure_categories',
             },
             {
-              label: 'Stock Disputes',
+              label: 'Receipt Disputes',
               icon: 'pi pi-exclamation-circle',
               route: '/admin/merchants/stock-disputes',
+              permissionKey: 'merchants.view',
+            },
+            {
+              label: 'Inventory Adjustments',
+              icon: 'pi pi-sliders-h',
+              route: '/admin/merchants/inventory-adjustment-disputes',
               permissionKey: 'merchants.view',
             },
           ],

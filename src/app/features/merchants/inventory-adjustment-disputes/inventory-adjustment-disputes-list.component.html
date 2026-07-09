@@ -1,0 +1,308 @@
+<div class="min-h-screen bg-mlm-background font-geist p-4 md:p-6 lg:p-8">
+  <p-toast></p-toast>
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 md:mb-8">
+    <div class="min-w-0">
+      <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        Inventory Adjustment Disputes
+      </h1>
+      <p class="text-sm text-mlm-secondary">
+        Review merchant manual stock quantity changes that differ from authorized inventory
+      </p>
+    </div>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+    <div
+      class="bg-white rounded-xl border px-4 py-4 md:px-5 md:py-5 transition-shadow duration-200 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+      [class]="stats().open > 0 ? 'border-red-200' : 'border-slate-200'">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">Open Disputes</p>
+      <p
+        class="text-3xl md:text-4xl font-bold tracking-tight leading-none mb-2 tabular-nums"
+        [class]="stats().open > 0 ? 'text-red-600' : 'text-mlm-text'">
+        {{ stats().open }}
+      </p>
+      <p class="text-xs text-slate-400">{{ stats().open > 0 ? 'Requires resolution' : 'All clear' }}</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-5 md:py-5 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">Admin Approved</p>
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2 tabular-nums">
+        {{ stats().approved }}
+      </p>
+      <p class="text-xs text-slate-400">Stock quantity updated</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-5 md:py-5 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">Admin Rejected</p>
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2 tabular-nums">
+        {{ stats().rejected }}
+      </p>
+      <p class="text-xs text-slate-400">Merchant notified</p>
+    </div>
+  </div>
+
+  <!-- Filters + Table -->
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div class="px-4 py-4 md:px-5 border-b border-slate-100">
+      <div class="flex flex-col gap-3">
+        <select
+          [formControl]="selectedStatusControl"
+          (change)="onSearch()"
+          class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary transition appearance-none w-full sm:w-44 shrink-0">
+          @for (option of statusOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+          <div class="relative flex-1">
+            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none" aria-hidden="true"></i>
+            <input
+              type="text"
+              [ngModel]="merchantIdFilter()"
+              (ngModelChange)="merchantIdFilter.set($event)"
+              (keydown.enter)="onSearch()"
+              placeholder="Filter by merchant ID…"
+              class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
+          </div>
+
+          <div class="relative flex-1">
+            <i class="pi pi-box absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none" aria-hidden="true"></i>
+            <input
+              type="text"
+              [ngModel]="productIdFilter()"
+              (ngModelChange)="productIdFilter.set($event)"
+              (keydown.enter)="onSearch()"
+              placeholder="Filter by product ID…"
+              class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
+          </div>
+
+          <button
+            type="button"
+            (click)="onSearch()"
+            class="h-9 px-4 rounded-lg bg-mlm-primary hover:bg-brand-green-dark text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors duration-150 border border-mlm-primary hover:border-brand-green-dark shrink-0">
+            <i class="pi pi-search text-xs" aria-hidden="true"></i>
+            Search
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <app-data-table
+      [value]="disputes()"
+      [headers]="tableHeaders()"
+      [loading]="tableLoading()"
+      [lazy]="true"
+      [rows]="rowsPerPage()"
+      [first]="firstRecord()"
+      [totalRecords]="totalRecords()"
+      (pageChange)="onPageChange($event)">
+
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition">
+          <td class="py-3 px-4">
+            <p class="font-medium text-sm text-mlm-text">{{ getMerchantDisplay(row) }}</p>
+            <a
+              [routerLink]="['/admin/merchants', row.merchantId]"
+              class="text-[10px] text-mlm-primary hover:underline font-mono">
+              {{ row.merchantId | slice:0:8 }}…
+            </a>
+          </td>
+          <td class="py-3 px-4 text-sm text-mlm-text">{{ getProductDisplay(row) }}</td>
+          <td class="py-3 px-4 text-sm tabular-nums text-mlm-text">{{ row.authorizedQuantity }}</td>
+          <td class="py-3 px-4 text-sm tabular-nums font-medium" [class]="getRequestedQtyClass(row)">
+            {{ row.requestedQuantity }}
+            <span class="text-[10px] ml-1">({{ formatDelta(row) }})</span>
+          </td>
+          <td class="py-3 px-4">
+            <span
+              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border"
+              [class]="getAdjustmentTypeClass(row.adjustmentType)">
+              {{ row.adjustmentType }}
+            </span>
+          </td>
+          <td class="py-3 px-4">
+            <span
+              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border"
+              [class]="getStatusClass(row.status)">
+              {{ getStatusLabel(row.status) }}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-xs text-slate-500">{{ formatDate(row.createdAt) }}</td>
+          <td class="py-3 px-4">
+            <div class="flex items-center gap-1 flex-wrap">
+              <button
+                type="button"
+                pButton
+                icon="pi pi-eye"
+                class="p-button-text p-button-sm"
+                aria-label="View details"
+                (click)="onViewDetails(row)">
+              </button>
+              @if (canResolve(row)) {
+                <button
+                  *hasPermission="'merchants.resolve_stock_dispute'"
+                  type="button"
+                  pButton
+                  label="Reject"
+                  class="p-button-outlined p-button-sm p-button-danger"
+                  (click)="onReject(row)">
+                </button>
+                <button
+                  *hasPermission="'merchants.resolve_stock_dispute'"
+                  type="button"
+                  pButton
+                  label="Approve"
+                  class="p-button-outlined p-button-sm p-button-success"
+                  (click)="onApprove(row)">
+                </button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </app-data-table>
+  </div>
+
+  <!-- Detail Modal -->
+  <p-dialog
+    [visible]="showDetailModal()"
+    [modal]="true"
+    [style]="{ width: '560px' }"
+    [draggable]="false"
+    [resizable]="false"
+    header="Adjustment Dispute Details"
+    (onHide)="closeDetailModal()">
+
+    @if (selectedDispute(); as dispute) {
+      <div class="space-y-4">
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-gray-50 rounded-lg p-3 border border-gray-100">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Authorized</p>
+            <p class="text-xl font-bold text-gray-900 tabular-nums">{{ dispute.authorizedQuantity }}</p>
+          </div>
+          <div
+            class="rounded-lg p-3 border"
+            [class]="dispute.adjustmentType === 'INCREASE' ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'">
+            <p
+              class="text-[10px] font-semibold uppercase tracking-wider mb-1"
+              [class]="dispute.adjustmentType === 'INCREASE' ? 'text-emerald-400' : 'text-red-400'">
+              Requested
+            </p>
+            <p
+              class="text-xl font-bold tabular-nums"
+              [class]="dispute.adjustmentType === 'INCREASE' ? 'text-emerald-700' : 'text-red-700'">
+              {{ dispute.requestedQuantity }}
+            </p>
+          </div>
+          <div class="bg-blue-50 rounded-lg p-3 border border-blue-100">
+            <p class="text-[10px] font-semibold text-blue-400 uppercase tracking-wider mb-1">Delta</p>
+            <p class="text-xl font-bold text-blue-700 tabular-nums">{{ formatDelta(dispute) }}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border"
+            [class]="getAdjustmentTypeClass(dispute.adjustmentType)">
+            {{ dispute.adjustmentType }}
+          </span>
+          <span
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border"
+            [class]="getStatusClass(dispute.status)">
+            {{ getStatusLabel(dispute.status) }}
+          </span>
+        </div>
+
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Merchant</p>
+          <p class="text-sm text-gray-900">{{ getMerchantDisplay(dispute) }}</p>
+          <a
+            [routerLink]="['/admin/merchants', dispute.merchantId]"
+            class="text-xs text-mlm-primary hover:underline font-mono">
+            View merchant profile
+          </a>
+        </div>
+
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Product</p>
+          <p class="text-sm text-gray-900">{{ getProductDisplay(dispute) }}</p>
+        </div>
+
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Merchant Reason</p>
+          <p class="text-sm text-gray-700 bg-gray-50 rounded-lg p-3 border border-gray-100">{{ dispute.reason }}</p>
+        </div>
+
+        @if (dispute.adminNotes) {
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Admin Notes</p>
+            <p class="text-sm text-gray-700 bg-gray-50 rounded-lg p-3 border border-gray-100">{{ dispute.adminNotes }}</p>
+          </div>
+        }
+
+        @if (dispute.resolvedAt) {
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Resolved</p>
+            <p class="text-sm text-gray-600">{{ formatDate(dispute.resolvedAt) }}</p>
+          </div>
+        }
+
+        @if (canResolve(dispute)) {
+          <div class="flex gap-2 pt-2 border-t border-gray-100">
+            <button
+              *hasPermission="'merchants.resolve_stock_dispute'"
+              type="button"
+              pButton
+              label="Reject"
+              class="p-button-outlined p-button-danger flex-1"
+              (click)="onReject(dispute)">
+            </button>
+            <button
+              *hasPermission="'merchants.resolve_stock_dispute'"
+              type="button"
+              pButton
+              label="Approve"
+              class="p-button-success flex-1"
+              (click)="onApprove(dispute)">
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </p-dialog>
+
+  <!-- Approve Modal -->
+  <app-confirmation-modal
+    [visible]="showApproveModal()"
+    title="Approve Adjustment"
+    message="Approving will update the merchant stock quantity to the requested amount and log a MANUAL_MERCHANT_ADJUST movement."
+    confirmLabel="Approve Adjustment"
+    confirmClass="p-button-success"
+    cancelLabel="Cancel"
+    [showReasonField]="true"
+    reasonPlaceholder="Optional admin notes..."
+    [loading]="actionLoading()"
+    (confirm)="handleApproveConfirm($event)"
+    (cancel)="showApproveModal.set(false)">
+  </app-confirmation-modal>
+
+  <!-- Reject Modal -->
+  <app-confirmation-modal
+    [visible]="showRejectModal()"
+    title="Reject Adjustment"
+    message="Rejecting means the merchant stock quantity will remain unchanged. Provide admin notes explaining the rejection."
+    confirmLabel="Reject Adjustment"
+    confirmClass="p-button-danger"
+    cancelLabel="Cancel"
+    [showReasonField]="true"
+    [reasonRequired]="true"
+    reasonPlaceholder="Explain why the adjustment is rejected..."
+    [loading]="actionLoading()"
+    (confirm)="handleRejectConfirm($event)"
+    (cancel)="showRejectModal.set(false)">
+  </app-confirmation-modal>
+</div>

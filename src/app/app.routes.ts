@@ -194,6 +194,7 @@ export const routes: Routes = [
           { path: 'category-config', loadComponent: () => import('./features/merchants/category-config/merchant-category-config-list.component').then(m => m.MerchantCategoryConfigListComponent) },
           { path: 'category-config/:type', loadComponent: () => import('./features/merchants/category-config-edit/merchant-category-config-edit.component').then(m => m.MerchantCategoryConfigEditComponent) },
           { path: 'stock-disputes', loadComponent: () => import('./features/merchants/stock-disputes/stock-disputes-list.component').then(m => m.StockDisputesListComponent) },
+          { path: 'inventory-adjustment-disputes', loadComponent: () => import('./features/merchants/inventory-adjustment-disputes/inventory-adjustment-disputes-list.component').then(m => m.InventoryAdjustmentDisputesListComponent) },
           { path: ':id', loadComponent: () => import('./features/merchants/details/merchant-details.component').then(m => m.MerchantDetailsComponent) }
         ]
       },

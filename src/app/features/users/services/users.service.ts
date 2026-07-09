@@ -135,7 +135,6 @@ export interface ActivateRegistrationResponse {
 /** POST /admin/users/:id/upgrade */
 export interface UpgradePackagePayload {
   targetPackage: string;
-  reason: string;
   waivePayment: boolean;
 }
 
@@ -219,7 +218,10 @@ export class UsersService {
 
   /** POST /admin/users/:id/upgrade */
   upgradePackage(userId: string, payload: UpgradePackagePayload): Observable<UpgradePackageResponse> {
-    return this.api.post<UpgradePackageResponse>(`admin/users/${userId}/upgrade`, payload);
+    return this.api.post<UpgradePackageResponse>(`admin/users/${userId}/upgrade`, {
+      ...payload,
+      reason: 'Admin upgrade',
+    });
   }
 
   /** POST /admin/users/:id/volume/credit */
