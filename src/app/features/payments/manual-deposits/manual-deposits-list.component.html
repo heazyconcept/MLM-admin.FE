@@ -1,0 +1,166 @@
+<div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
+  <p-toast></p-toast>
+
+  <!-- ── Header ── -->
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 md:mb-8">
+    <div class="min-w-0">
+      <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        Manual Wallet Deposits
+      </h1>
+      <p class="text-sm text-mlm-secondary">Review offline bank transfers to Registration and Product Voucher wallets</p>
+    </div>
+  </div>
+
+  <!-- ── Stats Cards ── -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
+
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-6 md:py-5
+                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        Pending Review
+      </p>
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2">
+        {{ stats().pending }}
+      </p>
+      <p class="text-xs font-medium text-mlm-warning">Awaiting admin action</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-6 md:py-5
+                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        Approved
+      </p>
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2">
+        {{ stats().approved }}
+      </p>
+      <p class="text-xs font-medium text-mlm-primary">Wallet credited</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-6 md:py-5
+                hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        Rejected
+      </p>
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2">
+        {{ stats().rejected }}
+      </p>
+      <p class="text-xs font-medium text-red-500">Returned to user</p>
+    </div>
+
+  </div>
+
+  <!-- ── Single Card: Filters + Table ── -->
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+
+    <!-- Filter Bar -->
+    <div class="px-4 py-4 md:px-5 border-b border-slate-100">
+      <div class="flex flex-col gap-3">
+
+        <div class="flex items-center gap-2 w-full sm:max-w-md">
+          <div class="relative flex-1">
+            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2
+                      text-slate-400 text-xs pointer-events-none"></i>
+            <input
+              type="text"
+              [ngModel]="searchVal()"
+              (ngModelChange)="searchVal.set($event)"
+              (keydown.enter)="onSearch()"
+              placeholder="Search by user name or email…"
+              class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm
+                     text-mlm-text bg-white placeholder:text-slate-300
+                     focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
+          </div>
+          <button
+            (click)="onSearch()"
+            class="h-9 px-4 rounded-lg bg-mlm-primary hover:bg-brand-green-dark text-white text-sm font-semibold
+                   flex items-center justify-center gap-2 transition-colors duration-150 border border-mlm-primary hover:border-brand-green-dark shrink-0">
+            <i class="pi pi-search text-xs"></i>
+            Search
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <select
+            [formControl]="selectedStatusControl"
+            class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text
+                   bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary
+                   transition appearance-none pr-8 w-full sm:w-40">
+            @for (option of statusOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+
+          <select
+            [formControl]="selectedWalletTypeControl"
+            class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text
+                   bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary
+                   transition appearance-none pr-8 w-full sm:w-48">
+            @for (option of walletTypeOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="manual-deposits-table-wrap">
+    <app-data-table
+      [value]="filteredDeposits()"
+      [headers]="tableHeaders()"
+      [loading]="tableLoading()">
+
+      <ng-template pTemplate="body" let-row>
+        <tr
+          class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100 cursor-pointer"
+          (click)="viewDetails(row)">
+
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[120px] sm:w-[140px] whitespace-nowrap">
+            <span class="text-[11px] font-mono text-slate-400">
+              {{ row.id | slice:0:10 }}…
+            </span>
+          </td>
+
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[140px]">
+            <p class="text-sm font-semibold text-mlm-text leading-tight truncate">{{ row.user?.username || '—' }}</p>
+            <p class="text-[11px] font-mono text-slate-400 mt-0.5 truncate max-w-[160px] sm:max-w-none">{{ row.user?.email || row.userId }}</p>
+          </td>
+
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
+            <span
+              class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-100">
+              {{ formatWalletType(row.walletType) }}
+            </span>
+          </td>
+
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-right w-[110px] sm:w-[120px] whitespace-nowrap">
+            <span class="text-sm font-semibold text-mlm-text tabular-nums font-mono">
+              {{ row.amount | currency:(row.currency || 'NGN') }}
+            </span>
+          </td>
+
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[120px]">
+            <span class="text-xs font-medium text-slate-600 truncate">
+              {{ row.depositorName }}
+            </span>
+          </td>
+
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[100px] sm:w-[120px] whitespace-nowrap">
+            <app-status-badge [status]="getStatusDisplay(row.status)"></app-status-badge>
+          </td>
+
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[110px] sm:w-[140px] whitespace-nowrap">
+            <span class="text-xs font-mono text-slate-400 tabular-nums">
+              {{ row.createdAt | date:'M/d/yyyy' }}
+            </span>
+          </td>
+
+        </tr>
+      </ng-template>
+
+    </app-data-table>
+    </div>
+
+  </div>
+
+</div>

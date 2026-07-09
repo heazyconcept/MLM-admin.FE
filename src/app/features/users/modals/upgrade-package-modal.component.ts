@@ -46,10 +46,10 @@ export class UpgradePackageModalComponent {
   }
 
   onConfirm(): void {
-    if (!this.targetPackage || this.reason.trim().length < 10) return;
+    if (!this.targetPackage) return;
     this.confirmed.emit({
       targetPackage: this.targetPackage,
-      reason: this.reason.trim(),
+      reason: this.reason.trim() || 'Admin upgrade',
       waivePayment: this.waivePayment,
     });
   }

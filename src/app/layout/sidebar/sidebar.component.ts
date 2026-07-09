@@ -189,6 +189,13 @@ export class SidebarComponent {
           permissionKey: 'payments.view',
         },
         {
+          label: 'Manual Wallet Deposits',
+          icon: 'pi pi-wallet',
+          route: '/admin/payments/manual-deposits',
+          feature: Feature.Payments,
+          permissionKey: 'payments.view',
+        },
+        {
           label: 'Products',
           icon: 'pi pi-shopping-bag',
           feature: Feature.Products,

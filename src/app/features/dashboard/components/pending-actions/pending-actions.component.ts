@@ -9,7 +9,7 @@ import { DataTableComponent } from '../../../../shared/components/data-table/dat
 import { TableColumn, TableConfig } from '../../../../shared/components/data-table/data-table.types';
 
 export interface PendingAction {
-  type: 'withdrawals' | 'merchants' | 'payments' | 'compliance' | 'manual-payments';
+  type: 'withdrawals' | 'merchants' | 'payments' | 'compliance' | 'manual-payments' | 'manual-deposits';
   label: string;
   count: number;
   icon: string;
@@ -70,6 +70,10 @@ export class PendingActionsComponent {
       this.router.navigate(['/admin/withdrawals/pending']);
     } else if (actionType === 'payments') {
       this.router.navigate(['/admin/payments'], { queryParams: { status: 'Failed' } });
+    } else if (actionType === 'manual-payments') {
+      this.router.navigate(['/admin/payments/manual']);
+    } else if (actionType === 'manual-deposits') {
+      this.router.navigate(['/admin/payments/manual-deposits']);
     } else {
       // Fallback for other types
       this.router.navigate(['/admin', actionType]);

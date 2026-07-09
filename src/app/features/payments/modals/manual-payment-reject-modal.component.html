@@ -1,7 +1,7 @@
 <p-dialog
   [visible]="visible()"
   [modal]="true"
-  header="Reject Manual Payment"
+  [header]="header()"
   [draggable]="false"
   [resizable]="false"
   [style]="{ width: 'min(450px, 95vw)' }"
@@ -14,11 +14,11 @@
     <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
       <div class="flex justify-between items-center mb-1">
         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Submission</span>
-        <span class="text-[10px] font-mono text-gray-500">{{ payment()?.id | slice:0:12 }}</span>
+        <span class="text-[10px] font-mono text-gray-500">{{ submission()?.id | slice:0:12 }}</span>
       </div>
       <div class="flex justify-between items-center">
-        <span class="text-sm font-medium text-gray-700">{{ payment()?.depositorName }}</span>
-        <span class="text-lg font-bold text-gray-900">{{ payment()?.amount | currency:(payment()?.currency || 'NGN') }}</span>
+        <span class="text-sm font-medium text-gray-700">{{ submission()?.depositorName }}</span>
+        <span class="text-lg font-bold text-gray-900">{{ submission()?.amount | currency:(submission()?.currency || 'NGN') }}</span>
       </div>
     </div>
 
