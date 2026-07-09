@@ -13,7 +13,7 @@ import { Feature } from '../../../core/models/admin-permission.model';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
-import { UsersService, User, UserWallet, AdminFundWalletType, ActivateRegistrationPayload, UpgradePackagePayload, CreditVolumePayload, UpdateUserStatusPayload } from '../services/users.service';
+import { UsersService, User, UserWallet, AdminFundWalletType, ActivateRegistrationPayload, CreditVolumePayload, UpdateUserStatusPayload } from '../services/users.service';
 import { WalletService } from '../../wallets/services/wallet.service';
 import {
   EarningsService,
@@ -375,23 +375,8 @@ export class UserDetailsComponent implements OnInit {
     this.upgradeModalVisible.set(true);
   }
 
-  onUpgradeConfirmed(payload: UpgradePackagePayload): void {
-    const u = this.user();
-    if (!u) return;
-    this.usersService.upgradePackage(u.id, payload).subscribe({
-      next: (res) => {
-        this.upgradeModalVisible.set(false);
-        this.messageService.add({ severity: 'success', summary: 'Upgraded', detail: res.message });
-        this.reloadUser();
-      },
-      error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: err?.error?.message || 'Upgrade failed.' });
-      },
-    });
-  }
-
-  onUpgradeCancelled(): void {
-    this.upgradeModalVisible.set(false);
+  onUpgradeComplete(): void {
+    this.reloadUser();
   }
 
   /** Credit volume */

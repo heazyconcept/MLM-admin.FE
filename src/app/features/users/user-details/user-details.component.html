@@ -799,11 +799,12 @@
 </app-activate-registration-modal>
 
 <app-upgrade-package-modal
-  [(visible)]="upgradeModalVisible"
+  [visible]="upgradeModalVisible()"
+  (visibleChange)="upgradeModalVisible.set($event)"
+  [userId]="user()?.id ?? ''"
   [userName]="user()?.fullName ?? ''"
   [currentPackage]="user()?.package ?? 'Nickel'"
-  (confirmed)="onUpgradeConfirmed($event)"
-  (cancelled)="onUpgradeCancelled()">
+  (upgraded)="onUpgradeComplete()">
 </app-upgrade-package-modal>
 
 <app-credit-volume-modal
