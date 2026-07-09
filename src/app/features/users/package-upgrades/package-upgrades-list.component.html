@@ -1,0 +1,173 @@
+<div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
+  @if (loadError(); as error) {
+    <div class="mb-4 md:mb-6 px-4 py-3 rounded-lg bg-mlm-red-50 border border-mlm-red-200 text-mlm-red-700 text-sm">
+      {{ error }}
+    </div>
+  }
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 md:mb-8">
+    <div class="min-w-0">
+      <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        Package Upgrades
+      </h1>
+      <p class="text-sm text-mlm-secondary">
+        All users who upgraded their registration package — previous package, new package, and stage at upgrade
+      </p>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-6 md:py-5 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">Total upgrades</p>
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2 tabular-nums">
+        {{ stats().total }}
+      </p>
+      <p class="text-xs text-slate-400">Matching current filters</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-6 md:py-5 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">This month</p>
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2 tabular-nums">
+        {{ stats().thisMonth }}
+      </p>
+      <p class="text-xs text-mlm-primary">Upgrades in {{ currentMonthLabel() }}</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-6 md:py-5 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">Most common path</p>
+      <p class="text-lg md:text-xl font-bold text-mlm-text tracking-tight leading-snug mb-2">
+        {{ stats().topPath }}
+      </p>
+      <p class="text-xs text-slate-400">Most common on current page</p>
+    </div>
+  </div>
+
+  <!-- Filters + Table -->
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div class="px-4 py-4 md:px-5 border-b border-slate-100">
+      <div class="flex flex-col gap-3">
+        <div class="flex items-center gap-2 w-full sm:max-w-md">
+          <div class="relative flex-1">
+            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none" aria-hidden="true"></i>
+            <input
+              type="text"
+              [ngModel]="searchVal()"
+              (ngModelChange)="searchVal.set($event)"
+              (keydown.enter)="onSearch()"
+              placeholder="Search by name, username, or email…"
+              class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
+          </div>
+          <button
+            type="button"
+            (click)="onSearch()"
+            class="h-9 px-4 rounded-lg bg-mlm-primary hover:bg-brand-green-dark text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors duration-150 border border-mlm-primary hover:border-brand-green-dark shrink-0">
+            <i class="pi pi-search text-xs" aria-hidden="true"></i>
+            Search
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <select
+            [ngModel]="previousPackageFilter()"
+            (ngModelChange)="previousPackageFilter.set($event); onSearch()"
+            class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary transition appearance-none pr-8 w-full sm:w-40">
+            @for (option of packageOptions; track option.value) {
+              <option [value]="option.value">{{ option.label === 'All packages' ? 'Previous: All' : 'Previous: ' + option.label }}</option>
+            }
+          </select>
+
+          <select
+            [ngModel]="currentPackageFilter()"
+            (ngModelChange)="currentPackageFilter.set($event); onSearch()"
+            class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary transition appearance-none pr-8 w-full sm:w-40">
+            @for (option of packageOptions; track option.value) {
+              <option [value]="option.value">{{ option.label === 'All packages' ? 'Current: All' : 'Current: ' + option.label }}</option>
+            }
+          </select>
+
+          <select
+            [ngModel]="stageFilter()"
+            (ngModelChange)="stageFilter.set($event); onSearch()"
+            class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary transition appearance-none pr-8 w-full sm:w-36">
+            @for (option of stageOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+
+          <p-datepicker
+            [ngModel]="dateRange()"
+            (ngModelChange)="dateRange.set($event); onSearch()"
+            selectionMode="range"
+            placeholder="Date range"
+            [showIcon]="true"
+            iconDisplay="input"
+            appendTo="body"
+            inputStyleClass="h-9 text-sm border-slate-200 rounded-lg w-52">
+          </p-datepicker>
+        </div>
+      </div>
+    </div>
+
+    <app-data-table
+      [value]="records()"
+      [headers]="tableHeaders()"
+      [loading]="tableLoading()"
+      [lazy]="true"
+      [rows]="rowsPerPage()"
+      [first]="tableFirst()"
+      [totalRecords]="totalRecords()"
+      (pageChange)="onPageChange($event)">
+
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition">
+          <td class="py-3 px-4 min-w-[140px]">
+            <p class="font-medium text-sm text-mlm-text">{{ getUserDisplay(row) }}</p>
+            <p class="text-[11px] text-slate-400 truncate">{{ row.username }} · {{ row.email }}</p>
+          </td>
+
+          <td class="py-3 px-4 whitespace-nowrap">
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
+              [style.background-color]="getPackageColor(row.previousPackage) + '18'"
+              [style.color]="getPackageColor(row.previousPackage)"
+              [style.border-color]="getPackageColor(row.previousPackage) + '40'">
+              {{ formatPackage(row.previousPackage) }}
+            </span>
+          </td>
+
+          <td class="py-3 px-4 whitespace-nowrap">
+            <div class="flex items-center gap-1.5">
+              <i class="pi pi-arrow-right text-[10px] text-slate-300" aria-hidden="true"></i>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
+                [style.background-color]="getPackageColor(row.currentPackage) + '18'"
+                [style.color]="getPackageColor(row.currentPackage)"
+                [style.border-color]="getPackageColor(row.currentPackage) + '40'">
+                {{ formatPackage(row.currentPackage) }}
+              </span>
+            </div>
+          </td>
+
+          <td class="py-3 px-4 text-sm text-mlm-text whitespace-nowrap">
+            {{ getStageDisplay(row) }}
+          </td>
+
+          <td class="py-3 px-4 text-xs text-slate-500 whitespace-nowrap tabular-nums">
+            {{ formatDate(row.upgradedAt) }}
+          </td>
+
+          <td class="py-3 px-4 whitespace-nowrap">
+            <a
+              [routerLink]="['/admin/users', row.userId]"
+              class="inline-flex items-center gap-1 text-xs font-semibold text-mlm-primary hover:underline">
+              <i class="pi pi-user text-[10px]" aria-hidden="true"></i>
+              View user
+            </a>
+          </td>
+        </tr>
+      </ng-template>
+    </app-data-table>
+  </div>
+</div>

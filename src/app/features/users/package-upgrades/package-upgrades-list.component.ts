@@ -1,0 +1,159 @@
+import {
+  Component,
+  inject,
+  computed,
+  signal,
+  ChangeDetectionStrategy,
+  OnInit,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { DatePickerModule } from 'primeng/datepicker';
+import { ButtonModule } from 'primeng/button';
+import { TablePageEvent } from 'primeng/table';
+import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import {
+  PackageUpgradeHistoryService,
+  PackageUpgradeRecord,
+  PackageTier,
+} from '../services/package-upgrade-history.service';
+
+@Component({
+  selector: 'app-package-upgrades-list',
+  imports: [
+    CommonModule,
+    RouterModule,
+    FormsModule,
+    DatePickerModule,
+    ButtonModule,
+    DataTableComponent,
+  ],
+  templateUrl: './package-upgrades-list.component.html',
+  styleUrls: ['./package-upgrades-list.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class PackageUpgradesListComponent implements OnInit {
+  private upgradeHistoryService = inject(PackageUpgradeHistoryService);
+
+  records = this.upgradeHistoryService.records;
+  totalRecords = this.upgradeHistoryService.total;
+  tableLoading = this.upgradeHistoryService.loading;
+  loadError = this.upgradeHistoryService.loadingError;
+  thisMonthCount = this.upgradeHistoryService.thisMonthCount;
+
+  searchVal = signal('');
+  previousPackageFilter = signal<PackageTier | ''>('');
+  currentPackageFilter = signal<PackageTier | ''>('');
+  stageFilter = signal<number | ''>('');
+  dateRange = signal<Date[] | null>(null);
+
+  tableFirst = signal(0);
+  rowsPerPage = signal(20);
+
+  packageOptions: { label: string; value: PackageTier | '' }[] = [
+    { label: 'All packages', value: '' },
+    { label: 'Nickel', value: 'NICKEL' },
+    { label: 'Silver', value: 'SILVER' },
+    { label: 'Gold', value: 'GOLD' },
+    { label: 'Platinum', value: 'PLATINUM' },
+    { label: 'Ruby', value: 'RUBY' },
+    { label: 'Diamond', value: 'DIAMOND' },
+  ];
+
+  stageOptions = [
+    { label: 'All stages', value: '' },
+    { label: 'Stage 1', value: 1 },
+    { label: 'Stage 2', value: 2 },
+    { label: 'Stage 3', value: 3 },
+    { label: 'Stage 4', value: 4 },
+    { label: 'Stage 5', value: 5 },
+    { label: 'Stage 6', value: 6 },
+  ];
+
+  tableHeaders = signal([
+    'User',
+    'Previous package',
+    'Current package',
+    'Stage',
+    'Upgraded',
+    'Actions',
+  ]);
+
+  stats = computed(() => ({
+    total: this.totalRecords(),
+    thisMonth: this.thisMonthCount(),
+    topPath: this.upgradeHistoryService.getMostCommonPath(this.records()),
+  }));
+
+  currentMonthLabel = computed(() =>
+    new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  );
+
+  ngOnInit(): void {
+    this.loadRecords();
+    this.upgradeHistoryService.loadThisMonthCount().subscribe();
+  }
+
+  loadRecords(): void {
+    const range = this.dateRange();
+    let dateFrom: string | undefined;
+    let dateTo: string | undefined;
+    if (range?.[0]) {
+      dateFrom = range[0].toISOString();
+    }
+    if (range?.[1]) {
+      dateTo = range[1].toISOString();
+    }
+
+    const stage = this.stageFilter();
+    this.upgradeHistoryService
+      .loadFromApi({
+        search: this.searchVal().trim() || undefined,
+        previousPackage: this.previousPackageFilter() || undefined,
+        currentPackage: this.currentPackageFilter() || undefined,
+        stage: stage === '' ? undefined : stage,
+        dateFrom,
+        dateTo,
+        limit: this.rowsPerPage(),
+        offset: this.tableFirst(),
+      })
+      .subscribe({
+        next: () => this.upgradeHistoryService.loadThisMonthCount().subscribe(),
+      });
+  }
+
+  onSearch(): void {
+    this.tableFirst.set(0);
+    this.loadRecords();
+  }
+
+  onPageChange(event: TablePageEvent): void {
+    this.tableFirst.set(event.first ?? 0);
+    this.rowsPerPage.set(event.rows ?? 20);
+    this.loadRecords();
+  }
+
+  formatPackage = (pkg: string) => this.upgradeHistoryService.formatPackageLabel(pkg);
+  getPackageColor = (pkg: string) => this.upgradeHistoryService.getPackageColor(pkg);
+
+  getUserDisplay(row: PackageUpgradeRecord): string {
+    return row.fullName || row.username;
+  }
+
+  getStageDisplay(row: PackageUpgradeRecord): string {
+    if (row.stage == null) return row.rankName ?? '—';
+    const rank = row.rankName ? ` · ${row.rankName}` : '';
+    return `Stage ${row.stage}${rank}`;
+  }
+
+  formatDate(dateStr: string): string {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+}
