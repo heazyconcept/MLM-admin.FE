@@ -1,0 +1,65 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  header="Reject Consultant Application"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: 'min(450px, 95vw)' }"
+  [breakpoints]="{ '640px': '95vw' }"
+  (onHide)="onCancel()">
+
+  <div class="flex flex-col gap-6 pt-2">
+    @if (consultant(); as c) {
+      <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+        <div class="flex justify-between items-center mb-1">
+          <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Applicant</span>
+          <span class="text-[10px] font-mono text-gray-500">{{ c.id | slice:0:12 }}</span>
+        </div>
+        <p class="text-sm font-medium text-gray-700">{{ c.user?.username || c.user?.email || c.userId }}</p>
+        <p class="text-xs text-gray-500 mt-1">{{ c.seminarCentreName }}</p>
+      </div>
+    }
+
+    <div class="flex gap-3 p-3 bg-amber-50 rounded-lg border border-amber-100">
+      <i class="pi pi-exclamation-triangle text-amber-600 mt-0.5" aria-hidden="true"></i>
+      <p class="text-[11px] font-medium text-amber-700 leading-normal">
+        The applicant will be notified and may re-apply with updated seminar centre details.
+      </p>
+    </div>
+
+    <div class="space-y-2">
+      <label for="reject-reason" class="text-xs font-bold text-gray-400 uppercase tracking-widest">
+        Rejection Reason <span class="text-red-500">*</span>
+      </label>
+      <textarea
+        id="reject-reason"
+        pTextarea
+        [autoResize]="true"
+        rows="3"
+        class="w-full rounded-xl"
+        placeholder="Provide a reason for rejection (min 5 characters)…"
+        [formControl]="reasonControl">
+      </textarea>
+      @if (reasonControl.touched && reasonControl.invalid) {
+        <p class="text-xs text-red-500">Reason must be at least 5 characters</p>
+      }
+    </div>
+
+    <div class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 mt-2">
+      <button
+        pButton
+        label="Cancel"
+        class="p-button-outlined p-button-secondary flex-1 w-full sm:w-auto"
+        (click)="onCancel()">
+      </button>
+      <button
+        pButton
+        label="Reject Application"
+        icon="pi pi-times"
+        class="p-button-danger flex-1 w-full sm:w-auto"
+        [disabled]="confirmDisabled"
+        (click)="onConfirm()">
+      </button>
+    </div>
+  </div>
+</p-dialog>

@@ -192,6 +192,15 @@ export const routes: Routes = [
         ]
       },
       {
+        path: 'consultants',
+        canActivate: [permissionGuard],
+        data: { feature: Feature.BusinessConsultants },
+        children: [
+          { path: '', loadComponent: () => import('./features/consultants/list/consultants-list.component').then(m => m.ConsultantsListComponent) },
+          { path: ':id', loadComponent: () => import('./features/consultants/details/consultant-details.component').then(m => m.ConsultantDetailsComponent) }
+        ]
+      },
+      {
         path: 'merchants',
         canActivate: [permissionGuard],
         data: { feature: Feature.Merchants },

@@ -255,6 +255,13 @@ export class SidebarComponent {
           ],
         },
         {
+          label: 'Business Consultants',
+          icon: 'pi pi-briefcase',
+          route: '/admin/consultants',
+          feature: Feature.BusinessConsultants,
+          permissionKey: 'consultants.view',
+        },
+        {
           label: 'Merchants',
           icon: 'pi pi-truck',
           feature: Feature.Merchants,

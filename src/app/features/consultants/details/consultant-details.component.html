@@ -1,0 +1,272 @@
+@if (consultant(); as c) {
+  <div class="min-h-screen bg-gray-50 font-geist">
+    <div class="w-full px-4 py-5 sm:px-6 md:px-8 2xl:px-12 sm:py-6">
+      <p-toast></p-toast>
+
+      @if (isViewOnly()) {
+        <div class="mb-4 md:mb-6">
+          <app-info-banner
+            message="You have view-only access. Contact an administrator to approve, reject, or revoke."
+            type="info">
+          </app-info-banner>
+        </div>
+      }
+
+      <app-consultant-reject-modal
+        [visible]="showRejectModal()"
+        [consultant]="c"
+        (confirmed)="handleRejectConfirmed($event)"
+        (cancelled)="handleRejectCancelled()">
+      </app-consultant-reject-modal>
+
+      <app-confirmation-modal
+        [visible]="showConfirmModal()"
+        [title]="confirmConfig().title"
+        [message]="confirmConfig().message"
+        [confirmLabel]="confirmConfig().confirmLabel"
+        [confirmClass]="confirmConfig().confirmClass"
+        [loading]="actionLoading()"
+        (confirm)="handleConfirm($event)"
+        (cancel)="handleConfirmCancelled()"
+        (visibleChange)="showConfirmModal.set($event)">
+      </app-confirmation-modal>
+
+      <div class="mb-6 md:mb-8">
+        <div class="flex items-center gap-3 text-xs text-gray-400 mb-2">
+          <button
+            type="button"
+            [routerLink]="['/admin/consultants']"
+            class="p-2 rounded-md hover:bg-gray-100 shrink-0"
+            aria-label="Back to consultants list">
+            <i class="pi pi-arrow-left" aria-hidden="true"></i>
+          </button>
+          Back to business consultants
+        </div>
+
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <div class="min-w-0">
+            <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 break-words">
+              {{ c.seminarCentreName || 'Consultant Application' }}
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">
+              Applied {{ c.appliedAt | date:'medium' }}
+              @if (c.grantedByAdmin) {
+                · <span class="text-mlm-primary font-medium">Admin granted</span>
+              }
+            </p>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto shrink-0">
+            <app-status-badge [status]="statusDisplay()"></app-status-badge>
+
+            @if (isPending()) {
+              <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+                <button
+                  *hasPermission="'consultants.approve'"
+                  pButton
+                  type="button"
+                  label="Reject"
+                  icon="pi pi-times"
+                  class="p-button-outlined p-button-danger w-full sm:w-auto"
+                  [disabled]="actionLoading()"
+                  (click)="onRejectClick()">
+                </button>
+                <button
+                  *hasPermission="'consultants.approve'"
+                  pButton
+                  type="button"
+                  label="Approve"
+                  icon="pi pi-check"
+                  class="p-button-success w-full sm:w-auto"
+                  [disabled]="actionLoading()"
+                  (click)="onApproveClick()">
+                </button>
+              </div>
+            }
+
+            @if (isApproved()) {
+              <button
+                *hasPermission="'consultants.approve'"
+                pButton
+                type="button"
+                label="Revoke"
+                icon="pi pi-ban"
+                class="p-button-outlined p-button-danger w-full sm:w-auto"
+                [disabled]="actionLoading()"
+                (click)="onRevokeClick()">
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 2xl:gap-10">
+        <div class="lg:col-span-8 space-y-5 md:space-y-8 order-2 lg:order-1">
+          <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 md:p-8">
+            <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <i class="pi pi-building text-gray-400" aria-hidden="true"></i>
+              Seminar Centre Details
+            </h3>
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Centre Name</dt>
+                <dd class="text-sm font-medium text-gray-900">{{ c.seminarCentreName || '—' }}</dd>
+              </div>
+              <div>
+                <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Phone</dt>
+                <dd class="text-sm font-medium text-gray-900">{{ c.phoneNumber || '—' }}</dd>
+              </div>
+              <div class="sm:col-span-2">
+                <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Address</dt>
+                <dd class="text-sm font-medium text-gray-900">{{ c.seminarCentreAddress || '—' }}</dd>
+              </div>
+              <div>
+                <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">City</dt>
+                <dd class="text-sm font-medium text-gray-900">{{ c.seminarCentreCity || '—' }}</dd>
+              </div>
+              <div>
+                <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">State</dt>
+                <dd class="text-sm font-medium text-gray-900">{{ c.seminarCentreState || '—' }}</dd>
+              </div>
+            </dl>
+
+            @if (c.applicantNotes) {
+              <div class="mt-6 pt-6 border-t border-gray-100">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Applicant Notes</p>
+                <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ c.applicantNotes }}</p>
+              </div>
+            }
+          </div>
+
+          <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <i class="pi pi-user text-gray-400" aria-hidden="true"></i>
+              Applicant Information
+            </h3>
+            <div class="flex items-center gap-4 min-w-0">
+              <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-600 shrink-0">
+                {{ (c.user?.username || c.user?.email || '?').charAt(0) | uppercase }}
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="font-medium text-gray-900 truncate">{{ applicantName() }}</p>
+                <p class="text-sm text-gray-500 truncate">{{ c.user?.username || '—' }}</p>
+                <p class="text-sm text-gray-500 truncate">{{ c.user?.email || '—' }}</p>
+                <p class="text-xs text-gray-400 mt-1 truncate">User ID: {{ c.userId }}</p>
+                <div class="flex flex-wrap gap-2 mt-2">
+                  @if (c.user?.registrationPackage) {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                      {{ c.user?.registrationPackage }}
+                    </span>
+                  }
+                  @if (c.user?.isRegistrationPaid) {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-green-50 text-green-700 border border-green-100">
+                      Registration paid
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-100">
+                      Registration unpaid
+                    </span>
+                  }
+                </div>
+              </div>
+              <button
+                pButton
+                type="button"
+                label="View User"
+                icon="pi pi-external-link"
+                class="p-button-outlined p-button-sm shrink-0"
+                (click)="goToUser()">
+              </button>
+            </div>
+          </div>
+
+          @if (c.status === 'REJECTED' && c.rejectionReason) {
+            <div class="bg-white border border-red-200 rounded-xl p-4 sm:p-6">
+              <h3 class="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
+                <i class="pi pi-times-circle text-red-400" aria-hidden="true"></i>
+                Rejection Reason
+              </h3>
+              <div class="p-4 bg-red-50/50 rounded-xl border border-red-100/50">
+                <p class="text-sm text-red-900 font-medium break-words">{{ c.rejectionReason }}</p>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="lg:col-span-4 order-1 lg:order-2 space-y-5">
+          <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 lg:sticky lg:top-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <i class="pi pi-chart-line text-gray-400" aria-hidden="true"></i>
+              Qualification
+            </h3>
+            <dl class="space-y-4">
+              <div>
+                <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Effective Ranking Level</dt>
+                <dd class="text-lg font-bold text-gray-900">{{ c.effectiveRankingLevel ?? '—' }}</dd>
+              </div>
+              <div>
+                <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Stage 1 Complete</dt>
+                <dd class="text-sm font-medium"
+                    [class.text-green-700]="c.isStage1Complete"
+                    [class.text-amber-700]="!c.isStage1Complete">
+                  {{ c.isStage1Complete ? 'Yes' : 'No (informational)' }}
+                </dd>
+              </div>
+            </dl>
+            <p class="text-xs text-gray-500 mt-4 leading-relaxed">
+              Stage 1 completion is informational. Admin decides approval based on seminar centre verification.
+            </p>
+          </div>
+
+          <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <i class="pi pi-clock text-gray-400" aria-hidden="true"></i>
+              Timeline
+            </h3>
+            <div class="space-y-4">
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Applied</p>
+                <p class="text-xs text-gray-500">{{ c.appliedAt | date:'medium' }}</p>
+              </div>
+              @if (c.reviewedAt) {
+                <div>
+                  <p class="text-sm font-semibold text-gray-900">Reviewed</p>
+                  <p class="text-xs text-gray-500">{{ c.reviewedAt | date:'medium' }}</p>
+                </div>
+              }
+              @if (c.updatedAt) {
+                <div>
+                  <p class="text-sm font-semibold text-gray-900">Last Updated</p>
+                  <p class="text-xs text-gray-500">{{ c.updatedAt | date:'medium' }}</p>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else if (loading()) {
+  <div class="h-[80vh] flex items-center justify-center">
+    <div class="flex flex-col items-center gap-3">
+      <i class="pi pi-spin pi-spinner text-3xl text-gray-300" aria-hidden="true"></i>
+      <p class="text-sm text-gray-500">Loading consultant details…</p>
+    </div>
+  </div>
+} @else {
+  <div class="h-[80vh] flex flex-col items-center justify-center text-center p-4 sm:p-8">
+    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 sm:mb-6">
+      <i class="pi pi-search text-2xl sm:text-3xl text-gray-300" aria-hidden="true"></i>
+    </div>
+    <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Application Not Found</h2>
+    <p class="text-gray-500 mt-2 max-w-xs text-sm">The application ID was not found or may have been removed.</p>
+    <button
+      pButton
+      type="button"
+      label="Back to Business Consultants"
+      icon="pi pi-arrow-left"
+      [routerLink]="['/admin/consultants']"
+      class="p-button-text mt-6 w-full sm:w-auto">
+    </button>
+  </div>
+}

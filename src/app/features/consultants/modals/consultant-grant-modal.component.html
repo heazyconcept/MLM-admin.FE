@@ -1,0 +1,128 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  header="Grant Business Consultant"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: 'min(520px, 95vw)' }"
+  [breakpoints]="{ '640px': '95vw' }"
+  (onHide)="onCancel()">
+
+  <div class="flex flex-col gap-5 pt-2">
+    <p class="text-sm text-mlm-secondary">
+      Directly assign business consultant status to a user without a prior application.
+    </p>
+
+    <div class="space-y-2">
+      <label for="grant-user-search" class="text-xs font-bold text-gray-400 uppercase tracking-widest">
+        Search User <span class="text-red-500">*</span>
+      </label>
+      <div class="flex gap-2">
+        <input
+          id="grant-user-search"
+          pInputText
+          type="text"
+          class="w-full"
+          placeholder="Search by username or email…"
+          [value]="searchVal()"
+          (input)="searchVal.set($any($event.target).value)"
+          (keydown.enter)="onSearchUsers()" />
+        <button
+          pButton
+          type="button"
+          icon="pi pi-search"
+          label="Search"
+          class="shrink-0"
+          [loading]="searchLoading()"
+          (click)="onSearchUsers()">
+        </button>
+      </div>
+
+      @if (selectedUser(); as user) {
+        <div class="flex items-center justify-between p-3 bg-green-50 border border-green-100 rounded-lg">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-gray-900 truncate">{{ user.username || user.fullName }}</p>
+            <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+          </div>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-times"
+            class="p-button-text p-button-secondary"
+            aria-label="Clear selected user"
+            (click)="clearSelectedUser()">
+          </button>
+        </div>
+      }
+
+      @if (searchResults().length > 0) {
+        <ul class="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-48 overflow-y-auto">
+          @for (user of searchResults(); track user.id) {
+            <li>
+              <button
+                type="button"
+                class="w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors"
+                (click)="selectUser(user)">
+                <p class="text-sm font-medium text-gray-900">{{ user.username || user.fullName }}</p>
+                <p class="text-xs text-gray-500">{{ user.email }}</p>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <form [formGroup]="grantForm" class="space-y-4">
+      <div class="space-y-2">
+        <label for="grant-centre-name" class="text-xs font-bold text-gray-400 uppercase tracking-widest">
+          Seminar Centre Name
+        </label>
+        <input id="grant-centre-name" pInputText type="text" class="w-full" formControlName="seminarCentreName" />
+      </div>
+
+      <div class="space-y-2">
+        <label for="grant-centre-address" class="text-xs font-bold text-gray-400 uppercase tracking-widest">
+          Address
+        </label>
+        <input id="grant-centre-address" pInputText type="text" class="w-full" formControlName="seminarCentreAddress" />
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="space-y-2">
+          <label for="grant-centre-city" class="text-xs font-bold text-gray-400 uppercase tracking-widest">City</label>
+          <input id="grant-centre-city" pInputText type="text" class="w-full" formControlName="seminarCentreCity" />
+        </div>
+        <div class="space-y-2">
+          <label for="grant-centre-state" class="text-xs font-bold text-gray-400 uppercase tracking-widest">State</label>
+          <input id="grant-centre-state" pInputText type="text" class="w-full" formControlName="seminarCentreState" />
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label for="grant-phone" class="text-xs font-bold text-gray-400 uppercase tracking-widest">Phone Number</label>
+        <input id="grant-phone" pInputText type="tel" class="w-full" formControlName="phoneNumber" />
+      </div>
+    </form>
+
+    <div class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+      <button
+        pButton
+        type="button"
+        label="Cancel"
+        class="p-button-outlined p-button-secondary flex-1 w-full sm:w-auto"
+        [disabled]="loading()"
+        (click)="onCancel()">
+      </button>
+      <button
+        pButton
+        type="button"
+        label="Grant Consultant"
+        icon="pi pi-check"
+        class="p-button-success flex-1 w-full sm:w-auto"
+        [disabled]="!canSubmit"
+        [loading]="loading()"
+        (click)="onSubmit()">
+      </button>
+    </div>
+  </div>
+</p-dialog>
