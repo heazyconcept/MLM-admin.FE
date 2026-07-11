@@ -26,7 +26,8 @@ export enum Feature {
   Notifications = 'Notifications',
   ReportsAudit = 'ReportsAudit',
   SystemConfig = 'SystemConfig',
-  AdminManagement = 'AdminManagement'
+  AdminManagement = 'AdminManagement',
+  BusinessConsultants = 'BusinessConsultants'
 }
 
 export enum Action {

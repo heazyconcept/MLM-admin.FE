@@ -159,6 +159,7 @@ export const PERMISSION_MODULES = [
   'Audit',
   'System',
   'Admin Management',
+  'Consultants',
 ] as const;
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[number];
@@ -182,6 +183,7 @@ export const FEATURE_TO_PERMISSION_PREFIX: Record<string, string> = {
   'ReportsAudit': 'reports.,audit.',
   'SystemConfig': 'system.',
   'AdminManagement': 'admin_management.',
+  'BusinessConsultants': 'consultants.',
 };
 
 /**
@@ -280,4 +282,9 @@ export const ALL_PERMISSION_KEYS: Permission[] = [
   { id: 'p-58', key: 'admin_management.manage_roles', label: 'Manage Roles', module: 'Admin Management', type: 'action' },
   { id: 'p-59', key: 'admin_management.manage_groups', label: 'Manage User Groups', module: 'Admin Management', type: 'action' },
   { id: 'p-60', key: 'admin_management.manage_users', label: 'Manage Admin Users', module: 'Admin Management', type: 'action' },
+
+  // Business Consultants
+  { id: 'p-64', key: 'consultants.view', label: 'View Consultants', module: 'Consultants', type: 'view' },
+  { id: 'p-65', key: 'consultants.view_details', label: 'View Consultant Details', module: 'Consultants', type: 'view' },
+  { id: 'p-66', key: 'consultants.approve', label: 'Approve / Grant / Revoke Consultant', module: 'Consultants', type: 'action' },
 ];
