@@ -59,7 +59,7 @@ export class ConsultantsListComponent implements OnInit {
   listTotal = this.consultantService.listTotal;
   loading = this.consultantService.loading;
 
-  selectedStatusControl = new FormControl<string>('PENDING');
+  selectedStatusControl = new FormControl<string>('all');
   searchVal = signal('');
   searchQuery = signal('');
 
