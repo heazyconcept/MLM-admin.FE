@@ -13,8 +13,10 @@ export type AdjustmentType = 'INCREASE' | 'DECREASE';
 export interface InventoryAdjustmentDispute {
   id: string;
   merchantId: string;
+  merchantUsername?: string;
   merchantName?: string;
   merchantBusinessName?: string;
+  merchantType?: string;
   productId: string;
   productName?: string;
   productSku?: string;
@@ -115,9 +117,18 @@ export class InventoryAdjustmentDisputeService {
   }
 
   getById(id: string): Observable<InventoryAdjustmentDispute> {
-    return this.api.get<InventoryAdjustmentDispute>(
-      `admin/merchants/inventory-adjustment-disputes/${id}`
-    );
+    return this.api
+      .get<InventoryAdjustmentDispute | { dispute: InventoryAdjustmentDispute }>(
+        `admin/merchants/inventory-adjustment-disputes/${id}`
+      )
+      .pipe(
+        map((res) => {
+          if (res && typeof res === 'object' && 'dispute' in res && res.dispute) {
+            return res.dispute;
+          }
+          return res as InventoryAdjustmentDispute;
+        })
+      );
   }
 
   approve(disputeId: string, adminNotes?: string): Observable<{ message: string }> {

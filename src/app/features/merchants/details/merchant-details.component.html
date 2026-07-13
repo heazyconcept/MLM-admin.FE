@@ -703,6 +703,45 @@
           </div>
         </div>
 
+        <!-- Stock Balance Summary -->
+        @if (m.status === 'ACTIVE') {
+          <div class="bg-white border border-gray-200 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">Stock Balance</h3>
+              <i class="pi pi-chart-bar text-gray-400" aria-hidden="true"></i>
+            </div>
+
+            @if (stockBalanceLoading()) {
+              <div class="animate-pulse space-y-3">
+                <div class="h-8 bg-gray-100 rounded"></div>
+                <div class="h-4 bg-gray-100 rounded w-2/3"></div>
+              </div>
+            } @else if (stockBalance(); as sb) {
+              <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="bg-emerald-50/60 rounded-lg px-3 py-3 border border-emerald-100">
+                  <p class="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider mb-1">Current balance</p>
+                  <p class="text-2xl font-bold text-gray-900 tabular-nums">{{ sb.totals.currentBalance }}</p>
+                </div>
+                <div class="bg-blue-50/60 rounded-lg px-3 py-3 border border-blue-100">
+                  <p class="text-[10px] text-blue-600 font-semibold uppercase tracking-wider mb-1">Products</p>
+                  <p class="text-2xl font-bold text-gray-900 tabular-nums">{{ sb.totals.productCount }}</p>
+                </div>
+              </div>
+              <p class="text-xs text-gray-500 mb-4">
+                Allocated {{ sb.totals.totalAllocated }} · Fulfilled {{ sb.totals.totalFulfilled }}
+              </p>
+              <a
+                [routerLink]="['/admin/merchants/stock-balance', m.id]"
+                class="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition w-full justify-center">
+                <i class="pi pi-external-link text-xs" aria-hidden="true"></i>
+                View full breakdown
+              </a>
+            } @else {
+              <p class="text-sm text-gray-500">No stock balance data available.</p>
+            }
+          </div>
+        }
+
         <!-- Commission Rates -->
         @if (merchantCategoryConfig(); as cfg) {
           <div class="bg-white border border-gray-200 rounded-xl p-6">

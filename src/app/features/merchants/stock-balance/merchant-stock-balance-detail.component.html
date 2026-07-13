@@ -1,0 +1,151 @@
+<div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+    <div>
+      <button
+        type="button"
+        (click)="onBack()"
+        class="text-sm text-mlm-secondary hover:text-mlm-text flex items-center gap-2 mb-2">
+        <i class="pi pi-arrow-left text-xs" aria-hidden="true"></i>
+        Back to merchant stock balance
+      </button>
+      <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        @if (detail(); as d) {
+          {{ d.merchantUsername || 'Merchant Stock' }}
+        } @else {
+          Merchant Stock Balance
+        }
+      </h1>
+      @if (detail(); as d) {
+        <p class="text-sm text-mlm-secondary">
+          {{ formatType(d.merchantType) }} · Ledger breakdown by category and product
+        </p>
+      }
+    </div>
+
+    <div class="flex flex-wrap gap-2 shrink-0">
+      @if (detail()) {
+        <a
+          [routerLink]="['/admin/merchants', merchantId()]"
+          class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text inline-flex items-center gap-2 transition-colors">
+          <i class="pi pi-user text-xs" aria-hidden="true"></i>
+          Merchant profile
+        </a>
+      }
+      <button
+        type="button"
+        (click)="onRefresh()"
+        [disabled]="loading()"
+        class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text flex items-center gap-2 transition-colors">
+        <i class="pi pi-refresh text-xs" [class.pi-spin]="loading()" aria-hidden="true"></i>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  @if (loadError()) {
+    <div class="mb-5 px-4 py-3 rounded-lg bg-mlm-red-50 border border-mlm-red-200 text-mlm-red-700 text-sm flex items-center justify-between">
+      <span>{{ loadError() }}</span>
+      <button type="button" (click)="onRefresh()" class="underline font-medium ml-4 shrink-0">Retry</button>
+    </div>
+  }
+
+  @if (loading() && !detail()) {
+    <div class="h-48 flex items-center justify-center">
+      <i class="pi pi-spin pi-spinner text-3xl text-slate-300" aria-hidden="true"></i>
+    </div>
+  } @else if (detail(); as d) {
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-5 mb-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        @for (card of summaryCards(); track card.label) {
+          <div class="rounded-lg border border-slate-200 px-4 py-3">
+            <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-2">{{ card.label }}</p>
+            <p class="text-2xl font-bold text-mlm-text tabular-nums">{{ card.value }}</p>
+          </div>
+        }
+      </div>
+      <p class="text-xs text-slate-500 mt-4 leading-relaxed">
+        Allocated = units credited to merchant. Fulfilled = units debited via orders.
+        Current balance = max(0, allocated − fulfilled).
+      </p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden mb-6">
+      <div class="px-4 py-4 md:px-5 border-b border-slate-100">
+        <h2 class="text-sm font-semibold text-mlm-text">By category</h2>
+        <p class="text-xs text-mlm-secondary mt-0.5">Stock grouped by product catalog category</p>
+      </div>
+
+      @if (d.byCategory.length > 0) {
+        <app-data-table
+          [value]="d.byCategory"
+          [headers]="categoryHeaders()"
+          [paginator]="false"
+          [loading]="loading()">
+
+          <ng-template pTemplate="body" let-row>
+            <tr class="border-b border-slate-100">
+              <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-sm font-medium text-mlm-text">{{ row.categoryName || '—' }}</td>
+              <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-sm tabular-nums text-right">{{ row.productCount }}</td>
+              <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-sm tabular-nums text-right text-mlm-secondary">{{ row.totalAllocated }}</td>
+              <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-sm tabular-nums text-right text-mlm-secondary">{{ row.totalFulfilled }}</td>
+              <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-sm tabular-nums text-right font-semibold text-mlm-text">{{ row.currentBalance }}</td>
+            </tr>
+          </ng-template>
+        </app-data-table>
+      } @else {
+        <p class="px-5 py-8 text-sm text-slate-400 text-center">No category breakdown available.</p>
+      }
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div class="px-4 py-4 md:px-5 border-b border-slate-100">
+        <h2 class="text-sm font-semibold text-mlm-text">Per-product ledger</h2>
+        <p class="text-xs text-mlm-secondary mt-0.5">
+          Authorized quantity is platform-recognized balance; reported is merchant-submitted stock on MerchantProduct.
+        </p>
+      </div>
+
+      @if (d.items.length > 0) {
+        <app-data-table
+          [value]="d.items"
+          [headers]="productHeaders()"
+          [paginator]="d.items.length > 10"
+          [rows]="10"
+          [loading]="loading()">
+
+          <ng-template pTemplate="body" let-row>
+            <tr class="border-b border-slate-100">
+              <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[160px]">
+                <p class="text-sm font-medium text-mlm-text">{{ row.productName || row.productId }}</p>
+                @if (row.sku) {
+                  <p class="text-[11px] font-mono text-slate-400 mt-0.5">{{ row.sku }}</p>
+                }
+              </td>
+              <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-sm text-mlm-secondary">{{ row.categoryName || '—' }}</td>
+              <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-sm tabular-nums text-right text-mlm-secondary">{{ row.totalAllocated }}</td>
+              <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-sm tabular-nums text-right text-mlm-secondary">{{ row.totalFulfilled }}</td>
+              <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-sm tabular-nums text-right font-semibold text-mlm-text">{{ row.currentBalance }}</td>
+              <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-sm tabular-nums text-right">{{ row.authorizedQuantity }}</td>
+              <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-sm tabular-nums text-right"
+                  [class.text-amber-700]="hasQuantityMismatch(row)"
+                  [class.font-semibold]="hasQuantityMismatch(row)">
+                {{ row.stockQuantity }}
+                @if (hasQuantityMismatch(row)) {
+                  <span class="block text-[10px] font-normal text-amber-600">Mismatch</span>
+                }
+              </td>
+            </tr>
+          </ng-template>
+        </app-data-table>
+      } @else {
+        <p class="px-5 py-8 text-sm text-slate-400 text-center">No product ledger items for this merchant.</p>
+      }
+    </div>
+  } @else if (!loading()) {
+    <div class="h-48 flex flex-col items-center justify-center text-center">
+      <i class="pi pi-inbox text-3xl text-slate-300 mb-3" aria-hidden="true"></i>
+      <p class="text-sm text-slate-500">No stock balance data found for this merchant.</p>
+      <button type="button" pButton label="Back to list" class="p-button-text mt-4" (click)="onBack()"></button>
+    </div>
+  }
+</div>
