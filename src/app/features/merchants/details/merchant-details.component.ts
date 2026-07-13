@@ -12,6 +12,10 @@ import { AdminProductsService } from '../../products/services/admin-products.ser
 import { Product } from '../../../core/models/product.model';
 import { MerchantCategoryConfigService } from '../services/merchant-category-config.service';
 import { MerchantCategoryType } from '../../../core/models/merchant-category-config.model';
+import {
+  MerchantStockBalanceDetail,
+  MerchantStockBalanceService,
+} from '../services/merchant-stock-balance.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
@@ -44,6 +48,7 @@ import { MessageService } from 'primeng/api';
 export class MerchantDetailsComponent implements OnInit {
   private merchantService = inject(MerchantService);
   private allocationService = inject(MerchantAllocationService);
+  private stockBalanceService = inject(MerchantStockBalanceService);
   private productService = inject(AdminProductsService);
   private categoryConfigService = inject(MerchantCategoryConfigService);
   private route = inject(ActivatedRoute);
@@ -88,6 +93,9 @@ export class MerchantDetailsComponent implements OnInit {
   selectedAllocation = signal<MerchantAllocation | null>(null);
   dispatchNotes = signal('');
   trackingReference = signal('');
+
+  stockBalance = signal<MerchantStockBalanceDetail | null>(null);
+  stockBalanceLoading = signal(false);
 
   // Product management state
   selectedProduct = signal<Product | null>(null);
@@ -178,6 +186,9 @@ export class MerchantDetailsComponent implements OnInit {
         if (m) {
           this.merchant.set(m);
           this.loadAllocations(id);
+          if (m.status === 'ACTIVE') {
+            this.loadStockBalance(id);
+          }
         } else {
           this.messageService.add({
             severity: 'error',
@@ -211,6 +222,20 @@ export class MerchantDetailsComponent implements OnInit {
       error: () => {
         this.allocations.set([]);
         this.allocationsLoading.set(false);
+      },
+    });
+  }
+
+  private loadStockBalance(merchantId: string): void {
+    this.stockBalanceLoading.set(true);
+    this.stockBalanceService.getMerchantStockBalance(merchantId).subscribe({
+      next: (detail) => {
+        this.stockBalance.set(detail);
+        this.stockBalanceLoading.set(false);
+      },
+      error: () => {
+        this.stockBalance.set(null);
+        this.stockBalanceLoading.set(false);
       },
     });
   }

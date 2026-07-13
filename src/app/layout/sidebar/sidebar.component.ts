@@ -280,6 +280,12 @@ export class SidebarComponent {
               permissionKey: 'merchants.configure_categories',
             },
             {
+              label: 'Stock Balance',
+              icon: 'pi pi-chart-bar',
+              route: '/admin/merchants/stock-balance',
+              permissionKey: 'merchants.view',
+            },
+            {
               label: 'Receipt Disputes',
               icon: 'pi pi-exclamation-circle',
               route: '/admin/merchants/stock-disputes',

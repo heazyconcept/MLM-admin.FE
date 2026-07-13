@@ -65,6 +65,7 @@ export class InventoryAdjustmentDisputesListComponent implements OnInit {
   showApproveModal = signal(false);
   showRejectModal = signal(false);
   selectedDispute = signal<InventoryAdjustmentDispute | null>(null);
+  detailLoading = signal(false);
   actionLoading = signal(false);
 
   statusOptions: StatusOption[] = [
@@ -129,6 +130,16 @@ export class InventoryAdjustmentDisputesListComponent implements OnInit {
   onViewDetails(dispute: InventoryAdjustmentDispute): void {
     this.selectedDispute.set(dispute);
     this.showDetailModal.set(true);
+    this.detailLoading.set(true);
+    this.disputeService.getById(dispute.id).subscribe({
+      next: (detail) => {
+        this.selectedDispute.set(detail);
+        this.detailLoading.set(false);
+      },
+      error: () => {
+        this.detailLoading.set(false);
+      },
+    });
   }
 
   onApprove(dispute: InventoryAdjustmentDispute): void {
@@ -216,7 +227,12 @@ export class InventoryAdjustmentDisputesListComponent implements OnInit {
   }
 
   getMerchantDisplay(dispute: InventoryAdjustmentDispute): string {
-    return dispute.merchantBusinessName ?? dispute.merchantName ?? dispute.merchantId;
+    return (
+      dispute.merchantUsername ??
+      dispute.merchantName ??
+      dispute.merchantBusinessName ??
+      dispute.merchantId
+    );
   }
 
   getProductDisplay(dispute: InventoryAdjustmentDispute): string {
