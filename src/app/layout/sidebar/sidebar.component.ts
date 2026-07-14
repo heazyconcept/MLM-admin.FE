@@ -297,6 +297,12 @@ export class SidebarComponent {
               route: '/admin/merchants/inventory-adjustment-disputes',
               permissionKey: 'merchants.view',
             },
+            {
+              label: 'Stock Handovers',
+              icon: 'pi pi-arrows-h',
+              route: '/admin/merchants/handover-requests',
+              permissionKey: 'merchants.view',
+            },
           ],
         },
         {
