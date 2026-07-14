@@ -147,6 +147,7 @@ interface StockDisputesListResponse {
 }
 
 interface HandoverRequestsListResponse {
+  items?: HandoverRequest[];
   data?: HandoverRequest[];
   requests?: HandoverRequest[];
   allocations?: HandoverRequest[];
@@ -332,13 +333,15 @@ export class MerchantAllocationService {
           if (Array.isArray(res)) {
             return { requests: res, total: res.length };
           }
-          const requests = Array.isArray(res?.data)
-            ? res.data
-            : Array.isArray(res?.requests)
-              ? res.requests
-              : Array.isArray(res?.allocations)
-                ? res.allocations
-                : [];
+          const requests = Array.isArray(res?.items)
+            ? res.items
+            : Array.isArray(res?.data)
+              ? res.data
+              : Array.isArray(res?.requests)
+                ? res.requests
+                : Array.isArray(res?.allocations)
+                  ? res.allocations
+                  : [];
           const total = typeof res?.total === 'number' ? res.total : requests.length;
           return { requests, total };
         }),
