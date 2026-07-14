@@ -48,6 +48,7 @@ export interface StatusHistory {
 interface AdminWithdrawalItem {
   id: string;
   userId: string;
+  userName?: string;
   walletId?: string;
   amount: number;
   baseAmount?: number;
@@ -253,12 +254,12 @@ export class WithdrawalService {
     return {
       id: item.id,
       userId: item.userId,
-      userName: (item.metadata?.['userName'] as string) || item.accountName || item.userId,
+      userName: item.userName || (item.metadata?.['userName'] as string) || item.userId,
       userEmail: (item.metadata?.['userEmail'] as string) || '',
       amount: item.amount,
       currency: (item.currency as Currency) ?? 'NGN',
-      destination: item.bankName && item.accountNumber && item.accountName
-        ? `${item.bankName} • ${item.accountNumber} • ${item.accountName}`
+      destination: item.bankName && item.accountNumber
+        ? `${item.bankName} • ${item.accountNumber}`
         : '',
       destinationType: 'Bank Account',
       status,
