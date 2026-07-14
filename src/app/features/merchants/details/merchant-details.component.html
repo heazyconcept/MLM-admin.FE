@@ -607,10 +607,12 @@
                             [class]="getHandoverStatusClass(alloc.handoverStatus)">
                             Handover: {{ getHandoverStatusLabel(alloc.handoverStatus) }}
                           </span>
-                          @if (alloc.sourceMerchant?.businessName) {
-                            <p class="text-[10px] text-gray-500 mt-1">
-                              From {{ alloc.sourceMerchant.businessName }}
-                            </p>
+                          @if (alloc.sourceMerchant; as source) {
+                            @if (source.businessName) {
+                              <p class="text-[10px] text-gray-500 mt-1">
+                                From {{ source.businessName }}
+                              </p>
+                            }
                           }
                         }
                         @if (alloc.dispute) {
