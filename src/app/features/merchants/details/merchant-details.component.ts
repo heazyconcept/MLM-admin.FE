@@ -7,6 +7,7 @@ import {
   MerchantAllocationService,
   MerchantAllocation,
   AllocationStatus,
+  HandoverStatus,
 } from '../services/merchant-allocation.service';
 import { AdminProductsService } from '../../products/services/admin-products.service';
 import { Product } from '../../../core/models/product.model';
@@ -343,7 +344,20 @@ export class MerchantDetailsComponent implements OnInit {
   }
 
   canDispatch(allocation: MerchantAllocation): boolean {
-    return allocation.status === 'PENDING';
+    if (allocation.status !== 'PENDING') return false;
+    return !this.allocationService.isHandoverBlockingDispatch(allocation.handoverStatus);
+  }
+
+  isHandoverBlocking(allocation: MerchantAllocation): boolean {
+    return (
+      allocation.status === 'PENDING' &&
+      this.allocationService.isHandoverBlockingDispatch(allocation.handoverStatus)
+    );
+  }
+
+  hasActiveHandover(allocation: MerchantAllocation): boolean {
+    const status = allocation.handoverStatus;
+    return !!status && status !== 'NONE';
   }
 
   canMarkInTransit(allocation: MerchantAllocation): boolean {
@@ -356,6 +370,23 @@ export class MerchantDetailsComponent implements OnInit {
 
   getAllocationStatusLabel(status: AllocationStatus): string {
     return this.allocationService.getAllocationStatusLabel(status);
+  }
+
+  getHandoverStatusLabel(status: HandoverStatus): string {
+    return this.allocationService.getHandoverStatusLabel(status);
+  }
+
+  getHandoverStatusClass(status: HandoverStatus): string {
+    const map: Record<HandoverStatus, string> = {
+      NONE: 'bg-gray-50 text-gray-500 border-gray-200',
+      REQUESTED: 'bg-amber-50 text-amber-700 border-amber-200',
+      SUPPLIER_APPROVED: 'bg-blue-50 text-blue-700 border-blue-200',
+      ADMIN_APPROVED: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      READY_FOR_PICKUP: 'bg-purple-50 text-purple-700 border-purple-200',
+      COMPLETED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      REJECTED: 'bg-red-50 text-red-700 border-red-200',
+    };
+    return map[status] ?? 'bg-gray-50 text-gray-500 border-gray-200';
   }
 
   getAllocationStatusClass(status: AllocationStatus): string {

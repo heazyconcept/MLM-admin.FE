@@ -210,6 +210,7 @@ export const routes: Routes = [
           { path: 'category-config/:type', loadComponent: () => import('./features/merchants/category-config-edit/merchant-category-config-edit.component').then(m => m.MerchantCategoryConfigEditComponent) },
           { path: 'stock-disputes', loadComponent: () => import('./features/merchants/stock-disputes/stock-disputes-list.component').then(m => m.StockDisputesListComponent) },
           { path: 'inventory-adjustment-disputes', loadComponent: () => import('./features/merchants/inventory-adjustment-disputes/inventory-adjustment-disputes-list.component').then(m => m.InventoryAdjustmentDisputesListComponent) },
+          { path: 'handover-requests', loadComponent: () => import('./features/merchants/handover-requests/handover-requests-list.component').then(m => m.HandoverRequestsListComponent) },
           { path: 'stock-balance', loadComponent: () => import('./features/merchants/stock-balance/merchant-stock-balance-list.component').then(m => m.MerchantStockBalanceListComponent) },
           { path: 'stock-balance/:merchantId', loadComponent: () => import('./features/merchants/stock-balance/merchant-stock-balance-detail.component').then(m => m.MerchantStockBalanceDetailComponent) },
           { path: ':id', loadComponent: () => import('./features/merchants/details/merchant-details.component').then(m => m.MerchantDetailsComponent) }

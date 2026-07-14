@@ -18,11 +18,28 @@ export type DisputeStatus =
   | 'MERCHANT_ACKNOWLEDGED'
   | 'CLOSED';
 
+export type HandoverStatus =
+  | 'NONE'
+  | 'REQUESTED'
+  | 'SUPPLIER_APPROVED'
+  | 'ADMIN_APPROVED'
+  | 'READY_FOR_PICKUP'
+  | 'COMPLETED'
+  | 'REJECTED';
+
 export interface AllocationDispute {
   id: string;
   status: DisputeStatus;
   dispatchedQuantity: number;
   claimedReceivedQuantity: number;
+}
+
+export interface HandoverMerchantSummary {
+  id: string;
+  businessName: string;
+  type?: string;
+  phoneNumber?: string;
+  address?: string;
 }
 
 export interface MerchantAllocation {
@@ -39,6 +56,45 @@ export interface MerchantAllocation {
   trackingReference: string | null;
   parentAllocationId: string | null;
   dispute?: AllocationDispute | null;
+  merchantId?: string;
+  handoverStatus?: HandoverStatus | null;
+  sourceMerchantId?: string | null;
+  sourceMerchant?: HandoverMerchantSummary | null;
+  receiverMerchant?: HandoverMerchantSummary | null;
+  supplierApprovedAt?: string | null;
+  adminApprovedAt?: string | null;
+  handoverReadyAt?: string | null;
+  handoverRejectedAt?: string | null;
+  handoverRejectedBy?: string | null;
+  handoverRejectReason?: string | null;
+  createdAt?: string;
+}
+
+export interface HandoverRequest {
+  id: string;
+  merchantId: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  status: AllocationStatus;
+  handoverStatus: HandoverStatus;
+  sourceMerchantId?: string | null;
+  sourceMerchant?: HandoverMerchantSummary | null;
+  receiverMerchant?: HandoverMerchantSummary | null;
+  supplierApprovedAt?: string | null;
+  adminApprovedAt?: string | null;
+  handoverReadyAt?: string | null;
+  handoverRejectedAt?: string | null;
+  handoverRejectedBy?: string | null;
+  handoverRejectReason?: string | null;
+  createdAt?: string;
+}
+
+export interface HandoverRequestFilters {
+  status?: HandoverStatus;
+  merchantId?: string;
+  limit?: number;
+  offset?: number;
 }
 
 export interface StockDispute {
@@ -90,6 +146,22 @@ interface StockDisputesListResponse {
   offset?: number;
 }
 
+interface HandoverRequestsListResponse {
+  data?: HandoverRequest[];
+  requests?: HandoverRequest[];
+  allocations?: HandoverRequest[];
+  total?: number;
+  limit?: number;
+  offset?: number;
+}
+
+const HANDOVER_BLOCKING_STATUSES: ReadonlySet<HandoverStatus> = new Set([
+  'REQUESTED',
+  'SUPPLIER_APPROVED',
+  'ADMIN_APPROVED',
+  'READY_FOR_PICKUP',
+]);
+
 export const ALLOCATION_STATUS_LABELS: Record<AllocationStatus, string> = {
   PENDING: 'Pending',
   DISPATCHED: 'Dispatched',
@@ -108,6 +180,16 @@ export const DISPUTE_STATUS_LABELS: Record<DisputeStatus, string> = {
   CLOSED: 'Closed',
 };
 
+export const HANDOVER_STATUS_LABELS: Record<HandoverStatus, string> = {
+  NONE: 'None',
+  REQUESTED: 'Requested',
+  SUPPLIER_APPROVED: 'Supplier Approved',
+  ADMIN_APPROVED: 'Admin Approved',
+  READY_FOR_PICKUP: 'Ready for Pickup',
+  COMPLETED: 'Completed',
+  REJECTED: 'Rejected',
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -119,13 +201,29 @@ export class MerchantAllocationService {
   private readonly loadingState = signal<boolean>(false);
   private readonly loadingErrorState = signal<string | null>(null);
 
+  private readonly handoverRequestsState = signal<HandoverRequest[]>([]);
+  private readonly handoverRequestsTotalState = signal<number>(0);
+  private readonly handoverLoadingState = signal<boolean>(false);
+  private readonly handoverLoadingErrorState = signal<string | null>(null);
+
   readonly disputes = this.disputesState.asReadonly();
   readonly disputesTotal = this.disputesTotalState.asReadonly();
   readonly loading = this.loadingState.asReadonly();
   readonly loadingError = this.loadingErrorState.asReadonly();
 
+  readonly handoverRequests = this.handoverRequestsState.asReadonly();
+  readonly handoverRequestsTotal = this.handoverRequestsTotalState.asReadonly();
+  readonly handoverLoading = this.handoverLoadingState.asReadonly();
+  readonly handoverLoadingError = this.handoverLoadingErrorState.asReadonly();
+
   readonly openDisputesCount = computed(
     () => this.disputesState().filter((d) => d.status === 'OPEN').length
+  );
+
+  readonly awaitingAdminHandoverCount = computed(
+    () =>
+      this.handoverRequestsState().filter((r) => r.handoverStatus === 'SUPPLIER_APPROVED')
+        .length
   );
 
   getAllocations(merchantId: string): Observable<MerchantAllocation[]> {
@@ -212,11 +310,86 @@ export class MerchantAllocationService {
     );
   }
 
+  getHandoverRequests(
+    filters?: HandoverRequestFilters
+  ): Observable<{ requests: HandoverRequest[]; total: number }> {
+    this.handoverLoadingState.set(true);
+    this.handoverLoadingErrorState.set(null);
+
+    const params: Record<string, string | number> = {};
+    if (filters?.status) params['status'] = filters.status;
+    if (filters?.merchantId) params['merchantId'] = filters.merchantId;
+    if (filters?.limit != null) params['limit'] = filters.limit;
+    if (filters?.offset != null) params['offset'] = filters.offset;
+
+    return this.api
+      .get<HandoverRequestsListResponse | HandoverRequest[]>(
+        `admin/merchants/handover-requests`,
+        params
+      )
+      .pipe(
+        map((res) => {
+          if (Array.isArray(res)) {
+            return { requests: res, total: res.length };
+          }
+          const requests = Array.isArray(res?.data)
+            ? res.data
+            : Array.isArray(res?.requests)
+              ? res.requests
+              : Array.isArray(res?.allocations)
+                ? res.allocations
+                : [];
+          const total = typeof res?.total === 'number' ? res.total : requests.length;
+          return { requests, total };
+        }),
+        tap(({ requests, total }) => {
+          this.handoverRequestsState.set(requests);
+          this.handoverRequestsTotalState.set(total);
+          this.handoverLoadingState.set(false);
+        }),
+        catchError((err) => {
+          this.handoverLoadingState.set(false);
+          this.handoverLoadingErrorState.set(
+            err?.message ?? 'Failed to load handover requests'
+          );
+          this.handoverRequestsState.set([]);
+          this.handoverRequestsTotalState.set(0);
+          return of({ requests: [] as HandoverRequest[], total: 0 });
+        })
+      );
+  }
+
+  approveHandoverRequest(allocationId: string): Observable<{ message: string }> {
+    return this.api.post<{ message: string }>(
+      `admin/merchants/handover-requests/${allocationId}/approve`,
+      {}
+    );
+  }
+
+  rejectHandoverRequest(
+    allocationId: string,
+    reason?: string
+  ): Observable<{ message: string }> {
+    return this.api.post<{ message: string }>(
+      `admin/merchants/handover-requests/${allocationId}/reject`,
+      reason ? { reason } : {}
+    );
+  }
+
+  isHandoverBlockingDispatch(status: HandoverStatus | null | undefined): boolean {
+    if (!status || status === 'NONE') return false;
+    return HANDOVER_BLOCKING_STATUSES.has(status);
+  }
+
   getAllocationStatusLabel(status: AllocationStatus): string {
     return ALLOCATION_STATUS_LABELS[status] ?? status;
   }
 
   getDisputeStatusLabel(status: DisputeStatus): string {
     return DISPUTE_STATUS_LABELS[status] ?? status;
+  }
+
+  getHandoverStatusLabel(status: HandoverStatus): string {
+    return HANDOVER_STATUS_LABELS[status] ?? status;
   }
 }

@@ -601,6 +601,18 @@
                           [class]="getAllocationStatusClass(alloc.status)">
                           {{ getAllocationStatusLabel(alloc.status) }}
                         </span>
+                        @if (hasActiveHandover(alloc) && alloc.handoverStatus) {
+                          <span
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border mt-1"
+                            [class]="getHandoverStatusClass(alloc.handoverStatus)">
+                            Handover: {{ getHandoverStatusLabel(alloc.handoverStatus) }}
+                          </span>
+                          @if (alloc.sourceMerchant?.businessName) {
+                            <p class="text-[10px] text-gray-500 mt-1">
+                              From {{ alloc.sourceMerchant.businessName }}
+                            </p>
+                          }
+                        }
                         @if (alloc.dispute) {
                           <a
                             [routerLink]="['/admin/merchants/stock-disputes']"
@@ -627,6 +639,9 @@
                               class="p-button-sm p-button-outlined"
                               (click)="onDispatch(alloc)">
                             </button>
+                          }
+                          @if (isHandoverBlocking(alloc)) {
+                            <span class="text-[10px] text-amber-600 font-medium">Handover in progress</span>
                           }
                           @if (canMarkInTransit(alloc)) {
                             <button
