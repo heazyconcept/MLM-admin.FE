@@ -57,7 +57,7 @@ export class HandoverRequestsListComponent implements OnInit {
 
   rowsPerPage = signal(10);
   firstRecord = signal(0);
-  selectedStatusControl = new FormControl('SUPPLIER_APPROVED');
+  selectedStatusControl = new FormControl('all');
   merchantIdFilter = signal('');
 
   showApproveModal = signal(false);
