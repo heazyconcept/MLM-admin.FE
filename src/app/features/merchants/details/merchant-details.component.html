@@ -481,6 +481,79 @@
           }
         </div>
 
+        <!-- Merchant Locations -->
+        <div class="bg-white border border-gray-200 rounded-xl p-8">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900">Merchant Locations</h2>
+              <p class="text-xs text-gray-500 mt-1">Pickup offices and coverage locations</p>
+            </div>
+            @if (m.locationsComplete) {
+              <span class="inline-flex items-center self-start gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <i class="pi pi-check-circle" aria-hidden="true"></i>
+                Complete
+              </span>
+            } @else {
+              <span class="inline-flex items-center self-start gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+                Needs review
+              </span>
+            }
+          </div>
+
+          @if (m.locations && m.locations.length > 0) {
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              @for (location of m.locations; track location.id) {
+                <article class="rounded-xl border border-gray-200 p-4">
+                  <div class="flex items-start justify-between gap-3 mb-4">
+                    <div class="flex items-start gap-3 min-w-0">
+                      <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                        <i class="pi pi-map-marker text-blue-600" aria-hidden="true"></i>
+                      </div>
+                      <div class="min-w-0">
+                        <h3 class="text-sm font-semibold text-gray-900">
+                          {{ location.state }}, {{ location.country }}
+                        </h3>
+                        <p class="text-xs text-gray-500 mt-0.5">
+                          {{ location.countryCode }} · {{ location.subdivisionCode }}
+                        </p>
+                      </div>
+                    </div>
+                    @if (location.isPrimary) {
+                      <span class="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
+                        Primary
+                      </span>
+                    }
+                  </div>
+
+                  <dl class="space-y-3">
+                    <div>
+                      <dt class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Address</dt>
+                      <dd class="text-sm text-gray-700 leading-relaxed">{{ location.address || 'N/A' }}</dd>
+                    </div>
+                    <div>
+                      <dt class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Phone</dt>
+                      <dd class="text-sm text-gray-700">{{ location.phoneNumber || 'N/A' }}</dd>
+                    </div>
+                  </dl>
+
+                  @if (!location.detailsComplete) {
+                    <p class="flex items-center gap-1.5 text-xs text-amber-700 mt-4">
+                      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                      Location details are incomplete
+                    </p>
+                  }
+                </article>
+              }
+            </div>
+          } @else {
+            <div class="text-center py-8">
+              <i class="pi pi-map-marker text-2xl text-gray-300" aria-hidden="true"></i>
+              <p class="text-sm text-gray-500 mt-2">No merchant locations provided</p>
+            </div>
+          }
+        </div>
+
         <!-- Assigned Products -->
         <!-- <div class="bg-white border border-gray-200 rounded-xl p-8">
           <div class="flex items-center justify-between mb-6">

@@ -25,6 +25,18 @@ export interface MerchantProduct {
   updatedAt?: string;
 }
 
+export interface MerchantLocation {
+  id: string;
+  countryCode: string;
+  subdivisionCode: string;
+  country: string;
+  state: string;
+  address: string;
+  phoneNumber: string;
+  isPrimary: boolean;
+  detailsComplete: boolean;
+}
+
 export interface Merchant {
   id: string;
   userId: string;
@@ -38,6 +50,10 @@ export interface Merchant {
   businessName?: string;
   phoneNumber?: string;
   address?: string;
+  homeCountryCode?: string;
+  geographyNeedsReview?: boolean;
+  locations?: MerchantLocation[];
+  locationsComplete?: boolean;
 }
 
 /** Query params for GET /admin/merchants */
