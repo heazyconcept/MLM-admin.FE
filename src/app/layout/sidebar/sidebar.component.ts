@@ -303,6 +303,12 @@ export class SidebarComponent {
               route: '/admin/merchants/handover-requests',
               permissionKey: 'merchants.view',
             },
+            {
+              label: 'Stock Requests',
+              icon: 'pi pi-inbox',
+              route: '/admin/merchants/stock-requests',
+              permissionKey: 'merchants.view',
+            },
           ],
         },
         {

@@ -27,6 +27,8 @@ export type HandoverStatus =
   | 'COMPLETED'
   | 'REJECTED';
 
+export type AllocationSource = 'CATEGORY' | 'MERCHANT_REQUEST' | 'DISPUTE_REMAINDER';
+
 export interface AllocationDispute {
   id: string;
   status: DisputeStatus;
@@ -68,6 +70,41 @@ export interface MerchantAllocation {
   handoverRejectedBy?: string | null;
   handoverRejectReason?: string | null;
   createdAt?: string;
+  source?: AllocationSource | null;
+  requestNotes?: string | null;
+  requestedByUserId?: string | null;
+  cancelledAt?: string | null;
+  cancelReason?: string | null;
+  cancelledByAdminId?: string | null;
+  merchantBusinessName?: string;
+  merchantName?: string;
+}
+
+export interface StockRequest {
+  id: string;
+  merchantId: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  status: AllocationStatus;
+  source: AllocationSource;
+  requestNotes?: string | null;
+  requestedByUserId?: string | null;
+  cancelledAt?: string | null;
+  cancelReason?: string | null;
+  cancelledByAdminId?: string | null;
+  createdAt?: string;
+  merchantBusinessName?: string;
+  merchantName?: string;
+  receiverMerchant?: HandoverMerchantSummary | null;
+}
+
+export interface StockRequestFilters {
+  status?: AllocationStatus;
+  merchantId?: string;
+  productId?: string;
+  limit?: number;
+  offset?: number;
 }
 
 export interface HandoverRequest {
@@ -156,6 +193,16 @@ interface HandoverRequestsListResponse {
   offset?: number;
 }
 
+interface StockRequestsListResponse {
+  items?: StockRequest[];
+  data?: StockRequest[];
+  requests?: StockRequest[];
+  allocations?: StockRequest[];
+  total?: number;
+  limit?: number;
+  offset?: number;
+}
+
 const HANDOVER_BLOCKING_STATUSES: ReadonlySet<HandoverStatus> = new Set([
   'REQUESTED',
   'SUPPLIER_APPROVED',
@@ -191,6 +238,12 @@ export const HANDOVER_STATUS_LABELS: Record<HandoverStatus, string> = {
   REJECTED: 'Rejected',
 };
 
+export const ALLOCATION_SOURCE_LABELS: Record<AllocationSource, string> = {
+  CATEGORY: 'Onboarding',
+  MERCHANT_REQUEST: 'Top-up',
+  DISPUTE_REMAINDER: 'Dispute remainder',
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -207,6 +260,11 @@ export class MerchantAllocationService {
   private readonly handoverLoadingState = signal<boolean>(false);
   private readonly handoverLoadingErrorState = signal<string | null>(null);
 
+  private readonly stockRequestsState = signal<StockRequest[]>([]);
+  private readonly stockRequestsTotalState = signal<number>(0);
+  private readonly stockRequestsLoadingState = signal<boolean>(false);
+  private readonly stockRequestsLoadingErrorState = signal<string | null>(null);
+
   readonly disputes = this.disputesState.asReadonly();
   readonly disputesTotal = this.disputesTotalState.asReadonly();
   readonly loading = this.loadingState.asReadonly();
@@ -217,6 +275,11 @@ export class MerchantAllocationService {
   readonly handoverLoading = this.handoverLoadingState.asReadonly();
   readonly handoverLoadingError = this.handoverLoadingErrorState.asReadonly();
 
+  readonly stockRequests = this.stockRequestsState.asReadonly();
+  readonly stockRequestsTotal = this.stockRequestsTotalState.asReadonly();
+  readonly stockRequestsLoading = this.stockRequestsLoadingState.asReadonly();
+  readonly stockRequestsLoadingError = this.stockRequestsLoadingErrorState.asReadonly();
+
   readonly openDisputesCount = computed(
     () => this.disputesState().filter((d) => d.status === 'OPEN').length
   );
@@ -225,6 +288,10 @@ export class MerchantAllocationService {
     () =>
       this.handoverRequestsState().filter((r) => r.handoverStatus === 'SUPPLIER_APPROVED')
         .length
+  );
+
+  readonly pendingStockRequestsCount = computed(
+    () => this.stockRequestsState().filter((r) => r.status === 'PENDING').length
   );
 
   getAllocations(merchantId: string): Observable<MerchantAllocation[]> {
@@ -379,6 +446,68 @@ export class MerchantAllocationService {
     );
   }
 
+  getStockRequests(
+    filters?: StockRequestFilters
+  ): Observable<{ requests: StockRequest[]; total: number }> {
+    this.stockRequestsLoadingState.set(true);
+    this.stockRequestsLoadingErrorState.set(null);
+
+    const params: Record<string, string | number> = {};
+    if (filters?.status) params['status'] = filters.status;
+    if (filters?.merchantId) params['merchantId'] = filters.merchantId;
+    if (filters?.productId) params['productId'] = filters.productId;
+    if (filters?.limit != null) params['limit'] = filters.limit;
+    if (filters?.offset != null) params['offset'] = filters.offset;
+
+    return this.api
+      .get<StockRequestsListResponse | StockRequest[]>(
+        `admin/merchants/stock-requests`,
+        params
+      )
+      .pipe(
+        map((res) => {
+          if (Array.isArray(res)) {
+            return { requests: res, total: res.length };
+          }
+          const requests = Array.isArray(res?.requests)
+            ? res.requests
+            : Array.isArray(res?.items)
+              ? res.items
+              : Array.isArray(res?.data)
+                ? res.data
+                : Array.isArray(res?.allocations)
+                  ? res.allocations
+                  : [];
+          const total = typeof res?.total === 'number' ? res.total : requests.length;
+          return { requests, total };
+        }),
+        tap(({ requests, total }) => {
+          this.stockRequestsState.set(requests);
+          this.stockRequestsTotalState.set(total);
+          this.stockRequestsLoadingState.set(false);
+        }),
+        catchError((err) => {
+          this.stockRequestsLoadingState.set(false);
+          this.stockRequestsLoadingErrorState.set(
+            err?.message ?? 'Failed to load stock requests'
+          );
+          this.stockRequestsState.set([]);
+          this.stockRequestsTotalState.set(0);
+          return of({ requests: [] as StockRequest[], total: 0 });
+        })
+      );
+  }
+
+  rejectStockRequest(
+    allocationId: string,
+    reason?: string
+  ): Observable<{ message: string }> {
+    return this.api.post<{ message: string }>(
+      `admin/merchants/stock-requests/${allocationId}/reject`,
+      reason ? { reason } : {}
+    );
+  }
+
   isHandoverBlockingDispatch(status: HandoverStatus | null | undefined): boolean {
     if (!status || status === 'NONE') return false;
     return HANDOVER_BLOCKING_STATUSES.has(status);
@@ -394,5 +523,9 @@ export class MerchantAllocationService {
 
   getHandoverStatusLabel(status: HandoverStatus): string {
     return HANDOVER_STATUS_LABELS[status] ?? status;
+  }
+
+  getAllocationSourceLabel(source: AllocationSource): string {
+    return ALLOCATION_SOURCE_LABELS[source] ?? source;
   }
 }

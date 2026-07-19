@@ -8,6 +8,7 @@ import {
   MerchantAllocation,
   AllocationStatus,
   HandoverStatus,
+  AllocationSource,
 } from '../services/merchant-allocation.service';
 import { AdminProductsService } from '../../products/services/admin-products.service';
 import { Product } from '../../../core/models/product.model';
@@ -219,12 +220,48 @@ export class MerchantDetailsComponent implements OnInit {
       next: (rows) => {
         this.allocations.set(rows);
         this.allocationsLoading.set(false);
+        this.tryOpenDispatchFromQuery(rows);
       },
       error: () => {
         this.allocations.set([]);
         this.allocationsLoading.set(false);
       },
     });
+  }
+
+  private tryOpenDispatchFromQuery(rows: MerchantAllocation[]): void {
+    const allocationId = this.route.snapshot.queryParamMap.get('dispatchAllocation');
+    if (!allocationId) return;
+
+    const allocation = rows.find((row) => row.id === allocationId);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { dispatchAllocation: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+
+    if (!allocation) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Allocation Not Found',
+        detail: 'The stock request allocation was not found on this merchant.',
+      });
+      return;
+    }
+
+    if (!this.canDispatch(allocation)) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Cannot Dispatch',
+        detail: this.isHandoverBlocking(allocation)
+          ? 'Handover is in progress for this allocation.'
+          : 'Only PENDING allocations can be dispatched.',
+      });
+      return;
+    }
+
+    this.onDispatch(allocation);
   }
 
   private loadStockBalance(merchantId: string): void {
@@ -374,6 +411,19 @@ export class MerchantDetailsComponent implements OnInit {
 
   getHandoverStatusLabel(status: HandoverStatus): string {
     return this.allocationService.getHandoverStatusLabel(status);
+  }
+
+  getAllocationSourceLabel(source: AllocationSource): string {
+    return this.allocationService.getAllocationSourceLabel(source);
+  }
+
+  getAllocationSourceClass(source: AllocationSource): string {
+    const map: Record<AllocationSource, string> = {
+      CATEGORY: 'bg-slate-50 text-slate-600 border-slate-200',
+      MERCHANT_REQUEST: 'bg-amber-50 text-amber-700 border-amber-200',
+      DISPUTE_REMAINDER: 'bg-purple-50 text-purple-700 border-purple-200',
+    };
+    return map[source] ?? 'bg-gray-50 text-gray-500 border-gray-200';
   }
 
   getHandoverStatusClass(status: HandoverStatus): string {

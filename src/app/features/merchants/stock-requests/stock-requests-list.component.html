@@ -1,0 +1,195 @@
+<div class="min-h-screen bg-mlm-background font-geist p-4 md:p-6 lg:p-8">
+  <p-toast></p-toast>
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 md:mb-8">
+    <div class="min-w-0">
+      <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        Stock Requests
+      </h1>
+      <p class="text-sm text-mlm-sercondary">
+        Review merchant warehouse top-up requests and dispatch or reject
+      </p>
+    </div>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+    <div
+      class="bg-white rounded-xl border px-4 py-4 md:px-5 md:py-5 transition-shadow duration-200 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+      [class]="stats().pending > 0 ? 'border-amber-200' : 'border-slate-200'">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        Pending
+      </p>
+      <p
+        class="text-3xl md:text-4xl font-bold tracking-tight leading-none mb-2 tabular-nums"
+        [class]="stats().pending > 0 ? 'text-amber-600' : 'text-mlm-text'">
+        {{ stats().pending }}
+      </p>
+      <p class="text-xs text-slate-400">
+        {{ stats().pending > 0 ? 'Awaiting dispatch or reject' : 'All clear' }}
+      </p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-5 md:py-5 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        In Progress
+      </p>
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2 tabular-nums">
+        {{ stats().inFlight }}
+      </p>
+      <p class="text-xs text-slate-400">Dispatched through receipt</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-5 md:py-5 hover:shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow duration-200">
+      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">
+        Cancelled
+      </p>
+      <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2 tabular-nums">
+        {{ stats().cancelled }}
+      </p>
+      <p class="text-xs text-slate-400">Rejected by admin</p>
+    </div>
+  </div>
+
+  <!-- Filters + Table -->
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div class="px-4 py-4 md:px-5 border-b border-slate-100">
+      <div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
+        <select
+          [formControl]="selectedStatusControl"
+          class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary transition appearance-none w-full sm:w-44 shrink-0">
+          @for (option of statusOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+
+        <div class="relative flex-1 min-w-0">
+          <i
+            class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"
+            aria-hidden="true"></i>
+          <input
+            type="text"
+            [ngModel]="merchantIdFilter()"
+            (ngModelChange)="merchantIdFilter.set($event)"
+            (keydown.enter)="onSearch()"
+            placeholder="Filter by merchant ID…"
+            class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
+        </div>
+
+        <div class="relative flex-1 min-w-0">
+          <i
+            class="pi pi-box absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"
+            aria-hidden="true"></i>
+          <input
+            type="text"
+            [ngModel]="productIdFilter()"
+            (ngModelChange)="productIdFilter.set($event)"
+            (keydown.enter)="onSearch()"
+            placeholder="Filter by product ID…"
+            class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
+        </div>
+
+        <button
+          type="button"
+          (click)="onSearch()"
+          class="h-9 px-4 rounded-lg bg-mlm-primary hover:bg-brand-green-dark text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors duration-150 border border-mlm-primary hover:border-brand-green-dark shrink-0">
+          <i class="pi pi-search text-xs" aria-hidden="true"></i>
+          Search
+        </button>
+      </div>
+    </div>
+
+    <app-data-table
+      [value]="requests()"
+      [headers]="tableHeaders()"
+      [loading]="tableLoading()"
+      [lazy]="true"
+      [rows]="rowsPerPage()"
+      [first]="firstRecord()"
+      [totalRecords]="totalRecords()"
+      (pageChange)="onPageChange($event)">
+
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition">
+          <td class="py-3 px-4">
+            <p class="font-medium text-sm text-mlm-text">{{ getMerchantDisplay(row) }}</p>
+            <a
+              [routerLink]="['/admin/merchants', row.merchantId]"
+              class="text-[10px] text-mlm-primary hover:underline font-mono">
+              {{ row.merchantId | slice:0:8 }}…
+            </a>
+          </td>
+          <td class="py-3 px-4">
+            <p class="text-sm text-mlm-text">{{ row.productName }}</p>
+            <p class="text-[10px] text-slate-400 font-mono mt-0.5">{{ row.productId | slice:0:8 }}…</p>
+          </td>
+          <td class="py-3 px-4 text-sm tabular-nums text-mlm-text">{{ row.quantity }}</td>
+          <td class="py-3 px-4 text-sm text-mlm-secondary max-w-[180px]">
+            <span class="truncate block" [title]="row.requestNotes || ''">
+              {{ row.requestNotes || '—' }}
+            </span>
+          </td>
+          <td class="py-3 px-4">
+            <span
+              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border"
+              [class]="getStatusClass(row.status)">
+              {{ getStatusLabel(row.status) }}
+            </span>
+            @if (row.cancelReason) {
+              <p class="text-[10px] text-red-600 mt-1 max-w-[140px] truncate" [title]="row.cancelReason">
+                {{ row.cancelReason }}
+              </p>
+            }
+          </td>
+          <td class="py-3 px-4">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border bg-slate-50 text-slate-600 border-slate-200">
+              {{ getSourceLabel(row.source) }}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">
+            {{ formatDate(row.createdAt) }}
+          </td>
+          <td class="py-3 px-4">
+            @if (canAct(row)) {
+              <div class="flex items-center gap-1">
+                <button
+                  *hasPermission="'merchants.dispatch_stock'"
+                  type="button"
+                  pButton
+                  label="Dispatch"
+                  class="p-button-outlined p-button-sm p-button-success"
+                  (click)="onDispatch(row)">
+                </button>
+                <button
+                  *hasPermission="'merchants.dispatch_stock'"
+                  type="button"
+                  pButton
+                  label="Reject"
+                  class="p-button-outlined p-button-sm p-button-danger"
+                  (click)="onReject(row)">
+                </button>
+              </div>
+            } @else {
+              <span class="text-xs text-slate-300 px-1">—</span>
+            }
+          </td>
+        </tr>
+      </ng-template>
+    </app-data-table>
+  </div>
+
+  <app-confirmation-modal
+    [visible]="showRejectModal()"
+    title="Reject Stock Request"
+    message="Rejecting will cancel this PENDING top-up request. The merchant will be notified."
+    confirmLabel="Reject Request"
+    confirmClass="p-button-danger"
+    cancelLabel="Cancel"
+    [showReasonField]="true"
+    reasonPlaceholder="Optional rejection reason..."
+    [loading]="actionLoading()"
+    (confirm)="handleRejectConfirm($event)"
+    (cancel)="showRejectModal.set(false)">
+  </app-confirmation-modal>
+</div>
