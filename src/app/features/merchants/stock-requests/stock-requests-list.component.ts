@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
@@ -21,6 +21,7 @@ import {
   AllocationSource,
 } from '../services/merchant-allocation.service';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { TablePageEvent } from 'primeng/table';
@@ -41,6 +42,7 @@ interface StatusOption {
     ConfirmationModalComponent,
     HasPermissionDirective,
     ButtonModule,
+    DialogModule,
     ToastModule,
   ],
   providers: [MessageService],
@@ -51,7 +53,6 @@ export class StockRequestsListComponent implements OnInit {
   private allocationService = inject(MerchantAllocationService);
   private messageService = inject(MessageService);
   private destroyRef = inject(DestroyRef);
-  private router = inject(Router);
 
   requests = this.allocationService.stockRequests;
   totalRecords = this.allocationService.stockRequestsTotal;
@@ -59,13 +60,20 @@ export class StockRequestsListComponent implements OnInit {
 
   rowsPerPage = signal(10);
   firstRecord = signal(0);
-  selectedStatusControl = new FormControl('PENDING');
+  selectedStatusControl = new FormControl('all');
   merchantIdFilter = signal('');
   productIdFilter = signal('');
 
   showRejectModal = signal(false);
+  showDispatchModal = signal(false);
+  showInTransitModal = signal(false);
+  showDeliveredModal = signal(false);
   selectedRequest = signal<StockRequest | null>(null);
   actionLoading = signal(false);
+  dispatchLoading = signal(false);
+  statusUpdateLoading = signal(false);
+  dispatchNotes = signal('');
+  trackingReference = signal('');
 
   statusOptions: StatusOption[] = [
     { label: 'All Statuses', value: 'all' },
@@ -116,10 +124,12 @@ export class StockRequestsListComponent implements OnInit {
     const merchantId = this.merchantIdFilter().trim();
     const productId = this.productIdFilter().trim();
 
+    const isAllStatuses = !status || status === 'all';
+
     this.allocationService
       .getStockRequests({
-        status:
-          status && status !== 'all' ? (status as AllocationStatus) : undefined,
+        status: isAllStatuses ? undefined : (status as AllocationStatus),
+        allStatuses: isAllStatuses,
         merchantId: merchantId || undefined,
         productId: productId || undefined,
         limit: this.rowsPerPage(),
@@ -140,9 +150,49 @@ export class StockRequestsListComponent implements OnInit {
   }
 
   onDispatch(request: StockRequest): void {
-    void this.router.navigate(['/admin/merchants', request.merchantId], {
-      queryParams: { dispatchAllocation: request.id },
-    });
+    this.selectedRequest.set(request);
+    this.dispatchNotes.set('');
+    this.trackingReference.set('');
+    this.showDispatchModal.set(true);
+  }
+
+  handleDispatchCancel(): void {
+    this.showDispatchModal.set(false);
+    this.selectedRequest.set(null);
+    this.dispatchNotes.set('');
+    this.trackingReference.set('');
+  }
+
+  handleDispatchConfirm(): void {
+    const request = this.selectedRequest();
+    if (!request) return;
+
+    this.dispatchLoading.set(true);
+    this.allocationService
+      .dispatchAllocation(request.merchantId, request.id, {
+        dispatchNotes: this.dispatchNotes().trim() || undefined,
+        trackingReference: this.trackingReference().trim() || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.dispatchLoading.set(false);
+          this.handleDispatchCancel();
+          this.loadRequests();
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Stock Dispatched',
+            detail: `${request.productName} has been dispatched to the merchant.`,
+          });
+        },
+        error: (err) => {
+          this.dispatchLoading.set(false);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Dispatch Failed',
+            detail: err?.error?.message ?? 'Failed to dispatch stock request',
+          });
+        },
+      });
   }
 
   onReject(request: StockRequest): void {
@@ -183,8 +233,87 @@ export class StockRequestsListComponent implements OnInit {
       });
   }
 
-  canAct(request: StockRequest): boolean {
+  onMarkInTransit(request: StockRequest): void {
+    this.selectedRequest.set(request);
+    this.showInTransitModal.set(true);
+  }
+
+  onMarkDelivered(request: StockRequest): void {
+    this.selectedRequest.set(request);
+    this.showDeliveredModal.set(true);
+  }
+
+  handleInTransitConfirm(event: { confirmed: boolean }): void {
+    if (event.confirmed) {
+      this.updateAllocationStatus('IN_TRANSIT');
+    } else {
+      this.showInTransitModal.set(false);
+    }
+  }
+
+  handleDeliveredConfirm(event: { confirmed: boolean }): void {
+    if (event.confirmed) {
+      this.updateAllocationStatus('DELIVERED');
+    } else {
+      this.showDeliveredModal.set(false);
+    }
+  }
+
+  private updateAllocationStatus(status: 'IN_TRANSIT' | 'DELIVERED'): void {
+    const request = this.selectedRequest();
+    if (!request) return;
+
+    this.statusUpdateLoading.set(true);
+    this.allocationService
+      .updateAllocationStatus(request.merchantId, request.id, status)
+      .subscribe({
+        next: () => {
+          this.statusUpdateLoading.set(false);
+          this.showInTransitModal.set(false);
+          this.showDeliveredModal.set(false);
+          this.selectedRequest.set(null);
+          this.loadRequests();
+          const label = status === 'IN_TRANSIT' ? 'In Transit' : 'Delivered';
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Status Updated',
+            detail: `Allocation marked as ${label}.`,
+          });
+        },
+        error: (err) => {
+          this.statusUpdateLoading.set(false);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Update Failed',
+            detail: err?.error?.message ?? 'Failed to update allocation status',
+          });
+        },
+      });
+  }
+
+  canDispatch(request: StockRequest): boolean {
     return request.status === 'PENDING';
+  }
+
+  canReject(request: StockRequest): boolean {
+    return request.status === 'PENDING';
+  }
+
+  canMarkInTransit(request: StockRequest): boolean {
+    return request.status === 'DISPATCHED';
+  }
+
+  canMarkDelivered(request: StockRequest): boolean {
+    return request.status === 'IN_TRANSIT';
+  }
+
+  hasRowActions(request: StockRequest): boolean {
+    return (
+      this.canDispatch(request) ||
+      this.canReject(request) ||
+      this.canMarkInTransit(request) ||
+      this.canMarkDelivered(request)
+    );
   }
 
   getMerchantDisplay(request: StockRequest): string {
