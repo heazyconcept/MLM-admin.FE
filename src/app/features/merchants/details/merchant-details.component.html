@@ -658,8 +658,20 @@
                     <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
                       <td class="py-3 px-2">
                         <p class="font-medium text-gray-900">{{ alloc.productName }}</p>
+                        @if (alloc.source) {
+                          <span
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border mt-1"
+                            [class]="getAllocationSourceClass(alloc.source)">
+                            {{ getAllocationSourceLabel(alloc.source) }}
+                          </span>
+                        }
                         @if (alloc.parentAllocationId) {
                           <p class="text-[10px] text-gray-400 mt-0.5">Remainder allocation</p>
+                        }
+                        @if (alloc.requestNotes) {
+                          <p class="text-[10px] text-gray-500 mt-1 max-w-[220px]" [title]="alloc.requestNotes">
+                            {{ alloc.requestNotes }}
+                          </p>
                         }
                       </td>
                       <td class="py-3 px-2 tabular-nums text-gray-700">
@@ -674,6 +686,11 @@
                           [class]="getAllocationStatusClass(alloc.status)">
                           {{ getAllocationStatusLabel(alloc.status) }}
                         </span>
+                        @if (alloc.status === 'CANCELLED' && alloc.cancelReason) {
+                          <p class="text-[10px] text-red-600 mt-1 max-w-[180px]" [title]="alloc.cancelReason">
+                            {{ alloc.cancelReason }}
+                          </p>
+                        }
                         @if (hasActiveHandover(alloc) && alloc.handoverStatus) {
                           <span
                             class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border mt-1"
