@@ -94,6 +94,12 @@ export interface StockRequest {
   cancelReason?: string | null;
   cancelledByAdminId?: string | null;
   createdAt?: string;
+  merchant?: {
+    id: string;
+    businessName: string;
+    type?: string;
+    status?: string;
+  } | null;
   merchantBusinessName?: string;
   merchantName?: string;
   receiverMerchant?: HandoverMerchantSummary | null;

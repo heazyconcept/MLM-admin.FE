@@ -189,6 +189,7 @@ export class StockRequestsListComponent implements OnInit {
 
   getMerchantDisplay(request: StockRequest): string {
     return (
+      request.merchant?.businessName ??
       request.merchantBusinessName ??
       request.merchantName ??
       request.receiverMerchant?.businessName ??
