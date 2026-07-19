@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { Observable, tap, map, catchError, of } from 'rxjs';
+import { Observable, tap, map, catchError, of, forkJoin } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 
 export type AllocationStatus =
@@ -107,6 +107,8 @@ export interface StockRequest {
 
 export interface StockRequestFilters {
   status?: AllocationStatus;
+  /** Fetch every status (API returns empty when status is omitted). */
+  allStatuses?: boolean;
   merchantId?: string;
   productId?: string;
   limit?: number;
@@ -458,11 +460,105 @@ export class MerchantAllocationService {
     this.stockRequestsLoadingState.set(true);
     this.stockRequestsLoadingErrorState.set(null);
 
+    if (filters?.allStatuses) {
+      return this.loadAllStockRequestStatuses(filters);
+    }
+
+    return this.fetchStockRequestsPage(filters).pipe(
+      tap(({ requests, total }) => {
+        this.stockRequestsState.set(requests);
+        this.stockRequestsTotalState.set(total);
+        this.stockRequestsLoadingState.set(false);
+      }),
+      catchError((err) => {
+        this.stockRequestsLoadingState.set(false);
+        this.stockRequestsLoadingErrorState.set(
+          err?.message ?? 'Failed to load stock requests'
+        );
+        this.stockRequestsState.set([]);
+        this.stockRequestsTotalState.set(0);
+        return of({ requests: [] as StockRequest[], total: 0 });
+      })
+    );
+  }
+
+  private static readonly MAX_LIMIT = 100;
+
+  private loadAllStockRequestStatuses(
+    filters: StockRequestFilters
+  ): Observable<{ requests: StockRequest[]; total: number }> {
+    const statuses: AllocationStatus[] = [
+      'PENDING',
+      'DISPATCHED',
+      'IN_TRANSIT',
+      'DELIVERED',
+      'RECEIVED',
+      'ACCEPTED',
+      'CANCELLED',
+    ];
+
+    return forkJoin(
+      statuses.map((status) =>
+        this.fetchStockRequestsPage({
+          merchantId: filters.merchantId,
+          productId: filters.productId,
+          status,
+          limit: MerchantAllocationService.MAX_LIMIT,
+          offset: 0,
+        }).pipe(catchError(() => of({ requests: [] as StockRequest[], total: 0 })))
+      )
+    ).pipe(
+      map((pages) => {
+        const byId = new Map<string, StockRequest>();
+        for (const page of pages) {
+          for (const request of page.requests) {
+            byId.set(request.id, request);
+          }
+        }
+
+        const merged = [...byId.values()].sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime;
+        });
+
+        const offset = filters.offset ?? 0;
+        const limit = Math.min(
+          filters.limit ?? 10,
+          MerchantAllocationService.MAX_LIMIT
+        );
+        return {
+          requests: merged.slice(offset, offset + limit),
+          total: merged.length,
+        };
+      }),
+      tap(({ requests, total }) => {
+        this.stockRequestsState.set(requests);
+        this.stockRequestsTotalState.set(total);
+        this.stockRequestsLoadingState.set(false);
+      }),
+      catchError((err) => {
+        this.stockRequestsLoadingState.set(false);
+        this.stockRequestsLoadingErrorState.set(
+          err?.message ?? 'Failed to load stock requests'
+        );
+        this.stockRequestsState.set([]);
+        this.stockRequestsTotalState.set(0);
+        return of({ requests: [] as StockRequest[], total: 0 });
+      })
+    );
+  }
+
+  private fetchStockRequestsPage(
+    filters?: StockRequestFilters
+  ): Observable<{ requests: StockRequest[]; total: number }> {
     const params: Record<string, string | number> = {};
     if (filters?.status) params['status'] = filters.status;
     if (filters?.merchantId) params['merchantId'] = filters.merchantId;
     if (filters?.productId) params['productId'] = filters.productId;
-    if (filters?.limit != null) params['limit'] = filters.limit;
+    if (filters?.limit != null) {
+      params['limit'] = Math.min(filters.limit, MerchantAllocationService.MAX_LIMIT);
+    }
     if (filters?.offset != null) params['offset'] = filters.offset;
 
     return this.api
@@ -486,20 +582,6 @@ export class MerchantAllocationService {
                   : [];
           const total = typeof res?.total === 'number' ? res.total : requests.length;
           return { requests, total };
-        }),
-        tap(({ requests, total }) => {
-          this.stockRequestsState.set(requests);
-          this.stockRequestsTotalState.set(total);
-          this.stockRequestsLoadingState.set(false);
-        }),
-        catchError((err) => {
-          this.stockRequestsLoadingState.set(false);
-          this.stockRequestsLoadingErrorState.set(
-            err?.message ?? 'Failed to load stock requests'
-          );
-          this.stockRequestsState.set([]);
-          this.stockRequestsTotalState.set(0);
-          return of({ requests: [] as StockRequest[], total: 0 });
         })
       );
   }
