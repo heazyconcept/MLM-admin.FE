@@ -1,3 +1,3 @@
 export const environment = {
-  apiBaseUrl: 'https://api.segulah.ng'
+  apiBaseUrl: 'https://api.segulahglobal-herbal.com'
 };
