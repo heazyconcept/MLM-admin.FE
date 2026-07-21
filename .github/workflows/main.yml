@@ -28,7 +28,7 @@ jobs:
       - name: Build application
         working-directory: ./
         # Uses production config (default) → src/environments/environment.ts
-        run: npm run build -- --configuration=production
+        run: npm run build -- --configuration=development
         env:
           CI: true
 
