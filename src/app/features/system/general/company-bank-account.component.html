@@ -9,17 +9,26 @@
   </div>
 
   <p class="text-xs text-gray-500 -mt-2">
-    These details are displayed to users who choose offline bank transfer for registration payment.
+    These details are shown to users who pay via offline bank transfer for manual registration payments and manual wallet deposits.
   </p>
+
+  @if (notConfigured() && !loading()) {
+    <div
+      class="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5 text-xs text-blue-800"
+      role="status">
+      <i class="pi pi-info-circle mt-0.5 shrink-0" aria-hidden="true"></i>
+      <span>No bank account configured. Enter details and save.</span>
+    </div>
+  }
 
   <div class="grid grid-cols-1 gap-4">
     <div>
-      <label class="text-sm font-medium text-gray-700">Bank Name</label>
+      <label class="text-sm font-medium text-gray-700" for="bank-name">Bank Name</label>
       <input
+        id="bank-name"
         type="text"
         formControlName="bankName"
         placeholder="e.g. Zenith Bank"
-        [attr.disabled]="!canEdit() ? true : null"
         class="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 text-sm text-gray-900
                bg-white placeholder:text-gray-400
                focus:outline-none focus:ring-2 focus:ring-mlm-primary transition
@@ -27,25 +36,29 @@
     </div>
 
     <div>
-      <label class="text-sm font-medium text-gray-700">Account Number</label>
+      <label class="text-sm font-medium text-gray-700" for="account-number">Account Number</label>
       <input
+        id="account-number"
         type="text"
         formControlName="accountNumber"
         placeholder="e.g. 1234567890"
-        [attr.disabled]="!canEdit() ? true : null"
+        inputmode="numeric"
         class="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 text-sm text-gray-900
                bg-white placeholder:text-gray-400 font-mono
                focus:outline-none focus:ring-2 focus:ring-mlm-primary transition
                disabled:bg-gray-50 disabled:text-gray-500" />
+      @if (form.controls.accountNumber.touched && form.controls.accountNumber.hasError('pattern')) {
+        <p class="mt-1 text-xs text-red-500">Account number must contain digits only.</p>
+      }
     </div>
 
     <div>
-      <label class="text-sm font-medium text-gray-700">Account Name</label>
+      <label class="text-sm font-medium text-gray-700" for="account-name">Account Name</label>
       <input
+        id="account-name"
         type="text"
         formControlName="accountName"
         placeholder="e.g. Segulah Global"
-        [attr.disabled]="!canEdit() ? true : null"
         class="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 text-sm text-gray-900
                bg-white placeholder:text-gray-400
                focus:outline-none focus:ring-2 focus:ring-mlm-primary transition
@@ -57,10 +70,11 @@
     <div class="flex justify-end pt-4">
       <button
         pButton
+        type="button"
         label="Save"
         icon="pi pi-check"
         class="p-button-primary"
-        [disabled]="!isDirty() || form.invalid || saving()"
+        [disabled]="!canSave()"
         [loading]="saving()"
         (click)="onSaveClick()">
       </button>

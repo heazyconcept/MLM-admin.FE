@@ -343,6 +343,13 @@ export class SidebarComponent {
       title: 'GENERAL',
       items: [
         {
+          label: 'System Configuration',
+          icon: 'pi pi-cog',
+          route: '/admin/system/general',
+          feature: Feature.SystemConfig,
+          permissionKey: 'system.view',
+        },
+        {
           label: 'Admin Management',
           icon: 'pi pi-shield',
           feature: Feature.AdminManagement,
