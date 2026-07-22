@@ -211,6 +211,14 @@
   (cancel)="onActionCancel()">
 </app-confirmation-modal>
 
+<!-- Reset Password Result -->
+<app-admin-password-reset-result-modal
+  [visible]="resetResultVisible()"
+  [fullName]="resetResultUser()?.fullName ?? ''"
+  [temporaryPassword]="resetResultUser()?.temporaryPassword ?? ''"
+  (closed)="onResetResultClose()">
+</app-admin-password-reset-result-modal>
+
 <!-- Permission Detail Drawer -->
 @if (detailVisible() && detailUser()) {
   <div class="fixed inset-0 z-50 flex items-stretch bg-black/40 backdrop-blur-sm"
