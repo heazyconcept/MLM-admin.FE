@@ -221,6 +221,7 @@ export class AdminUsersListComponent implements OnInit {
   onResetResultClose(): void {
     this.resetResultVisible.set(false);
     this.resetResultUser.set(null);
+    this.loadData();
   }
 
   // ── Detail View ──────────────────────────────
@@ -266,7 +267,6 @@ export class AdminUsersListComponent implements OnInit {
     this.actionLoading.set(false);
     this.resetResultUser.set({ fullName, temporaryPassword: TEMPORARY_PASSWORD });
     this.resetResultVisible.set(true);
-    this.loadData();
   }
 
   private handleActionError(): void {

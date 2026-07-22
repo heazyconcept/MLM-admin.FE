@@ -1,3 +1,1 @@
-export const environment = {
-  apiBaseUrl: 'https://api.segulahglobal-herbal.com'
-};
+export { environment } from './environment.development';

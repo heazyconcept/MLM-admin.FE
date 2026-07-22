@@ -5,68 +5,6 @@
       type="info">
     </app-info-banner>
   }
-  <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-6" [formGroup]="form">
-    <h2 class="text-lg font-semibold text-gray-900">General Settings</h2>
 
-    <div class="grid grid-cols-1 gap-4">
-      <div>
-        <label class="text-sm font-medium text-gray-700">System name</label>
-        <p class="mt-1 text-gray-900 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2" aria-readonly="true">{{ config.general().systemName }}</p>
-      </div>
-
-      <div>
-        <label class="text-sm font-medium text-gray-700">Environment</label>
-        <p class="mt-1 text-gray-900 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2" aria-readonly="true">{{ config.general().environment }}</p>
-      </div>
-
-      <div class="flex items-center justify-between gap-4">
-        <div>
-          <label class="text-sm font-medium text-gray-700">Maintenance mode</label>
-          <p class="text-xs text-gray-500 mt-0.5">When enabled, users may see a maintenance message.</p>
-        </div>
-        <p-toggleSwitch
-          formControlName="maintenanceMode"
-          [inputId]="'maintenance-mode'"
-          ariaLabel="Toggle maintenance mode"
-          [disabled]="!canChangeSystemConfig()">
-        </p-toggleSwitch>
-      </div>
-
-      <app-config-input
-        label="Support contact"
-        type="text"
-        [control]="supportContactControl"
-        placeholder="support&#64;example.com"
-        [error]="supportContactControl.touched && supportContactControl.invalid ? 'Valid email required' : null"
-        [disabled]="!canChangeSystemConfig()">
-      </app-config-input>
-    </div>
-
-    @if (lastModified(); as lm) {
-      <p class="text-xs text-gray-500 pt-2 border-t border-gray-100">Last modified: {{ lm }}@if (lastModifiedBy()) { by {{ lastModifiedBy() }}}.</p>
-    }
-
-    <div class="flex justify-end pt-4">
-      <button
-        pButton
-        label="Save"
-        icon="pi pi-check"
-        class="p-button-primary"
-        [disabled]="!isDirty() || form.invalid || !canChangeSystemConfig()"
-        (click)="onSaveClick()">
-      </button>
-    </div>
-  </div>
   <app-company-bank-account></app-company-bank-account>
 </div>
-
-<app-confirmation-modal
-  [visible]="confirmVisible()"
-  (visibleChange)="confirmVisible.set(false)"
-  title="Confirm changes"
-  message="Are you sure you want to save these general settings?"
-  confirmLabel="Save"
-  cancelLabel="Cancel"
-  (confirm)="onConfirm($event)"
-  (cancel)="onCancelConfirm()">
-</app-confirmation-modal>
