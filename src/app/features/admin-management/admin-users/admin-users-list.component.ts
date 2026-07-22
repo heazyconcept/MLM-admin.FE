@@ -7,8 +7,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { AdminUserFormComponent } from './admin-user-form/admin-user-form.component';
+import { AdminPasswordResetResultModalComponent } from './modals/admin-password-reset-result-modal.component';
 import { AdminManagementService } from '../services/admin-management.service';
 import { AdminUser, UserGroup, ALL_PERMISSION_KEYS } from '../../../core/models/rbac.model';
+
+const TEMPORARY_PASSWORD = 'TempPass123!';
 
 @Component({
   selector: 'app-admin-users-list',
@@ -20,6 +23,7 @@ import { AdminUser, UserGroup, ALL_PERMISSION_KEYS } from '../../../core/models/
     TooltipModule,
     ConfirmationModalComponent,
     AdminUserFormComponent,
+    AdminPasswordResetResultModalComponent,
   ],
   providers: [MessageService],
   templateUrl: './admin-users-list.component.html',
@@ -44,6 +48,10 @@ export class AdminUsersListComponent implements OnInit {
   actionUser = signal<AdminUser | null>(null);
   actionType = signal<'deactivate' | 'activate' | 'resetPassword'>('deactivate');
   actionLoading = signal(false);
+
+  // Reset password result modal
+  resetResultVisible = signal(false);
+  resetResultUser = signal<{ fullName: string; temporaryPassword: string } | null>(null);
 
   // Detail view
   detailUser = signal<AdminUser | null>(null);
@@ -196,9 +204,9 @@ export class AdminUsersListComponent implements OnInit {
         break;
       case 'resetPassword':
         this.adminService.resetAdminPassword(user.id, {
-          temporaryPassword: 'TempPass123!',
+          temporaryPassword: TEMPORARY_PASSWORD,
         }).subscribe({
-          next: () => this.handleActionSuccess('Password reset successfully. Temporary password: TempPass123!'),
+          next: () => this.handleResetPasswordSuccess(user.fullName),
           error: () => this.handleActionError(),
         });
         break;
@@ -208,6 +216,11 @@ export class AdminUsersListComponent implements OnInit {
   onActionCancel(): void {
     this.actionConfirmVisible.set(false);
     this.actionUser.set(null);
+  }
+
+  onResetResultClose(): void {
+    this.resetResultVisible.set(false);
+    this.resetResultUser.set(null);
   }
 
   // ── Detail View ──────────────────────────────
@@ -244,6 +257,15 @@ export class AdminUsersListComponent implements OnInit {
     this.actionConfirmVisible.set(false);
     this.actionUser.set(null);
     this.actionLoading.set(false);
+    this.loadData();
+  }
+
+  private handleResetPasswordSuccess(fullName: string): void {
+    this.actionConfirmVisible.set(false);
+    this.actionUser.set(null);
+    this.actionLoading.set(false);
+    this.resetResultUser.set({ fullName, temporaryPassword: TEMPORARY_PASSWORD });
+    this.resetResultVisible.set(true);
     this.loadData();
   }
 
