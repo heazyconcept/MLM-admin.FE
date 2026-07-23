@@ -13,7 +13,8 @@ import {
   ManualDepositService,
   ManualWalletDeposit,
   ManualDepositStatus,
-  ManualDepositWalletType
+  ManualDepositWalletType,
+  ManualDepositPurpose
 } from '../services/manual-deposit.service';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
@@ -52,6 +53,7 @@ export class ManualDepositsListComponent implements OnInit {
 
   selectedStatusControl = new FormControl('PENDING');
   selectedWalletTypeControl = new FormControl('all');
+  selectedPurposeControl = new FormControl('all');
   searchVal = signal<string>('');
   searchQuery = signal<string>('');
 
@@ -66,6 +68,12 @@ export class ManualDepositsListComponent implements OnInit {
     { label: 'All Wallets', value: 'all' },
     { label: 'Registration', value: 'REGISTRATION' },
     { label: 'Product Voucher', value: 'VOUCHER' }
+  ];
+
+  purposeOptions = [
+    { label: 'All Purposes', value: 'all' },
+    { label: 'Wallet funding', value: 'WALLET_FUNDING' },
+    { label: 'Package upgrade', value: 'PACKAGE_UPGRADE' }
   ];
 
   filteredDeposits = computed(() => this.deposits());
@@ -83,6 +91,7 @@ export class ManualDepositsListComponent implements OnInit {
     'Submission ID',
     'User',
     'Wallet Type',
+    'Purpose',
     'Amount',
     'Depositor',
     'Status',
@@ -99,6 +108,10 @@ export class ManualDepositsListComponent implements OnInit {
     this.selectedWalletTypeControl.valueChanges.subscribe(() => {
       this.fetchDeposits();
     });
+
+    this.selectedPurposeControl.valueChanges.subscribe(() => {
+      this.fetchDeposits();
+    });
   }
 
   private fetchDeposits(): void {
@@ -112,12 +125,18 @@ export class ManualDepositsListComponent implements OnInit {
       ? (selectedWalletType as ManualDepositWalletType)
       : undefined;
 
+    const selectedPurpose = this.selectedPurposeControl.value as ManualDepositPurpose | 'all' | null;
+    const purpose = selectedPurpose && selectedPurpose !== 'all'
+      ? (selectedPurpose as ManualDepositPurpose)
+      : undefined;
+
     const search = this.searchQuery();
 
     this.tableLoading.set(true);
     this.manualDepositService.loadFromApi({
       status,
       walletType,
+      purpose,
       search: search || undefined,
       limit: 50,
       offset: 0
@@ -148,5 +167,26 @@ export class ManualDepositsListComponent implements OnInit {
   formatWalletType(walletType: string): string {
     const normalized = walletType?.toUpperCase() as ManualDepositWalletType;
     return WALLET_TYPE_LABELS[normalized] ?? walletType;
+  }
+
+  resolvePurpose(deposit: ManualWalletDeposit): ManualDepositPurpose {
+    return deposit.purpose === 'PACKAGE_UPGRADE' ? 'PACKAGE_UPGRADE' : 'WALLET_FUNDING';
+  }
+
+  isPackageUpgrade(deposit: ManualWalletDeposit): boolean {
+    return this.resolvePurpose(deposit) === 'PACKAGE_UPGRADE';
+  }
+
+  formatPackage(name: string | null | undefined): string {
+    if (!name) return '—';
+    const lower = name.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  }
+
+  purposeBadgeLabel(deposit: ManualWalletDeposit): string {
+    if (this.isPackageUpgrade(deposit)) {
+      return `Upgrade → ${this.formatPackage(deposit.targetPackage)}`;
+    }
+    return 'Wallet funding';
   }
 }

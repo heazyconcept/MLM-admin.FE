@@ -7,7 +7,7 @@
       <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
         Manual Wallet Deposits
       </h1>
-      <p class="text-sm text-mlm-secondary">Review offline bank transfers to Registration and Product Voucher wallets</p>
+      <p class="text-sm text-mlm-secondary">Review offline bank transfers for wallet funding and package upgrades</p>
     </div>
   </div>
 
@@ -99,6 +99,16 @@
               <option [value]="option.value">{{ option.label }}</option>
             }
           </select>
+
+          <select
+            [formControl]="selectedPurposeControl"
+            class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text
+                   bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary
+                   transition appearance-none pr-8 w-full sm:w-48">
+            @for (option of purposeOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
         </div>
       </div>
     </div>
@@ -130,6 +140,19 @@
             <span
               class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-100">
               {{ formatWalletType(row.walletType) }}
+            </span>
+          </td>
+
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
+            <span
+              class="px-2.5 py-0.5 rounded-md text-[10px] font-bold tracking-wider border"
+              [class.bg-amber-50]="isPackageUpgrade(row)"
+              [class.text-amber-800]="isPackageUpgrade(row)"
+              [class.border-amber-100]="isPackageUpgrade(row)"
+              [class.bg-slate-50]="!isPackageUpgrade(row)"
+              [class.text-slate-600]="!isPackageUpgrade(row)"
+              [class.border-slate-200]="!isPackageUpgrade(row)">
+              {{ purposeBadgeLabel(row) }}
             </span>
           </td>
 
