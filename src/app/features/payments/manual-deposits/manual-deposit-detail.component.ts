@@ -59,6 +59,8 @@ export class ManualDepositDetailComponent implements OnInit {
   deposit = signal<ManualWalletDeposit | null>(null);
   loading = signal(false);
   actionLoading = signal(false);
+  approving = signal(false);
+  rejecting = signal(false);
 
   showRejectModal = signal(false);
 
@@ -77,7 +79,12 @@ export class ManualDepositDetailComponent implements OnInit {
 
   purpose = computed<ManualDepositPurpose>(() => {
     const d = this.deposit();
-    return d?.purpose === 'PACKAGE_UPGRADE' ? 'PACKAGE_UPGRADE' : 'WALLET_FUNDING';
+    if (!d) return 'WALLET_FUNDING';
+    const purpose = (d.purpose ?? '').toString().toUpperCase();
+    if (purpose === 'PACKAGE_UPGRADE' || (!!d.targetPackage && purpose !== 'WALLET_FUNDING')) {
+      return 'PACKAGE_UPGRADE';
+    }
+    return 'WALLET_FUNDING';
   });
 
   isPackageUpgrade = computed(() => this.purpose() === 'PACKAGE_UPGRADE');
@@ -122,31 +129,36 @@ export class ManualDepositDetailComponent implements OnInit {
 
   onApprove(): void {
     const d = this.deposit();
-    if (!d) return;
+    if (!d || this.actionLoading()) return;
 
+    this.approving.set(true);
     this.actionLoading.set(true);
     this.manualDepositService.approve(d.id).subscribe({
       next: () => {
-        const isUpgrade = d.purpose === 'PACKAGE_UPGRADE';
+        const isUpgrade = this.isPackageUpgrade();
+        const target = this.formatPackage(d.targetPackage);
         this.messageService.add({
           severity: 'success',
           summary: isUpgrade ? 'Package Upgraded' : 'Deposit Approved',
           detail: isUpgrade
-            ? `User package has been upgraded to ${this.formatPackage(d.targetPackage)}.`
+            ? `User package has been upgraded to ${target}.`
             : `The ${this.formatWalletType(d.walletType)} has been credited.`
         });
+        this.approving.set(false);
         this.actionLoading.set(false);
         this.loadDeposit(d.id);
       },
       error: (err: { error?: { message?: string }; message?: string }) => {
         const detail = err?.error?.message ?? err?.message ?? 'Failed to approve deposit';
         this.messageService.add({ severity: 'error', summary: 'Approval Failed', detail });
+        this.approving.set(false);
         this.actionLoading.set(false);
       }
     });
   }
 
   onRejectClick(): void {
+    if (this.actionLoading()) return;
     this.showRejectModal.set(true);
   }
 
@@ -154,6 +166,7 @@ export class ManualDepositDetailComponent implements OnInit {
     const d = this.deposit();
     if (!d) return;
 
+    this.rejecting.set(true);
     this.actionLoading.set(true);
     this.showRejectModal.set(false);
 
@@ -164,12 +177,14 @@ export class ManualDepositDetailComponent implements OnInit {
           summary: 'Deposit Rejected',
           detail: 'The submission has been rejected. The user can submit again.'
         });
+        this.rejecting.set(false);
         this.actionLoading.set(false);
         this.loadDeposit(d.id);
       },
       error: (err: { error?: { message?: string }; message?: string }) => {
         const detail = err?.error?.message ?? err?.message ?? 'Failed to reject deposit';
         this.messageService.add({ severity: 'error', summary: 'Rejection Failed', detail });
+        this.rejecting.set(false);
         this.actionLoading.set(false);
       }
     });
