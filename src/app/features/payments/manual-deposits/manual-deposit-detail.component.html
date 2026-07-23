@@ -12,6 +12,15 @@
       </div>
     }
 
+    @if (isPackageUpgrade()) {
+      <div class="mb-4 md:mb-6">
+        <app-info-banner
+          [message]="upgradeBannerMessage()"
+          type="warning">
+        </app-info-banner>
+      </div>
+    }
+
     <app-manual-payment-reject-modal
       [visible]="showRejectModal()"
       [submission]="d"
@@ -59,7 +68,7 @@
               <button
                 *hasPermission="'payments.mark_successful'"
                 pButton
-                label="Approve & Credit Wallet"
+                [label]="approveButtonLabel()"
                 icon="pi pi-check"
                 class="p-button-success w-full sm:w-auto"
                 [disabled]="actionLoading()"
@@ -93,7 +102,7 @@
               </span>
             </div>
 
-            <div class="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8">
+            <div class="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
               <div>
                 <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Currency</p>
                 <p class="font-semibold text-gray-700">{{ d.currency }}</p>
@@ -109,7 +118,28 @@
                 <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Depositor Name</p>
                 <p class="font-semibold text-gray-700">{{ d.depositorName }}</p>
               </div>
+              <div>
+                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Purpose</p>
+                <p class="font-semibold text-gray-700">{{ purposeLabel() }}</p>
+              </div>
             </div>
+
+            @if (isPackageUpgrade()) {
+              <div class="mt-6 pt-6 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Current package</p>
+                  <p class="font-semibold text-gray-700">{{ formatPackage(d.user?.registrationPackage) }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Target package</p>
+                  <p class="font-semibold text-amber-800">
+                    {{ formatPackage(d.user?.registrationPackage) }}
+                    <i class="pi pi-arrow-right text-[10px] mx-1 text-gray-400" aria-hidden="true"></i>
+                    {{ formatPackage(d.targetPackage) }}
+                  </p>
+                </div>
+              </div>
+            }
           </div>
         </div>
 
@@ -268,6 +298,16 @@
               <span class="text-xs text-gray-400 font-medium">Submission ID</span>
               <span class="text-xs font-mono text-gray-600 truncate ml-2 max-w-[180px]">{{ d.id }}</span>
             </div>
+            <div class="flex justify-between items-center gap-2">
+              <span class="text-xs text-gray-400 font-medium">Purpose</span>
+              <span class="text-xs font-semibold text-gray-700 truncate ml-2">{{ purposeLabel() }}</span>
+            </div>
+            @if (isPackageUpgrade()) {
+              <div class="flex justify-between items-center gap-2">
+                <span class="text-xs text-gray-400 font-medium">Target package</span>
+                <span class="text-xs font-semibold text-amber-800 truncate ml-2">{{ formatPackage(d.targetPackage) }}</span>
+              </div>
+            }
             @if (d.payment) {
               <div class="flex justify-between items-center gap-2">
                 <span class="text-xs text-gray-400 font-medium">Payment</span>

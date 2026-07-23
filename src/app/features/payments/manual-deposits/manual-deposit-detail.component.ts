@@ -11,7 +11,8 @@ import { RouterModule, ActivatedRoute } from '@angular/router';
 import {
   ManualDepositService,
   ManualWalletDeposit,
-  ManualDepositWalletType
+  ManualDepositWalletType,
+  ManualDepositPurpose
 } from '../services/manual-deposit.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
@@ -74,6 +75,28 @@ export class ManualDepositDetailComponent implements OnInit {
 
   isPending = computed(() => this.deposit()?.status === 'PENDING');
 
+  purpose = computed<ManualDepositPurpose>(() => {
+    const d = this.deposit();
+    return d?.purpose === 'PACKAGE_UPGRADE' ? 'PACKAGE_UPGRADE' : 'WALLET_FUNDING';
+  });
+
+  isPackageUpgrade = computed(() => this.purpose() === 'PACKAGE_UPGRADE');
+
+  purposeLabel = computed(() =>
+    this.isPackageUpgrade() ? 'Package upgrade' : 'Wallet funding'
+  );
+
+  approveButtonLabel = computed(() =>
+    this.isPackageUpgrade() ? 'Approve & Upgrade Package' : 'Approve & Credit Wallet'
+  );
+
+  upgradeBannerMessage = computed(() => {
+    const d = this.deposit();
+    if (!d || !this.isPackageUpgrade()) return '';
+    const target = this.formatPackage(d.targetPackage);
+    return `Package upgrade request — approving will upgrade this user to ${target} (same outcome as a gateway upgrade).`;
+  });
+
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       const id = params['id'];
@@ -104,10 +127,13 @@ export class ManualDepositDetailComponent implements OnInit {
     this.actionLoading.set(true);
     this.manualDepositService.approve(d.id).subscribe({
       next: () => {
+        const isUpgrade = d.purpose === 'PACKAGE_UPGRADE';
         this.messageService.add({
           severity: 'success',
-          summary: 'Deposit Approved',
-          detail: `The ${this.formatWalletType(d.walletType)} has been credited.`
+          summary: isUpgrade ? 'Package Upgraded' : 'Deposit Approved',
+          detail: isUpgrade
+            ? `User package has been upgraded to ${this.formatPackage(d.targetPackage)}.`
+            : `The ${this.formatWalletType(d.walletType)} has been credited.`
         });
         this.actionLoading.set(false);
         this.loadDeposit(d.id);
@@ -156,6 +182,12 @@ export class ManualDepositDetailComponent implements OnInit {
   formatWalletType(walletType: string): string {
     const normalized = walletType?.toUpperCase() as ManualDepositWalletType;
     return WALLET_TYPE_LABELS[normalized] ?? walletType;
+  }
+
+  formatPackage(name: string | null | undefined): string {
+    if (!name) return '—';
+    const lower = name.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
   }
 
   isImageUrl(url: string): boolean {

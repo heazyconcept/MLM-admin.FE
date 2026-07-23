@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 
 export type ManualDepositStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export type ManualDepositWalletType = 'REGISTRATION' | 'VOUCHER';
+export type ManualDepositPurpose = 'WALLET_FUNDING' | 'PACKAGE_UPGRADE';
 
 export interface ManualWalletDeposit {
   id: string;
@@ -20,6 +21,9 @@ export interface ManualWalletDeposit {
   createdAt: string;
   updatedAt: string;
   reviewedAt: string | null;
+  /** Defaults to WALLET_FUNDING when omitted by older API rows */
+  purpose?: ManualDepositPurpose | null;
+  targetPackage?: string | null;
   user?: {
     id: string;
     username: string;
@@ -50,6 +54,7 @@ export interface ManualDepositListOptions {
   status?: ManualDepositStatus;
   userId?: string;
   walletType?: ManualDepositWalletType;
+  purpose?: ManualDepositPurpose;
   search?: string;
   limit?: number;
   offset?: number;
@@ -80,6 +85,10 @@ export class ManualDepositService {
 
     if (options?.walletType) {
       params['walletType'] = options.walletType;
+    }
+
+    if (options?.purpose) {
+      params['purpose'] = options.purpose;
     }
 
     if (options?.search) {
