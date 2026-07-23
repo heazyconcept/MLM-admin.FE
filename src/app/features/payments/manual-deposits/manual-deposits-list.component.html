@@ -156,6 +156,18 @@
             </span>
           </td>
 
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 whitespace-nowrap">
+            @if (isPackageUpgrade(row)) {
+              <span class="text-sm font-semibold text-amber-800">
+                {{ formatPackage(row.user?.registrationPackage) }}
+                <i class="pi pi-arrow-right text-[10px] mx-1 text-slate-400" aria-hidden="true"></i>
+                {{ targetPackageLabel(row) }}
+              </span>
+            } @else {
+              <span class="text-xs text-slate-300">—</span>
+            }
+          </td>
+
           <td class="px-3 py-3 sm:px-5 sm:py-3.5 text-right w-[110px] sm:w-[120px] whitespace-nowrap">
             <span class="text-sm font-semibold text-mlm-text tabular-nums font-mono">
               {{ row.amount | currency:(row.currency || 'NGN') }}

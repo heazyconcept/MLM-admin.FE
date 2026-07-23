@@ -58,9 +58,11 @@
               <button
                 *hasPermission="'payments.mark_successful'"
                 pButton
+                type="button"
                 label="Reject"
-                icon="pi pi-times"
+                [icon]="rejecting() ? 'pi pi-spin pi-spinner' : 'pi pi-times'"
                 class="p-button-outlined p-button-danger w-full sm:w-auto"
+                [loading]="rejecting()"
                 [disabled]="actionLoading()"
                 (click)="onRejectClick()">
               </button>
@@ -68,9 +70,11 @@
               <button
                 *hasPermission="'payments.mark_successful'"
                 pButton
-                [label]="approveButtonLabel()"
-                icon="pi pi-check"
+                type="button"
+                [label]="approving() ? 'Processing…' : approveButtonLabel()"
+                [icon]="approving() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
                 class="p-button-success w-full sm:w-auto"
+                [loading]="approving()"
                 [disabled]="actionLoading()"
                 (click)="onApprove()">
               </button>
@@ -99,6 +103,19 @@
               <span
                 class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border bg-blue-50 text-blue-700 border-blue-100 self-start">
                 {{ formatWalletType(d.walletType) }}
+              </span>
+              <span
+                class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-widest border self-start"
+                [class.bg-amber-50]="isPackageUpgrade()"
+                [class.text-amber-800]="isPackageUpgrade()"
+                [class.border-amber-100]="isPackageUpgrade()"
+                [class.bg-slate-50]="!isPackageUpgrade()"
+                [class.text-slate-600]="!isPackageUpgrade()"
+                [class.border-slate-200]="!isPackageUpgrade()">
+                {{ purposeLabel() }}
+                @if (isPackageUpgrade() && d.targetPackage) {
+                  <span> · {{ formatPackage(d.targetPackage) }}</span>
+                }
               </span>
             </div>
 

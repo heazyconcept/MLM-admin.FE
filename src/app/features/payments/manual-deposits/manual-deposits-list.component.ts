@@ -92,6 +92,7 @@ export class ManualDepositsListComponent implements OnInit {
     'User',
     'Wallet Type',
     'Purpose',
+    'Target Package',
     'Amount',
     'Depositor',
     'Status',
@@ -184,9 +185,13 @@ export class ManualDepositsListComponent implements OnInit {
   }
 
   purposeBadgeLabel(deposit: ManualWalletDeposit): string {
-    if (this.isPackageUpgrade(deposit)) {
-      return `Upgrade → ${this.formatPackage(deposit.targetPackage)}`;
+    return this.isPackageUpgrade(deposit) ? 'Package upgrade' : 'Wallet funding';
+  }
+
+  targetPackageLabel(deposit: ManualWalletDeposit): string {
+    if (!this.isPackageUpgrade(deposit)) {
+      return '—';
     }
-    return 'Wallet funding';
+    return this.formatPackage(deposit.targetPackage);
   }
 }
