@@ -43,7 +43,6 @@ export class CreditVolumeModalComponent {
 
   onConfirm(): void {
     if (!this.amount || this.amount <= 0) return;
-    if (this.reason.trim().length < 10) return;
     const payload: CreditVolumePayload = {
       amount: this.amount,
       volumeType: this.volumeType,
