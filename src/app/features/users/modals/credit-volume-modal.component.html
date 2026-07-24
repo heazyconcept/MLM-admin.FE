@@ -42,7 +42,7 @@
         class="w-full"
         [(ngModel)]="reason"
         [disabled]="submitting"
-        placeholder="Correction for ... (min 10 chars)">
+        placeholder="Correction for ...">
       </textarea>
     </div>
 
@@ -71,7 +71,7 @@
       type="button"
       [label]="'Credit ' "
       class="p-button-primary"
-      [disabled]="!amount || amount <= 0 || reason.trim().length < 10 || submitting"
+      [disabled]="!amount || amount <= 0 || submitting"
       [loading]="submitting"
       (click)="onConfirm()">
     </button>
