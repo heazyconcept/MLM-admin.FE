@@ -12,7 +12,7 @@
         Package Upgrades
       </h1>
       <p class="text-sm text-mlm-secondary">
-        All users who upgraded their registration package — previous package, new package, and stage at upgrade
+        Upgrade history with funding audit — source, amount, and how each upgrade was funded or settled
       </p>
     </div>
   </div>
@@ -96,6 +96,24 @@
             }
           </select>
 
+          <select
+            [ngModel]="sourceFilter()"
+            (ngModelChange)="sourceFilter.set($event); onSearch()"
+            class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary transition appearance-none pr-8 w-full sm:w-44">
+            @for (option of sourceOptions; track option.value) {
+              <option [value]="option.value">{{ option.label === 'All sources' ? 'Source: All' : 'Source: ' + option.label }}</option>
+            }
+          </select>
+
+          <label class="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text bg-white cursor-pointer select-none">
+            <input
+              type="checkbox"
+              class="rounded border-slate-300 text-mlm-primary focus:ring-mlm-primary"
+              [ngModel]="merchantsOnly()"
+              (ngModelChange)="merchantsOnly.set($event); onSearch()" />
+            Merchants only
+          </label>
+
           <p-datepicker
             [ngModel]="dateRange()"
             (ngModelChange)="dateRange.set($event); onSearch()"
@@ -125,6 +143,9 @@
           <td class="py-3 px-4 min-w-[140px]">
             <p class="font-medium text-sm text-mlm-text">{{ getUserDisplay(row) }}</p>
             <p class="text-[11px] text-slate-400 truncate">{{ row.username }} · {{ row.email }}</p>
+            @if (row.isMerchant) {
+              <p class="text-[10px] font-semibold text-amber-700 mt-0.5">Merchant</p>
+            }
           </td>
 
           <td class="py-3 px-4 whitespace-nowrap">
@@ -154,16 +175,36 @@
             {{ getStageDisplay(row) }}
           </td>
 
+          <td class="py-3 px-4 whitespace-nowrap">
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
+              [class]="getSourceBadgeClass(row.source)">
+              {{ formatSource(row.source) }}
+            </span>
+          </td>
+
+          <td class="py-3 px-4 text-sm text-mlm-text whitespace-nowrap tabular-nums">
+            @if (row.amount != null) {
+              {{ row.amount | currency:(row.currency || 'NGN') }}
+            } @else {
+              <span class="text-slate-400">—</span>
+            }
+          </td>
+
+          <td class="py-3 px-4 text-xs text-slate-600 max-w-[220px]" [title]="row.fundingSummary || ''">
+            {{ truncateFunding(row.fundingSummary) }}
+          </td>
+
           <td class="py-3 px-4 text-xs text-slate-500 whitespace-nowrap tabular-nums">
             {{ formatDate(row.upgradedAt) }}
           </td>
 
           <td class="py-3 px-4 whitespace-nowrap">
             <a
-              [routerLink]="['/admin/users', row.userId]"
+              [routerLink]="['/admin/users/package-upgrades', row.id]"
               class="inline-flex items-center gap-1 text-xs font-semibold text-mlm-primary hover:underline">
-              <i class="pi pi-user text-[10px]" aria-hidden="true"></i>
-              View user
+              <i class="pi pi-eye text-[10px]" aria-hidden="true"></i>
+              View details
             </a>
           </td>
         </tr>
