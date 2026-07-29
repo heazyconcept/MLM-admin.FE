@@ -1,0 +1,249 @@
+<div class="min-h-screen bg-mlm-background font-geist">
+  <div class="w-full px-4 py-5 sm:px-6 md:px-8 2xl:px-12 sm:py-6">
+    @if (loading()) {
+      <div class="flex items-center justify-center py-24 text-slate-400 gap-2">
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+        <span class="text-sm">Loading upgrade details…</span>
+      </div>
+    } @else if (loadError(); as error) {
+      <div class="mb-4 px-4 py-3 rounded-lg bg-mlm-red-50 border border-mlm-red-200 text-mlm-red-700 text-sm">
+        {{ error }}
+      </div>
+      <a
+        [routerLink]="['/admin/users/package-upgrades']"
+        class="inline-flex items-center gap-2 text-sm font-semibold text-mlm-primary hover:underline">
+        <i class="pi pi-arrow-left text-xs" aria-hidden="true"></i>
+        Back to package upgrades
+      </a>
+    } @else if (detail(); as d) {
+      <div class="mb-6 md:mb-8">
+        <div class="flex items-center gap-3 text-xs text-slate-400 mb-2">
+          <a
+            [routerLink]="['/admin/users/package-upgrades']"
+            class="p-2 rounded-md hover:bg-slate-100 shrink-0 text-slate-500"
+            aria-label="Back to package upgrades">
+            <i class="pi pi-arrow-left" aria-hidden="true"></i>
+          </a>
+          Back to package upgrades
+        </div>
+
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <div class="min-w-0">
+            <h1 class="text-xl sm:text-2xl font-semibold text-mlm-text break-words">
+              {{ getUserDisplay(d) }}
+            </h1>
+            <p class="text-sm text-slate-500 mt-1">
+              {{ d.username }} · {{ d.email }}
+              @if (d.isMerchant) {
+                <span class="ml-2 text-[10px] font-bold uppercase tracking-wider text-amber-700">Merchant</span>
+              }
+            </p>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
+                [style.background-color]="getPackageColor(d.previousPackage) + '18'"
+                [style.color]="getPackageColor(d.previousPackage)"
+                [style.border-color]="getPackageColor(d.previousPackage) + '40'">
+                {{ formatPackage(d.previousPackage) }}
+              </span>
+              <i class="pi pi-arrow-right text-[10px] text-slate-300" aria-hidden="true"></i>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
+                [style.background-color]="getPackageColor(d.currentPackage) + '18'"
+                [style.color]="getPackageColor(d.currentPackage)"
+                [style.border-color]="getPackageColor(d.currentPackage) + '40'">
+                {{ formatPackage(d.currentPackage) }}
+              </span>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
+                [class]="getSourceBadgeClass(d.source)">
+                {{ formatSource(d.source) }}
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-2 tabular-nums">
+              Upgraded {{ d.upgradedAt | date:'medium' }}
+              @if (d.performedBy) {
+                <span> · by {{ d.performedBy }}</span>
+              }
+            </p>
+          </div>
+
+          <div class="text-right shrink-0">
+            @if (d.amount != null) {
+              <p class="text-2xl font-bold text-mlm-text tabular-nums">
+                {{ d.amount | currency:(d.currency || 'NGN') }}
+              </p>
+            }
+            <p class="text-xs text-slate-400 mt-1">{{ getStageDisplay(d) }}</p>
+            @if (d.waivePayment) {
+              <p class="text-[10px] font-bold uppercase tracking-wider text-violet-700 mt-2">Payment waived</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6">
+        <div class="lg:col-span-8 space-y-5">
+          <!-- Funding -->
+          <section class="bg-white border border-slate-200 rounded-xl p-4 sm:p-6">
+            <h2 class="text-sm font-semibold text-mlm-text mb-4">Funding</h2>
+            @if (funding(); as f) {
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Mode</p>
+                  <p class="text-sm font-semibold text-mlm-text">{{ formatFundingMode(f.mode) }}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Wallet type</p>
+                  <p class="text-sm font-semibold text-mlm-text">{{ f.walletType || '—' }}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Credited</p>
+                  <p class="text-sm font-semibold text-mlm-text tabular-nums">
+                    @if (f.creditedAmount != null) {
+                      {{ f.creditedAmount | currency:(d.currency || 'NGN') }}
+                    } @else {
+                      —
+                    }
+                  </p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Debited</p>
+                  <p class="text-sm font-semibold text-mlm-text tabular-nums">
+                    @if (f.debitedAmount != null) {
+                      {{ f.debitedAmount | currency:(d.currency || 'NGN') }}
+                    } @else {
+                      —
+                    }
+                  </p>
+                </div>
+                <div class="sm:col-span-2">
+                  <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Net wallet effect</p>
+                  <p class="text-sm font-semibold text-mlm-text">{{ formatNetEffect(f.netWalletEffect) }}</p>
+                </div>
+                @if (f.description) {
+                  <div class="sm:col-span-2">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Description</p>
+                    <p class="text-sm text-slate-600">{{ f.description }}</p>
+                  </div>
+                }
+              </div>
+            } @else if (d.fundingSummary) {
+              <p class="text-sm text-slate-600">{{ d.fundingSummary }}</p>
+            } @else {
+              <p class="text-sm text-slate-400">No funding details available for this upgrade.</p>
+            }
+          </section>
+
+          <!-- Ledger -->
+          <section class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div class="px-4 sm:px-6 py-4 border-b border-slate-100">
+              <h2 class="text-sm font-semibold text-mlm-text">Ledger entries</h2>
+            </div>
+            @if (ledgerEntries().length === 0) {
+              <div class="px-4 sm:px-6 py-10 text-center">
+                <p class="text-sm text-slate-500">{{ emptyLedgerMessage() }}</p>
+              </div>
+            } @else {
+              <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                  <thead>
+                    <tr class="border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      <th class="px-4 sm:px-6 py-3">Direction</th>
+                      <th class="px-4 sm:px-6 py-3">Amount</th>
+                      <th class="px-4 sm:px-6 py-3">Wallet</th>
+                      <th class="px-4 sm:px-6 py-3">Source</th>
+                      <th class="px-4 sm:px-6 py-3">Reference</th>
+                      <th class="px-4 sm:px-6 py-3">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (entry of ledgerEntries(); track entry.id) {
+                      <tr class="border-b border-slate-50 text-sm">
+                        <td class="px-4 sm:px-6 py-3">
+                          <span
+                            class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border"
+                            [class.bg-emerald-50]="entry.direction === 'CREDIT'"
+                            [class.text-emerald-700]="entry.direction === 'CREDIT'"
+                            [class.border-emerald-100]="entry.direction === 'CREDIT'"
+                            [class.bg-red-50]="entry.direction === 'DEBIT'"
+                            [class.text-red-700]="entry.direction === 'DEBIT'"
+                            [class.border-red-100]="entry.direction === 'DEBIT'">
+                            {{ entry.direction }}
+                          </span>
+                        </td>
+                        <td class="px-4 sm:px-6 py-3 tabular-nums font-medium text-mlm-text">
+                          {{ entry.amount | currency:(entry.currency || d.currency || 'NGN') }}
+                        </td>
+                        <td class="px-4 sm:px-6 py-3 text-slate-600">{{ entry.walletType || '—' }}</td>
+                        <td class="px-4 sm:px-6 py-3 text-slate-600">{{ entry.source || '—' }}</td>
+                        <td class="px-4 sm:px-6 py-3 text-xs text-slate-500 max-w-[180px] truncate" [title]="entry.reference || ''">
+                          {{ entry.reference || '—' }}
+                        </td>
+                        <td class="px-4 sm:px-6 py-3 text-xs text-slate-500 whitespace-nowrap tabular-nums">
+                          {{ entry.createdAt | date:'medium' }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </section>
+        </div>
+
+        <!-- Links -->
+        <aside class="lg:col-span-4 space-y-5">
+          <section class="bg-white border border-slate-200 rounded-xl p-4 sm:p-6">
+            <h2 class="text-sm font-semibold text-mlm-text mb-4">Links</h2>
+            <ul class="space-y-3">
+              @if (links()?.userId; as userId) {
+                <li>
+                  <a
+                    [routerLink]="['/admin/users', userId]"
+                    class="inline-flex items-center gap-2 text-sm font-semibold text-mlm-primary hover:underline">
+                    <i class="pi pi-user text-xs" aria-hidden="true"></i>
+                    View user
+                  </a>
+                </li>
+              }
+              @if (links()?.paymentId; as paymentId) {
+                <li>
+                  <a
+                    [routerLink]="['/admin/payments', paymentId]"
+                    class="inline-flex items-center gap-2 text-sm font-semibold text-mlm-primary hover:underline">
+                    <i class="pi pi-credit-card text-xs" aria-hidden="true"></i>
+                    View payment
+                  </a>
+                  @if (d.paymentReference) {
+                    <p class="text-[11px] text-slate-400 mt-1 ml-6">{{ d.paymentReference }}</p>
+                  }
+                </li>
+              }
+              @if (links()?.manualDepositId; as depositId) {
+                <li>
+                  <a
+                    [routerLink]="['/admin/payments/manual-deposits', depositId]"
+                    class="inline-flex items-center gap-2 text-sm font-semibold text-mlm-primary hover:underline">
+                    <i class="pi pi-building text-xs" aria-hidden="true"></i>
+                    View manual deposit
+                  </a>
+                </li>
+              }
+              @if (!links()?.userId && !links()?.paymentId && !links()?.manualDepositId) {
+                <li class="text-sm text-slate-400">No related links</li>
+              }
+            </ul>
+          </section>
+
+          @if (d.fundingSummary) {
+            <section class="bg-white border border-slate-200 rounded-xl p-4 sm:p-6">
+              <h2 class="text-sm font-semibold text-mlm-text mb-2">Summary</h2>
+              <p class="text-sm text-slate-600">{{ d.fundingSummary }}</p>
+            </section>
+          }
+        </aside>
+      </div>
+    }
+  </div>
+</div>

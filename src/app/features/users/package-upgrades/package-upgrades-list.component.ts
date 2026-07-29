@@ -17,6 +17,7 @@ import {
   PackageUpgradeHistoryService,
   PackageUpgradeRecord,
   PackageTier,
+  UpgradeSource,
 } from '../services/package-upgrade-history.service';
 
 @Component({
@@ -46,6 +47,8 @@ export class PackageUpgradesListComponent implements OnInit {
   previousPackageFilter = signal<PackageTier | ''>('');
   currentPackageFilter = signal<PackageTier | ''>('');
   stageFilter = signal<number | ''>('');
+  sourceFilter = signal<UpgradeSource | ''>('');
+  merchantsOnly = signal(false);
   dateRange = signal<Date[] | null>(null);
 
   tableFirst = signal(0);
@@ -62,7 +65,7 @@ export class PackageUpgradesListComponent implements OnInit {
   ];
 
   stageOptions = [
-    { label: 'All stages', value: '' },
+    { label: 'All stages', value: '' as const },
     { label: 'Stage 1', value: 1 },
     { label: 'Stage 2', value: 2 },
     { label: 'Stage 3', value: 3 },
@@ -71,11 +74,22 @@ export class PackageUpgradesListComponent implements OnInit {
     { label: 'Stage 6', value: 6 },
   ];
 
+  sourceOptions: { label: string; value: UpgradeSource | '' }[] = [
+    { label: 'All sources', value: '' },
+    { label: 'Admin', value: 'ADMIN' },
+    { label: 'Gateway', value: 'GATEWAY' },
+    { label: 'System', value: 'SYSTEM' },
+    { label: 'Manual deposit', value: 'MANUAL_DEPOSIT' },
+  ];
+
   tableHeaders = signal([
     'User',
     'Previous package',
     'Current package',
     'Stage',
+    'Source',
+    'Amount',
+    'Funding',
     'Upgraded',
     'Actions',
   ]);
@@ -113,6 +127,8 @@ export class PackageUpgradesListComponent implements OnInit {
         previousPackage: this.previousPackageFilter() || undefined,
         currentPackage: this.currentPackageFilter() || undefined,
         stage: stage === '' ? undefined : stage,
+        source: this.sourceFilter() || undefined,
+        isMerchant: this.merchantsOnly() ? true : undefined,
         dateFrom,
         dateTo,
         limit: this.rowsPerPage(),
@@ -136,6 +152,22 @@ export class PackageUpgradesListComponent implements OnInit {
 
   formatPackage = (pkg: string) => this.upgradeHistoryService.formatPackageLabel(pkg);
   getPackageColor = (pkg: string) => this.upgradeHistoryService.getPackageColor(pkg);
+  formatSource = (source?: string | null) => this.upgradeHistoryService.formatSourceLabel(source);
+
+  getSourceBadgeClass(source?: string | null): string {
+    switch (source) {
+      case 'ADMIN':
+        return 'bg-violet-50 text-violet-700 border-violet-100';
+      case 'GATEWAY':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+      case 'MANUAL_DEPOSIT':
+        return 'bg-amber-50 text-amber-800 border-amber-100';
+      case 'SYSTEM':
+        return 'bg-slate-50 text-slate-600 border-slate-200';
+      default:
+        return 'bg-slate-50 text-slate-500 border-slate-200';
+    }
+  }
 
   getUserDisplay(row: PackageUpgradeRecord): string {
     return row.fullName || row.username;
@@ -145,6 +177,11 @@ export class PackageUpgradesListComponent implements OnInit {
     if (row.stage == null) return row.rankName ?? '—';
     const rank = row.rankName ? ` · ${row.rankName}` : '';
     return `Stage ${row.stage}${rank}`;
+  }
+
+  truncateFunding(summary?: string | null, max = 48): string {
+    if (!summary) return '—';
+    return summary.length > max ? `${summary.slice(0, max)}…` : summary;
   }
 
   formatDate(dateStr: string): string {

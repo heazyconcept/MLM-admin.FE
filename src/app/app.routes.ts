@@ -45,6 +45,24 @@ export const routes: Routes = [
         loadComponent: () => import('./features/users/package-upgrades/package-upgrades-list.component').then(m => m.PackageUpgradesListComponent)
       },
       {
+        path: 'users/package-upgrades/:id',
+        canActivate: [permissionGuard],
+        data: { feature: Feature.Users },
+        loadComponent: () => import('./features/users/package-upgrades/package-upgrade-detail.component').then(m => m.PackageUpgradeDetailComponent)
+      },
+      {
+        path: 'users/registration-activations',
+        canActivate: [permissionGuard],
+        data: { feature: Feature.Users },
+        loadComponent: () => import('./features/users/registration-activations/registration-activations-list.component').then(m => m.RegistrationActivationsListComponent)
+      },
+      {
+        path: 'users/registration-activations/:id',
+        canActivate: [permissionGuard],
+        data: { feature: Feature.Users },
+        loadComponent: () => import('./features/users/registration-activations/registration-activation-detail.component').then(m => m.RegistrationActivationDetailComponent)
+      },
+      {
         path: 'users/:id',
         canActivate: [permissionGuard],
         data: { feature: Feature.Users },
@@ -206,6 +224,8 @@ export const routes: Routes = [
         data: { feature: Feature.Merchants },
         children: [
           { path: '', loadComponent: () => import('./features/merchants/list/merchants-list.component').then(m => m.MerchantsListComponent) },
+          { path: 'package-upgrades', loadComponent: () => import('./features/merchants/package-upgrades/merchant-package-upgrades-list.component').then(m => m.MerchantPackageUpgradesListComponent) },
+          { path: 'package-upgrades/:id', loadComponent: () => import('./features/merchants/package-upgrades/merchant-package-upgrade-detail.component').then(m => m.MerchantPackageUpgradeDetailComponent) },
           { path: 'category-config', loadComponent: () => import('./features/merchants/category-config/merchant-category-config-list.component').then(m => m.MerchantCategoryConfigListComponent) },
           { path: 'category-config/:type', loadComponent: () => import('./features/merchants/category-config-edit/merchant-category-config-edit.component').then(m => m.MerchantCategoryConfigEditComponent) },
           { path: 'stock-disputes', loadComponent: () => import('./features/merchants/stock-disputes/stock-disputes-list.component').then(m => m.StockDisputesListComponent) },

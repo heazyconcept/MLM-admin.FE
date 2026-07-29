@@ -76,6 +76,12 @@ export class SidebarComponent {
               route: '/admin/users/package-upgrades',
               permissionKey: 'users.view',
             },
+            {
+              label: 'Registration Activations',
+              icon: 'pi pi-verified',
+              route: '/admin/users/registration-activations',
+              permissionKey: 'users.view',
+            },
           ],
         },
         {
@@ -271,6 +277,12 @@ export class SidebarComponent {
               label: 'All Merchants',
               icon: 'pi pi-list',
               route: '/admin/merchants',
+              permissionKey: 'merchants.view',
+            },
+            {
+              label: 'Package Upgrades',
+              icon: 'pi pi-level-up',
+              route: '/admin/merchants/package-upgrades',
               permissionKey: 'merchants.view',
             },
             {

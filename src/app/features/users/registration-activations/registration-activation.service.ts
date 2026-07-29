@@ -1,34 +1,27 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, map, of, tap } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
+import {
+  NetWalletEffect,
+  PackageTier,
+  UpgradeLedgerEntry,
+} from '../services/package-upgrade-history.service';
 
-export type UpgradeSource = 'ADMIN' | 'GATEWAY' | 'SYSTEM' | 'MANUAL_DEPOSIT';
+export type RegistrationActivationSource =
+  | 'GATEWAY'
+  | 'MANUAL_REGISTRATION_PAYMENT'
+  | 'ADMIN_DEBIT_WALLET'
+  | 'ADMIN_WAIVE';
 
-export type PackageTier =
-  | 'NICKEL'
-  | 'SILVER'
-  | 'GOLD'
-  | 'PLATINUM'
-  | 'RUBY'
-  | 'DIAMOND';
-
-export type UpgradeFundingMode =
+export type RegistrationFundingMode =
   | 'GATEWAY_PAYMENT'
-  | 'MANUAL_DEPOSIT_UPGRADE'
-  | 'ADMIN_WAIVE'
-  | 'ADMIN_PAID'
-  | 'WALLET_SETTLEMENT'
+  | 'MANUAL_REGISTRATION_PAYMENT'
+  | 'DEBIT_REGISTRATION_WALLET'
+  | 'WAIVE'
   | 'UNKNOWN';
 
-export type NetWalletEffect =
-  | 'NONE'
-  | 'CREDIT_ONLY'
-  | 'DEBIT_ONLY'
-  | 'SETTLED_AS_UPGRADE'
-  | 'CREDIT_THEN_DEBIT';
-
-export interface UpgradeFunding {
-  mode: UpgradeFundingMode | string;
+export interface RegistrationFunding {
+  mode: RegistrationFundingMode | string;
   walletType?: string | null;
   creditedAmount?: number | null;
   debitedAmount?: number | null;
@@ -36,25 +29,13 @@ export interface UpgradeFunding {
   description?: string | null;
 }
 
-export interface UpgradeLedgerEntry {
-  id: string;
-  walletId?: string;
-  walletType?: string;
-  direction: 'CREDIT' | 'DEBIT' | string;
-  amount: number;
-  currency?: string;
-  source?: string;
-  reference?: string | null;
-  createdAt: string;
-}
-
-export interface PackageUpgradeLinks {
+export interface RegistrationActivationLinks {
   userId?: string | null;
   paymentId?: string | null;
-  manualDepositId?: string | null;
+  manualRegistrationPaymentId?: string | null;
 }
 
-export interface PackageUpgradeRecord {
+export interface RegistrationActivationRecord {
   id: string;
   userId: string;
   username: string;
@@ -62,34 +43,27 @@ export interface PackageUpgradeRecord {
   fullName?: string;
   isMerchant?: boolean;
   merchantId?: string | null;
-  previousPackage: string;
-  currentPackage: string;
-  stage: number;
-  rankName?: string;
-  upgradedAt: string;
-  source?: UpgradeSource;
+  package: string;
+  amount?: number | null;
+  currency?: string | null;
+  source: RegistrationActivationSource | string;
   performedBy?: string | null;
   paymentId?: string | null;
   paymentReference?: string | null;
-  manualDepositId?: string | null;
-  amount?: number | null;
-  currency?: string | null;
-  waivePayment?: boolean;
+  manualRegistrationPaymentId?: string | null;
   fundingSummary?: string | null;
+  funding?: RegistrationFunding | null;
+  activatedAt: string;
 }
 
-export interface PackageUpgradeDetail extends PackageUpgradeRecord {
-  funding?: UpgradeFunding | null;
+export interface RegistrationActivationDetail extends RegistrationActivationRecord {
   ledgerEntries?: UpgradeLedgerEntry[];
-  links?: PackageUpgradeLinks;
+  links?: RegistrationActivationLinks;
 }
 
-export interface PackageUpgradeFilters {
+export interface RegistrationActivationFilters {
   search?: string;
-  previousPackage?: PackageTier | '';
-  currentPackage?: PackageTier | '';
-  stage?: number;
-  source?: UpgradeSource;
+  source?: RegistrationActivationSource;
   isMerchant?: boolean;
   dateFrom?: string;
   dateTo?: string;
@@ -98,8 +72,8 @@ export interface PackageUpgradeFilters {
   offset?: number;
 }
 
-interface PackageUpgradesListResponse {
-  items?: PackageUpgradeRecord[];
+interface RegistrationActivationsListResponse {
+  items?: RegistrationActivationRecord[];
   total?: number;
   limit?: number;
   offset?: number;
@@ -108,31 +82,29 @@ interface PackageUpgradesListResponse {
 @Injectable({
   providedIn: 'root',
 })
-export class PackageUpgradeHistoryService {
+export class RegistrationActivationService {
   private readonly api = inject(ApiService);
 
-  private readonly recordsState = signal<PackageUpgradeRecord[]>([]);
+  private readonly recordsState = signal<RegistrationActivationRecord[]>([]);
   private readonly totalState = signal(0);
-  private readonly thisMonthCountState = signal(0);
   private readonly loadingState = signal(false);
   private readonly loadingErrorState = signal<string | null>(null);
 
   readonly records = this.recordsState.asReadonly();
   readonly total = this.totalState.asReadonly();
-  readonly thisMonthCount = this.thisMonthCountState.asReadonly();
   readonly loading = this.loadingState.asReadonly();
   readonly loadingError = this.loadingErrorState.asReadonly();
 
-  loadFromApi(filters?: PackageUpgradeFilters): Observable<{ items: PackageUpgradeRecord[]; total: number }> {
+  loadFromApi(
+    filters?: RegistrationActivationFilters
+  ): Observable<{ items: RegistrationActivationRecord[]; total: number }> {
     this.loadingState.set(true);
     this.loadingErrorState.set(null);
 
-    const params = this.buildParams(filters);
-
     return this.api
-      .get<PackageUpgradesListResponse | PackageUpgradeRecord[]>(
-        'admin/users/package-upgrades',
-        params
+      .get<RegistrationActivationsListResponse | RegistrationActivationRecord[]>(
+        'admin/users/registration-activations',
+        this.buildParams(filters)
       )
       .pipe(
         map((response) => this.normalizeListResponse(response)),
@@ -144,42 +116,19 @@ export class PackageUpgradeHistoryService {
         catchError((err) => {
           this.loadingState.set(false);
           this.loadingErrorState.set(
-            err?.error?.message ?? err?.message ?? 'Failed to load package upgrades'
+            err?.error?.message ?? err?.message ?? 'Failed to load registration activations'
           );
           this.recordsState.set([]);
           this.totalState.set(0);
-          return of({ items: [] as PackageUpgradeRecord[], total: 0 });
+          return of({ items: [] as RegistrationActivationRecord[], total: 0 });
         })
       );
   }
 
-  loadThisMonthCount(): Observable<number> {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
+  getById(id: string): Observable<RegistrationActivationDetail> {
     return this.api
-      .get<PackageUpgradesListResponse>('admin/users/package-upgrades', {
-        dateFrom: monthStart,
-        limit: 1,
-        offset: 0,
-      })
-      .pipe(
-        map((response) => {
-          const total = this.normalizeListResponse(response).total;
-          this.thisMonthCountState.set(total);
-          return total;
-        }),
-        catchError(() => {
-          this.thisMonthCountState.set(0);
-          return of(0);
-        })
-      );
-  }
-
-  getById(id: string): Observable<PackageUpgradeDetail> {
-    return this.api.get<PackageUpgradeDetail>(`admin/users/package-upgrades/${id}`).pipe(
-      map((record) => this.normalizeDetail(record))
-    );
+      .get<RegistrationActivationDetail>(`admin/users/registration-activations/${id}`)
+      .pipe(map((record) => this.normalizeDetail(record)));
   }
 
   formatPackageLabel(pkg: string): string {
@@ -203,10 +152,10 @@ export class PackageUpgradeHistoryService {
   formatSourceLabel(source?: string | null): string {
     if (!source) return '—';
     const labels: Record<string, string> = {
-      ADMIN: 'Admin',
       GATEWAY: 'Gateway',
-      SYSTEM: 'System',
-      MANUAL_DEPOSIT: 'Manual deposit',
+      MANUAL_REGISTRATION_PAYMENT: 'Manual registration',
+      ADMIN_DEBIT_WALLET: 'Admin debit',
+      ADMIN_WAIVE: 'Admin waive',
     };
     return labels[source] ?? source;
   }
@@ -231,31 +180,11 @@ export class PackageUpgradeHistoryService {
     return labels[effect] ?? this.formatFundingMode(effect);
   }
 
-  getMostCommonPath(records: PackageUpgradeRecord[]): string {
-    if (!records.length) return '—';
-    const counts = new Map<string, number>();
-    for (const r of records) {
-      const key = `${this.formatPackageLabel(r.previousPackage)} → ${this.formatPackageLabel(r.currentPackage)}`;
-      counts.set(key, (counts.get(key) ?? 0) + 1);
-    }
-    let best = '';
-    let bestCount = 0;
-    for (const [path, count] of counts) {
-      if (count > bestCount) {
-        best = path;
-        bestCount = count;
-      }
-    }
-    return best || '—';
-  }
-
-  private buildParams(filters?: PackageUpgradeFilters): Record<string, string | number | boolean> {
+  private buildParams(
+    filters?: RegistrationActivationFilters
+  ): Record<string, string | number | boolean> {
     const params: Record<string, string | number | boolean> = {};
-
     if (filters?.search) params['search'] = filters.search;
-    if (filters?.previousPackage) params['previousPackage'] = filters.previousPackage;
-    if (filters?.currentPackage) params['currentPackage'] = filters.currentPackage;
-    if (filters?.stage != null && filters.stage > 0) params['stage'] = filters.stage;
     if (filters?.source) params['source'] = filters.source;
     if (filters?.isMerchant === true) params['isMerchant'] = true;
     if (filters?.dateFrom) params['dateFrom'] = filters.dateFrom;
@@ -263,23 +192,21 @@ export class PackageUpgradeHistoryService {
     if (filters?.userId) params['userId'] = filters.userId;
     if (filters?.limit != null) params['limit'] = filters.limit;
     if (filters?.offset != null) params['offset'] = filters.offset;
-
     return params;
   }
 
   private normalizeListResponse(
-    response: PackageUpgradesListResponse | PackageUpgradeRecord[]
-  ): { items: PackageUpgradeRecord[]; total: number } {
+    response: RegistrationActivationsListResponse | RegistrationActivationRecord[]
+  ): { items: RegistrationActivationRecord[]; total: number } {
     if (Array.isArray(response)) {
       return { items: response.map((r) => this.normalizeRecord(r)), total: response.length };
     }
-
     const items = (response.items ?? []).map((r) => this.normalizeRecord(r));
     const total = typeof response.total === 'number' ? response.total : items.length;
     return { items, total };
   }
 
-  private normalizeDetail(record: PackageUpgradeDetail): PackageUpgradeDetail {
+  private normalizeDetail(record: RegistrationActivationDetail): RegistrationActivationDetail {
     const base = this.normalizeRecord(record);
     return {
       ...base,
@@ -288,23 +215,19 @@ export class PackageUpgradeHistoryService {
       links: record.links ?? {
         userId: record.userId,
         paymentId: record.paymentId ?? null,
-        manualDepositId: record.manualDepositId ?? null,
+        manualRegistrationPaymentId: record.manualRegistrationPaymentId ?? null,
       },
     };
   }
 
-  private normalizeRecord(record: PackageUpgradeRecord): PackageUpgradeRecord {
-    const raw = record as PackageUpgradeRecord & {
-      fromPackage?: string;
-      toPackage?: string;
+  private normalizeRecord(record: RegistrationActivationRecord): RegistrationActivationRecord {
+    const raw = record as RegistrationActivationRecord & {
+      registrationPackage?: PackageTier | string;
     };
-
     return {
       ...record,
-      previousPackage: raw.previousPackage ?? raw.fromPackage ?? '',
-      currentPackage: raw.currentPackage ?? raw.toPackage ?? '',
+      package: raw.package ?? raw.registrationPackage ?? '',
       isMerchant: !!record.isMerchant,
-      waivePayment: !!record.waivePayment,
     };
   }
 }
