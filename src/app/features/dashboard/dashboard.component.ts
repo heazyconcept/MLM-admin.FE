@@ -9,6 +9,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { StatCardComponent } from './components/stat-card/stat-card.component';
 import { OverviewChartComponent } from './components/overview-chart/overview-chart.component';
 import { PackageChartComponent, PackageData } from './components/package-chart/package-chart.component';
@@ -26,6 +28,7 @@ import {
   userEarningsActivityTrackId
 } from '../earnings/services/earnings.service';
 import { getEarningTypeLabel } from '../../core/constants/earning-type-labels';
+import { UsersService } from '../users/services/users.service';
 
 interface StatCardVM {
   title: string;
@@ -66,6 +69,7 @@ const PKG_COLORS: Record<string, string> = {
 export class DashboardComponent implements OnInit {
   private readonly dashboardService = inject(DashboardService);
   private readonly earningsService = inject(EarningsService);
+  private readonly usersService = inject(UsersService);
 
   userName = 'Admin';
   currentDate = new Date();
@@ -120,14 +124,22 @@ export class DashboardComponent implements OnInit {
   reload(): void {
     this.loading.set(true);
     this.loadError.set(null);
-    this.dashboardService.getSummary().subscribe((s) => {
+    forkJoin({
+      summary: this.dashboardService.getSummary(),
+      // Align Total users with User Management (GET /admin/users total)
+      usersTotal: this.usersService.getUsers({ limit: 1, offset: 0 }).pipe(
+        catchError(() => of(null))
+      ),
+    }).subscribe(({ summary, usersTotal }) => {
       this.loading.set(false);
-      if (!s) {
+      if (!summary) {
         this.loadError.set('Failed to load dashboard summary. Please try again.');
         this.applyEmptyState();
         return;
       }
-      this.applySummary(s);
+      const authoritativeUserCount =
+        typeof usersTotal?.total === 'number' ? usersTotal.total : summary.userCount;
+      this.applySummary(summary, authoritativeUserCount);
     });
     this.loadActivity();
   }
@@ -161,7 +173,7 @@ export class DashboardComponent implements OnInit {
     this.pendingActions.set([]);
   }
 
-  private applySummary(s: AdminDashboardSummary): void {
+  private applySummary(s: AdminDashboardSummary, userCount = s.userCount): void {
     const openTasks =
       (s.pendingWithdrawalsCount ?? 0) +
       (s.initiatedPaymentsCount ?? 0) +
@@ -172,7 +184,7 @@ export class DashboardComponent implements OnInit {
     this.systemStats.set([
       {
         title: 'Total users',
-        value: this.fmtInt(s.userCount),
+        value: this.fmtInt(userCount),
         icon: 'pi pi-users',
         iconBg: 'bg-mlm-green-100',
         iconColor: 'text-mlm-primary',
@@ -260,7 +272,7 @@ export class DashboardComponent implements OnInit {
       },
       {
         title: 'Total users',
-        value: this.fmtInt(s.userCount),
+        value: this.fmtInt(userCount),
         subtitle: 'Registered accounts',
         icon: 'pi pi-users',
         iconBg: 'bg-mlm-success/10',
