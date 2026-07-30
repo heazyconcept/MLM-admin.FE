@@ -72,6 +72,8 @@ export class UsersListComponent implements OnInit {
 
   /** Server-side pagination (GET /admin/users) */
   totalRecords = signal(0);
+  /** Unfiltered platform total for the stats card */
+  totalUsersCount = signal(0);
   tableFirst = signal(0);
   pageRows = signal(20);
 
@@ -206,7 +208,25 @@ export class UsersListComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.loadTotalUsersCount();
     this.loadUsers();
+  }
+
+  /** Platform-wide user count (ignores list filters) */
+  private loadTotalUsersCount(): void {
+    this.usersService.getUsers({ limit: 1, offset: 0 }).subscribe({
+      next: ({ total }) => this.totalUsersCount.set(total),
+      error: () => this.totalUsersCount.set(0),
+    });
+  }
+
+  private hasServerFilters(): boolean {
+    return !!(
+      this.statusFilter() ||
+      this.packageFilter() ||
+      this.roleFilter() ||
+      this.globalFilter()
+    );
   }
 
   /** Build query params supported by GET /admin/users */
@@ -252,6 +272,10 @@ export class UsersListComponent implements OnInit {
           this.users.set(users);
           this.totalRecords.set(total);
           this.tableLoading.set(false);
+          // Keep the stats card in sync when listing without filters
+          if (!this.hasServerFilters()) {
+            this.totalUsersCount.set(total);
+          }
         },
         error: () => {
           this.tableLoading.set(false);
