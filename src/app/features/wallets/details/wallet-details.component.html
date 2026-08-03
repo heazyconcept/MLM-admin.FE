@@ -42,12 +42,22 @@
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto shrink-0">
             <button
               *hasPermission="'wallets.adjust_funds'"
-              (click)="openAdjustment()"
+              (click)="openAddFunds()"
               class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
                      text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
                      flex items-center justify-center gap-2 transition-colors duration-150 w-full sm:w-auto">
-              <i class="pi pi-plus-minus text-xs"></i>
-              Adjust Funds
+              <i class="pi pi-plus text-xs"></i>
+              Add Funds
+            </button>
+
+            <button
+              *hasPermission="'wallets.adjust_funds'"
+              (click)="openRemoveFunds()"
+              class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
+                     text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+                     flex items-center justify-center gap-2 transition-colors duration-150 w-full sm:w-auto">
+              <i class="pi pi-minus text-xs"></i>
+              Remove Funds
             </button>
 
             <button
@@ -260,8 +270,18 @@
     </div>
   
     <app-funds-adjustment-modal
-      [visible]="showAdjustmentModal()"
-      (visibleChange)="showAdjustmentModal.set($event)"
+      mode="add"
+      [visible]="showAddFundsModal()"
+      (visibleChange)="showAddFundsModal.set($event)"
+      [wallet]="wallet() ?? undefined"
+      [contextWallets]="fundContextWallets()"
+      (adjusted)="onAdjustmentComplete()">
+    </app-funds-adjustment-modal>
+
+    <app-funds-adjustment-modal
+      mode="remove"
+      [visible]="showRemoveFundsModal()"
+      (visibleChange)="showRemoveFundsModal.set($event)"
       [wallet]="wallet() ?? undefined"
       [contextWallets]="fundContextWallets()"
       (adjusted)="onAdjustmentComplete()">
