@@ -18,17 +18,19 @@ import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
-import { Wallet } from '../services/wallet.service';
+import { Wallet, WalletService } from '../services/wallet.service';
 import {
   AdminFundWalletType,
   UserWallets,
-  UsersService,
 } from '../../users/services/users.service';
 import { MessageService } from 'primeng/api';
+
+export type FundsAdjustmentMode = 'add' | 'remove';
 
 interface WalletTypeOption {
   label: string;
   value: AdminFundWalletType;
+  walletId: string;
   displayCurrency: string;
   disabled: boolean;
 }
@@ -74,16 +76,18 @@ function mapWalletType(walletType: string): AdminFundWalletType {
 })
 export class FundsAdjustmentModalComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly usersService = inject(UsersService);
+  private readonly walletService = inject(WalletService);
   private readonly messageService = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
 
   visible = input<boolean>(false);
+  /** Fixed action for this modal instance — add (credit) or remove (debit). */
+  mode = input<FundsAdjustmentMode>('add');
   /** Wallet detail mode context (current wallet). */
   wallet = input<Wallet | undefined>();
   /** All wallets for the user on wallet detail page (for type dropdown). */
   contextWallets = input<Wallet[] | undefined>();
-  /** User detail mode: fund wallet with type picker. */
+  /** User detail mode: adjust wallet with type picker. */
   userId = input<string>('');
   userName = input<string>('');
   userWallets = input<UserWallets | undefined>();
@@ -95,6 +99,7 @@ export class FundsAdjustmentModalComponent {
   submitting = signal(false);
   selectedWalletType = signal<AdminFundWalletType | ''>('');
 
+  isAddMode = computed(() => this.mode() === 'add');
   isUserMode = computed(() => !!this.userWallets());
   isWalletDetailMode = computed(() => !!this.wallet() && !this.isUserMode());
 
@@ -119,16 +124,27 @@ export class FundsAdjustmentModalComponent {
     return option?.displayCurrency ?? 'NGN';
   });
 
+  selectedWalletId = computed(() => {
+    const selected = this.selectedWalletType();
+    const option = this.walletTypeOptions().find((o) => o.value === selected);
+    return option?.walletId ?? '';
+  });
+
   dialogHeader = computed(() => {
+    const action = this.isAddMode() ? 'Add Funds' : 'Remove Funds';
     if (this.isUserMode()) {
-      return `Adjust Funds — ${this.userName() || 'User'}`;
+      return `${action} — ${this.userName() || 'User'}`;
     }
     const w = this.wallet();
     if (w?.userName) {
-      return `Adjust Funds — ${w.userName}`;
+      return `${action} — ${w.userName}`;
     }
-    return w ? `Adjust Funds — ${w.walletType}` : 'Adjust Funds';
+    return w ? `${action} — ${w.walletType}` : action;
   });
+
+  submitLabel = computed(() =>
+    this.isAddMode() ? 'Confirm credit' : 'Confirm debit'
+  );
 
   constructor() {
     this.fundForm.controls.walletType.valueChanges
@@ -176,26 +192,31 @@ export class FundsAdjustmentModalComponent {
   submitFund(): void {
     if (this.fundForm.invalid || this.submitting()) return;
 
-    const fundUserId = this.isUserMode() ? this.userId() : this.wallet()?.userId;
-    if (!fundUserId) return;
+    const walletId = this.selectedWalletId();
+    if (!walletId) return;
 
-    const { walletType, amount, reason } = this.fundForm.getRawValue();
-    if (!walletType || !amount) return;
+    const { amount, reason } = this.fundForm.getRawValue();
+    if (!amount) return;
+
+    const isAdd = this.isAddMode();
+    const signedAmount = isAdd ? amount : -amount;
+    const trimmedReason = (reason ?? '').trim();
 
     this.submitting.set(true);
-    this.usersService
-      .fundWallet(fundUserId, {
-        walletType,
-        amount,
-        reason: (reason ?? '').trim(),
+    this.walletService
+      .adjustWallet(walletId, {
+        amount: signedAmount,
+        reason: trimmedReason,
+        displayAmount: signedAmount,
       })
       .subscribe({
-        next: (res) => {
+        next: (newBalance) => {
           this.submitting.set(false);
+          const currency = this.selectedCurrency();
           this.messageService.add({
             severity: 'success',
             summary: 'Funds adjusted',
-            detail: `Wallet credited. New balance: ${res.displayCurrency} ${res.balance.toLocaleString()}`,
+            detail: `Wallet ${isAdd ? 'credited' : 'debited'}. New balance: ${currency} ${newBalance.toLocaleString()}`,
           });
           this.adjusted.emit();
           this.close();
@@ -205,7 +226,9 @@ export class FundsAdjustmentModalComponent {
           this.messageService.add({
             severity: 'error',
             summary: 'Adjustment failed',
-            detail: err?.error?.message || 'Could not fund wallet. Please try again.',
+            detail:
+              err?.error?.message ||
+              `Could not ${isAdd ? 'credit' : 'debit'} wallet. Please try again.`,
           });
         },
       });
@@ -226,24 +249,28 @@ export class FundsAdjustmentModalComponent {
       {
         label: WALLET_TYPE_LABELS.REGISTRATION,
         value: 'REGISTRATION',
+        walletId: w.registration?.walletId ?? '',
         displayCurrency: w.registration?.displayCurrency ?? 'NGN',
         disabled: !w.registration,
       },
       {
         label: WALLET_TYPE_LABELS.VOUCHER,
         value: 'VOUCHER',
+        walletId: w.voucher?.walletId ?? '',
         displayCurrency: w.voucher?.displayCurrency ?? 'NGN',
         disabled: !w.voucher,
       },
       {
         label: WALLET_TYPE_LABELS.CASH,
         value: 'CASH',
+        walletId: w.cash?.walletId ?? '',
         displayCurrency: w.cash?.displayCurrency ?? 'NGN',
         disabled: !w.cash,
       },
       {
         label: WALLET_TYPE_LABELS.AUTOSHIP,
         value: 'AUTOSHIP',
+        walletId: w.autoship?.walletId ?? '',
         displayCurrency: w.autoship?.displayCurrency ?? 'NGN',
         disabled: !w.autoship,
       },
@@ -256,6 +283,7 @@ export class FundsAdjustmentModalComponent {
       return {
         label: WALLET_TYPE_LABELS[type],
         value: type,
+        walletId: match?.id ?? '',
         displayCurrency: match?.displayCurrency ?? 'NGN',
         disabled: !match,
       };

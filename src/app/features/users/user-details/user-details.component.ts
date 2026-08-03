@@ -86,7 +86,8 @@ export class UserDetailsComponent implements OnInit {
   actionLoading = signal(false);
 
   /** Modal visibility signals */
-  adjustFundsModalVisible = signal(false);
+  addFundsModalVisible = signal(false);
+  removeFundsModalVisible = signal(false);
   selectedFundWalletType = signal<AdminFundWalletType | undefined>(undefined);
   activateModalVisible = signal(false);
   upgradeModalVisible = signal(false);
@@ -329,21 +330,23 @@ export class UserDetailsComponent implements OnInit {
 
   /** ────────── Modal handlers ────────── */
 
-  /** Adjust funds (fund wallet with type picker) */
-  openAdjustFundsModal(walletType?: AdminFundWalletType): void {
+  /** Add funds (credit via wallet adjust endpoint) */
+  openAddFundsModal(walletType?: AdminFundWalletType): void {
     this.selectedFundWalletType.set(walletType);
-    this.adjustFundsModalVisible.set(true);
+    this.addFundsModalVisible.set(true);
+  }
+
+  /** Remove funds (debit via wallet adjust endpoint) */
+  openRemoveFundsModal(walletType?: AdminFundWalletType): void {
+    this.selectedFundWalletType.set(walletType);
+    this.removeFundsModalVisible.set(true);
   }
 
   onAdjustFundsComplete(): void {
-    this.adjustFundsModalVisible.set(false);
+    this.addFundsModalVisible.set(false);
+    this.removeFundsModalVisible.set(false);
     this.selectedFundWalletType.set(undefined);
     this.reloadUser();
-  }
-
-  onAdjustFundsCancelled(): void {
-    this.adjustFundsModalVisible.set(false);
-    this.selectedFundWalletType.set(undefined);
   }
 
   /** Activate registration */

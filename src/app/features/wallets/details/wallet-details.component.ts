@@ -91,7 +91,8 @@ export class WalletDetailsComponent {
   tableHeaders = computed(() => this.columns().map(c => c.header));
 
   // Modal state
-  showAdjustmentModal = signal(false);
+  showAddFundsModal = signal(false);
+  showRemoveFundsModal = signal(false);
   showActionModal = signal(false);
   showUndoModal = signal(false);
   pendingUndoReference = signal('');
@@ -182,8 +183,12 @@ export class WalletDetailsComponent {
     });
   }
 
-  openAdjustment() {
-    this.showAdjustmentModal.set(true);
+  openAddFunds(): void {
+    this.showAddFundsModal.set(true);
+  }
+
+  openRemoveFunds(): void {
+    this.showRemoveFundsModal.set(true);
   }
 
   onAdjustmentComplete() {

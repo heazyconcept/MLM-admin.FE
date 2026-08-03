@@ -8,9 +8,15 @@
 
   @if (isUserMode() || wallet()) {
     <form [formGroup]="fundForm" (ngSubmit)="submitFund()" class="space-y-4 pt-2">
-      <p class="text-sm text-mlm-secondary">
-        Credit a wallet for this user. Select the wallet type and enter a positive amount.
-      </p>
+      @if (isAddMode()) {
+        <p class="text-sm text-mlm-secondary">
+          Add funds to a wallet for this user. Enter a positive amount to credit.
+        </p>
+      } @else {
+        <p class="text-sm text-mlm-secondary">
+          Remove funds from a wallet for this user. Enter a positive amount to debit.
+        </p>
+      }
 
       <div>
         <label for="adjust-wallet-type" class="block text-sm font-medium text-gray-700 mb-1">Wallet type</label>
@@ -50,23 +56,28 @@
           class="w-full"
           formControlName="reason"
           [disabled]="submitting()"
-          placeholder="Offline bank transfer ref ... (min 10 chars)">
+          placeholder="Manual correction per finance (min 10 chars)">
         </textarea>
         @if (fundForm.controls.reason.touched && fundForm.controls.reason.hasError('minlength')) {
           <p class="text-xs text-mlm-error mt-1">Reason must be at least 10 characters.</p>
         }
       </div>
 
-      <div class="p-3 bg-blue-50 text-blue-700 text-xs rounded-lg flex gap-2">
-        <i class="pi pi-info-circle mt-0.5"></i>
-        <span>
-          @if (isWalletDetailMode()) {
-            This will credit the selected wallet. Eligible credits can be undone from the ledger below.
-          } @else {
+      @if (isAddMode()) {
+        <div class="p-3 bg-blue-50 text-blue-700 text-xs rounded-lg flex gap-2">
+          <i class="pi pi-info-circle mt-0.5" aria-hidden="true"></i>
+          <span>
             This will credit the selected wallet. Eligible credits can be undone from the ledger.
-          }
-        </span>
-      </div>
+          </span>
+        </div>
+      } @else {
+        <div class="p-3 bg-red-50 text-red-700 text-xs rounded-lg flex gap-2">
+          <i class="pi pi-exclamation-triangle mt-0.5" aria-hidden="true"></i>
+          <span>
+            This will deduct funds from the selected wallet. Debits require sufficient balance and cannot be undone.
+          </span>
+        </div>
+      }
 
       <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 mt-2">
         <button
@@ -80,9 +91,11 @@
         <button
           type="submit"
           pButton
-          label="Confirm credit"
-          class="p-button-success w-full sm:w-auto"
-          [disabled]="fundForm.invalid || submitting()"
+          [label]="submitLabel()"
+          class="w-full sm:w-auto"
+          [class.p-button-success]="isAddMode()"
+          [class.p-button-danger]="!isAddMode()"
+          [disabled]="fundForm.invalid || submitting() || !selectedWalletId()"
           [loading]="submitting()">
         </button>
       </div>
