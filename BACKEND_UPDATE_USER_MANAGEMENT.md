@@ -109,9 +109,12 @@
 
 ---
 
-# Part 2: User Status Expansion — directReferralsCount
+# Part 2: User Status Expansion — directReferralsCount + status filter
 
 To support the updated user status classifications on the frontend, we need the backend to return the count of direct referrals for each user, and support filtering by status.
+
+> **Full backend request (problem, query contract, acceptance):**  
+> [BACKEND_REQUEST_USER_LIST_STATUS_FILTER.md](./BACKEND_REQUEST_USER_LIST_STATUS_FILTER.md)
 
 ---
 
@@ -145,9 +148,11 @@ A user's visual status is calculated dynamically based on three fields (`isActiv
 
 ## 3. Query Parameter Filtering Enhancements
 
+**Current gap:** `isActive` + `isRegistrationPaid` alone cannot distinguish **Activated**, **Active**, and **Inactive** — the FE maps all three to the same query, so the status dropdown returns identical data/totals.
+
 To avoid page size discrepancies due to client-side filtering on server-paginated data, we require support for a `status` filter query parameter:
 
 `GET /admin/users?status=REGISTERED|ACTIVATED|ACTIVE|INACTIVE|SUSPENDED`
 
-This will allow administrators to filter users by their precise MLM classification on the server.
+This will allow administrators to filter users by their precise MLM classification on the server. See [BACKEND_REQUEST_USER_LIST_STATUS_FILTER.md](./BACKEND_REQUEST_USER_LIST_STATUS_FILTER.md) for the full contract and checklist.
 
