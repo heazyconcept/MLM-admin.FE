@@ -86,26 +86,25 @@ export class UsersListComponent implements OnInit {
 
   /**
    * Status / package / role are applied on the server via loadUsers().
-   * Search and joined date range are client-only on the current page (API has no text search).
-   * "Flagged" is client-only on the current page when the list API cannot filter by flag.
+   * Search and joined date range are client-only on the current page.
+   * "Flagged" is client-only (list API cannot filter by flag).
+   * "Active" / "Inactive" further narrow the shared Activated API result
+   * (isActive + isRegistrationPaid) by referral-derived status.
    */
   filteredUsers = computed(() => {
     let result = this.users();
     const status = this.statusFilter();
     const range = this.dateRange();
 
+    // Registered / Activated / Suspended: trust the server result.
+    // Activated returns all paid+login-active users; their mapped status is often
+    // Active/Inactive (by referrals), so do not require status === 'Activated'.
     if (status === 'Flagged') {
       result = result.filter((u) => u.status === 'Flagged');
-    } else if (status === 'Registered') {
-      result = result.filter((u) => u.status === 'Registered');
-    } else if (status === 'Activated') {
-      result = result.filter((u) => u.status === 'Activated');
     } else if (status === 'Active') {
       result = result.filter((u) => u.status === 'Active');
     } else if (status === 'Inactive') {
       result = result.filter((u) => u.status === 'Inactive');
-    } else if (status === 'Suspended') {
-      result = result.filter((u) => u.status === 'Suspended');
     }
 
     if (range && range.length === 2 && range[0] && range[1]) {
@@ -228,6 +227,13 @@ export class UsersListComponent implements OnInit {
       this.globalFilter()
     );
   }
+
+  /** True when any list filter (server or client) is applied */
+  hasActiveFilters = computed(() => {
+    const range = this.dateRange();
+    const hasDateRange = !!(range && range.length === 2 && range[0] && range[1]);
+    return this.hasServerFilters() || hasDateRange;
+  });
 
   /** Build query params supported by GET /admin/users */
   private serverQuery(): UsersListQuery {

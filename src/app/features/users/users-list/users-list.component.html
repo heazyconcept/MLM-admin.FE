@@ -132,6 +132,17 @@
       </div>
     </div>
 
+    <!-- Result total for current filters -->
+    <div class="px-4 py-3 md:px-5 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/60">
+      <p class="text-sm text-mlm-secondary">
+        <span class="font-semibold text-mlm-text tabular-nums">{{ totalRecords() | number }}</span>
+        {{ totalRecords() === 1 ? 'user' : 'users' }}
+        @if (hasActiveFilters()) {
+          <span class="text-slate-400"> matching filters</span>
+        }
+      </p>
+    </div>
+
     <!-- Table — 7 <td> matching 7 headers: Username · Referrer · Upline · Package · Status · Joined · Actions -->
     <div class="users-table-wrap">
     <app-data-table
