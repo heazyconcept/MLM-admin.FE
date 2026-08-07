@@ -251,7 +251,7 @@ Date filters (when present) use ISO 8601 strings, e.g. **fromDate** / **toDate**
 | POST | /admin/payments/fund | Admin fund user; body per AdminFundingDto |
 | GET | /admin/payments | List payments; query filters |
 | POST | /admin/payments/:id/verify | Verify payment by id |
-| GET | /admin/users | List users; query per UserFiltersDto |
+| GET | /admin/users | List users; query per UserFiltersDto (`status`, `package`, `role`, `search`, `isActive`, `isRegistrationPaid`, …). Prefer `status` for MLM filters — see FRONTEND_INTEGRATION_ADMIN_USER_STATUS_FILTER.md |
 | POST | /admin/users/:id/reset-password | Reset user password |
 | GET | /admin/packages | Package configs |
 | PUT | /admin/packages/:package | Update package config |

@@ -95,11 +95,30 @@ export interface UsersListQuery {
   offset?: number;
   package?: string;
   rank?: string;
+  /** Prefer for User Management status dropdown — see FRONTEND_INTEGRATION_ADMIN_USER_STATUS_FILTER.md */
+  status?: UsersListStatus;
   isRegistrationPaid?: boolean;
   isActive?: boolean;
   role?: 'USER' | 'MERCHANT' | 'ADMIN';
   search?: string;
 }
+
+/** GET /admin/users?status=… */
+export type UsersListStatus =
+  | 'REGISTERED'
+  | 'ACTIVATED'
+  | 'ACTIVE'
+  | 'INACTIVE'
+  | 'SUSPENDED';
+
+/** UI status dropdown label → API `status` query value */
+export const UI_STATUS_TO_API: Record<string, UsersListStatus> = {
+  Registered: 'REGISTERED',
+  Activated: 'ACTIVATED',
+  Active: 'ACTIVE',
+  Inactive: 'INACTIVE',
+  Suspended: 'SUSPENDED',
+};
 
 export interface UsersListResult {
   users: User[];

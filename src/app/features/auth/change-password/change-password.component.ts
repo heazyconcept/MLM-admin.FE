@@ -33,6 +33,9 @@ export class ChangePasswordComponent {
   readonly showNewPassword = signal(false);
   readonly showConfirmPassword = signal(false);
 
+  /** True when admin must change a temporary password before using the panel */
+  readonly isForced = this.authService.mustChangePassword;
+
   readonly form: FormGroup = this.fb.group({
     currentPassword: ['', [Validators.required]],
     newPassword: ['', [Validators.required, passwordStrengthValidator()]],
@@ -47,6 +50,7 @@ export class ChangePasswordComponent {
 
     this.isLoading.set(true);
     const { currentPassword, newPassword } = this.form.value;
+    const wasForced = this.isForced();
 
     this.authService.changePassword(currentPassword, newPassword).subscribe({
       next: () => {
@@ -54,7 +58,9 @@ export class ChangePasswordComponent {
         this.modalService.open(
           'success',
           'Password Updated',
-          'Your password has been changed. You can now access the admin panel.'
+          wasForced
+            ? 'Your password has been changed. You can now access the admin panel.'
+            : 'Your login password has been updated.'
         );
         setTimeout(() => {
           this.router.navigate(['/admin/dashboard']);
@@ -71,6 +77,10 @@ export class ChangePasswordComponent {
   onLogout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  onBackToDashboard(): void {
+    this.router.navigate(['/admin/dashboard']);
   }
 
   toggleVisibility(field: 'current' | 'new' | 'confirm'): void {

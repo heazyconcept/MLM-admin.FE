@@ -588,10 +588,13 @@ Get a filtered, paginated list of users with summary earnings/CPV info.
 - **Authorization**
 
 ### Query Parameters
+- `status` (string, optional): MLM classification filter — `REGISTERED` | `ACTIVATED` | `ACTIVE` | `INACTIVE` | `SUSPENDED`. Prefer this for the User Management status dropdown. When set, it owns active/paid/referral predicates; do not also send `isActive` / `isRegistrationPaid` for the same filter. See [FRONTEND_INTEGRATION_ADMIN_USER_STATUS_FILTER.md](./FRONTEND_INTEGRATION_ADMIN_USER_STATUS_FILTER.md).
 - `package` (string, optional): Registration package enum.
 - `rank` (string, optional).
-- `isRegistrationPaid` (boolean, optional).
-- `isActive` (boolean, optional).
+- `role` (string, optional): `USER` | `MERCHANT` | `ADMIN`.
+- `search` (string, optional): username / name / email when supported.
+- `isRegistrationPaid` (boolean, optional): Legacy boolean filter (prefer `status` for MLM chips).
+- `isActive` (boolean, optional): Legacy boolean filter (prefer `status` for MLM chips).
 - `limit` (number, optional, default `20`).
 - `offset` (number, optional, default `0`).
 
@@ -629,13 +632,15 @@ Get a filtered, paginated list of users with summary earnings/CPV info.
 
 ### Frontend Integration Notes
 - Good for admin user tables with multiple filters.
+- Prefer `status` for User Management MLM filters so Activated / Active / Inactive return distinct sets and accurate `total` (do not client-re-filter paginated results).
 - `rank` filtering is applied after mapping on the backend; you can use the `rank` field from response directly.
+- Include `directReferralsCount` on each user for badge consistency with `status` filters.
 
 ### Example Request (Axios)
 
 ```ts
 const res = await axios.get('/admin/users', {
-  params: { isActive: true, limit: 20, offset: 0 },
+  params: { status: 'ACTIVE', limit: 20, offset: 0 },
   headers: { Authorization: `Bearer ${token}` },
 });
 ```

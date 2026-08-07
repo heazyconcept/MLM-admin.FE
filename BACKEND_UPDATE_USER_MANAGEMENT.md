@@ -113,8 +113,12 @@
 
 To support the updated user status classifications on the frontend, we need the backend to return the count of direct referrals for each user, and support filtering by status.
 
-> **Full backend request (problem, query contract, acceptance):**  
-> [BACKEND_REQUEST_USER_LIST_STATUS_FILTER.md](./BACKEND_REQUEST_USER_LIST_STATUS_FILTER.md)
+> **FE integration (API usage, mapping, tests):**  
+> [FRONTEND_INTEGRATION_ADMIN_USER_STATUS_FILTER.md](./FRONTEND_INTEGRATION_ADMIN_USER_STATUS_FILTER.md)  
+> **Original request:**  
+> [BACKEND_REQUEST_USER_LIST_STATUS_FILTER.md](./BACKEND_REQUEST_USER_LIST_STATUS_FILTER.md)  
+> **Backend test reference:**  
+> [docs/backend-test-reference/admin.service.get-users.spec.ts](./docs/backend-test-reference/admin.service.get-users.spec.ts)
 
 ---
 
@@ -148,11 +152,9 @@ A user's visual status is calculated dynamically based on three fields (`isActiv
 
 ## 3. Query Parameter Filtering Enhancements
 
-**Current gap:** `isActive` + `isRegistrationPaid` alone cannot distinguish **Activated**, **Active**, and **Inactive** — the FE maps all three to the same query, so the status dropdown returns identical data/totals.
+**Resolved via `status`:** `GET /admin/users?status=REGISTERED|ACTIVATED|ACTIVE|INACTIVE|SUSPENDED`
 
-To avoid page size discrepancies due to client-side filtering on server-paginated data, we require support for a `status` filter query parameter:
+Admin FE now sends `status=` from the User Management dropdown so Activated / Active / Inactive are distinct and pagination `total` stays correct. Do not client-filter those statuses on top of server pagination.
 
-`GET /admin/users?status=REGISTERED|ACTIVATED|ACTIVE|INACTIVE|SUSPENDED`
-
-This will allow administrators to filter users by their precise MLM classification on the server. See [BACKEND_REQUEST_USER_LIST_STATUS_FILTER.md](./BACKEND_REQUEST_USER_LIST_STATUS_FILTER.md) for the full contract and checklist.
+See [FRONTEND_INTEGRATION_ADMIN_USER_STATUS_FILTER.md](./FRONTEND_INTEGRATION_ADMIN_USER_STATUS_FILTER.md).
 

@@ -14,17 +14,13 @@ export const blockUntilPasswordChangedGuard: CanActivateFn = () => {
   return true;
 };
 
-/** Allows access to change-password only when a password change is required */
+/** Allows authenticated admins to change their password (forced or voluntary) */
 export const changePasswordPageGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
   if (!auth.isAuthenticated()) {
     return router.createUrlTree(['/login']);
-  }
-
-  if (!auth.mustChangePassword()) {
-    return router.createUrlTree(['/admin/dashboard']);
   }
 
   return true;

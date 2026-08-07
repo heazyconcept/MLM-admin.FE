@@ -18,7 +18,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { UserProfileModalComponent } from '../user-profile-modal/user-profile-modal.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
-import { UsersService, User, UsersListQuery } from '../services/users.service';
+import { UsersService, User, UsersListQuery, UI_STATUS_TO_API } from '../services/users.service';
 
 interface ActionConfig {
   visible: boolean;
@@ -85,26 +85,17 @@ export class UsersListComponent implements OnInit {
   dateRange = signal<Date[] | null>(null);
 
   /**
-   * Status / package / role are applied on the server via loadUsers().
-   * Search and joined date range are client-only on the current page.
-   * "Flagged" is client-only (list API cannot filter by flag).
-   * "Active" / "Inactive" further narrow the shared Activated API result
-   * (isActive + isRegistrationPaid) by referral-derived status.
+   * Status / package / role / search are applied on the server via loadUsers().
+   * Joined date range remains client-only on the current page.
+   * "Flagged" is client-only (list API has no flag filter).
    */
   filteredUsers = computed(() => {
     let result = this.users();
     const status = this.statusFilter();
     const range = this.dateRange();
 
-    // Registered / Activated / Suspended: trust the server result.
-    // Activated returns all paid+login-active users; their mapped status is often
-    // Active/Inactive (by referrals), so do not require status === 'Activated'.
     if (status === 'Flagged') {
       result = result.filter((u) => u.status === 'Flagged');
-    } else if (status === 'Active') {
-      result = result.filter((u) => u.status === 'Active');
-    } else if (status === 'Inactive') {
-      result = result.filter((u) => u.status === 'Inactive');
     }
 
     if (range && range.length === 2 && range[0] && range[1]) {
@@ -239,14 +230,9 @@ export class UsersListComponent implements OnInit {
   private serverQuery(): UsersListQuery {
     const q: UsersListQuery = {};
     const status = this.statusFilter();
-    if (status === 'Suspended') {
-      q.isActive = false;
-    } else if (status === 'Registered') {
-      q.isActive = true;
-      q.isRegistrationPaid = false;
-    } else if (status === 'Activated' || status === 'Active' || status === 'Inactive') {
-      q.isActive = true;
-      q.isRegistrationPaid = true;
+    const apiStatus = status ? UI_STATUS_TO_API[status] : undefined;
+    if (apiStatus) {
+      q.status = apiStatus;
     }
     const pkg = this.packageFilter();
     if (pkg) {

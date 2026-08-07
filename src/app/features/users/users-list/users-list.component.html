@@ -95,7 +95,7 @@
         <p-select
           [options]="roleOptions"
           [ngModel]="roleFilter()"
-          (ngModelChange)="roleFilter.set($event)"
+          (ngModelChange)="roleFilter.set($event); onServerFilterChange()"
           placeholder="All Roles"
           optionLabel="label"
           optionValue="value"

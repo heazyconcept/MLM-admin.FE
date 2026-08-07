@@ -276,6 +276,8 @@ Display `message` from API (string or string[]).
 
 - [ ] Link to user detail
 - [ ] Columns or filters for `isActive`, `isRegistrationPaid`, package
+- [x] Status dropdown uses `GET /admin/users?status=REGISTERED|ACTIVATED|ACTIVE|INACTIVE|SUSPENDED` (not shared booleans for Active/Inactive/Activated) — see [FRONTEND_INTEGRATION_ADMIN_USER_STATUS_FILTER.md](./FRONTEND_INTEGRATION_ADMIN_USER_STATUS_FILTER.md)
+- [x] Matching-filters count uses response `total`; no client re-filter of server status results
 
 ### User detail (`/admin/users/:id`)
 
