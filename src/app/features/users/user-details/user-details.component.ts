@@ -247,6 +247,11 @@ export class UserDetailsComponent implements OnInit {
         });
         return;
       }
+      case 'lockCash':
+      case 'unlockCash': {
+        this.handleLockCashAction(result);
+        return;
+      }
     }
     this.confirmVisible.set(false);
   }
@@ -308,24 +313,32 @@ export class UserDetailsComponent implements OnInit {
   private handleLockCashAction(confirmResult: ConfirmationResult): void {
     const u = this.user();
     if (!u || !confirmResult.confirmed) return;
-    const action = this.confirmAction();
-    if (action === 'lockCash') {
-      this.usersService.lockCASHWallet(u.id).subscribe({
-        next: () => {
-          this.messageService.add({ severity: 'success', summary: 'Locked', detail: 'CASH wallet locked.' });
-          this.reloadUser();
-        },
-        error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to lock wallet' }),
-      });
-    } else {
-      this.usersService.unlockCASHWallet(u.id).subscribe({
-        next: () => {
-          this.messageService.add({ severity: 'success', summary: 'Unlocked', detail: 'CASH wallet unlocked.' });
-          this.reloadUser();
-        },
-        error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to unlock wallet' }),
-      });
-    }
+    const isLock = this.confirmAction() === 'lockCash';
+    this.actionLoading.set(true);
+    const request$ = isLock
+      ? this.usersService.lockCASHWallet(u.id)
+      : this.usersService.unlockCASHWallet(u.id);
+
+    request$.subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: isLock ? 'Locked' : 'Unlocked',
+          detail: isLock ? 'CASH wallet locked.' : 'CASH wallet unlocked.',
+        });
+        this.actionLoading.set(false);
+        this.confirmVisible.set(false);
+        this.reloadUser();
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: isLock ? 'Failed to lock wallet' : 'Failed to unlock wallet',
+        });
+        this.actionLoading.set(false);
+      },
+    });
   }
 
   /** ────────── Modal handlers ────────── */
