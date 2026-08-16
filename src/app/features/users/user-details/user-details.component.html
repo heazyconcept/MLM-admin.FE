@@ -134,23 +134,25 @@
                       type="button"
                       (click)="toggleCashLock()"
                       [disabled]="actionLoading()"
-                      class="h-9 px-3.5 rounded-lg border text-sm font-semibold bg-white
+                      class="h-9 px-3.5 rounded-lg border text-sm font-semibold
                              flex items-center gap-2 transition-colors duration-150
                              disabled:opacity-60 disabled:cursor-not-allowed"
-                      [class.border-mlm-error]="u.wallets.cash.status === 'ACTIVE'"
-                      [class.text-mlm-error]="u.wallets.cash.status === 'ACTIVE'"
-                      [class.hover:bg-mlm-red-50]="u.wallets.cash.status === 'ACTIVE'"
-                      [class.bg-mlm-primary]="u.wallets.cash.status !== 'ACTIVE'"
-                      [class.border-mlm-primary]="u.wallets.cash.status !== 'ACTIVE'"
-                      [class.text-white]="u.wallets.cash.status !== 'ACTIVE'"
-                      [class.hover:bg-brand-green-dark]="u.wallets.cash.status !== 'ACTIVE'">
-                      <i class="pi text-xs"
-                         aria-hidden="true"
-                         [class.pi-spin]="actionLoading()"
-                         [class.pi-spinner]="actionLoading()"
-                         [class.pi-lock]="!actionLoading() && u.wallets.cash.status === 'ACTIVE'"
-                         [class.pi-lock-open]="!actionLoading() && u.wallets.cash.status !== 'ACTIVE'"></i>
-                      {{ u.wallets.cash.status === 'ACTIVE' ? 'Lock CASH' : 'Unlock CASH' }}
+                      [class.bg-white]="isCashWalletActive()"
+                      [class.border-mlm-error]="isCashWalletActive()"
+                      [class.text-mlm-error]="isCashWalletActive()"
+                      [class.hover:bg-mlm-red-50]="isCashWalletActive()"
+                      [class.bg-mlm-primary]="!isCashWalletActive()"
+                      [class.border-mlm-primary]="!isCashWalletActive()"
+                      [class.text-white]="!isCashWalletActive()"
+                      [class.hover:bg-brand-green-dark]="!isCashWalletActive()">
+                      @if (actionLoading()) {
+                        <i class="pi pi-spin pi-spinner text-xs" aria-hidden="true"></i>
+                      } @else if (isCashWalletActive()) {
+                        <i class="pi pi-lock text-xs" aria-hidden="true"></i>
+                      } @else {
+                        <i class="pi pi-lock-open text-xs" aria-hidden="true"></i>
+                      }
+                      <span>{{ isCashWalletActive() ? 'Lock CASH' : 'Unlock CASH' }}</span>
                     </button>
                   }
 
@@ -158,8 +160,9 @@
                     <button
                       type="button"
                       (click)="toggleActiveStatus()"
-                      class="h-9 px-3.5 rounded-lg border text-sm font-semibold bg-white
+                      class="h-9 px-3.5 rounded-lg border text-sm font-semibold
                              flex items-center gap-2 transition-colors duration-150"
+                      [class.bg-white]="u.isActive"
                       [class.border-mlm-error]="u.isActive"
                       [class.text-mlm-error]="u.isActive"
                       [class.hover:bg-mlm-red-50]="u.isActive"
