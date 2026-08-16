@@ -80,6 +80,9 @@ export class UserDetailsComponent implements OnInit {
   isViewOnly = computed(
     () => this.permission.hasAccess(Feature.Users) && !this.hasUserActions()
   );
+  isCashWalletActive = computed(
+    () => (this.user()?.wallets.cash?.status ?? '').toUpperCase() === 'ACTIVE'
+  );
 
   user = signal<User | null>(null);
   activeTab = signal('basic');
@@ -285,7 +288,7 @@ export class UserDetailsComponent implements OnInit {
     if (!u || !this.hasUserActions()) return;
     const cash = u.wallets.cash;
     if (!cash) return;
-    if (cash.status === 'ACTIVE') {
+    if (this.isCashWalletActive()) {
       this.showConfirm('lockCash', {
         title: 'Lock CASH wallet',
         message: `Locking blocks cashouts and internal transfers from the CASH wallet for ${u.fullName}.`,
