@@ -29,6 +29,8 @@ export interface AdminStockDetailResponse extends AdminStockProductRow {
 
 export type StockMovementType =
   | 'ALLOCATION_ACCEPT'
+  | 'ALLOCATION_DISPATCH'
+  | 'ALLOCATION_RECEIPT'
   | 'ORDER_PICKUP'
   | 'ORDER_MERCHANT_ASSIGN'
   | 'ADMIN_HOME_DELIVERY_APPROVE'
@@ -52,14 +54,18 @@ export interface AdminStockMovementRow {
   id: string;
   productId: string;
   quantity: number;
-  type: StockMovementType;
+  type: StockMovementType | string;
   fromLocation: StockLocation;
   toLocation: StockLocation;
   merchantId?: string | null;
+  merchantName?: string | null;
+  businessName?: string | null;
   orderId?: string | null;
+  orderName?: string | null;
   allocationId?: string | null;
   actorType: StockActorType;
   actorId?: string | null;
+  actorName?: string | null;
   metadata?: StockMovementMetadata | null;
   createdAt: string;
 }
@@ -96,6 +102,7 @@ export class AdminStockService {
 
   getStockMovements(productId: string, params?: {
     type?: StockMovementType;
+    search?: string;
     limit?: number;
     offset?: number;
   }): Observable<AdminStockMovementsResponse | null> {

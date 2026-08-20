@@ -43,6 +43,7 @@ export class ProductStockListComponent implements OnInit {
   rows = signal(50);
 
   searchQuery = signal('');
+  private appliedSearch = signal('');
   selectedCategory = signal<string | null>(null);
 
   categoryOptions = computed(() => [
@@ -72,7 +73,7 @@ export class ProductStockListComponent implements OnInit {
   loadStock(): void {
     this.loading.set(true);
     this.loadError.set(null);
-    const query = this.searchQuery().trim();
+    const query = this.appliedSearch().trim();
     this.stockApi
       .getStockList({
         categoryId: this.selectedCategory() ?? undefined,
@@ -101,8 +102,8 @@ export class ProductStockListComponent implements OnInit {
       });
   }
 
-  onSearchChange(value: string): void {
-    this.searchQuery.set(value);
+  onSearch(): void {
+    this.appliedSearch.set(this.searchQuery().trim());
     this.tableFirst.set(0);
     this.loadStock();
   }
