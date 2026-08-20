@@ -102,7 +102,6 @@ export class AdminStockService {
 
   getStockMovements(productId: string, params?: {
     type?: StockMovementType;
-    search?: string;
     limit?: number;
     offset?: number;
   }): Observable<AdminStockMovementsResponse | null> {

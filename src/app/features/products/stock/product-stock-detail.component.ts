@@ -124,10 +124,8 @@ export class ProductStockDetailComponent implements OnInit {
     const id = productId ?? this.detail()?.productId;
     if (!id) return;
     this.loadingMovements.set(true);
-    const search = this.merchantSearch().trim();
     this.stockApi.getStockMovements(id, {
       type: this.movementType() ?? undefined,
-      search: search || undefined,
       limit: this.movementRows(),
       offset: this.movementFirst(),
     }).subscribe({
@@ -141,10 +139,11 @@ export class ProductStockDetailComponent implements OnInit {
         }
         const items = res.items ?? [];
         this.allMovements.set(items);
-        // If we also filter client-side (names live on row), reflect filtered count when searching.
+        const search = this.merchantSearch().trim().toLowerCase();
         if (search) {
-          const filtered = items.filter((row) => this.matchesMerchantSearch(row, search.toLowerCase()));
-          this.totalMovements.set(filtered.length);
+          this.totalMovements.set(
+            items.filter((row) => this.matchesMerchantSearch(row, search)).length
+          );
         } else {
           this.totalMovements.set(res.total ?? 0);
         }
