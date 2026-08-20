@@ -91,7 +91,22 @@ export class AdminOrdersService {
     this.loadingDetailState.set(true);
     this.errorState.set(null);
 
+    // Preserve locally known assignedMerchantId when GET omits it (backend gap).
+    const previousAssignedMerchantId =
+      this.selectedOrderState()?.id === id ? this.selectedOrderState()?.assignedMerchantId : null;
+
     return this.api.get<Order>(`admin/orders/${id}`).pipe(
+      map((order) => {
+        if (
+          order &&
+          !order.assignedMerchantId &&
+          previousAssignedMerchantId &&
+          order.status === 'ASSIGNED_TO_MERCHANT'
+        ) {
+          return { ...order, assignedMerchantId: previousAssignedMerchantId };
+        }
+        return order;
+      }),
       tap((order) => {
         this.selectedOrderState.set(order);
         this.loadingDetailState.set(false);

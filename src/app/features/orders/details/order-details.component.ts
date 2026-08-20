@@ -108,12 +108,12 @@ export class OrderDetailsComponent implements OnInit {
     return ['ASSIGNED_TO_MERCHANT', 'READY_FOR_PICKUP', 'PICKED_UP', 'COMPLETED', 'CANCELLED'].includes(o.status);
   });
 
-  // Can assign? Only for PICKUP orders now, based on user instruction
+  // Can assign merchant for OFFLINE_DELIVERY orders.
   canShowAssign = computed(() => {
     const o = this.order();
     if (!o) return false;
     return (
-      o.fulfilmentMode !== 'OFFLINE_DELIVERY' &&
+      o.fulfilmentMode === 'OFFLINE_DELIVERY' &&
       (o.status === 'PAID' || o.status === 'ASSIGNED_TO_MERCHANT') &&
       this.canAssignMerchant()
     );
@@ -126,7 +126,9 @@ export class OrderDetailsComponent implements OnInit {
     return (
       o.fulfilmentMode === 'OFFLINE_DELIVERY' &&
       o.status === 'PAID' &&
-      this.canAssignMerchant()
+      this.canAssignMerchant() &&
+      // If we can assign a merchant, prefer the merchant-assignment flow.
+      !this.canShowAssign()
     );
   });
 
@@ -365,7 +367,12 @@ export class OrderDetailsComponent implements OnInit {
 
   getAssignedMerchantName(): string {
     const o = this.order();
-    if (!o?.assignedMerchantId) return 'Not assigned';
+    if (!o?.assignedMerchantId) {
+      // Backend may set status to ASSIGNED_TO_MERCHANT without returning assignedMerchantId.
+      return o?.status === 'ASSIGNED_TO_MERCHANT'
+        ? 'Assigned (merchant ID missing from API)'
+        : 'Not assigned';
+    }
     const merchant = this.merchants().find((m) => m.id === o.assignedMerchantId);
     return merchant ? this.merchantService.getMerchantDisplayName(merchant) : o.assignedMerchantId;
   }
