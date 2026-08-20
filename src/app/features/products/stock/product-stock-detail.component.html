@@ -102,13 +102,35 @@
           <td class="px-5 py-3.5 text-xs text-slate-500">{{ row.fromLocation }}</td>
           <td class="px-5 py-3.5 text-xs text-slate-500">{{ row.toLocation }}</td>
           <td class="px-5 py-3.5 text-[11px] text-slate-400">
-            @if (row.orderId) { <span class="block">Order: {{ row.orderId }}</span> }
-            @if (row.merchantId) { <span class="block">Merchant: {{ row.merchantId }}</span> }
-            @if (row.allocationId) { <span class="block">Allocation: {{ row.allocationId }}</span> }
+            @if (orderId(row)) {
+              <span class="block">
+                Order:
+                <a
+                  [routerLink]="['/admin/orders', orderId(row)]"
+                  class="text-mlm-primary hover:underline font-medium"
+                  (click)="$event.stopPropagation()">
+                  {{ orderLabel(row) }}
+                </a>
+              </span>
+            }
+            @if (merchantId(row) || merchantLabel(row)) {
+              <span class="block">
+                Merchant:
+                <span class="font-medium text-slate-600">{{ merchantLabel(row) }}</span>
+                @if (merchantSecondaryLabel(row); as secondary) {
+                  <span class="text-slate-400"> ({{ secondary }})</span>
+                }
+              </span>
+            }
+            @if (row.allocationId) {
+              <span class="block">Allocation: {{ row.allocationId | slice:0:8 }}…</span>
+            }
           </td>
           <td class="px-5 py-3.5 text-[11px] text-slate-400">
-            {{ row.actorType }}
-            @if (row.actorId) { <span class="block">{{ row.actorId }}</span> }
+            <span class="font-medium text-slate-600">{{ row.actorType }}</span>
+            @if (actorLabel(row)) {
+              <span class="block text-slate-600">{{ actorLabel(row) }}</span>
+            }
           </td>
         </tr>
       </ng-template>

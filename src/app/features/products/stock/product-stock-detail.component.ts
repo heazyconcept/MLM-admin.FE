@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { TablePageEvent } from 'primeng/table';
@@ -23,7 +23,7 @@ interface MovementOption {
 @Component({
   selector: 'app-product-stock-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, SelectModule, DataTableComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ButtonModule, SelectModule, DataTableComponent],
   templateUrl: './product-stock-detail.component.html',
   styleUrls: ['./product-stock-detail.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -161,5 +161,51 @@ export class ProductStockDetailComponent implements OnInit {
 
   formatType(value: string): string {
     return value.replace(/_/g, ' ');
+  }
+
+  private truncateId(id: string | null | undefined): string {
+    if (!id) return '';
+    return id.length > 8 ? `${id.slice(0, 8)}…` : id;
+  }
+
+  orderId(row: AdminStockMovementRow): string | null {
+    return row.orderId || row.metadata?.orderId || null;
+  }
+
+  merchantId(row: AdminStockMovementRow): string | null {
+    return row.merchantId || row.metadata?.merchantId || null;
+  }
+
+  actorId(row: AdminStockMovementRow): string | null {
+    return row.actorId || row.metadata?.actorId || null;
+  }
+
+  orderLabel(row: AdminStockMovementRow): string {
+    const name = row.metadata?.orderName?.trim();
+    if (name) return name;
+    return this.truncateId(this.orderId(row));
+  }
+
+  merchantLabel(row: AdminStockMovementRow): string {
+    const business = row.metadata?.businessName?.trim();
+    if (business) return business;
+    const merchantName = row.metadata?.merchantName?.trim();
+    if (merchantName) return merchantName;
+    return this.truncateId(this.merchantId(row));
+  }
+
+  merchantSecondaryLabel(row: AdminStockMovementRow): string | null {
+    const business = row.metadata?.businessName?.trim();
+    const merchantName = row.metadata?.merchantName?.trim();
+    if (business && merchantName && business !== merchantName) {
+      return merchantName;
+    }
+    return null;
+  }
+
+  actorLabel(row: AdminStockMovementRow): string {
+    const name = row.metadata?.actorName?.trim();
+    if (name) return name;
+    return this.truncateId(this.actorId(row));
   }
 }

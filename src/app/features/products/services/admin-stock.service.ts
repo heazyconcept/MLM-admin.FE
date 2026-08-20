@@ -38,6 +38,16 @@ export type StockMovementType =
 export type StockLocation = 'WAREHOUSE' | 'MERCHANT' | 'CUSTOMER';
 export type StockActorType = 'ADMIN' | 'USER' | 'SYSTEM';
 
+export interface StockMovementMetadata {
+  merchantId?: string | null;
+  merchantName?: string | null;
+  businessName?: string | null;
+  orderId?: string | null;
+  orderName?: string | null;
+  actorId?: string | null;
+  actorName?: string | null;
+}
+
 export interface AdminStockMovementRow {
   id: string;
   productId: string;
@@ -50,7 +60,7 @@ export interface AdminStockMovementRow {
   allocationId?: string | null;
   actorType: StockActorType;
   actorId?: string | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: StockMovementMetadata | null;
   createdAt: string;
 }
 
