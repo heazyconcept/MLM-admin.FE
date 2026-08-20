@@ -119,6 +119,7 @@ Same metrics as list row, plus:
 | Param | Type | Notes |
 |-------|------|--------|
 | `type` | enum | Optional; see `StockMovementType` below |
+| `search` | string | Optional; filter by merchant name / business name (admin UI merchant search) |
 | `limit` | number | Default 50, max 100 |
 | `offset` | number | Default 0 |
 
@@ -135,10 +136,14 @@ Same metrics as list row, plus:
       "fromLocation": "WAREHOUSE",
       "toLocation": "MERCHANT",
       "merchantId": "uuid",
-      "orderId": null,
+      "merchantName": "CoachSpeaker",
+      "businessName": "BigAfrika Store",
+      "orderId": "uuid",
+      "orderName": "ORD-REF-A1B2C3D4",
       "allocationId": "uuid",
       "actorType": "USER",
       "actorId": "uuid",
+      "actorName": "Ada Lovelace",
       "metadata": null,
       "createdAt": "2026-05-29T10:00:00.000Z"
     }
@@ -154,11 +159,15 @@ Same metrics as list row, plus:
 | Type | When recorded |
 |------|----------------|
 | `ALLOCATION_ACCEPT` | Merchant accepts onboarding/refill allocation |
+| `ALLOCATION_DISPATCH` | Admin dispatches allocation stock to a merchant |
+| `ALLOCATION_RECEIPT` | Merchant receives/accepts a dispatched allocation |
 | `ORDER_PICKUP` | PICKUP order created with `selectedMerchantId` |
 | `ORDER_MERCHANT_ASSIGN` | Admin assigns merchant to `OFFLINE_DELIVERY` order |
 | `ADMIN_HOME_DELIVERY_APPROVE` | Admin approves home delivery without merchant (`POST /admin/orders/:id/approve`) |
 | `MANUAL_POOL_SET` | Admin sets pool via `PUT /admin/products/:id/pool` |
 | `MANUAL_MERCHANT_ADJUST` | Merchant updates inventory via `PUT /merchants/inventory/:productId/stock` |
+
+**Display fields (top-level on each movement row):** `merchantName`, `businessName`, `orderName`, `actorName` — use these in the UI instead of raw UUIDs. `metadata` may be `null`.
 
 ### `StockLocation`
 
@@ -197,6 +206,8 @@ interface AdminStockDetailResponse extends AdminStockProductRow {
 
 type StockMovementType =
   | 'ALLOCATION_ACCEPT'
+  | 'ALLOCATION_DISPATCH'
+  | 'ALLOCATION_RECEIPT'
   | 'ORDER_PICKUP'
   | 'ORDER_MERCHANT_ASSIGN'
   | 'ADMIN_HOME_DELIVERY_APPROVE'
@@ -206,19 +217,33 @@ type StockMovementType =
 type StockLocation = 'WAREHOUSE' | 'MERCHANT' | 'CUSTOMER';
 type StockActorType = 'ADMIN' | 'USER' | 'SYSTEM';
 
+interface StockMovementMetadata {
+  merchantId?: string | null;
+  merchantName?: string | null;
+  businessName?: string | null;
+  orderId?: string | null;
+  orderName?: string | null;
+  actorId?: string | null;
+  actorName?: string | null;
+}
+
 interface AdminStockMovementRow {
   id: string;
   productId: string;
   quantity: number;
-  type: StockMovementType;
+  type: StockMovementType | string;
   fromLocation: StockLocation;
   toLocation: StockLocation;
   merchantId?: string | null;
+  merchantName?: string | null;
+  businessName?: string | null;
   orderId?: string | null;
+  orderName?: string | null;
   allocationId?: string | null;
   actorType: StockActorType;
   actorId?: string | null;
-  metadata?: Record<string, unknown> | null;
+  actorName?: string | null;
+  metadata?: StockMovementMetadata | null;
   createdAt: string;
 }
 ```

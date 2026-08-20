@@ -1,27 +1,28 @@
-<div class="p-8 font-geist min-h-screen bg-mlm-background">
-  <div class="flex items-start justify-between gap-4 mb-6">
-    <div>
+<div class="p-4 sm:p-6 md:p-8 font-geist min-h-screen bg-mlm-background">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+    <div class="min-w-0">
       <button
         (click)="onBack()"
         class="text-sm text-mlm-secondary hover:text-mlm-text flex items-center gap-2 mb-2">
         <i class="pi pi-arrow-left text-xs"></i>
         Back to stock list
       </button>
-      <h1 class="text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+      <h1 class="text-xl sm:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
         Product Stock
       </h1>
-      <p class="text-sm text-mlm-secondary">
+      <p class="text-sm text-mlm-secondary break-words">
         {{ detail()?.productName || 'Loading...' }}
       </p>
     </div>
 
-    <div class="flex items-center gap-2.5 shrink-0 pt-1">
+    <div class="flex items-center gap-2.5 shrink-0 sm:pt-1">
       <button
         (click)="onAdjustWarehouse()"
         [disabled]="loadingDetail() || !detail()"
-        class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
+        class="w-full sm:w-auto h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
                text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
-               flex items-center gap-2 transition-colors duration-150">
+               flex items-center justify-center gap-2 transition-colors duration-150
+               disabled:opacity-40 disabled:cursor-not-allowed">
         <i class="pi pi-sliders-h text-xs"></i>
         Adjust warehouse
       </button>
@@ -30,111 +31,178 @@
 
   @if (loadError()) {
     <div class="mb-5 px-4 py-3 rounded-lg bg-mlm-red-50 border border-mlm-red-200
-                text-mlm-red-700 text-sm flex items-center justify-between">
+                text-mlm-red-700 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <span>{{ loadError() }}</span>
       <button (click)="loadMovements()"
-              class="flex items-center gap-1.5 underline font-medium ml-4 shrink-0">
+              class="flex items-center gap-1.5 underline font-medium shrink-0">
         <i class="pi pi-refresh text-xs"></i> Retry
       </button>
     </div>
   }
 
-  <div class="bg-white rounded-xl border border-slate-200 px-5 py-4 mb-6">
-    <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
+  <div class="bg-white rounded-xl border border-slate-200 px-4 sm:px-5 py-4 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
       @for (card of summaryCards(); track card.label) {
-        <div class="rounded-lg border border-slate-200 px-4 py-3 bg-white">
-          <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-2">
+        <div class="rounded-lg border border-slate-200 px-3 sm:px-4 py-3 bg-white min-w-0">
+          <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-2 leading-snug">
             {{ card.label }}
           </p>
           @if (loadingDetail()) {
-            <p class="text-xl font-bold text-slate-300">...</p>
+            <p class="text-lg sm:text-xl font-bold text-slate-300">...</p>
           } @else {
-            <p class="text-xl font-bold text-mlm-text tabular-nums">{{ card.value }}</p>
+            <p class="text-lg sm:text-xl font-bold text-mlm-text tabular-nums">{{ card.value }}</p>
           }
         </div>
       }
     </div>
   </div>
 
-  <div class="bg-white rounded-xl border border-slate-200 px-5 py-4 mb-6">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+  <div class="bg-white rounded-xl border border-slate-200 px-4 sm:px-5 py-4 mb-6">
+    <div class="flex flex-col gap-4">
       <div>
         <p class="text-sm font-semibold text-mlm-text">Movement history</p>
         <p class="text-xs text-mlm-secondary">Stock movement ledger for this product.</p>
       </div>
-      <div class="flex items-center gap-2">
-        <p-select
-          [options]="movementOptions"
-          [ngModel]="movementType()"
-          (ngModelChange)="onMovementTypeChange($event)"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="All types"
-          styleClass="w-56">
-        </p-select>
+
+      <div class="flex flex-col lg:flex-row lg:items-end gap-3">
+        <div class="flex-1 min-w-0">
+          <label class="block text-xs font-medium text-slate-600 mb-1.5" for="merchant-search">
+            Search merchant
+          </label>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <div class="relative flex-1 min-w-0">
+              <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2
+                        text-slate-400 text-xs pointer-events-none" aria-hidden="true"></i>
+              <input
+                id="merchant-search"
+                type="text"
+                placeholder="Merchant name or business…"
+                class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm
+                       text-mlm-text bg-white placeholder:text-slate-300
+                       focus:outline-none focus:ring-2 focus:ring-mlm-primary transition"
+                [ngModel]="merchantSearchVal()"
+                (ngModelChange)="merchantSearchVal.set($event)"
+                (keydown)="onMerchantSearchKeydown($event)" />
+            </div>
+            <div class="flex gap-2 shrink-0">
+              <button
+                type="button"
+                (click)="onMerchantSearch()"
+                class="h-9 px-4 rounded-lg text-sm font-semibold text-white
+                       bg-mlm-primary border border-mlm-primary
+                       hover:bg-brand-green-dark hover:border-brand-green-dark
+                       flex items-center justify-center gap-2 transition-colors duration-150 flex-1 sm:flex-none">
+                <i class="pi pi-search text-xs" aria-hidden="true"></i>
+                Search
+              </button>
+              @if (merchantSearch()) {
+                <button
+                  type="button"
+                  (click)="onClearMerchantSearch()"
+                  class="h-9 px-3 rounded-lg border border-slate-300 text-sm font-medium
+                         text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+                         flex items-center justify-center gap-1.5 transition-colors duration-150"
+                  aria-label="Clear merchant search">
+                  <i class="pi pi-times text-xs" aria-hidden="true"></i>
+                  Clear
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="w-full lg:w-56 shrink-0">
+          <label class="block text-xs font-medium text-slate-600 mb-1.5" for="movement-type">
+            Type
+          </label>
+          <p-select
+            inputId="movement-type"
+            [options]="movementOptions"
+            [ngModel]="movementType()"
+            (ngModelChange)="onMovementTypeChange($event)"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="All types"
+            styleClass="w-full"
+            appendTo="body">
+          </p-select>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-    <app-data-table
-      [value]="movements()"
-      [headers]="['Date', 'Type', 'Quantity', 'From', 'To', 'Refs', 'Actor']"
-      [loading]="loadingMovements()"
-      [lazy]="true"
-      [totalRecords]="totalMovements()"
-      [first]="movementFirst()"
-      [rows]="movementRows()"
-      [rowsPerPageOptions]="[25, 50, 100]"
-      (pageChange)="onMovementPageChange($event)">
+    <div class="overflow-x-auto">
+      <app-data-table
+        [value]="movements()"
+        [headers]="['Date', 'Type', 'Quantity', 'From', 'To', 'Refs', 'Actor']"
+        [loading]="loadingMovements()"
+        [lazy]="true"
+        [totalRecords]="totalMovements()"
+        [first]="movementFirst()"
+        [rows]="movementRows()"
+        [rowsPerPageOptions]="[25, 50, 100]"
+        (pageChange)="onMovementPageChange($event)">
 
-      <ng-template pTemplate="body" let-row>
-        <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100">
-          <td class="px-5 py-3.5 text-xs font-mono text-slate-400">
-            {{ row.createdAt | date:'MMM d, y, h:mm a' }}
-          </td>
-          <td class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-mlm-secondary">
-            {{ formatType(row.type) }}
-          </td>
-          <td class="px-5 py-3.5 text-sm font-semibold text-mlm-text tabular-nums text-right">
-            {{ row.quantity }}
-          </td>
-          <td class="px-5 py-3.5 text-xs text-slate-500">{{ row.fromLocation }}</td>
-          <td class="px-5 py-3.5 text-xs text-slate-500">{{ row.toLocation }}</td>
-          <td class="px-5 py-3.5 text-[11px] text-slate-400">
-            @if (orderId(row)) {
-              <span class="block">
-                Order:
-                <a
-                  [routerLink]="['/admin/orders', orderId(row)]"
-                  class="text-mlm-primary hover:underline font-medium"
-                  (click)="$event.stopPropagation()">
-                  {{ orderLabel(row) }}
-                </a>
-              </span>
-            }
-            @if (merchantId(row) || merchantLabel(row)) {
-              <span class="block">
-                Merchant:
-                <span class="font-medium text-slate-600">{{ merchantLabel(row) }}</span>
-                @if (merchantSecondaryLabel(row); as secondary) {
-                  <span class="text-slate-400"> ({{ secondary }})</span>
-                }
-              </span>
-            }
-            @if (row.allocationId) {
-              <span class="block">Allocation: {{ row.allocationId | slice:0:8 }}…</span>
-            }
-          </td>
-          <td class="px-5 py-3.5 text-[11px] text-slate-400">
-            <span class="font-medium text-slate-600">{{ row.actorType }}</span>
-            @if (actorLabel(row)) {
-              <span class="block text-slate-600">{{ actorLabel(row) }}</span>
-            }
-          </td>
-        </tr>
-      </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100">
+            <td class="px-3 sm:px-5 py-3.5 text-xs font-mono text-slate-400 whitespace-nowrap">
+              {{ row.createdAt | date:'MMM d, y, h:mm a' }}
+            </td>
+            <td class="px-3 sm:px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-mlm-secondary whitespace-nowrap">
+              {{ formatType(row.type) }}
+            </td>
+            <td class="px-3 sm:px-5 py-3.5 text-sm font-semibold text-mlm-text tabular-nums text-right">
+              {{ row.quantity }}
+            </td>
+            <td class="px-3 sm:px-5 py-3.5 text-xs text-slate-500 whitespace-nowrap">{{ row.fromLocation }}</td>
+            <td class="px-3 sm:px-5 py-3.5 text-xs text-slate-500 whitespace-nowrap">{{ row.toLocation }}</td>
+            <td class="px-3 sm:px-5 py-3.5 text-[11px] text-slate-400 min-w-[200px]">
+              @if (orderId(row)) {
+                <div class="mb-2">
+                  <p class="text-[10px] font-semibold tracking-[0.08em] text-slate-400 uppercase mb-0.5">
+                    Order
+                  </p>
+                  <p class="text-xs font-semibold text-mlm-text mb-1.5">{{ orderLabel(row) }}</p>
+                  <a
+                    [routerLink]="['/admin/orders', orderId(row)]"
+                    class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-semibold
+                           text-mlm-primary bg-emerald-50 border border-emerald-100
+                           hover:bg-emerald-100 hover:border-emerald-200
+                           transition-colors duration-150"
+                    (click)="$event.stopPropagation()">
+                    <i class="pi pi-external-link text-[10px]" aria-hidden="true"></i>
+                    View details
+                  </a>
+                </div>
+              }
+              @if (merchantId(row) || merchantLabel(row)) {
+                <div class="mb-1">
+                  <p class="text-[10px] font-semibold tracking-[0.08em] text-slate-400 uppercase mb-0.5">
+                    Merchant
+                  </p>
+                  <p class="text-xs font-medium text-slate-700">{{ merchantLabel(row) }}</p>
+                  @if (merchantSecondaryLabel(row); as secondary) {
+                    <p class="text-[11px] text-slate-400">{{ secondary }}</p>
+                  }
+                </div>
+              }
+              @if (row.allocationId) {
+                <p class="text-[11px] text-slate-400 mt-1">
+                  Allocation: {{ row.allocationId | slice:0:8 }}…
+                </p>
+              }
+            </td>
+            <td class="px-3 sm:px-5 py-3.5 text-[11px] text-slate-400 whitespace-nowrap">
+              <span class="font-medium text-slate-600">{{ row.actorType }}</span>
+              @if (actorLabel(row)) {
+                <span class="block text-slate-600">{{ actorLabel(row) }}</span>
+              }
+            </td>
+          </tr>
+        </ng-template>
 
-    </app-data-table>
+      </app-data-table>
+    </div>
   </div>
 </div>

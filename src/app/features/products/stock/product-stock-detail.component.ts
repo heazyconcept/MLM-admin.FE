@@ -36,16 +36,21 @@ export class ProductStockDetailComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   detail = signal<AdminStockDetailResponse | null>(null);
-  movements = signal<AdminStockMovementRow[]>([]);
+  private readonly allMovements = signal<AdminStockMovementRow[]>([]);
 
   loadingDetail = signal(false);
   loadingMovements = signal(false);
   loadError = signal<string | null>(null);
 
   movementType = signal<StockMovementType | null>(null);
+  merchantSearchVal = signal('');
+  merchantSearch = signal('');
+
   movementOptions: MovementOption[] = [
     { label: 'All types', value: null },
     { label: 'Allocation accept', value: 'ALLOCATION_ACCEPT' },
+    { label: 'Allocation dispatch', value: 'ALLOCATION_DISPATCH' },
+    { label: 'Allocation receipt', value: 'ALLOCATION_RECEIPT' },
     { label: 'Order pickup', value: 'ORDER_PICKUP' },
     { label: 'Order merchant assign', value: 'ORDER_MERCHANT_ASSIGN' },
     { label: 'Admin home delivery approve', value: 'ADMIN_HOME_DELIVERY_APPROVE' },
@@ -56,6 +61,13 @@ export class ProductStockDetailComponent implements OnInit {
   totalMovements = signal(0);
   movementFirst = signal(0);
   movementRows = signal(50);
+
+  movements = computed(() => {
+    const query = this.merchantSearch().trim().toLowerCase();
+    const rows = this.allMovements();
+    if (!query) return rows;
+    return rows.filter((row) => this.matchesMerchantSearch(row, query));
+  });
 
   summaryCards = computed(() => {
     const data = this.detail();
@@ -112,8 +124,10 @@ export class ProductStockDetailComponent implements OnInit {
     const id = productId ?? this.detail()?.productId;
     if (!id) return;
     this.loadingMovements.set(true);
+    const search = this.merchantSearch().trim();
     this.stockApi.getStockMovements(id, {
       type: this.movementType() ?? undefined,
+      search: search || undefined,
       limit: this.movementRows(),
       offset: this.movementFirst(),
     }).subscribe({
@@ -121,17 +135,24 @@ export class ProductStockDetailComponent implements OnInit {
         this.loadingMovements.set(false);
         if (!res) {
           this.loadError.set('Failed to load movement history.');
-          this.movements.set([]);
+          this.allMovements.set([]);
           this.totalMovements.set(0);
           return;
         }
-        this.movements.set(res.items ?? []);
-        this.totalMovements.set(res.total ?? 0);
+        const items = res.items ?? [];
+        this.allMovements.set(items);
+        // If we also filter client-side (names live on row), reflect filtered count when searching.
+        if (search) {
+          const filtered = items.filter((row) => this.matchesMerchantSearch(row, search.toLowerCase()));
+          this.totalMovements.set(filtered.length);
+        } else {
+          this.totalMovements.set(res.total ?? 0);
+        }
       },
       error: () => {
         this.loadingMovements.set(false);
         this.loadError.set('Failed to load movement history.');
-        this.movements.set([]);
+        this.allMovements.set([]);
         this.totalMovements.set(0);
       },
     });
@@ -141,6 +162,26 @@ export class ProductStockDetailComponent implements OnInit {
     this.movementType.set(value);
     this.movementFirst.set(0);
     this.loadMovements();
+  }
+
+  onMerchantSearch(): void {
+    this.merchantSearch.set(this.merchantSearchVal().trim());
+    this.movementFirst.set(0);
+    this.loadMovements();
+  }
+
+  onClearMerchantSearch(): void {
+    this.merchantSearchVal.set('');
+    this.merchantSearch.set('');
+    this.movementFirst.set(0);
+    this.loadMovements();
+  }
+
+  onMerchantSearchKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.onMerchantSearch();
+    }
   }
 
   onMovementPageChange(event: TablePageEvent): void {
@@ -163,6 +204,21 @@ export class ProductStockDetailComponent implements OnInit {
     return value.replace(/_/g, ' ');
   }
 
+  private matchesMerchantSearch(row: AdminStockMovementRow, query: string): boolean {
+    const haystack = [
+      row.businessName,
+      row.merchantName,
+      row.merchantId,
+      row.metadata?.businessName,
+      row.metadata?.merchantName,
+      row.metadata?.merchantId,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return haystack.includes(query);
+  }
+
   private truncateId(id: string | null | undefined): string {
     if (!id) return '';
     return id.length > 8 ? `${id.slice(0, 8)}…` : id;
@@ -181,22 +237,22 @@ export class ProductStockDetailComponent implements OnInit {
   }
 
   orderLabel(row: AdminStockMovementRow): string {
-    const name = row.metadata?.orderName?.trim();
+    const name = row.orderName?.trim() || row.metadata?.orderName?.trim();
     if (name) return name;
     return this.truncateId(this.orderId(row));
   }
 
   merchantLabel(row: AdminStockMovementRow): string {
-    const business = row.metadata?.businessName?.trim();
+    const business = row.businessName?.trim() || row.metadata?.businessName?.trim();
     if (business) return business;
-    const merchantName = row.metadata?.merchantName?.trim();
+    const merchantName = row.merchantName?.trim() || row.metadata?.merchantName?.trim();
     if (merchantName) return merchantName;
     return this.truncateId(this.merchantId(row));
   }
 
   merchantSecondaryLabel(row: AdminStockMovementRow): string | null {
-    const business = row.metadata?.businessName?.trim();
-    const merchantName = row.metadata?.merchantName?.trim();
+    const business = row.businessName?.trim() || row.metadata?.businessName?.trim();
+    const merchantName = row.merchantName?.trim() || row.metadata?.merchantName?.trim();
     if (business && merchantName && business !== merchantName) {
       return merchantName;
     }
@@ -204,7 +260,7 @@ export class ProductStockDetailComponent implements OnInit {
   }
 
   actorLabel(row: AdminStockMovementRow): string {
-    const name = row.metadata?.actorName?.trim();
+    const name = row.actorName?.trim() || row.metadata?.actorName?.trim();
     if (name) return name;
     return this.truncateId(this.actorId(row));
   }
