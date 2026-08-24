@@ -388,6 +388,11 @@ export class SidebarComponent {
           ],
         },
         {
+          label: 'Change password',
+          icon: 'pi pi-key',
+          route: '/change-password',
+        },
+        {
           label: 'Log out',
           icon: 'pi pi-sign-out',
           action: () => this.logout(),

@@ -29,7 +29,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      if (req.url.includes('users/me/password')) {
+      // Let the change-password form show its own error UI
+      if (req.url.includes('admin/me/password') || req.url.includes('users/me/password')) {
         return throwError(() => error);
       }
 

@@ -95,9 +95,10 @@ export class AuthService {
     );
   }
 
+  /** PUT /admin/me/password — logged-in admin changes own console password */
   changePassword(currentPassword: string, newPassword: string): Observable<void> {
     const body: ChangePasswordRequest = { currentPassword, newPassword };
-    return this.api.put<void>('users/me/password', body).pipe(
+    return this.api.put<void>('admin/me/password', body).pipe(
       tap(() => this.setMustChangePassword(false))
     );
   }
