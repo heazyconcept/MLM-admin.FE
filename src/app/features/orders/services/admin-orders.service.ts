@@ -26,6 +26,7 @@ export class AdminOrdersService {
   private readonly errorState = signal<string | null>(null);
   private readonly assigningState = signal<boolean>(false);
   private readonly approvingState = signal<boolean>(false);
+  private readonly cancellingState = signal<boolean>(false);
 
   // ── Public readonly signals ────────────────────────────────
   readonly orders = this.ordersState.asReadonly();
@@ -36,6 +37,7 @@ export class AdminOrdersService {
   readonly error = this.errorState.asReadonly();
   readonly assigning = this.assigningState.asReadonly();
   readonly approving = this.approvingState.asReadonly();
+  readonly cancelling = this.cancellingState.asReadonly();
 
   // ── Computed counts ────────────────────────────────────────
   readonly paidCount = computed(() => this.ordersState().filter((o) => o.status === 'PAID').length);
@@ -180,6 +182,41 @@ export class AdminOrdersService {
         return of(null);
       })
     );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  //  POST /admin/orders/:id/cancel
+  // ────────────────────────────────────────────────────────────
+  cancelOrder(
+    orderId: string,
+    reason: string
+  ): Observable<{ message: string; orderId: string; status: OrderStatus } | null> {
+    this.cancellingState.set(true);
+    this.errorState.set(null);
+
+    return this.api
+      .post<{ message: string; orderId: string; status: OrderStatus }>(`admin/orders/${orderId}/cancel`, {
+        reason,
+      })
+      .pipe(
+        tap((res) => {
+          this.cancellingState.set(false);
+          const cancelledStatus = (res?.status ?? 'CANCELLED') as OrderStatus;
+          this.ordersState.update((list) =>
+            list.map((o) => (o.id === orderId ? { ...o, status: cancelledStatus, cancelReason: reason } : o))
+          );
+          if (this.selectedOrderState()?.id === orderId) {
+            this.selectedOrderState.update((o) =>
+              o ? { ...o, status: cancelledStatus, cancelReason: reason } : o
+            );
+          }
+        }),
+        catchError((err) => {
+          this.cancellingState.set(false);
+          this.errorState.set(err?.error?.message ?? err?.message ?? 'Failed to cancel order');
+          return of(null);
+        })
+      );
   }
 
   // ────────────────────────────────────────────────────────────

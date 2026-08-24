@@ -83,6 +83,9 @@ export interface Order {
   checkoutBatchId?: string | null;
   pickedUpAt?: string | null;
   completedAt?: string | null;
+  cancelledAt?: string | null;
+  cancelReason?: string | null;
+  cancelledByAdminId?: string | null;
   dispute?: OrderDisputeSummary | null;
   items: OrderItem[];
   createdAt: string;
