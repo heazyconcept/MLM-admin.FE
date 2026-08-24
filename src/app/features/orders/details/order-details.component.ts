@@ -17,10 +17,24 @@ import { AdminOrdersService } from '../services/admin-orders.service';
 import { MerchantService, Merchant } from '../../merchants/services/merchant.service';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
+import {
+  ConfirmationModalComponent,
+  ConfirmationResult,
+} from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { Order, OrderStatus, FulfilmentMode, CustomerType } from '../../../core/models/order.model';
 import { PermissionService } from '../../../core/services/permission.service';
 import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { StockRefreshService } from '../../products/services/stock-refresh.service';
+
+const CANCELLABLE_STATUSES: OrderStatus[] = [
+  'PENDING',
+  'CREATED',
+  'PAID',
+  'APPROVED',
+  'ASSIGNED_TO_MERCHANT',
+  'READY_FOR_PICKUP',
+  'OFFLINE_DELIVERY_REQUESTED',
+];
 
 @Component({
   selector: 'app-order-details',
@@ -30,6 +44,7 @@ import { StockRefreshService } from '../../products/services/stock-refresh.servi
     FormsModule,
     InfoBannerComponent,
     StatusBadgeComponent,
+    ConfirmationModalComponent,
     ButtonModule,
     TagModule,
     SelectModule,
@@ -62,10 +77,12 @@ export class OrderDetailsComponent implements OnInit {
   loadError = this.ordersService.error;
   assigning = this.ordersService.assigning;
   approving = this.ordersService.approving;
+  cancelling = this.ordersService.cancelling;
   markSentLoading = signal(false);
   confirmDeliveryLoading = signal(false);
   deliveryProof = signal('');
   deliveryNotes = signal('');
+  showCancelModal = signal(false);
 
   // Merchant picker state
   merchants = this.merchantService.merchants;
@@ -155,6 +172,19 @@ export class OrderDetailsComponent implements OnInit {
     return this.canShowDeliveryActions() && !!o.sentAt && !o.receivedAt;
   });
 
+  canShowCancel = computed(() => {
+    const o = this.order();
+    if (!o || !this.canAssignMerchant()) return false;
+    if (this.hasOpenDispute()) return false;
+    return CANCELLABLE_STATUSES.includes(o.status);
+  });
+
+  showCancelAudit = computed(() => {
+    const o = this.order();
+    if (!o || o.status !== 'CANCELLED') return false;
+    return !!(o.cancelledAt || o.cancelReason || o.cancelledByAdminId);
+  });
+
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const id = params.get('id');
@@ -216,6 +246,49 @@ export class OrderDetailsComponent implements OnInit {
           severity: 'error',
           summary: 'Approval Failed',
           detail: this.ordersService.error() || 'Failed to approve order.',
+        });
+      }
+    });
+  }
+
+  openCancelModal(): void {
+    this.showCancelModal.set(true);
+  }
+
+  onCancelModalDismiss(): void {
+    if (this.cancelling()) return;
+    this.showCancelModal.set(false);
+  }
+
+  onCancelOrderConfirm(event: ConfirmationResult): void {
+    if (!event.confirmed) {
+      this.showCancelModal.set(false);
+      return;
+    }
+
+    const reason = (event.reason ?? '').trim();
+    if (reason.length < 5) return;
+
+    const order = this.order();
+    if (!order) return;
+
+    this.ordersService.cancelOrder(order.id, reason).subscribe((res) => {
+      if (res) {
+        this.showCancelModal.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Order Cancelled',
+          detail:
+            res.message ||
+            'Order cancelled. Reserved stock was restored and wallet refunds applied when applicable.',
+        });
+        this.emitStockRefresh(order);
+        this.ordersService.loadOrder(order.id).subscribe();
+      } else {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Cancel Failed',
+          detail: this.ordersService.error() || 'Failed to cancel order.',
         });
       }
     });

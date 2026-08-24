@@ -52,6 +52,8 @@ export class ProductStockDetailComponent implements OnInit {
     { label: 'Allocation dispatch', value: 'ALLOCATION_DISPATCH' },
     { label: 'Allocation receipt', value: 'ALLOCATION_RECEIPT' },
     { label: 'Order pickup', value: 'ORDER_PICKUP' },
+    { label: 'Order pickup release', value: 'ORDER_PICKUP_RELEASE' },
+    { label: 'Order stock restore', value: 'ORDER_STOCK_RESTORE' },
     { label: 'Order merchant assign', value: 'ORDER_MERCHANT_ASSIGN' },
     { label: 'Admin home delivery approve', value: 'ADMIN_HOME_DELIVERY_APPROVE' },
     { label: 'Manual pool set', value: 'MANUAL_POOL_SET' },

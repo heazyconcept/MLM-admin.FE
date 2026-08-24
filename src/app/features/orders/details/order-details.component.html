@@ -59,6 +59,19 @@
         </div>
       </div>
 
+      @if (canShowCancel()) {
+        <button
+          type="button"
+          (click)="openCancelModal()"
+          class="h-9 px-4 rounded-lg text-sm font-semibold
+                 text-red-700 bg-red-50 border border-red-200
+                 hover:bg-red-100 hover:border-red-300
+                 inline-flex items-center gap-2 transition-colors duration-150 shrink-0">
+          <i class="pi pi-times-circle text-xs" aria-hidden="true"></i>
+          Cancel order
+        </button>
+      }
+
     </div>
   </div>
 
@@ -289,6 +302,29 @@
                   Completed At
                 </p>
                 <p class="text-sm text-mlm-text">{{ o.completedAt | date:'MMM d, y · h:mm a' }}</p>
+              </div>
+            }
+
+            @if (showCancelAudit()) {
+              <div class="md:col-span-2 rounded-lg border border-red-100 bg-red-50/60 p-4 space-y-2">
+                <p class="text-[10px] font-semibold tracking-[0.12em] text-red-700 uppercase">
+                  Cancellation
+                </p>
+                @if (o.cancelledAt) {
+                  <p class="text-sm text-mlm-text">
+                    Cancelled {{ o.cancelledAt | date:'MMM d, y · h:mm a' }}
+                  </p>
+                }
+                @if (o.cancelReason) {
+                  <p class="text-sm text-mlm-text">
+                    <span class="text-slate-500">Reason:</span> {{ o.cancelReason }}
+                  </p>
+                }
+                @if (o.cancelledByAdminId) {
+                  <p class="text-xs font-mono text-slate-500" [pTooltip]="o.cancelledByAdminId" tooltipPosition="top">
+                    By admin: {{ o.cancelledByAdminId | slice:0:8 }}…
+                  </p>
+                }
               </div>
             }
           </div>
@@ -678,3 +714,19 @@
     </div>
   </div>
 }
+
+<app-confirmation-modal
+  [visible]="showCancelModal()"
+  title="Cancel order"
+  message="This will cancel the order, restore any reserved stock, and refund Product Voucher / unwind earnings when the order was paid by wallet. Members cannot undo this."
+  confirmLabel="Cancel order"
+  confirmClass="p-button-danger"
+  cancelLabel="Keep order"
+  [showReasonField]="true"
+  [reasonRequired]="true"
+  [reasonMinLength]="5"
+  reasonPlaceholder="Customer requested cancellation / stock correction / duplicate order"
+  [loading]="cancelling()"
+  (confirm)="onCancelOrderConfirm($event)"
+  (cancel)="onCancelModalDismiss()">
+</app-confirmation-modal>

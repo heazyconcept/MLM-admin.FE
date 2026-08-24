@@ -23,8 +23,14 @@
           rows="3"
           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mlm-primary/50 focus:border-mlm-primary resize-none">
         </textarea>
-        @if (reasonRequired() && !(reasonControl.value || '').trim()) {
-          <small class="text-mlm-error">Reason is required</small>
+        @if (reasonRequired() && isReasonInvalid()) {
+          <small class="text-mlm-error">
+            @if (reasonMinLength() > 0) {
+              Enter at least {{ reasonMinLength() }} characters
+            } @else {
+              Reason is required
+            }
+          </small>
         }
       </div>
     }
@@ -46,10 +52,9 @@
         [label]="confirmLabel()"
         [class]="confirmClass()"
         [icon]="loading() ? 'pi pi-spin pi-spinner' : ''"
-        [disabled]="confirmDisabled() || loading() || (showReasonField() && reasonRequired() && !(reasonControl.value || '').trim())"
+        [disabled]="confirmDisabled() || loading() || isReasonInvalid()"
         (click)="onConfirm()">
       </button>
     </div>
   </ng-template>
 </p-dialog>
-
