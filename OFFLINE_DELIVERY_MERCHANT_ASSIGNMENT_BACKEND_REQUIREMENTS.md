@@ -29,6 +29,7 @@ Backend must validate:
 - Order exists.
 - `order.fulfilmentMode === "OFFLINE_DELIVERY"`.
 - `order.status` is one of:
+  - `PENDING`
   - `PAID`
   - `ASSIGNED_TO_MERCHANT` (reassignment scenario)
 - Merchant exists and `merchant.status === "ACTIVE"`.

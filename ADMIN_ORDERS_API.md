@@ -156,13 +156,13 @@ Example:
 
 **Errors:** 404 if order not found.
 
-**Frontend:** Order detail page; show items, customer (user), payment, and for OFFLINE_DELIVERY show “Assign merchant” when status is PAID or ASSIGNED_TO_MERCHANT.
+**Frontend:** Order detail page; show items, customer (user), payment, and for OFFLINE_DELIVERY show “Assign merchant” when status is PENDING, PAID, or ASSIGNED_TO_MERCHANT.
 
 ---
 
 ## POST /admin/orders/{id}/assign-merchant
 
-**Purpose:** Assign a merchant to an **OFFLINE_DELIVERY** order. Order must be in status `PAID` or `ASSIGNED_TO_MERCHANT` (for reassignment). The merchant must be ACTIVE and must support all products in the order. Sets `assignedMerchantId` and order status to `ASSIGNED_TO_MERCHANT`.
+**Purpose:** Assign a merchant to an **OFFLINE_DELIVERY** order. Order must be in status `PENDING`, `PAID`, or `ASSIGNED_TO_MERCHANT` (for reassignment). The merchant must be ACTIVE and must support all products in the order. Sets `assignedMerchantId` and order status to `ASSIGNED_TO_MERCHANT`.
 
 **Request**
 
@@ -192,9 +192,9 @@ Example:
 **Errors**
 
 - **404** — Order not found.
-- **400** — Order status is not `PAID` or `ASSIGNED_TO_MERCHANT`; or order is not `OFFLINE_DELIVERY`; or order has no items; or merchant does not support one or more products in the order; or merchant not ACTIVE.
+- **400** — Order status is not `PENDING`, `PAID`, or `ASSIGNED_TO_MERCHANT`; or order is not `OFFLINE_DELIVERY`; or order has no items; or merchant does not support one or more products in the order; or merchant not ACTIVE.
 
-**Frontend:** On order detail for OFFLINE_DELIVERY orders in PAID/ASSIGNED_TO_MERCHANT, show a control to pick a merchant (e.g. from `GET /admin/merchants` or a dedicated picker) and POST `{ "merchantId": "..." }`. Then refresh order to show assigned merchant and status.
+**Frontend:** On order detail for OFFLINE_DELIVERY orders in PENDING/PAID/ASSIGNED_TO_MERCHANT, show a control to pick a merchant (e.g. from `GET /admin/merchants` or a dedicated picker) and POST `{ "merchantId": "..." }`. Then refresh order to show assigned merchant and status.
 
 ---
 
@@ -202,4 +202,4 @@ Example:
 
 1. **List:** Use `GET /admin/orders` with query params for status, fulfilmentMode, date range, userId, productId, etc. Paginate with `limit` and `offset`; use `total` for total count.
 2. **Detail:** Use `GET /admin/orders/{id}` for the full order, user, and payment. Use `status` and `fulfilmentMode` to decide which actions to show.
-3. **Assign merchant:** Only for `fulfilmentMode === OFFLINE_DELIVERY` and status `PAID` or `ASSIGNED_TO_MERCHANT`. Send `POST /admin/orders/{id}/assign-merchant` with `{ "merchantId": "uuid" }`. Ensure the chosen merchant is ACTIVE and has the order’s products assigned (e.g. from `GET /admin/merchants/{id}/products`).
+3. **Assign merchant:** Only for `fulfilmentMode === OFFLINE_DELIVERY` and status `PENDING`, `PAID`, or `ASSIGNED_TO_MERCHANT`. Send `POST /admin/orders/{id}/assign-merchant` with `{ "merchantId": "uuid" }`. Ensure the chosen merchant is ACTIVE and has the order’s products assigned (e.g. from `GET /admin/merchants/{id}/products`).

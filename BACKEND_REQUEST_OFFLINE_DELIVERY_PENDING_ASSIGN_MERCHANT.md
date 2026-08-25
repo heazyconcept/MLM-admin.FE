@@ -5,7 +5,7 @@
 **Scope:** `POST /admin/orders/{id}/assign-merchant` must accept `PENDING` for `OFFLINE_DELIVERY` orders  
 **Related:** [ADMIN_ORDERS_API.md](./ADMIN_ORDERS_API.md), [OFFLINE_DELIVERY_MERCHANT_ASSIGNMENT_BACKEND_REQUIREMENTS.md](./OFFLINE_DELIVERY_MERCHANT_ASSIGNMENT_BACKEND_REQUIREMENTS.md)  
 **Priority:** High — admins cannot assign merchants on live Pending offline-delivery orders  
-**Status:** Waiting on backend
+**Status:** Done / shipped (backend accepts `PENDING`; FE `canShowAssign` includes `PENDING`)
 
 ---
 
@@ -103,8 +103,9 @@ so Pending offline-delivery orders show the Assign Merchant picker.
 
 ## 6. Acceptance checklist
 
-- [ ] `POST /admin/orders/{id}/assign-merchant` succeeds for `OFFLINE_DELIVERY` + `PENDING`
-- [ ] Order becomes `ASSIGNED_TO_MERCHANT` with `assignedMerchantId` set
-- [ ] Existing `PAID` / reassign (`ASSIGNED_TO_MERCHANT`) paths still work
-- [ ] Example order `300e5e3a-532d-41f3-b3e3-c302676d440f` (or equivalent Pending offline-delivery) can be assigned
-- [ ] API docs updated with `PENDING` in allowed statuses
+- [x] `POST /admin/orders/{id}/assign-merchant` succeeds for `OFFLINE_DELIVERY` + `PENDING`
+- [x] Order becomes `ASSIGNED_TO_MERCHANT` with `assignedMerchantId` set
+- [x] Existing `PAID` / reassign (`ASSIGNED_TO_MERCHANT`) paths still work
+- [ ] Example order `300e5e3a-532d-41f3-b3e3-c302676d440f` (or equivalent Pending offline-delivery) can be assigned — verify in env after deploy
+- [x] API docs updated with `PENDING` in allowed statuses
+- [x] FE shows Assign Merchant for `PENDING` offline-delivery orders (`canShowAssign`)
