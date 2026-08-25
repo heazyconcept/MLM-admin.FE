@@ -63,8 +63,10 @@
                         <li>
                           <a
                             [routerLink]="subitem.route"
+                            [queryParams]="subitem.queryParams ?? null"
                             (click)="onNavClick()"
                             routerLinkActive="bg-mlm-green-100 text-mlm-primary"
+                            [routerLinkActiveOptions]="{ paths: 'exact', queryParams: 'exact', fragment: 'ignored', matrixParams: 'ignored' }"
                             class="flex items-center gap-3 px-3 py-2 rounded-lg text-mlm-text hover:bg-mlm-green-50 transition-colors text-sm">
                             <i [class]="subitem.icon" class="text-base"></i>
                             <span>{{ subitem.label }}</span>
