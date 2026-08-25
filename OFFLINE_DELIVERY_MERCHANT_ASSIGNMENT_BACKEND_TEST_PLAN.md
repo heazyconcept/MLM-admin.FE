@@ -45,6 +45,20 @@ Test the end-to-end flow:
     - metadata includes `orderId`
   - Merchant can discover it via `GET /notifications` (at least in-app).
 
+### A1b. Happy path assignment (PENDING -> ASSIGNED_TO_MERCHANT)
+**Given**
+- An order with:
+  - `fulfilmentMode = OFFLINE_DELIVERY`
+  - `status = PENDING`
+  - `assignedMerchantId = null`
+- Same ACTIVE merchant preconditions as A1
+
+**When**
+- Admin calls `POST /admin/orders/:orderId/assign-merchant` with `{ "merchantId": "<active-merchant-id>" }`
+
+**Then**
+- Same success outcomes as A1 (`200`, `assignedMerchantId` set, `status = ASSIGNED_TO_MERCHANT`, stock movement, merchant notification)
+
 ### A2. Merchant not active
 **Then**
 - Response `400`
@@ -66,12 +80,11 @@ Test the end-to-end flow:
 
 ### A5. Invalid order status
 Try each invalid status:
-- `status != PAID && status != ASSIGNED_TO_MERCHANT`
+- `status` is not one of `PENDING`, `PAID`, or `ASSIGNED_TO_MERCHANT`
 
 **Then**
 - Response `400`
 - No stock movement / no notification / no order state change
-
 ### A6. Reassignment idempotency (same merchant)
 **Given**
 - Order already `assignedMerchantId = merchantId`

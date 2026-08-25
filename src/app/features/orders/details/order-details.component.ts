@@ -131,7 +131,7 @@ export class OrderDetailsComponent implements OnInit {
     if (!o) return false;
     return (
       o.fulfilmentMode === 'OFFLINE_DELIVERY' &&
-      (o.status === 'PAID' || o.status === 'ASSIGNED_TO_MERCHANT') &&
+      (o.status === 'PENDING' || o.status === 'PAID' || o.status === 'ASSIGNED_TO_MERCHANT') &&
       this.canAssignMerchant()
     );
   });
