@@ -17,6 +17,7 @@ interface MenuItem {
   label: string;
   icon: string;
   route?: string;
+  queryParams?: Record<string, string>;
   feature?: Feature;
   permissionKey?: string;
   badge?: number;
@@ -250,6 +251,27 @@ export class SidebarComponent {
               label: 'All Orders',
               icon: 'pi pi-list',
               route: '/admin/orders',
+              permissionKey: 'orders.view',
+            },
+            {
+              label: 'Pending Orders',
+              icon: 'pi pi-clock',
+              route: '/admin/orders',
+              queryParams: { status: 'PENDING' },
+              permissionKey: 'orders.view',
+            },
+            {
+              label: 'Failed Orders',
+              icon: 'pi pi-times-circle',
+              route: '/admin/orders',
+              queryParams: { status: 'FAILED' },
+              permissionKey: 'orders.view',
+            },
+            {
+              label: 'Delivered Orders',
+              icon: 'pi pi-check-circle',
+              route: '/admin/orders',
+              queryParams: { status: 'DELIVERED' },
               permissionKey: 'orders.view',
             },
             {

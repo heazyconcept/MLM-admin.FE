@@ -1,8 +1,9 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 
 // PrimeNG
 import { TableModule } from 'primeng/table';
@@ -18,6 +19,22 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { AdminOrdersService } from '../services/admin-orders.service';
 import { Order, OrderStatus, FulfilmentMode, CustomerType, AdminOrderFilters } from '../../../core/models/order.model';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
+
+const KNOWN_STATUSES = new Set<string>([
+  'PENDING',
+  'CREATED',
+  'PAID',
+  'APPROVED',
+  'ASSIGNED_TO_MERCHANT',
+  'READY_FOR_PICKUP',
+  'PICKED_UP',
+  'OFFLINE_DELIVERY_REQUESTED',
+  'FULFILLED',
+  'DELIVERED',
+  'COMPLETED',
+  'CANCELLED',
+  'FAILED',
+]);
 
 @Component({
   selector: 'app-order-list',
@@ -42,6 +59,7 @@ import { DataTableComponent } from '../../../shared/components/data-table/data-t
 export class OrderListComponent implements OnInit {
   private ordersService = inject(AdminOrdersService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
 
   // State from service
@@ -106,12 +124,25 @@ export class OrderListComponent implements OnInit {
   ]);
 
   ngOnInit(): void {
-    this.loadOrders();
+    // Drive loads from URL status so sidebar shortcuts and dropdown stay aligned
+    // without double-fetching when the FormControl is updated from the query.
+    this.route.queryParamMap
+      .pipe(
+        map((params) => params.get('status')),
+        map((status) => (status && KNOWN_STATUSES.has(status) ? status : 'all')),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((status) => {
+        if (this.selectedStatusControl.value !== status) {
+          this.selectedStatusControl.setValue(status, { emitEvent: false });
+        }
+        this.loadOrders();
+      });
 
-    // Re-fetch when filters change
     this.selectedStatusControl.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.loadOrders());
+      .subscribe((status) => this.syncStatusToUrl(status));
 
     this.selectedFulfilmentControl.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -171,6 +202,22 @@ export class OrderListComponent implements OnInit {
 
   getOrderCustomerUsername(order: Order): string {
     return this.ordersService.getOrderCustomerUsername(order);
+  }
+
+  private syncStatusToUrl(status: string | null): void {
+    const next = status && status !== 'all' ? status : null;
+    const current = this.route.snapshot.queryParamMap.get('status');
+    if (current === next) {
+      this.loadOrders();
+      return;
+    }
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { status: next },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   private buildFilters(): AdminOrderFilters {
