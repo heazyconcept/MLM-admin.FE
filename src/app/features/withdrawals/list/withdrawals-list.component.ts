@@ -148,14 +148,17 @@ export class WithdrawalsListComponent implements OnInit {
         align: 'right',
         formatter: (value: unknown, row: WithdrawalRequest) => `${row.currency} ${Number(value).toLocaleString()}`
       },
-      {   
-        field: 'destination',
-        header: 'Destination',
-        width: '200px',
-        formatter: (value: unknown) => {
-          const s = String(value ?? '');
-          return s.length > 30 ? s.substring(0, 30) + '...' : s;
-        }
+      {
+        field: 'accountNumber',
+        header: 'Account Number',
+        width: '160px',
+        formatter: (value: unknown) => String(value ?? '—') || '—',
+      },
+      {
+        field: 'bankName',
+        header: 'Bank',
+        width: '160px',
+        formatter: (value: unknown) => String(value ?? '—') || '—',
       },
       {
         field: 'status',

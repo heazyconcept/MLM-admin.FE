@@ -15,6 +15,8 @@ export interface WithdrawalRequest {
   amount: number;
   currency: Currency;
   destination: string;
+  bankName?: string;
+  accountNumber?: string;
   destinationType: 'Bank Account' | 'Crypto Wallet' | 'Mobile Money';
   status: WithdrawalStatus;
   requestDate: Date;
@@ -258,9 +260,11 @@ export class WithdrawalService {
       userEmail: (item.metadata?.['userEmail'] as string) || '',
       amount: item.amount,
       currency: (item.currency as Currency) ?? 'NGN',
-      destination: item.bankName && item.accountNumber
-        ? `${item.bankName} • ${item.accountNumber}`
-        : '',
+      bankName: item.bankName,
+      accountNumber: item.accountNumber,
+      destination: item.accountNumber && item.bankName
+        ? `${item.accountNumber} • ${item.bankName}`
+        : item.accountNumber || item.bankName || '',
       destinationType: 'Bank Account',
       status,
       requestDate: new Date(item.createdAt),
