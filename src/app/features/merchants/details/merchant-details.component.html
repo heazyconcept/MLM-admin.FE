@@ -53,15 +53,103 @@
       (cancel)="handleModalCancel('reactivate')">
     </app-confirmation-modal>
 
-    <app-confirmation-modal
+    <p-dialog
       [visible]="showRefillModal()"
-      title="Refill Merchant Stock"
-      message="This will create new onboarding allocations for this ACTIVE merchant based on merchant category config."
-      confirmLabel="Refill"
-      cancelLabel="Cancel"
-      (confirm)="handleRefillConfirm($event)"
-      (cancel)="handleModalCancel('refill')">
-    </app-confirmation-modal>
+      [modal]="true"
+      [style]="{ width: '560px' }"
+      [draggable]="false"
+      [resizable]="false"
+      [closable]="false"
+      [showHeader]="false"
+      (onHide)="handleModalCancel('refill')">
+
+      <div class="relative bg-white rounded-xl">
+        <button
+          type="button"
+          (click)="handleModalCancel('refill')"
+          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+          aria-label="Close refill dialog">
+          <i class="pi pi-times"></i>
+        </button>
+
+        <div class="px-6 pt-6 pb-4 border-b border-gray-100">
+          <h3 class="text-xl font-semibold text-gray-900">Refill Merchant Stock</h3>
+          <p class="text-sm text-gray-500 mt-0.5">
+            Select which onboarding products to refill. Quantities default from category config.
+          </p>
+        </div>
+
+        <div class="px-6 py-5 max-h-[360px] overflow-y-auto space-y-3">
+          @if (refillRows().length === 0) {
+            <p class="text-sm text-gray-500">No onboarding products configured for this merchant type.</p>
+          } @else {
+            @for (row of refillRows(); track row.productId) {
+              <div
+                class="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-gray-200 px-3 py-3"
+                [class.border-mlm-primary]="row.selected"
+                [class.bg-brand-green-light/30]="row.selected">
+                <label class="flex items-start gap-3 flex-1 min-w-0 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    class="mt-1 h-4 w-4 rounded border-gray-300 text-mlm-primary focus:ring-mlm-primary"
+                    [checked]="row.selected"
+                    (change)="onRefillSelectionChange($event, row.productId)" />
+                  <span class="min-w-0">
+                    <span class="block text-sm font-medium text-gray-900 truncate">{{ row.productName }}</span>
+                    <span class="block text-xs text-gray-500 mt-0.5">
+                      Pool available: {{ row.available }}
+                    </span>
+                  </span>
+                </label>
+                <div class="flex items-center gap-2 sm:shrink-0">
+                  <label class="text-xs text-gray-500" [attr.for]="'refill-qty-' + row.productId">Qty</label>
+                  <input
+                    type="number"
+                    [id]="'refill-qty-' + row.productId"
+                    min="1"
+                    step="1"
+                    [disabled]="!row.selected"
+                    [ngModel]="row.quantity"
+                    (ngModelChange)="onRefillQuantityChange(row.productId, $event)"
+                    class="w-20 h-9 px-2 rounded-lg border border-gray-300 text-sm text-gray-900 tabular-nums
+                           disabled:bg-gray-50 disabled:text-gray-400 focus:outline-none focus:ring-2 focus:ring-mlm-primary" />
+                </div>
+              </div>
+            }
+          }
+
+          @if (selectedRefillShortages().length > 0) {
+            <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-1.5">
+              <p class="text-xs font-semibold text-amber-900">Insufficient admin pool for selected products</p>
+              @for (row of selectedRefillShortages(); track row.productId) {
+                <p class="text-xs text-amber-800">
+                  {{ row.productName }} · Need {{ row.required }} · Have {{ row.available }} · Short {{ row.shortBy }}
+                </p>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 rounded-b-xl">
+          <button
+            type="button"
+            pButton
+            label="Cancel"
+            class="p-button-text p-button-secondary font-medium"
+            (click)="handleModalCancel('refill')">
+          </button>
+          <button
+            type="button"
+            pButton
+            [label]="refillLoading() ? 'Refilling...' : 'Refill selected'"
+            [icon]="refillLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"
+            class="p-button-primary font-medium"
+            [disabled]="!canConfirmRefill() || refillLoading()"
+            (click)="handleRefillConfirm()">
+          </button>
+        </div>
+      </div>
+    </p-dialog>
 
     <!-- Beautiful Unique Assign Product Modal -->
     <p-dialog
@@ -318,7 +406,7 @@
                 @if (canApprove()) {
                   Onboarding pool stock is below the configured requirement. You can still approve this merchant who has paid — top up stock when you are ready to fulfill allocations.
                 } @else {
-                  Refill is blocked until required onboarding pool stock is available.
+                  Some onboarding products are below the configured pool requirement. When refilling, select only products with enough pool stock (or top up first).
                 }
               </p>
               <div class="space-y-1.5">
@@ -400,7 +488,7 @@
               [label]="refillLoading() ? 'Refilling...' : 'Refill'"
               [icon]="refillLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"
               class="p-button-outlined"
-              [disabled]="refillLoading() || isPoolBlockingRefill()"
+              [disabled]="refillLoading()"
               (click)="onRefill()">
             </button>
           }

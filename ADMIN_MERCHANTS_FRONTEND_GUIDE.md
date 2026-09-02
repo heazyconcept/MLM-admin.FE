@@ -255,13 +255,27 @@ Same shape as a single `merchants[]` entry from the list (mapped via `mapMerchan
 
 ## 7. Refill merchant – POST /admin/merchants/{id}/refill
 
-**Purpose:** Create additional allocations for an **ACTIVE** merchant, using the same `onboardingItems` from their merchant type’s category config.
+**Purpose:** Create additional allocations for an **ACTIVE** merchant for **selected** products from their merchant type’s category-config `onboardingItems` (not necessarily the full set).
 
 **Request**
 
 - Method: `POST`
 - Path: `/admin/merchants/{id}/refill`
-- Body: none
+- Body (required):
+
+```json
+{
+  "items": [
+    { "productId": "product-uuid", "quantity": 10 }
+  ]
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `items` | array | Yes | Non-empty list of products to refill |
+| `items[].productId` | UUID | Yes | Must be in the merchant type’s `onboardingItems` |
+| `items[].quantity` | integer | Yes | ≥ 1 |
 
 **Response (200)** (example)
 
@@ -275,13 +289,16 @@ Same shape as a single `merchants[]` entry from the list (mapped via `mapMerchan
 **Backend behavior**
 
 - Merchant must be `ACTIVE`; otherwise 400.
-- Uses category config `onboardingItems` for merchant’s type to create new `MerchantAllocation`s.
+- `items` required and non-empty; empty body must **not** refill all products.
+- Each `productId` must be in category config `onboardingItems` for the merchant’s type; otherwise 400.
+- Creates one `MerchantAllocation` per requested item with the given quantity.
+- Insufficient admin pool for any selected item → 400.
 
 **Frontend usage**
 
-- On ACTIVE merchant detail, show **Refill stock** button.
-- After success, show a notice like “Refill created; merchant must accept each allocation after receiving stock.”
-- There is no direct admin UI for allocations here, but `allocationIds` can be logged or shown for reference.
+- On ACTIVE merchant detail, show **Refill** and open a product-selection dialog listing `onboardingItems` (checkbox + editable qty, defaults from config).
+- Pool sufficiency is checked for **selected** rows only; confirm stays disabled until ≥ 1 valid selection with enough pool stock.
+- After success, show a notice like “Refill created; merchant must accept each allocation after receiving stock,” and refresh allocations.
 
 ---
 
