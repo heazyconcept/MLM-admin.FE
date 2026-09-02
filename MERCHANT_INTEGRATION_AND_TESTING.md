@@ -80,12 +80,12 @@ These steps are optional advanced admin flows (refill and OFFLINE_DELIVERY assig
 
 | Step | Action | How to verify |
 |------|--------|----------------|
-| 5.1 | **Refill merchant** — `POST /admin/merchants/:merchantId/refill` (merchant must be ACTIVE). | Response: `200`, body with `message` and `allocationIds`. Backend uses the same `onboardingItems` for that merchant’s type to create new allocations. |
+| 5.1 | **Refill merchant (selective)** — `POST /admin/merchants/:merchantId/refill` with body `{ "items": [{ "productId": "<onboarding-product-id>", "quantity": <n> }] }` (merchant must be ACTIVE; products must be in that type’s `onboardingItems`). | Response: `200`, body with `message` and `allocationIds` matching only the selected items. Empty/`items: []` returns 400. Unknown productId returns 400. |
 | 5.2 | **Assign merchant to OFFLINE_DELIVERY order** — Create an order with `fulfilmentMode: "OFFLINE_DELIVERY"` (user flow), pay for it; then `POST /admin/orders/:orderId/assign-merchant` with body `{ "merchantId": "<active-merchant-id>" }`. | Response: `200`, `{ "message": "Merchant assigned to order successfully" }`. Order updates to `status=ASSIGNED_TO_MERCHANT` and `assignedMerchantId=<merchantId>`. Merchant inventory decreases for order items and a stock/ledger movement of type `ORDER_MERCHANT_ASSIGN` is recorded. A notification exists for the merchant user: `NotificationType=ORDER_ASSIGNED_TO_MERCHANT` (discoverable via the merchant/user notifications list). If merchant has insufficient stock, API returns 400. |
 | 5.3 | **Merchant marks delivery requested** — As the assigned merchant, call `POST /merchants/orders/:orderId/mark-delivery-requested`. | Response: `200`. Order updates to `status=OFFLINE_DELIVERY_REQUESTED` and `sentAt` is set. Customer notification exists: `NotificationType=ORDER_DELIVERY_REQUESTED` (with `orderId` metadata). |
 | 5.4 | **Merchant confirms delivery** — As the assigned merchant, call `POST /merchants/orders/:orderId/confirm-delivery` (optionally with `proof`/`notes`). | Response: `200`. Order updates to delivery-complete state (expected `status=DELIVERED`) and `receivedAt` is set. Customer completion notification exists: expected `NotificationType=ORDER_COMPLETED` (with `orderId` metadata). Merchant delivery bonus is credited and PV/CPV credit processing occurs as per existing delivery-confirmation behavior. |
 
-**Exit condition:** Refill creates new allocations from category config; order assignment decrements merchant stock and returns an error when stock is insufficient.
+**Exit condition:** Refill creates allocations only for the selected `items` from category-config onboarding products; order assignment decrements merchant stock and returns an error when stock is insufficient.
 
 ---
 
@@ -115,7 +115,7 @@ After admin approval, the same user becomes a merchant with `status: ACTIVE`. Th
 
 | Step | Action | How to verify |
 |------|--------|----------------|
-| 4.1 | **Get my allocations** — `GET /merchants/me/allocations`. | Response: array of allocations (from approval/refill); each has e.g. `id`, `productId`, `quantity`, `status: "PENDING"`. Count should match number of entries in category config `onboardingItems` for that type (per refill or approve). |
+| 4.1 | **Get my allocations** — `GET /merchants/me/allocations`. | Response: array of allocations (from approval/refill); each has e.g. `id`, `productId`, `quantity`, `status: "PENDING"`. After approve, count should match full `onboardingItems`; after selective refill, count increases by the number of selected items only. |
 | 4.2 | **Accept one allocation** — `POST /merchants/me/allocations/:allocationId/accept` (use one allocation `id` from 4.1). | Response: `200`, `{ "message": "Allocation accepted successfully" }`. |
 | 4.3 | **Get allocations again** — `GET /merchants/me/allocations`. | Accepted allocation no longer pending (or removed from list, depending on API). |
 | 4.4 | **Get my inventory** — `GET /merchants/inventory`. | Response: `{ "items": [ ... ] }` includes the product from the accepted allocation with updated stock (e.g. quantity 10 if that was the onboarding quantity). |

@@ -83,6 +83,15 @@ interface MerchantRefillResponse {
   allocationIds?: string[];
 }
 
+export interface MerchantRefillItem {
+  productId: string;
+  quantity: number;
+}
+
+export interface MerchantRefillRequest {
+  items: MerchantRefillItem[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -196,8 +205,8 @@ export class MerchantService {
     );
   }
 
-  refillMerchant(id: string): Observable<MerchantRefillResponse> {
-    return this.api.post<MerchantRefillResponse>(`admin/merchants/${id}/refill`, {});
+  refillMerchant(id: string, body: MerchantRefillRequest): Observable<MerchantRefillResponse> {
+    return this.api.post<MerchantRefillResponse>(`admin/merchants/${id}/refill`, body);
   }
 
   // ---------- Products ----------

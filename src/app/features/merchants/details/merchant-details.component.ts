@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit } 
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MerchantService, Merchant, MerchantStatus } from '../services/merchant.service';
+import { MerchantService, Merchant, MerchantStatus, MerchantRefillItem } from '../services/merchant.service';
 import {
   MerchantAllocationService,
   MerchantAllocation,
@@ -77,6 +77,15 @@ export class MerchantDetailsComponent implements OnInit {
   showDispatchModal = signal(false);
   showInTransitModal = signal(false);
   showDeliveredModal = signal(false);
+
+  /** Rows shown in the selective refill dialog */
+  refillRows = signal<Array<{
+    productId: string;
+    productName: string;
+    quantity: number;
+    available: number;
+    selected: boolean;
+  }>>([]);
 
   // Action loading states
   approveLoading = signal(false);
@@ -156,7 +165,34 @@ export class MerchantDetailsComponent implements OnInit {
 
   hasPoolShortage = computed(() => this.poolShortages().length > 0);
   canPrecheckPool = computed(() => !!this.merchantCategoryType());
-  isPoolBlockingRefill = computed(() => this.canRefill() && this.canPrecheckPool() && this.hasPoolShortage());
+
+  selectedRefillItems = computed(() =>
+    this.refillRows().filter((row) => row.selected && Number(row.quantity) >= 1)
+  );
+
+  selectedRefillShortages = computed(() =>
+    this.refillRows()
+      .filter((row) => row.selected)
+      .map((row) => {
+        const required = Math.max(0, Number(row.quantity) || 0);
+        const available = Math.max(0, Number(row.available) || 0);
+        return {
+          productId: row.productId,
+          productName: row.productName,
+          required,
+          available,
+          shortBy: required - available,
+        };
+      })
+      .filter((row) => row.shortBy > 0)
+  );
+
+  canConfirmRefill = computed(() => {
+    const selected = this.selectedRefillItems();
+    if (selected.length === 0) return false;
+    if (this.selectedRefillShortages().length > 0) return false;
+    return selected.every((row) => Number.isInteger(row.quantity) && row.quantity >= 1);
+  });
 
   // Computed
   canApprove = computed(() => this.merchant()?.status === 'PENDING');
@@ -471,16 +507,54 @@ export class MerchantDetailsComponent implements OnInit {
   onSuspend() { this.showSuspendModal.set(true); }
   onReactivate() { this.showReactivateModal.set(true); }
   onRefill() {
-    if (this.isPoolBlockingRefill()) {
+    this.initRefillRows();
+    if (this.refillRows().length === 0) {
       this.messageService.add({
-        severity: 'error',
-        summary: 'Insufficient Admin Pool',
-        detail: 'Top up admin pool stock for onboarding products before refilling this merchant.'
+        severity: 'warn',
+        summary: 'No Onboarding Products',
+        detail: 'This merchant type has no onboarding products configured for refill.',
       });
       return;
     }
     this.showRefillModal.set(true);
   }
+
+  private initRefillRows(): void {
+    const config = this.merchantCategoryConfig();
+    const products = this.productService.products();
+    const items = Array.isArray(config?.onboardingItems) ? config!.onboardingItems : [];
+    this.refillRows.set(
+      items.map((item) => {
+        const product = products.find((p) => p.id === item.productId);
+        return {
+          productId: item.productId,
+          productName: product?.name ?? item.productName ?? item.productId,
+          quantity: Math.max(1, Number(item.quantity) || 1),
+          available: Math.max(0, Number(product?.adminPoolQuantity ?? 0)),
+          selected: false,
+        };
+      })
+    );
+  }
+
+  toggleRefillProduct(productId: string, selected: boolean): void {
+    this.refillRows.update((rows) =>
+      rows.map((row) => (row.productId === productId ? { ...row, selected } : row))
+    );
+  }
+
+  onRefillQuantityChange(productId: string, value: string | number): void {
+    const qty = Math.max(1, Math.floor(Number(value) || 1));
+    this.refillRows.update((rows) =>
+      rows.map((row) => (row.productId === productId ? { ...row, quantity: qty } : row))
+    );
+  }
+
+  onRefillSelectionChange(event: Event, productId: string): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.toggleRefillProduct(productId, checked);
+  }
+
   onAssignProduct() { 
     this.selectedProduct.set(null);
     this.showAssignProductModal.set(true); 
@@ -607,33 +681,41 @@ export class MerchantDetailsComponent implements OnInit {
     }
   }
 
-  handleRefillConfirm(event: { confirmed: boolean; reason?: string }) {
-    if (event.confirmed) {
-      const id = this.merchant()?.id;
-      if (id) {
-        this.refillLoading.set(true);
-        this.merchantService.refillMerchant(id).subscribe({
-          next: (res) => {
-            this.refillLoading.set(false);
-            this.refreshMerchant(id);
-            const allocationsCount = Array.isArray(res?.allocationIds) ? res.allocationIds.length : 0;
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Merchant Refilled',
-              detail: allocationsCount > 0
-                ? `Refill created ${allocationsCount} allocation(s)`
-                : (res?.message ?? 'Merchant refill completed successfully')
-            });
-            this.loadAllocations(id);
-          },
-          error: (err) => {
-            this.refillLoading.set(false);
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: err?.error?.message ?? 'Failed to refill merchant' });
-          }
+  handleRefillConfirm(): void {
+    const id = this.merchant()?.id;
+    if (!id || !this.canConfirmRefill()) return;
+
+    const items: MerchantRefillItem[] = this.selectedRefillItems().map((row) => ({
+      productId: row.productId,
+      quantity: row.quantity,
+    }));
+
+    this.refillLoading.set(true);
+    this.merchantService.refillMerchant(id, { items }).subscribe({
+      next: (res) => {
+        this.refillLoading.set(false);
+        this.showRefillModal.set(false);
+        this.refillRows.set([]);
+        this.refreshMerchant(id);
+        const allocationsCount = Array.isArray(res?.allocationIds) ? res.allocationIds.length : 0;
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Merchant Refilled',
+          detail: allocationsCount > 0
+            ? `Refill created ${allocationsCount} allocation(s)`
+            : (res?.message ?? 'Merchant refill completed successfully')
+        });
+        this.loadAllocations(id);
+      },
+      error: (err) => {
+        this.refillLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: err?.error?.message ?? 'Failed to refill merchant',
         });
       }
-    }
-    this.showRefillModal.set(false);
+    });
   }
 
   handleRemoveProductConfirm(event: { confirmed: boolean; reason?: string }) {
@@ -668,7 +750,10 @@ export class MerchantDetailsComponent implements OnInit {
       case 'reject': this.showRejectModal.set(false); break;
       case 'suspend': this.showSuspendModal.set(false); break;
       case 'reactivate': this.showReactivateModal.set(false); break;
-      case 'refill': this.showRefillModal.set(false); break;
+      case 'refill':
+        this.showRefillModal.set(false);
+        this.refillRows.set([]);
+        break;
       case 'assignProduct': this.showAssignProductModal.set(false); break;
       case 'removeProduct': 
         this.showRemoveProductModal.set(false);
