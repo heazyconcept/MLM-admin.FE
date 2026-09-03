@@ -26,15 +26,7 @@ import { PermissionService } from '../../../core/services/permission.service';
 import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { StockRefreshService } from '../../products/services/stock-refresh.service';
 
-const CANCELLABLE_STATUSES: OrderStatus[] = [
-  'PENDING',
-  'CREATED',
-  'PAID',
-  'APPROVED',
-  'ASSIGNED_TO_MERCHANT',
-  'READY_FOR_PICKUP',
-  'OFFLINE_DELIVERY_REQUESTED',
-];
+const CANCELLABLE_STATUSES: OrderStatus[] = ['PAID', 'ASSIGNED_TO_MERCHANT'];
 
 @Component({
   selector: 'app-order-details',
@@ -131,33 +123,20 @@ export class OrderDetailsComponent implements OnInit {
     if (!o) return false;
     return (
       o.fulfilmentMode === 'OFFLINE_DELIVERY' &&
-      (o.status === 'PENDING' || o.status === 'PAID' || o.status === 'ASSIGNED_TO_MERCHANT') &&
+      (o.status === 'PAID' || o.status === 'ASSIGNED_TO_MERCHANT') &&
       this.canAssignMerchant()
     );
   });
 
-  // Can approve directly? Home delivery + PAID + has permission
-  canApproveDirectly = computed(() => {
-    const o = this.order();
-    if (!o) return false;
-    return (
-      o.fulfilmentMode === 'OFFLINE_DELIVERY' &&
-      o.status === 'PAID' &&
-      this.canAssignMerchant() &&
-      // If we can assign a merchant, prefer the merchant-assignment flow.
-      !this.canShowAssign()
-    );
-  });
+  // Legacy home-delivery direct approve flow — not used in current production statuses.
+  canApproveDirectly = computed(() => false);
 
-  // Show delivery actions for:
-  //  - orders with an assigned merchant (existing flow)
-  //  - OR home delivery orders that are APPROVED (admin direct flow)
   canShowDeliveryActions = computed(() => {
     const o = this.order();
     if (!o) return false;
     if (o.fulfilmentMode !== 'OFFLINE_DELIVERY') return false;
     if (!this.canAssignMerchant()) return false;
-    return !!o.assignedMerchantId || o.status === 'APPROVED';
+    return !!o.assignedMerchantId;
   });
 
   canMarkSent = computed(() => {

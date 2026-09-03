@@ -5,7 +5,7 @@
 **Scope:** `POST /admin/orders/{id}/assign-merchant` must accept `PENDING` for `OFFLINE_DELIVERY` orders  
 **Related:** [ADMIN_ORDERS_API.md](./ADMIN_ORDERS_API.md), [OFFLINE_DELIVERY_MERCHANT_ASSIGNMENT_BACKEND_REQUIREMENTS.md](./OFFLINE_DELIVERY_MERCHANT_ASSIGNMENT_BACKEND_REQUIREMENTS.md)  
 **Priority:** High — admins cannot assign merchants on live Pending offline-delivery orders  
-**Status:** Done / shipped (backend accepts `PENDING`; FE `canShowAssign` includes `PENDING`)
+**Status:** Superseded — production uses `PAID` only (not `PENDING`) for assignable offline-delivery orders. FE assign gate is `PAID` | `ASSIGNED_TO_MERCHANT`.
 
 ---
 
