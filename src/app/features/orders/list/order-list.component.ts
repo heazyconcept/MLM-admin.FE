@@ -18,23 +18,11 @@ import { DatePickerModule } from 'primeng/datepicker';
 // App
 import { AdminOrdersService } from '../services/admin-orders.service';
 import { Order, OrderStatus, FulfilmentMode, CustomerType, AdminOrderFilters } from '../../../core/models/order.model';
+import {
+  ACTIVE_ORDER_STATUS_SET,
+  ORDER_STATUS_FILTER_OPTIONS,
+} from '../../../core/constants/order.constants';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
-
-const KNOWN_STATUSES = new Set<string>([
-  'PENDING',
-  'CREATED',
-  'PAID',
-  'APPROVED',
-  'ASSIGNED_TO_MERCHANT',
-  'READY_FOR_PICKUP',
-  'PICKED_UP',
-  'OFFLINE_DELIVERY_REQUESTED',
-  'FULFILLED',
-  'DELIVERED',
-  'COMPLETED',
-  'CANCELLED',
-  'FAILED',
-]);
 
 @Component({
   selector: 'app-order-list',
@@ -78,22 +66,7 @@ export class OrderListComponent implements OnInit {
   toDateControl = new FormControl<Date | null>(null);
 
   // Options
-  statusOptions = [
-    { label: 'All Statuses', value: 'all' },
-    { label: 'Pending', value: 'PENDING' },
-    { label: 'Created', value: 'CREATED' },
-    { label: 'Paid', value: 'PAID' },
-    { label: 'Approved', value: 'APPROVED' },
-    { label: 'Assigned to Merchant', value: 'ASSIGNED_TO_MERCHANT' },
-    { label: 'Ready for Pickup', value: 'READY_FOR_PICKUP' },
-    { label: 'Picked Up', value: 'PICKED_UP' },
-    { label: 'Delivery Requested', value: 'OFFLINE_DELIVERY_REQUESTED' },
-    { label: 'Fulfilled', value: 'FULFILLED' },
-    { label: 'Delivered', value: 'DELIVERED' },
-    { label: 'Completed', value: 'COMPLETED' },
-    { label: 'Cancelled', value: 'CANCELLED' },
-    { label: 'Failed', value: 'FAILED' },
-  ];
+  statusOptions = [{ label: 'All Statuses', value: 'all' }, ...ORDER_STATUS_FILTER_OPTIONS];
 
   fulfilmentOptions = [
     { label: 'All Types', value: 'all' },
@@ -129,7 +102,7 @@ export class OrderListComponent implements OnInit {
     this.route.queryParamMap
       .pipe(
         map((params) => params.get('status')),
-        map((status) => (status && KNOWN_STATUSES.has(status) ? status : 'all')),
+        map((status) => (status && ACTIVE_ORDER_STATUS_SET.has(status) ? status : 'all')),
         distinctUntilChanged(),
         takeUntilDestroyed(this.destroyRef)
       )

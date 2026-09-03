@@ -254,10 +254,24 @@ export class SidebarComponent {
               permissionKey: 'orders.view',
             },
             {
-              label: 'Pending Orders',
-              icon: 'pi pi-clock',
+              label: 'Paid Orders',
+              icon: 'pi pi-wallet',
               route: '/admin/orders',
-              queryParams: { status: 'PENDING' },
+              queryParams: { status: 'PAID' },
+              permissionKey: 'orders.view',
+            },
+            {
+              label: 'Assigned Orders',
+              icon: 'pi pi-user',
+              route: '/admin/orders',
+              queryParams: { status: 'ASSIGNED_TO_MERCHANT' },
+              permissionKey: 'orders.view',
+            },
+            {
+              label: 'Delivered Orders',
+              icon: 'pi pi-check-circle',
+              route: '/admin/orders',
+              queryParams: { status: 'DELIVERED' },
               permissionKey: 'orders.view',
             },
             {
@@ -268,10 +282,10 @@ export class SidebarComponent {
               permissionKey: 'orders.view',
             },
             {
-              label: 'Delivered Orders',
-              icon: 'pi pi-check-circle',
+              label: 'Cancelled Orders',
+              icon: 'pi pi-ban',
               route: '/admin/orders',
-              queryParams: { status: 'DELIVERED' },
+              queryParams: { status: 'CANCELLED' },
               permissionKey: 'orders.view',
             },
             {
