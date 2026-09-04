@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
+import { AuditApiItem, AuditDisplayEntry, mapAuditApiItem } from '../../../core/models/audit.model';
 
 export type UserStatus = 'Active' | 'Suspended' | 'Flagged' | 'Registered' | 'Activated' | 'Inactive';
 export type UserPackage = 'Nickel' | 'Silver' | 'Gold' | 'Platinum' | 'Ruby' | 'Diamond';
@@ -45,12 +46,7 @@ export interface User {
   directReferralsCount?: number;
 }
 
-export interface ActivityLogItem {
-  id: string;
-  action: string;
-  timestamp: Date;
-  performedBy: string;
-}
+export type ActivityLogItem = AuditDisplayEntry;
 
 export interface UserFilters {
   search: string;
@@ -81,6 +77,7 @@ interface AdminUserApi {
   totalCpv?: number;
   wallets?: Record<string, { walletId: string; balance: number; displayCurrency: string; status: string }>;
   directReferralsCount?: number;
+  activityLog?: AuditApiItem[];
 }
 
 interface AdminUsersListResponse {
@@ -350,7 +347,7 @@ export class UsersService {
       isActive: apiUser.isActive,
       isRegistrationPaid: apiUser.isRegistrationPaid,
       wallets,
-      activityLog: [],
+      activityLog: (apiUser.activityLog ?? []).map(mapAuditApiItem),
       directReferralsCount: apiUser.directReferralsCount
     };
   }

@@ -29,6 +29,7 @@ import { ActivateRegistrationModalComponent } from '../modals/activate-registrat
 import { UpgradePackageModalComponent } from '../modals/upgrade-package-modal.component';
 import { CreditVolumeModalComponent } from '../modals/credit-volume-modal.component';
 import { SetUserPasswordModalComponent } from '../modals/set-user-password-modal.component';
+import { formatAuditTimestamp } from '../../../core/models/audit.model';
 
 @Component({
   selector: 'app-user-details',
@@ -536,6 +537,7 @@ export class UserDetailsComponent implements OnInit {
   }
 
   formatActivityAmount = formatUserEarningsActivityAmount;
+  formatAuditLogTimestamp = formatAuditTimestamp;
   activityKind = getUserEarningsActivityKind;
   activityDetail = getUserEarningsActivityDetail;
   activityTrack = userEarningsActivityTrackId;

@@ -206,6 +206,7 @@
         @for (tab of [
           { key: 'basic', label: 'Account Info' },
           { key: 'network', label: 'Network Details' },
+          { key: 'activity', label: 'Activity Log' },
           { key: 'earnings', label: 'Earnings Activity' }
         ]; track tab.key) {
           <button
@@ -375,6 +376,59 @@
                   <p class="text-2xl font-bold text-mlm-text tracking-tight">{{ u.rank }}</p>
                 </div>
 
+              </div>
+            </div>
+          }
+
+          <!-- ── Activity Log Tab ── -->
+          @if (activeTab() === 'activity') {
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div class="px-6 py-5 border-b border-slate-100">
+                <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-0.5">
+                  Activity Log
+                </p>
+                <p class="text-xs text-slate-400">Audited actions affecting this account</p>
+              </div>
+
+              <div class="px-6 py-5">
+                @if ((u.activityLog ?? []).length === 0) {
+                  <p class="text-sm text-slate-400">No activity recorded for this user.</p>
+                } @else {
+                  <div class="overflow-x-auto rounded-lg border border-slate-200">
+                    <table class="w-full text-sm">
+                      <thead>
+                        <tr class="border-b border-slate-100">
+                          <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[160px]">Timestamp</th>
+                          <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[180px]">Actor</th>
+                          <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[140px]">Action</th>
+                          <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Description</th>
+                          <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[140px]">IP</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (entry of u.activityLog; track entry.id) {
+                          <tr class="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors duration-100">
+                            <td class="px-4 py-3 text-[11px] font-mono text-slate-500 tabular-nums whitespace-nowrap">
+                              {{ formatAuditLogTimestamp(entry.timestamp) }}
+                            </td>
+                            <td class="px-4 py-3 text-slate-700 whitespace-nowrap">
+                              {{ entry.actorDisplayName }}
+                            </td>
+                            <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
+                              {{ entry.action }}
+                            </td>
+                            <td class="px-4 py-3 text-slate-700">
+                              {{ entry.description }}
+                            </td>
+                            <td class="px-4 py-3 text-[11px] font-mono text-slate-500 whitespace-nowrap">
+                              {{ entry.ipAddress ?? '—' }}
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
               </div>
             </div>
           }
