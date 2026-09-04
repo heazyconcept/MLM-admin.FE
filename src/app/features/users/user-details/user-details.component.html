@@ -181,12 +181,16 @@
                   @if (canResetPassword()) {
                     <button
                       type="button"
-                      (click)="openResetPasswordConfirm()"
+                      (click)="openSetPasswordModal()"
+                      [disabled]="!canSetPassword()"
+                      [pTooltip]="isAdminRoleUser() ? 'Use Admin Management to reset admin console passwords' : ''"
+                      tooltipPosition="top"
                       class="h-9 px-3.5 rounded-lg border border-slate-300 text-sm font-medium
                              text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+                             disabled:opacity-50 disabled:cursor-not-allowed
                              flex items-center gap-2 transition-colors duration-150">
                       <i class="pi pi-key text-xs" aria-hidden="true"></i>
-                      Reset password
+                      Set login password
                     </button>
                   }
                 </div>
@@ -893,3 +897,11 @@
   (confirmed)="onVolumeConfirmed($event)"
   (cancelled)="onVolumeCancelled()">
 </app-credit-volume-modal>
+
+<app-set-user-password-modal
+  [(visible)]="setPasswordModalVisible"
+  [userName]="user()?.fullName ?? ''"
+  [loading]="actionLoading()"
+  (confirmed)="onSetPasswordConfirmed($event)"
+  (cancelled)="onSetPasswordCancelled()">
+</app-set-user-password-modal>

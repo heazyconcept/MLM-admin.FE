@@ -258,3 +258,11 @@
   (confirm)="onActionConfirm($event)"
   (cancel)="onActionCancel()">
 </app-confirmation-modal>
+
+<app-set-user-password-modal
+  [(visible)]="setPasswordModalVisible"
+  [userName]="setPasswordUser()?.fullName ?? ''"
+  [loading]="actionLoading()"
+  (confirmed)="onSetPasswordConfirmed($event)"
+  (cancelled)="onSetPasswordCancelled()">
+</app-set-user-password-modal>

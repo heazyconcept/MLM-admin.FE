@@ -125,8 +125,9 @@ export interface UsersListResult {
   total: number;
 }
 
-interface ResetPasswordResponse {
+export interface SetUserPasswordResponse {
   message: string;
+  username: string;
 }
 
 export interface AdminImpersonationStartResponse {
@@ -263,10 +264,10 @@ export class UsersService {
     return this.api.put<{ message: string; status: string }>(`admin/users/${userId}/cash-wallet/unlock`, {});
   }
 
-  resetUserPassword(userId: string): Observable<string> {
-    return this.api.post<ResetPasswordResponse>(`admin/users/${userId}/reset-password`, {}).pipe(
-      map(response => response.message)
-    );
+  setUserPassword(userId: string, newPassword: string): Observable<SetUserPasswordResponse> {
+    return this.api.post<SetUserPasswordResponse>(`admin/users/${userId}/reset-password`, {
+      newPassword,
+    });
   }
 
   impersonateUser(userId: string): Observable<AdminImpersonationStartResponse> {
