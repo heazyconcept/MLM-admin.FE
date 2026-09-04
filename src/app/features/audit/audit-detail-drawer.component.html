@@ -30,12 +30,24 @@
           </div>
           <div>
             <dt class="text-gray-500 font-medium">Actor</dt>
-            <dd class="text-gray-900 mt-0.5">{{ e.actor }}</dd>
+            <dd class="text-gray-900 mt-0.5">{{ e.actorDisplayName }}</dd>
           </div>
+          @if (e.targetUsername) {
+            <div>
+              <dt class="text-gray-500 font-medium">Username</dt>
+              <dd class="text-gray-900 mt-0.5">{{ e.targetUsername }}</dd>
+            </div>
+          }
           <div>
             <dt class="text-gray-500 font-medium">Action</dt>
             <dd class="text-gray-900 mt-0.5">{{ e.action }}</dd>
           </div>
+          @if (e.ipAddress) {
+            <div>
+              <dt class="text-gray-500 font-medium">IP Address</dt>
+              <dd class="text-gray-900 mt-0.5 font-mono">{{ e.ipAddress }}</dd>
+            </div>
+          }
           <div>
             <dt class="text-gray-500 font-medium">Entity</dt>
             <dd class="text-gray-900 mt-0.5">{{ e.entity }}</dd>
