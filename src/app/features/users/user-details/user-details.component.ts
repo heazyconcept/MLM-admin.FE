@@ -28,6 +28,7 @@ import { FundsAdjustmentModalComponent } from '../../wallets/modals/funds-adjust
 import { ActivateRegistrationModalComponent } from '../modals/activate-registration-modal.component';
 import { UpgradePackageModalComponent } from '../modals/upgrade-package-modal.component';
 import { CreditVolumeModalComponent } from '../modals/credit-volume-modal.component';
+import { SetUserPasswordModalComponent } from '../modals/set-user-password-modal.component';
 
 @Component({
   selector: 'app-user-details',
@@ -47,6 +48,7 @@ import { CreditVolumeModalComponent } from '../modals/credit-volume-modal.compon
     ActivateRegistrationModalComponent,
     UpgradePackageModalComponent,
     CreditVolumeModalComponent,
+    SetUserPasswordModalComponent,
     StatusBadgeComponent,
   ],
   providers: [MessageService],
@@ -77,6 +79,11 @@ export class UserDetailsComponent implements OnInit {
   );
   canSuspendUser = computed(() => this.permission.hasPermission('users.suspend'));
   canResetPassword = computed(() => this.permission.hasPermission('users.reset_password'));
+  canSetPassword = computed(() => {
+    const u = this.user();
+    return this.canResetPassword() && u?.apiRole !== 'ADMIN';
+  });
+  isAdminRoleUser = computed(() => this.user()?.apiRole === 'ADMIN');
   isViewOnly = computed(
     () => this.permission.hasAccess(Feature.Users) && !this.hasUserActions()
   );
@@ -95,6 +102,7 @@ export class UserDetailsComponent implements OnInit {
   activateModalVisible = signal(false);
   upgradeModalVisible = signal(false);
   volumeModalVisible = signal(false);
+  setPasswordModalVisible = signal(false);
 
   /** Confirmation modal state */
   confirmAction = signal('');
@@ -236,20 +244,6 @@ export class UserDetailsComponent implements OnInit {
         });
         break;
       }
-      case 'resetPassword': {
-        this.actionLoading.set(true);
-        this.usersService.resetUserPassword(u.id).subscribe({
-          next: (message) => {
-            this.messageService.add({ severity: 'success', summary: 'Success', detail: message || 'Password reset link sent' });
-            this.actionLoading.set(false);
-          },
-          error: (error) => {
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.error?.message || 'Failed to reset password' });
-            this.actionLoading.set(false);
-          },
-        });
-        return;
-      }
       case 'lockCash':
       case 'unlockCash': {
         this.handleLockCashAction(result);
@@ -264,21 +258,43 @@ export class UserDetailsComponent implements OnInit {
     this.confirmVisible.set(false);
   }
 
-  /** ────────── Reset password confirm ────────── */
+  /** ────────── Set login password ────────── */
 
-  openResetPasswordConfirm(): void {
+  openSetPasswordModal(): void {
+    const u = this.user();
+    if (!u || !this.canSetPassword()) return;
+    this.setPasswordModalVisible.set(true);
+  }
+
+  onSetPasswordConfirmed(newPassword: string): void {
     const u = this.user();
     if (!u) return;
-    this.showConfirm('resetPassword', {
-      title: 'Reset Password',
-      message: `Are you sure you want to reset ${u.fullName}'s password? A temporary password will be sent to their email.`,
-      icon: 'pi pi-key',
-      iconClass: 'text-mlm-blue-600',
-      confirmLabel: 'Reset Password',
-      confirmClass: 'p-button-primary',
-      showReason: false,
-      reasonRequired: false,
+
+    this.actionLoading.set(true);
+    this.usersService.setUserPassword(u.id, newPassword).subscribe({
+      next: (res) => {
+        this.actionLoading.set(false);
+        this.setPasswordModalVisible.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Password Updated',
+          detail: `${res.message} Share the new password with @${res.username} securely offline.`,
+        });
+        this.reloadUser();
+      },
+      error: (error) => {
+        this.actionLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error?.error?.message || 'Failed to set password',
+        });
+      },
     });
+  }
+
+  onSetPasswordCancelled(): void {
+    this.setPasswordModalVisible.set(false);
   }
 
   /** ────────── Lock / Unlock CASH wallet ────────── */

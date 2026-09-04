@@ -16,6 +16,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DatePickerModule } from 'primeng/datepicker';
 
 import { UserProfileModalComponent } from '../user-profile-modal/user-profile-modal.component';
+import { SetUserPasswordModalComponent } from '../modals/set-user-password-modal.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { UsersService, User, UsersListQuery } from '../services/users.service';
@@ -47,6 +48,7 @@ interface ActionConfig {
     TooltipModule,
     DatePickerModule,
     UserProfileModalComponent,
+    SetUserPasswordModalComponent,
     StatusBadgeComponent,
     ConfirmationModalComponent,
     DataTableComponent,
@@ -66,6 +68,8 @@ export class UsersListComponent implements OnInit {
   users = signal<User[]>([]);
   selectedUser = signal<User | null>(null);
   profileModalVisible = signal(false);
+  setPasswordModalVisible = signal(false);
+  setPasswordUser = signal<User | null>(null);
   globalFilter = signal('');
   tableLoading = signal(false);
   actionLoading = signal(false);
@@ -160,8 +164,8 @@ export class UsersListComponent implements OnInit {
     // { icon: 'pi pi-flag', tooltip: 'Flag User', visible: (user) => user.status === 'Active', command: (user) => this.showActionModal('flag', user), severity: 'warning' },
     {
       icon: 'pi pi-key',
-      tooltip: 'Reset Password',
-      command: (user) => this.showActionModal('resetPassword', user),
+      tooltip: 'Set login password',
+      command: (user) => this.openSetPasswordModal(user),
       severity: 'info'
     }
   ]);
@@ -372,11 +376,11 @@ export class UsersListComponent implements OnInit {
     }
 
     items.push({
-      label: 'Reset Password',
+      label: 'Set login password',
       icon: 'pi pi-key',
       command: () => {
         menu.hide();
-        this.showActionModal('resetPassword', user);
+        this.openSetPasswordModal(user);
       }
     });
 
@@ -427,16 +431,6 @@ export class UsersListComponent implements OnInit {
         showReasonField: false,
         reasonRequired: false
       },
-      resetPassword: {
-        title: 'Reset Password',
-        message: `Are you sure you want to reset ${user.fullName}'s password? A temporary password will be sent to their email.`,
-        icon: 'pi pi-key',
-        iconClass: 'text-mlm-blue-600',
-        confirmLabel: 'Reset Password',
-        confirmClass: 'p-button-primary',
-        showReasonField: false,
-        reasonRequired: false
-      },
       impersonate: {
         title: 'Login as User',
         message: `You will view the dashboard as ${user.username}. Actions are audited.`,
@@ -461,7 +455,57 @@ export class UsersListComponent implements OnInit {
 
   onProfileAction(event: { action: string; user: User }): void {
     this.profileModalVisible.set(false);
+    if (event.action === 'resetPassword') {
+      this.openSetPasswordModal(event.user);
+      return;
+    }
     this.showActionModal(event.action, event.user);
+  }
+
+  openSetPasswordModal(user: User): void {
+    if (user.apiRole === 'ADMIN') {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Not available',
+        detail: 'Use Admin Management to reset admin console passwords.',
+      });
+      return;
+    }
+    this.setPasswordUser.set(user);
+    this.setPasswordModalVisible.set(true);
+  }
+
+  onSetPasswordConfirmed(newPassword: string): void {
+    const user = this.setPasswordUser();
+    if (!user) return;
+
+    this.actionLoading.set(true);
+    this.usersService.setUserPassword(user.id, newPassword).subscribe({
+      next: (res) => {
+        this.actionLoading.set(false);
+        this.setPasswordModalVisible.set(false);
+        this.setPasswordUser.set(null);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Password Updated',
+          detail: `${res.message} Share the new password with @${res.username} securely offline.`,
+        });
+        this.loadUsers();
+      },
+      error: (error) => {
+        this.actionLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error?.error?.message || 'Failed to set password',
+        });
+      },
+    });
+  }
+
+  onSetPasswordCancelled(): void {
+    this.setPasswordModalVisible.set(false);
+    this.setPasswordUser.set(null);
   }
 
   onActionConfirm(result: ConfirmationResult): void {
@@ -547,29 +591,6 @@ export class UsersListComponent implements OnInit {
           }
         });
         break;
-      case 'resetPassword':
-        this.actionLoading.set(true);
-        this.usersService.resetUserPassword(user.id).subscribe({
-          next: (message) => {
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Password Reset',
-              detail: message || `Password reset link sent to ${user.email}`
-            });
-            this.actionConfig.visible = false;
-            this.selectedUser.set(null);
-            this.actionLoading.set(false);
-          },
-          error: (error) => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: error?.error?.message || 'Failed to reset password'
-            });
-            this.actionLoading.set(false);
-          }
-        });
-        return;
       case 'impersonate':
         this.actionLoading.set(true);
         this.usersService.impersonateUser(user.id).subscribe({
