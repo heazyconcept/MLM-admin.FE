@@ -130,8 +130,8 @@ export class WithdrawalsListComponent implements OnInit {
 
     this.columns.set([
       {
-        field: 'id',
-        header: 'Request ID',
+        field: 'accountName',
+        header: 'Account Name',
         width: '120px',
         sortable: true
       },
