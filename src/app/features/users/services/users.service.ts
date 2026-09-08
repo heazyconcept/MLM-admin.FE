@@ -74,6 +74,7 @@ interface AdminUserApi {
   isActive: boolean;
   isRegistrationPaid: boolean;
   createdAt: string;
+  downlinesCount?: number;
   totalCpv?: number;
   wallets?: Record<string, { walletId: string; balance: number; displayCurrency: string; status: string }>;
   directReferralsCount?: number;
@@ -342,7 +343,7 @@ export class UsersService {
       referrerUsername: apiUser.referrerUsername ?? undefined,
       upline: undefined,
       uplineUsername: apiUser.uplineUsername ?? undefined,
-      downlinesCount: apiUser.totalCpv ?? 0,
+      downlinesCount: apiUser.downlinesCount ?? 0,
       rank: apiUser.isRegistrationPaid ? 'Active Member' : 'Pending Registration',
       isActive: apiUser.isActive,
       isRegistrationPaid: apiUser.isRegistrationPaid,

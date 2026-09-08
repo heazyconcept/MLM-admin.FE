@@ -132,7 +132,7 @@ export class WithdrawalsListComponent implements OnInit {
       {
         field: 'accountName',
         header: 'Account Name',
-        width: '120px',
+        width: '250px',
         sortable: true
       },
       {
