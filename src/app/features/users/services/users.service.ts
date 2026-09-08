@@ -38,6 +38,10 @@ export interface User {
   upline?: string;
   uplineUsername?: string;
   downlinesCount: number;
+  directSuccesslines?: number;
+  registeredDirectReferrals?: number;
+  activeDirectReferrals?: number;
+  inactiveDirectReferrals?: number;
   rank: string;
   isActive: boolean;
   isRegistrationPaid: boolean;
@@ -75,6 +79,11 @@ interface AdminUserApi {
   isRegistrationPaid: boolean;
   createdAt: string;
   downlinesCount?: number;
+  directSuccesslines?: number;
+  registeredDirectReferrals?: number;
+  activeDirectReferrals?: number;
+  inactiveDirectReferrals?: number;
+  rank?: string;
   totalCpv?: number;
   wallets?: Record<string, { walletId: string; balance: number; displayCurrency: string; status: string }>;
   directReferralsCount?: number;
@@ -344,7 +353,11 @@ export class UsersService {
       upline: undefined,
       uplineUsername: apiUser.uplineUsername ?? undefined,
       downlinesCount: apiUser.downlinesCount ?? 0,
-      rank: apiUser.isRegistrationPaid ? 'Active Member' : 'Pending Registration',
+      directSuccesslines: apiUser.directSuccesslines ?? 0,
+      registeredDirectReferrals: apiUser.registeredDirectReferrals ?? 0,
+      activeDirectReferrals: apiUser.activeDirectReferrals ?? 0,
+      inactiveDirectReferrals: apiUser.inactiveDirectReferrals ?? 0,
+      rank: apiUser.rank ?? (apiUser.isRegistrationPaid ? 'Active Member' : 'Pending Registration'),
       isActive: apiUser.isActive,
       isRegistrationPaid: apiUser.isRegistrationPaid,
       wallets,
