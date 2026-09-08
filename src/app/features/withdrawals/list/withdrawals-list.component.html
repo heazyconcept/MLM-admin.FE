@@ -107,7 +107,7 @@
     </div>
 
     <!-- Table — cols: REQUEST ID · USER · AMOUNT · ACCOUNT NUMBER · BANK · STATUS · DATE · ACTIONS -->
-    <div class="withdrawals-table-wrap">
+    <div class="withdrawals-table-wrap overflow-x-auto">
     <app-data-table
       [value]="filteredWithdrawals()"
       [headers]="tableHeaders()"
@@ -121,11 +121,11 @@
       <ng-template pTemplate="body" let-row>
         <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100">
 
-          <!-- Request ID — truncated, full on tooltip -->
-          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[110px] sm:w-[130px] whitespace-nowrap">
-            <span class="text-[11px] font-mono text-slate-400"
-                  [title]="row.id">
-              {{ row.id | slice:0:8 }}…
+          <!-- Account Name — full name with tooltip -->
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[200px] sm:w-[250px]">
+            <span class="text-sm font-semibold text-mlm-text"
+                  [title]="row.accountName || ''">
+              {{ row.accountName || '—' }}
             </span>
           </td>
 
