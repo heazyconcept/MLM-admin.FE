@@ -9,7 +9,7 @@
         Legacy members
       </h1>
       <p class="text-sm text-mlm-secondary">
-        View ACTIVE Legacy Club memberships, wallets, and cycle progress
+        View Legacy Club memberships, wallets, and cycle progress
       </p>
     </div>
 
@@ -140,15 +140,19 @@
             <p class="text-sm font-semibold text-mlm-text leading-tight truncate">
               &#64;{{ row.username }}
             </p>
-            @if (row.fullName) {
-              <p class="text-[11px] text-slate-400 mt-0.5 truncate">{{ row.fullName }}</p>
-            }
+          </td>
+          <td class="px-3 py-3 sm:px-4">
+            <span
+              class="inline-flex text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md"
+              [class]="statusClass(row.status)">
+              {{ statusLabel(row.status) }}
+            </span>
           </td>
           <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary">
-            {{ row.segulahPackage || '—' }}
+            {{ row.registrationPackage || '—' }}
           </td>
           <td class="px-3 py-3 sm:px-4 text-sm font-medium text-mlm-text">
-            {{ packageLabel(row.legacyPackage) }}
+            {{ packageLabel(row.package) }}
           </td>
           <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary">
             @if (row.sponsorUsername) {
@@ -163,44 +167,27 @@
             </span>
           </td>
           <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text">
-            {{ row.directSuccesslineCount ?? 0 }}
-          </td>
-          @if (canViewWallets()) {
-            <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text">
-              {{ formatMoney(row.legacyCashoutBalance) }}
-            </td>
-            <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text">
-              {{ formatMoney(row.legacyVoucherBalance) }}
-            </td>
-          }
-          <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary whitespace-nowrap">
-            {{ formatDate(row.joinedAt) }}
+            {{ row.successlineCount ?? 0 }}
           </td>
           <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text">
             {{ monthProgress(row) }}
           </td>
           <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text">
-            {{ formatMoney(row.pendingAmount) }}
+            {{ formatMoney(row.pendingAmount, row.currency) }}
           </td>
           <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary">
             {{ row.nextDueRateTier || '—' }}
           </td>
+          @if (canViewWallets()) {
+            <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text">
+              {{ formatMoney(row.legacyCashoutBalance, row.currency) }}
+            </td>
+            <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text">
+              {{ formatMoney(row.legacyVoucherBalance, row.currency) }}
+            </td>
+          }
           <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary whitespace-nowrap">
-            {{ formatDate(row.lastAutoshipAt) }}
-          </td>
-          <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary whitespace-nowrap">
-            {{ formatDate(row.cycleStartedAt) }}
-          </td>
-          <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary">
-            @if (row.lastEventKind) {
-              <span>{{ row.lastEventKind }}</span>
-              <span class="block text-[11px] text-slate-400">{{ formatDate(row.lastEventAt) }}</span>
-            } @else {
-              —
-            }
-          </td>
-          <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary whitespace-nowrap">
-            {{ formatDate(row.monthlyQualifiedAt) }}
+            {{ formatDate(row.joinedAt) }}
           </td>
         </tr>
       </ng-template>
