@@ -20,7 +20,7 @@
       Legacy packages
     </h1>
     <p class="text-sm text-mlm-secondary">
-      Configure VIP / Executive / Supreme amounts (NGN). USD preview = NGN ÷ {{ fxRate() | number }}.
+      Configure VIP / Executive / Supreme amounts in NGN. USD values come from the API.
     </p>
   </div>
 
@@ -60,15 +60,15 @@
     </div>
   } @else {
     <div class="space-y-6">
-      @for (pkg of packages(); track pkg.code) {
-        @if (getForm(pkg.code); as form) {
+      @for (pkg of packages(); track pkg.package) {
+        @if (getForm(pkg.package); as form) {
           <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
             <div class="px-6 py-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
               <div class="flex items-center gap-3 min-w-0">
                 <span
                   class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border"
-                  [class]="packageBadgeClass(pkg.code)">
-                  {{ packageLabel(pkg.code) }}
+                  [class]="packageBadgeClass(pkg.package)">
+                  {{ packageLabel(pkg.package) }}
                 </span>
                 @if (!pkg.isActive) {
                   <span class="text-[10px] font-semibold tracking-[0.08em] uppercase text-slate-400">
@@ -125,14 +125,14 @@
                   </p>
                   @if (!isEditing(pkg)) {
                     <p class="text-sm font-medium text-mlm-text tabular-nums">
-                      {{ pkg.purchaseAmount | number:'1.0-2' }}
+                      {{ pkg.purchaseAmountNgn | number:'1.0-2' }}
                     </p>
                     <p class="text-xs text-slate-400 mt-0.5">
-                      ≈ ${{ usdPreview(pkg.purchaseAmount) | number:'1.2-2' }}
+                      ${{ pkg.purchaseAmountUsd | number:'1.2-2' }}
                     </p>
                   } @else {
                     <p-inputNumber
-                      formControlName="purchaseAmount"
+                      formControlName="purchaseAmountNgn"
                       mode="decimal"
                       [min]="0"
                       [minFractionDigits]="0"
@@ -141,7 +141,7 @@
                       styleClass="w-full">
                     </p-inputNumber>
                     <p class="text-xs text-slate-400 mt-1">
-                      ≈ ${{ usdPreview(form.get('purchaseAmount')?.value) | number:'1.2-2' }}
+                      API USD: ${{ pkg.purchaseAmountUsd | number:'1.2-2' }}
                     </p>
                   }
                 </div>
@@ -152,14 +152,14 @@
                   </p>
                   @if (!isEditing(pkg)) {
                     <p class="text-sm font-medium text-mlm-text tabular-nums">
-                      {{ pkg.instantCommission | number:'1.0-2' }}
+                      {{ pkg.instantCommissionNgn | number:'1.0-2' }}
                     </p>
                     <p class="text-xs text-slate-400 mt-0.5">
-                      ≈ ${{ usdPreview(pkg.instantCommission) | number:'1.2-2' }}
+                      ${{ pkg.instantCommissionUsd | number:'1.2-2' }}
                     </p>
                   } @else {
                     <p-inputNumber
-                      formControlName="instantCommission"
+                      formControlName="instantCommissionNgn"
                       mode="decimal"
                       [min]="0"
                       [minFractionDigits]="0"
@@ -167,7 +167,7 @@
                       styleClass="w-full">
                     </p-inputNumber>
                     <p class="text-xs text-slate-400 mt-1">
-                      ≈ ${{ usdPreview(form.get('instantCommission')?.value) | number:'1.2-2' }}
+                      API USD: ${{ pkg.instantCommissionUsd | number:'1.2-2' }}
                     </p>
                   }
                 </div>
@@ -179,21 +179,25 @@
                   @if (!isEditing(pkg)) {
                     <p
                       class="text-sm font-medium tabular-nums"
-                      [class]="!displayBase(pkg) ? 'text-amber-700' : 'text-mlm-text'">
-                      {{ displayBase(pkg) | number:'1.0-2' }}
+                      [class]="!pkg.monthlyCommissionBaseNgn ? 'text-amber-700' : 'text-mlm-text'">
+                      {{ pkg.monthlyCommissionBaseNgn | number:'1.0-2' }}
                     </p>
                     <p class="text-xs text-slate-400 mt-0.5">
-                      Before {{ pkg.minDirectsToIncreaseMonthly ?? 3 }} Successlines
+                      ${{ pkg.monthlyCommissionBaseUsd | number:'1.2-2' }}
+                      · Before {{ pkg.minDirectsToIncreaseMonthly }} Successlines
                     </p>
                   } @else {
                     <p-inputNumber
-                      formControlName="monthlyCommissionBase"
+                      formControlName="monthlyCommissionBaseNgn"
                       mode="decimal"
                       [min]="0"
                       [minFractionDigits]="0"
                       [maxFractionDigits]="2"
                       styleClass="w-full">
                     </p-inputNumber>
+                    <p class="text-xs text-slate-400 mt-1">
+                      API USD: ${{ pkg.monthlyCommissionBaseUsd | number:'1.2-2' }}
+                    </p>
                   }
                 </div>
 
@@ -203,18 +207,24 @@
                   </p>
                   @if (!isEditing(pkg)) {
                     <p class="text-sm font-medium text-mlm-text tabular-nums">
-                      {{ displayIncreased(pkg) | number:'1.0-2' }}
+                      {{ pkg.monthlyCommissionIncreasedNgn | number:'1.0-2' }}
                     </p>
-                    <p class="text-xs text-slate-400 mt-0.5">Flyer rate after Successlines threshold</p>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                      ${{ pkg.monthlyCommissionIncreasedUsd | number:'1.2-2' }}
+                      · Flyer rate after Successlines threshold
+                    </p>
                   } @else {
                     <p-inputNumber
-                      formControlName="monthlyCommissionIncreased"
+                      formControlName="monthlyCommissionIncreasedNgn"
                       mode="decimal"
                       [min]="0"
                       [minFractionDigits]="0"
                       [maxFractionDigits]="2"
                       styleClass="w-full">
                     </p-inputNumber>
+                    <p class="text-xs text-slate-400 mt-1">
+                      API USD: ${{ pkg.monthlyCommissionIncreasedUsd | number:'1.2-2' }}
+                    </p>
                   }
                 </div>
 
@@ -246,20 +256,23 @@
                   </p>
                   @if (!isEditing(pkg)) {
                     <p class="text-sm font-medium text-mlm-text tabular-nums">
-                      {{ pkg.autoshipAmount | number:'1.0-2' }}
+                      {{ pkg.autoshipAmountNgn | number:'1.0-2' }}
                     </p>
                     <p class="text-xs text-slate-400 mt-0.5">
-                      ≈ ${{ usdPreview(pkg.autoshipAmount) | number:'1.2-2' }}
+                      ${{ pkg.autoshipAmountUsd | number:'1.2-2' }}
                     </p>
                   } @else {
                     <p-inputNumber
-                      formControlName="autoshipAmount"
+                      formControlName="autoshipAmountNgn"
                       mode="decimal"
                       [min]="0"
                       [minFractionDigits]="0"
                       [maxFractionDigits]="2"
                       styleClass="w-full">
                     </p-inputNumber>
+                    <p class="text-xs text-slate-400 mt-1">
+                      API USD: ${{ pkg.autoshipAmountUsd | number:'1.2-2' }}
+                    </p>
                   }
                 </div>
 
@@ -268,7 +281,7 @@
                     Cycle months
                   </p>
                   @if (!isEditing(pkg)) {
-                    <p class="text-sm font-medium text-mlm-text tabular-nums">{{ pkg.cycleMonths ?? 6 }}</p>
+                    <p class="text-sm font-medium text-mlm-text tabular-nums">{{ pkg.cycleMonths }}</p>
                   } @else {
                     <p-inputNumber
                       formControlName="cycleMonths"
@@ -286,7 +299,7 @@
                   </p>
                   @if (!isEditing(pkg)) {
                     <p class="text-sm font-medium text-mlm-text tabular-nums">
-                      {{ pkg.minDirectsToIncreaseMonthly ?? 3 }}
+                      {{ pkg.minDirectsToIncreaseMonthly }}
                     </p>
                     <p class="text-xs text-slate-400 mt-0.5">
                       Raises monthly in Phase 2. Does not lock cashout.
@@ -324,14 +337,14 @@
         }
       }
 
-      @if (upgradePreviews().length) {
+      @if (upgradeDifferences().length) {
         <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div class="px-6 py-5 border-b border-slate-100">
             <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
               Upgrade difference preview
             </p>
             <p class="text-xs text-mlm-secondary mt-1">
-              Pay amount and Instant difference between tiers (NGN). Read-only helper for Phase 3.
+              Pay amount and Instant difference between tiers from the API.
             </p>
           </div>
           <div class="overflow-x-auto">
@@ -350,21 +363,21 @@
                 </tr>
               </thead>
               <tbody>
-                @for (row of upgradePreviews(); track row.from + row.to) {
+                @for (row of upgradeDifferences(); track row.fromPackage + row.toPackage) {
                   <tr class="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60">
                     <td class="px-6 py-3.5 text-mlm-text font-medium">
-                      {{ packageLabel(row.from) }} → {{ packageLabel(row.to) }}
+                      {{ packageLabel(row.fromPackage) }} → {{ packageLabel(row.toPackage) }}
                     </td>
                     <td class="px-6 py-3.5 text-right tabular-nums text-mlm-text">
-                      ₦{{ row.payDiff | number:'1.0-2' }}
+                      ₦{{ row.payAmountNgn | number:'1.0-2' }}
                       <span class="block text-xs text-slate-400 font-normal">
-                        ≈ ${{ usdPreview(row.payDiff) | number:'1.2-2' }}
+                        ${{ row.payAmountUsd | number:'1.2-2' }}
                       </span>
                     </td>
                     <td class="px-6 py-3.5 text-right tabular-nums text-mlm-text">
-                      ₦{{ row.instantDiff | number:'1.0-2' }}
+                      ₦{{ row.instantCommissionNgn | number:'1.0-2' }}
                       <span class="block text-xs text-slate-400 font-normal">
-                        ≈ ${{ usdPreview(row.instantDiff) | number:'1.2-2' }}
+                        ${{ row.instantCommissionUsd | number:'1.2-2' }}
                       </span>
                     </td>
                   </tr>

@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ApiService } from '../../../core/services/api.service';
 import {
   AdminLegacyEnrollRequest,
@@ -12,6 +12,7 @@ import {
   AdminLegacyPackage,
   AdminLegacyPackageUpdatePayload,
   AdminLegacyPackagesResponse,
+  AdminLegacyUpgradeDifference,
   LegacyPackageCode,
 } from '../models/admin-legacy.models';
 
@@ -38,7 +39,7 @@ export class AdminLegacyService {
   private readonly api = inject(ApiService);
 
   packages = signal<AdminLegacyPackage[]>([]);
-  fxRateNgnPerUsd = signal(1000);
+  upgradeDifferences = signal<AdminLegacyUpgradeDifference[]>([]);
   packagesLoading = signal(false);
   packagesError = signal<string | null>(null);
 
@@ -58,16 +59,16 @@ export class AdminLegacyService {
       map((raw) => {
         const data = unwrapData<AdminLegacyPackagesResponse | AdminLegacyPackage[]>(raw);
         if (Array.isArray(data)) {
-          return { fxRateNgnPerUsd: 1000, packages: data };
+          return { packages: data, upgradeDifferences: [] as AdminLegacyUpgradeDifference[] };
         }
         return {
-          fxRateNgnPerUsd: data?.fxRateNgnPerUsd ?? 1000,
           packages: data?.packages ?? [],
+          upgradeDifferences: data?.upgradeDifferences ?? [],
         };
       }),
       tap((res) => {
-        this.fxRateNgnPerUsd.set(res.fxRateNgnPerUsd);
         this.packages.set(res.packages);
+        this.upgradeDifferences.set(res.upgradeDifferences);
         this.packagesLoading.set(false);
       }),
       map((res) => res.packages),
@@ -75,6 +76,7 @@ export class AdminLegacyService {
         this.packagesError.set(extractErrorMessage(err));
         this.packagesLoading.set(false);
         this.packages.set([]);
+        this.upgradeDifferences.set([]);
         return of([]);
       })
     );
@@ -88,31 +90,29 @@ export class AdminLegacyService {
     return this.api
       .put<unknown>(`admin/legacy/packages/${encodeURIComponent(code)}`, payload)
       .pipe(
-        map((raw) => {
+        switchMap((raw) => {
           const data = unwrapData<AdminLegacyPackage | AdminLegacyPackagesResponse>(raw);
           if (data && typeof data === 'object' && 'packages' in data) {
-            const found = (data as AdminLegacyPackagesResponse).packages?.find(
-              (p) => p.code === code
+            const res = data as AdminLegacyPackagesResponse;
+            this.packages.set(res.packages ?? []);
+            this.upgradeDifferences.set(res.upgradeDifferences ?? []);
+            const found = res.packages?.find((p) => p.package === code);
+            if (found) return of(found);
+          }
+          if (data && typeof data === 'object' && 'package' in data) {
+            return this.loadPackages().pipe(
+              map((pkgs) => pkgs.find((p) => p.package === code) ?? (data as AdminLegacyPackage))
             );
-            if (found) return found;
           }
-          return data as AdminLegacyPackage;
-        }),
-        tap((updated) => {
-          const current = this.packages();
-          const idx = current.findIndex((p) => p.code === code);
-          if (idx >= 0) {
-            this.packages.set([
-              ...current.slice(0, idx),
-              { ...current[idx], ...updated },
-              ...current.slice(idx + 1),
-            ]);
-          } else {
-            this.packages.set([...current, updated]);
-          }
+          return this.loadPackages().pipe(
+            map((pkgs) => {
+              const found = pkgs.find((p) => p.package === code);
+              if (!found) throw new Error('Package not found after update');
+              return found;
+            })
+          );
         }),
         catchError((err) => {
-          // Fallback: bulk PUT if per-package endpoint is not available
           if ((err as { status?: number })?.status === 404) {
             return this.bulkUpdatePackage(code, payload);
           }
@@ -126,52 +126,70 @@ export class AdminLegacyService {
     code: LegacyPackageCode,
     payload: Partial<AdminLegacyPackageUpdatePayload>
   ): Observable<AdminLegacyPackage> {
-    const current = this.packages().find((p) => p.code === code);
+    const current = this.packages().find((p) => p.package === code);
     const merged: AdminLegacyPackage = {
-      code,
+      package: code,
       isActive: payload.isActive ?? current?.isActive ?? true,
-      purchaseAmount: payload.purchaseAmount ?? current?.purchaseAmount ?? 0,
-      instantCommission: payload.instantCommission ?? current?.instantCommission ?? 0,
-      monthlyCommissionBase:
-        payload.monthlyCommissionBase ?? current?.monthlyCommissionBase ?? null,
-      monthlyCommissionIncreased:
-        payload.monthlyCommissionIncreased ??
-        current?.monthlyCommissionIncreased ??
-        null,
+      purchaseAmountNgn:
+        payload.purchaseAmountNgn ?? current?.purchaseAmountNgn ?? 0,
+      purchaseAmountUsd: current?.purchaseAmountUsd ?? 0,
+      instantCommissionNgn:
+        payload.instantCommissionNgn ?? current?.instantCommissionNgn ?? 0,
+      instantCommissionUsd: current?.instantCommissionUsd ?? 0,
+      monthlyCommissionBaseNgn:
+        payload.monthlyCommissionBaseNgn ?? current?.monthlyCommissionBaseNgn ?? 0,
+      monthlyCommissionBaseUsd: current?.monthlyCommissionBaseUsd ?? 0,
+      monthlyCommissionIncreasedNgn:
+        payload.monthlyCommissionIncreasedNgn ??
+        current?.monthlyCommissionIncreasedNgn ??
+        0,
+      monthlyCommissionIncreasedUsd: current?.monthlyCommissionIncreasedUsd ?? 0,
       successlineBonusPercent:
         payload.successlineBonusPercent ?? current?.successlineBonusPercent ?? 0,
-      autoshipAmount: payload.autoshipAmount ?? current?.autoshipAmount ?? 0,
+      autoshipAmountNgn:
+        payload.autoshipAmountNgn ?? current?.autoshipAmountNgn ?? 0,
+      autoshipAmountUsd: current?.autoshipAmountUsd ?? 0,
       cycleMonths: payload.cycleMonths ?? current?.cycleMonths ?? 6,
       minDirectsToIncreaseMonthly:
         payload.minDirectsToIncreaseMonthly ??
         current?.minDirectsToIncreaseMonthly ??
         3,
+      updatedById: current?.updatedById ?? null,
+      updatedAt: current?.updatedAt,
     };
 
-    return this.api
-      .put<unknown>('admin/legacy/packages', { packages: [merged] })
-      .pipe(
-        map((raw) => {
-          const data = unwrapData<AdminLegacyPackagesResponse | AdminLegacyPackage[]>(raw);
-          const list = Array.isArray(data) ? data : (data?.packages ?? [merged]);
-          return list.find((p) => p.code === code) ?? merged;
-        }),
-        tap((updated) => {
-          const list = this.packages();
-          const idx = list.findIndex((p) => p.code === code);
-          if (idx >= 0) {
-            this.packages.set([
-              ...list.slice(0, idx),
-              { ...list[idx], ...updated },
-              ...list.slice(idx + 1),
-            ]);
-          }
-        }),
-        catchError((err) => {
-          this.packagesError.set(extractErrorMessage(err));
-          return throwError(() => err);
-        })
-      );
+    const putBody = {
+      packages: [
+        {
+          package: code,
+          purchaseAmountNgn: merged.purchaseAmountNgn,
+          instantCommissionNgn: merged.instantCommissionNgn,
+          monthlyCommissionBaseNgn: merged.monthlyCommissionBaseNgn,
+          monthlyCommissionIncreasedNgn: merged.monthlyCommissionIncreasedNgn,
+          successlineBonusPercent: merged.successlineBonusPercent,
+          autoshipAmountNgn: merged.autoshipAmountNgn,
+          cycleMonths: merged.cycleMonths,
+          minDirectsToIncreaseMonthly: merged.minDirectsToIncreaseMonthly,
+          isActive: merged.isActive,
+        },
+      ],
+    };
+
+    return this.api.put<unknown>('admin/legacy/packages', putBody).pipe(
+      switchMap(() =>
+        this.loadPackages().pipe(
+          map((pkgs) => {
+            const found = pkgs.find((p) => p.package === code);
+            if (!found) throw new Error('Package not found after bulk update');
+            return found;
+          })
+        )
+      ),
+      catchError((err) => {
+        this.packagesError.set(extractErrorMessage(err));
+        return throwError(() => err);
+      })
+    );
   }
 
   loadMembers(query: AdminLegacyMembersQuery = {}): Observable<AdminLegacyMemberListItem[]> {

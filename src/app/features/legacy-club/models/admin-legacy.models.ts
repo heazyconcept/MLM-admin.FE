@@ -7,35 +7,47 @@ export type LegacyWalletStatus = 'ACTIVE' | 'LOCKED';
 export type LegacyCurrency = 'NGN' | 'USD';
 
 export interface AdminLegacyPackage {
-  code: LegacyPackageCode;
-  name?: string;
-  isActive: boolean;
-  purchaseAmount: number;
-  instantCommission: number;
-  /** Phase 1 flyer field; prefer monthlyCommissionIncreased when present */
-  monthlyCommission?: number;
-  monthlyCommissionBase?: number | null;
-  monthlyCommissionIncreased?: number | null;
+  package: LegacyPackageCode;
+  purchaseAmountNgn: number;
+  purchaseAmountUsd: number;
+  instantCommissionNgn: number;
+  instantCommissionUsd: number;
+  monthlyCommissionBaseNgn: number;
+  monthlyCommissionBaseUsd: number;
+  monthlyCommissionIncreasedNgn: number;
+  monthlyCommissionIncreasedUsd: number;
   successlineBonusPercent: number;
-  autoshipAmount: number;
+  autoshipAmountNgn: number;
+  autoshipAmountUsd: number;
   cycleMonths: number;
   minDirectsToIncreaseMonthly: number;
+  isActive: boolean;
+  updatedById?: string | null;
   updatedAt?: string;
 }
 
+export interface AdminLegacyUpgradeDifference {
+  fromPackage: LegacyPackageCode;
+  toPackage: LegacyPackageCode;
+  payAmountNgn: number;
+  payAmountUsd: number;
+  instantCommissionNgn: number;
+  instantCommissionUsd: number;
+}
+
 export interface AdminLegacyPackagesResponse {
-  fxRateNgnPerUsd?: number;
   packages: AdminLegacyPackage[];
+  upgradeDifferences: AdminLegacyUpgradeDifference[];
 }
 
 export type AdminLegacyPackageUpdatePayload = Pick<
   AdminLegacyPackage,
-  | 'purchaseAmount'
-  | 'instantCommission'
-  | 'monthlyCommissionBase'
-  | 'monthlyCommissionIncreased'
+  | 'purchaseAmountNgn'
+  | 'instantCommissionNgn'
+  | 'monthlyCommissionBaseNgn'
+  | 'monthlyCommissionIncreasedNgn'
   | 'successlineBonusPercent'
-  | 'autoshipAmount'
+  | 'autoshipAmountNgn'
   | 'cycleMonths'
   | 'minDirectsToIncreaseMonthly'
   | 'isActive'
@@ -174,17 +186,3 @@ export interface AdminLegacyEnrollResponse {
   sponsorSource?: LegacySponsorSource;
 }
 
-export function packageMonthlyDisplay(pkg: AdminLegacyPackage): {
-  base: number;
-  increased: number;
-} {
-  const increased =
-    pkg.monthlyCommissionIncreased ?? pkg.monthlyCommission ?? 0;
-  const base = pkg.monthlyCommissionBase ?? pkg.monthlyCommission ?? 0;
-  return { base, increased };
-}
-
-export function ngnToUsd(amountNgn: number, fxRate = 1000): number {
-  if (!fxRate || fxRate <= 0) return 0;
-  return amountNgn / fxRate;
-}
