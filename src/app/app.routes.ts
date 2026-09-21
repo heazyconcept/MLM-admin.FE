@@ -69,6 +69,48 @@ export const routes: Routes = [
         loadComponent: () => import('./features/users/user-details/user-details.component').then(m => m.UserDetailsComponent)
       },
       {
+        path: 'legacy',
+        children: [
+          { path: '', redirectTo: 'members', pathMatch: 'full' },
+          {
+            path: 'enroll',
+            canActivate: [permissionGuard],
+            data: { permissionKey: 'legacy.enroll_seed' },
+            loadComponent: () =>
+              import('./features/legacy-club/enroll/legacy-seed-enroll.component').then(
+                (m) => m.LegacySeedEnrollComponent
+              ),
+          },
+          {
+            path: 'packages',
+            canActivate: [permissionGuard],
+            data: { permissionKey: 'legacy.configure_packages' },
+            loadComponent: () =>
+              import('./features/legacy-club/packages/legacy-packages.component').then(
+                (m) => m.LegacyPackagesComponent
+              ),
+          },
+          {
+            path: 'members',
+            canActivate: [permissionGuard],
+            data: { permissionKey: 'legacy.view_members' },
+            loadComponent: () =>
+              import('./features/legacy-club/members/legacy-members-list.component').then(
+                (m) => m.LegacyMembersListComponent
+              ),
+          },
+          {
+            path: 'members/:userId',
+            canActivate: [permissionGuard],
+            data: { permissionKey: 'legacy.view_members' },
+            loadComponent: () =>
+              import('./features/legacy-club/members/legacy-member-detail.component').then(
+                (m) => m.LegacyMemberDetailComponent
+              ),
+          },
+        ],
+      },
+      {
         path: 'earnings',
         canActivate: [permissionGuard],
         data: { feature: Feature.Earnings },

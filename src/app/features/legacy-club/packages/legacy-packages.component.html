@@ -1,0 +1,379 @@
+<p-toast></p-toast>
+
+<app-confirmation-modal
+  [visible]="showConfirm()"
+  title="Save package configuration"
+  [message]="confirmMessage()"
+  confirmLabel="Save"
+  confirmClass="p-button-primary"
+  icon="pi pi-save"
+  [loading]="!!savingCode()"
+  (confirm)="onConfirmSave($event)"
+  (cancel)="onCancelConfirm()"
+  (visibleChange)="showConfirm.set($event)">
+</app-confirmation-modal>
+
+<div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
+
+  <div class="mb-6 md:mb-8">
+    <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+      Legacy packages
+    </h1>
+    <p class="text-sm text-mlm-secondary">
+      Configure VIP / Executive / Supreme amounts (NGN). USD preview = NGN ÷ {{ fxRate() | number }}.
+    </p>
+  </div>
+
+  @if (missingBaseWarning()) {
+    <div class="mb-4">
+      <app-info-banner
+        type="warning"
+        message="Base monthly is missing or zero on one or more packages. Set base monthly before production — flyer figures are the increased rate.">
+      </app-info-banner>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="mb-4 bg-red-50 border border-red-100 rounded-xl p-4 flex items-center justify-between gap-3">
+      <p class="text-sm text-red-700">{{ error() }}</p>
+      <button
+        pButton
+        label="Retry"
+        icon="pi pi-refresh"
+        class="p-button-sm p-button-outlined"
+        (click)="retry()">
+      </button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div class="animate-pulse divide-y divide-slate-100">
+        @for (i of [1, 2, 3]; track i) {
+          <div class="px-6 py-5 flex items-center gap-4">
+            <div class="h-8 w-24 rounded bg-slate-200"></div>
+            <div class="h-6 w-32 rounded bg-slate-100"></div>
+            <div class="h-6 w-20 rounded bg-slate-100"></div>
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="space-y-6">
+      @for (pkg of packages(); track pkg.code) {
+        @if (getForm(pkg.code); as form) {
+          <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <span
+                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border"
+                  [class]="packageBadgeClass(pkg.code)">
+                  {{ packageLabel(pkg.code) }}
+                </span>
+                @if (!pkg.isActive) {
+                  <span class="text-[10px] font-semibold tracking-[0.08em] uppercase text-slate-400">
+                    Inactive
+                  </span>
+                }
+              </div>
+              <div class="flex items-center gap-2">
+                @if (!isEditing(pkg)) {
+                  <button
+                    type="button"
+                    (click)="startEdit(pkg)"
+                    class="h-9 px-3.5 rounded-lg border border-slate-300 text-sm font-medium
+                           text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+                           flex items-center gap-2 transition-colors duration-150">
+                    <i class="pi pi-pencil text-xs" aria-hidden="true"></i>
+                    Edit
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    (click)="cancelEdit(pkg)"
+                    [disabled]="isSaving(pkg)"
+                    class="h-9 px-3.5 rounded-lg border border-slate-300 text-sm font-medium
+                           text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+                           flex items-center gap-2 transition-colors duration-150 disabled:opacity-60">
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    (click)="requestSave(pkg)"
+                    [disabled]="isSaving(pkg)"
+                    class="h-9 px-3.5 rounded-lg text-sm font-semibold text-white
+                           bg-mlm-primary border border-mlm-primary
+                           hover:bg-brand-green-dark hover:border-brand-green-dark
+                           flex items-center gap-2 transition-colors duration-150 disabled:opacity-60">
+                    @if (isSaving(pkg)) {
+                      <i class="pi pi-spin pi-spinner text-xs" aria-hidden="true"></i>
+                    } @else {
+                      <i class="pi pi-check text-xs" aria-hidden="true"></i>
+                    }
+                    Save
+                  </button>
+                }
+              </div>
+            </div>
+
+            <form class="px-6 py-6" [formGroup]="form">
+              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-10 gap-y-6">
+
+                <div>
+                  <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+                    Product purchase (NGN)
+                  </p>
+                  @if (!isEditing(pkg)) {
+                    <p class="text-sm font-medium text-mlm-text tabular-nums">
+                      {{ pkg.purchaseAmount | number:'1.0-2' }}
+                    </p>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                      ≈ ${{ usdPreview(pkg.purchaseAmount) | number:'1.2-2' }}
+                    </p>
+                  } @else {
+                    <p-inputNumber
+                      formControlName="purchaseAmount"
+                      mode="decimal"
+                      [min]="0"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
+                      [useGrouping]="true"
+                      styleClass="w-full">
+                    </p-inputNumber>
+                    <p class="text-xs text-slate-400 mt-1">
+                      ≈ ${{ usdPreview(form.get('purchaseAmount')?.value) | number:'1.2-2' }}
+                    </p>
+                  }
+                </div>
+
+                <div>
+                  <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+                    Instant commission (NGN)
+                  </p>
+                  @if (!isEditing(pkg)) {
+                    <p class="text-sm font-medium text-mlm-text tabular-nums">
+                      {{ pkg.instantCommission | number:'1.0-2' }}
+                    </p>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                      ≈ ${{ usdPreview(pkg.instantCommission) | number:'1.2-2' }}
+                    </p>
+                  } @else {
+                    <p-inputNumber
+                      formControlName="instantCommission"
+                      mode="decimal"
+                      [min]="0"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
+                      styleClass="w-full">
+                    </p-inputNumber>
+                    <p class="text-xs text-slate-400 mt-1">
+                      ≈ ${{ usdPreview(form.get('instantCommission')?.value) | number:'1.2-2' }}
+                    </p>
+                  }
+                </div>
+
+                <div>
+                  <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+                    Base monthly (NGN)
+                  </p>
+                  @if (!isEditing(pkg)) {
+                    <p
+                      class="text-sm font-medium tabular-nums"
+                      [class]="!displayBase(pkg) ? 'text-amber-700' : 'text-mlm-text'">
+                      {{ displayBase(pkg) | number:'1.0-2' }}
+                    </p>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                      Before {{ pkg.minDirectsToIncreaseMonthly ?? 3 }} Successlines
+                    </p>
+                  } @else {
+                    <p-inputNumber
+                      formControlName="monthlyCommissionBase"
+                      mode="decimal"
+                      [min]="0"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
+                      styleClass="w-full">
+                    </p-inputNumber>
+                  }
+                </div>
+
+                <div>
+                  <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+                    Increased monthly (NGN)
+                  </p>
+                  @if (!isEditing(pkg)) {
+                    <p class="text-sm font-medium text-mlm-text tabular-nums">
+                      {{ displayIncreased(pkg) | number:'1.0-2' }}
+                    </p>
+                    <p class="text-xs text-slate-400 mt-0.5">Flyer rate after Successlines threshold</p>
+                  } @else {
+                    <p-inputNumber
+                      formControlName="monthlyCommissionIncreased"
+                      mode="decimal"
+                      [min]="0"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
+                      styleClass="w-full">
+                    </p-inputNumber>
+                  }
+                </div>
+
+                <div>
+                  <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+                    Successline bonus %
+                  </p>
+                  @if (!isEditing(pkg)) {
+                    <p class="text-sm font-medium text-mlm-text tabular-nums">
+                      {{ pkg.successlineBonusPercent | number:'1.0-2' }}%
+                    </p>
+                  } @else {
+                    <p-inputNumber
+                      formControlName="successlineBonusPercent"
+                      mode="decimal"
+                      [min]="0"
+                      [max]="100"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
+                      suffix="%"
+                      styleClass="w-full">
+                    </p-inputNumber>
+                  }
+                </div>
+
+                <div>
+                  <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+                    Autoship amount (NGN)
+                  </p>
+                  @if (!isEditing(pkg)) {
+                    <p class="text-sm font-medium text-mlm-text tabular-nums">
+                      {{ pkg.autoshipAmount | number:'1.0-2' }}
+                    </p>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                      ≈ ${{ usdPreview(pkg.autoshipAmount) | number:'1.2-2' }}
+                    </p>
+                  } @else {
+                    <p-inputNumber
+                      formControlName="autoshipAmount"
+                      mode="decimal"
+                      [min]="0"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
+                      styleClass="w-full">
+                    </p-inputNumber>
+                  }
+                </div>
+
+                <div>
+                  <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+                    Cycle months
+                  </p>
+                  @if (!isEditing(pkg)) {
+                    <p class="text-sm font-medium text-mlm-text tabular-nums">{{ pkg.cycleMonths ?? 6 }}</p>
+                  } @else {
+                    <p-inputNumber
+                      formControlName="cycleMonths"
+                      [min]="1"
+                      [max]="24"
+                      [showButtons]="true"
+                      styleClass="w-full">
+                    </p-inputNumber>
+                  }
+                </div>
+
+                <div>
+                  <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+                    Min Successlines to raise monthly
+                  </p>
+                  @if (!isEditing(pkg)) {
+                    <p class="text-sm font-medium text-mlm-text tabular-nums">
+                      {{ pkg.minDirectsToIncreaseMonthly ?? 3 }}
+                    </p>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                      Raises monthly in Phase 2. Does not lock cashout.
+                    </p>
+                  } @else {
+                    <p-inputNumber
+                      formControlName="minDirectsToIncreaseMonthly"
+                      [min]="0"
+                      [showButtons]="true"
+                      styleClass="w-full">
+                    </p-inputNumber>
+                    <p class="text-xs text-slate-400 mt-1">
+                      Raises monthly in Phase 2. Does not lock cashout.
+                    </p>
+                  }
+                </div>
+
+                <div>
+                  <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+                    Active
+                  </p>
+                  @if (!isEditing(pkg)) {
+                    <p
+                      class="text-sm font-medium"
+                      [class]="pkg.isActive ? 'text-mlm-primary' : 'text-slate-400'">
+                      {{ pkg.isActive ? 'Yes' : 'No' }}
+                    </p>
+                  } @else {
+                    <p-toggleswitch formControlName="isActive"></p-toggleswitch>
+                  }
+                </div>
+              </div>
+            </form>
+          </div>
+        }
+      }
+
+      @if (upgradePreviews().length) {
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div class="px-6 py-5 border-b border-slate-100">
+            <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
+              Upgrade difference preview
+            </p>
+            <p class="text-xs text-mlm-secondary mt-1">
+              Pay amount and Instant difference between tiers (NGN). Read-only helper for Phase 3.
+            </p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-slate-100">
+                  <th class="px-6 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 bg-white">
+                    From → To
+                  </th>
+                  <th class="px-6 py-3 text-right text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 bg-white">
+                    Pay difference
+                  </th>
+                  <th class="px-6 py-3 text-right text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 bg-white">
+                    Instant difference
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of upgradePreviews(); track row.from + row.to) {
+                  <tr class="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60">
+                    <td class="px-6 py-3.5 text-mlm-text font-medium">
+                      {{ packageLabel(row.from) }} → {{ packageLabel(row.to) }}
+                    </td>
+                    <td class="px-6 py-3.5 text-right tabular-nums text-mlm-text">
+                      ₦{{ row.payDiff | number:'1.0-2' }}
+                      <span class="block text-xs text-slate-400 font-normal">
+                        ≈ ${{ usdPreview(row.payDiff) | number:'1.2-2' }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-3.5 text-right tabular-nums text-mlm-text">
+                      ₦{{ row.instantDiff | number:'1.0-2' }}
+                      <span class="block text-xs text-slate-400 font-normal">
+                        ≈ ${{ usdPreview(row.instantDiff) | number:'1.2-2' }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

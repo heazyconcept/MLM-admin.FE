@@ -1,0 +1,209 @@
+<p-toast></p-toast>
+
+<div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
+
+  <!-- ── Header ── -->
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 md:mb-8">
+    <div class="min-w-0">
+      <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        Legacy members
+      </h1>
+      <p class="text-sm text-mlm-secondary">
+        View ACTIVE Legacy Club memberships, wallets, and cycle progress
+      </p>
+    </div>
+
+    @if (canEnroll()) {
+      <a
+        routerLink="/admin/legacy/enroll"
+        class="h-9 px-4 rounded-lg bg-mlm-primary hover:bg-brand-green-dark text-white text-sm font-semibold
+               flex items-center justify-center gap-2 transition-colors duration-150
+               shrink-0 w-full sm:w-auto self-start border border-mlm-primary hover:border-brand-green-dark">
+        <i class="pi pi-user-plus text-xs" aria-hidden="true"></i>
+        Seed enroll
+      </a>
+    }
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 md:px-6 md:py-5 shadow-sm">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-3">Total members</p>
+          <p class="text-3xl md:text-4xl font-bold text-mlm-text tracking-tight leading-none mb-2 tabular-nums">
+            {{ total() | number }}
+          </p>
+          <p class="text-xs text-slate-400">Matching current filters</p>
+        </div>
+        <div
+          class="h-10 w-10 rounded-lg bg-mlm-green-100 text-mlm-primary flex items-center justify-center shrink-0"
+          aria-hidden="true">
+          <i class="pi pi-star text-sm"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="mb-4 bg-red-50 border border-red-100 rounded-xl p-4 flex items-center justify-between gap-3">
+      <p class="text-sm text-red-700">{{ error() }}</p>
+      <button
+        type="button"
+        pButton
+        label="Retry"
+        icon="pi pi-refresh"
+        class="p-button-sm p-button-outlined"
+        (click)="retry()">
+      </button>
+    </div>
+  }
+
+  <!-- ── Single Card: Filters + Table ── -->
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+
+    <div class="px-4 py-4 md:px-5 border-b border-slate-100">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center gap-2 sm:gap-3">
+
+        <div class="relative w-full sm:w-64">
+          <i
+            class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"
+            aria-hidden="true"></i>
+          <input
+            pInputText
+            type="search"
+            [ngModel]="searchVal()"
+            (ngModelChange)="searchVal.set($event)"
+            (keydown.enter)="onSearch()"
+            placeholder="Search by username…"
+            aria-label="Search by username"
+            class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm
+                   text-mlm-text bg-white placeholder:text-slate-300
+                   focus:outline-none focus:ring-2 focus:ring-mlm-primary transition" />
+        </div>
+
+        <button
+          type="button"
+          (click)="onSearch()"
+          class="h-9 px-4 rounded-lg bg-mlm-primary hover:bg-brand-green-dark text-white text-sm font-semibold
+                 flex items-center justify-center gap-2 transition-colors duration-150
+                 w-full sm:w-auto shrink-0 border border-mlm-primary hover:border-brand-green-dark">
+          <i class="pi pi-search text-xs" aria-hidden="true"></i>
+          Search
+        </button>
+
+        <p-select
+          [options]="packageOptions"
+          [ngModel]="packageFilter()"
+          (ngModelChange)="packageFilter.set($event); onFilterChange()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All packages"
+          appendTo="body"
+          styleClass="!h-9 !text-sm !rounded-lg !border-slate-200 w-full sm:w-36"
+          ariaLabel="Filter by package">
+        </p-select>
+
+        <p-select
+          [options]="placementOptions"
+          [ngModel]="sponsorSourceFilter()"
+          (ngModelChange)="sponsorSourceFilter.set($event); onFilterChange()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All placements"
+          appendTo="body"
+          styleClass="!h-9 !text-sm !rounded-lg !border-slate-200 w-full sm:w-36"
+          ariaLabel="Filter by placement">
+        </p-select>
+      </div>
+    </div>
+
+    <app-data-table
+      [value]="members()"
+      [headers]="tableHeaders()"
+      [loading]="loading()"
+      [lazy]="true"
+      [totalRecords]="total()"
+      [first]="tableFirst()"
+      [rows]="pageRows()"
+      (pageChange)="onPageChange($event)">
+
+      <ng-template pTemplate="body" let-row>
+        <tr
+          class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100 cursor-pointer"
+          (click)="openDetail(row)"
+          (keydown.enter)="openDetail(row)"
+          tabindex="0"
+          role="link"
+          [attr.aria-label]="'Open Legacy member ' + row.username">
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[120px]">
+            <p class="text-sm font-semibold text-mlm-text leading-tight truncate">
+              &#64;{{ row.username }}
+            </p>
+            @if (row.fullName) {
+              <p class="text-[11px] text-slate-400 mt-0.5 truncate">{{ row.fullName }}</p>
+            }
+          </td>
+          <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary">
+            {{ row.segulahPackage || '—' }}
+          </td>
+          <td class="px-3 py-3 sm:px-4 text-sm font-medium text-mlm-text">
+            {{ packageLabel(row.legacyPackage) }}
+          </td>
+          <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary">
+            @if (row.sponsorUsername) {
+              &#64;{{ row.sponsorUsername }}
+            } @else {
+              —
+            }
+          </td>
+          <td class="px-3 py-3 sm:px-4">
+            <span class="inline-flex text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+              {{ row.sponsorSource }}
+            </span>
+          </td>
+          <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text">
+            {{ row.directSuccesslineCount ?? 0 }}
+          </td>
+          @if (canViewWallets()) {
+            <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text">
+              {{ formatMoney(row.legacyCashoutBalance) }}
+            </td>
+            <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text">
+              {{ formatMoney(row.legacyVoucherBalance) }}
+            </td>
+          }
+          <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary whitespace-nowrap">
+            {{ formatDate(row.joinedAt) }}
+          </td>
+          <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text">
+            {{ monthProgress(row) }}
+          </td>
+          <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text">
+            {{ formatMoney(row.pendingAmount) }}
+          </td>
+          <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary">
+            {{ row.nextDueRateTier || '—' }}
+          </td>
+          <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary whitespace-nowrap">
+            {{ formatDate(row.lastAutoshipAt) }}
+          </td>
+          <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary whitespace-nowrap">
+            {{ formatDate(row.cycleStartedAt) }}
+          </td>
+          <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary">
+            @if (row.lastEventKind) {
+              <span>{{ row.lastEventKind }}</span>
+              <span class="block text-[11px] text-slate-400">{{ formatDate(row.lastEventAt) }}</span>
+            } @else {
+              —
+            }
+          </td>
+          <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary whitespace-nowrap">
+            {{ formatDate(row.monthlyQualifiedAt) }}
+          </td>
+        </tr>
+      </ng-template>
+    </app-data-table>
+  </div>
+</div>
