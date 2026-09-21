@@ -28,16 +28,7 @@ import {
   AdminLegacyPackage,
   AdminLegacyPackageUpdatePayload,
   LegacyPackageCode,
-  ngnToUsd,
-  packageMonthlyDisplay,
 } from '../models/admin-legacy.models';
-
-interface UpgradePreviewRow {
-  from: LegacyPackageCode;
-  to: LegacyPackageCode;
-  payDiff: number;
-  instantDiff: number;
-}
 
 @Component({
   selector: 'app-legacy-packages',
@@ -61,9 +52,9 @@ export class LegacyPackagesComponent implements OnInit {
   private readonly messageService = inject(MessageService);
 
   packages = this.legacyService.packages;
+  upgradeDifferences = this.legacyService.upgradeDifferences;
   loading = this.legacyService.packagesLoading;
   error = this.legacyService.packagesError;
-  fxRate = this.legacyService.fxRateNgnPerUsd;
 
   editingCode = signal<LegacyPackageCode | null>(null);
   savingCode = signal<LegacyPackageCode | null>(null);
@@ -74,37 +65,8 @@ export class LegacyPackagesComponent implements OnInit {
 
   private formMap = signal<Record<string, FormGroup>>({});
 
-  upgradePreviews = computed((): UpgradePreviewRow[] => {
-    const pkgs = this.packages();
-    const byCode = (c: LegacyPackageCode) => pkgs.find((p) => p.code === c);
-    const pairs: [LegacyPackageCode, LegacyPackageCode][] = [
-      ['VIP', 'EXECUTIVE'],
-      ['EXECUTIVE', 'SUPREME'],
-      ['VIP', 'SUPREME'],
-    ];
-    return pairs
-      .map(([from, to]) => {
-        const a = byCode(from);
-        const b = byCode(to);
-        if (!a || !b) return null;
-        return {
-          from,
-          to,
-          payDiff: Math.max(0, (b.purchaseAmount ?? 0) - (a.purchaseAmount ?? 0)),
-          instantDiff: Math.max(
-            0,
-            (b.instantCommission ?? 0) - (a.instantCommission ?? 0)
-          ),
-        };
-      })
-      .filter((r): r is UpgradePreviewRow => r !== null);
-  });
-
   missingBaseWarning = computed(() =>
-    this.packages().some((p) => {
-      const { base } = packageMonthlyDisplay(p);
-      return !base || base <= 0;
-    })
+    this.packages().some((p) => !p.monthlyCommissionBaseNgn || p.monthlyCommissionBaseNgn <= 0)
   );
 
   ngOnInit(): void {
@@ -116,10 +78,10 @@ export class LegacyPackagesComponent implements OnInit {
   ensureForms(pkgs: AdminLegacyPackage[]): void {
     const map = { ...this.formMap() };
     for (const pkg of pkgs) {
-      if (!map[pkg.code]) {
-        map[pkg.code] = this.buildForm(pkg);
+      if (!map[pkg.package]) {
+        map[pkg.package] = this.buildForm(pkg);
       } else {
-        this.patchForm(map[pkg.code], pkg);
+        this.patchForm(map[pkg.package], pkg);
       }
     }
     this.formMap.set(map);
@@ -130,23 +92,31 @@ export class LegacyPackagesComponent implements OnInit {
   }
 
   private buildForm(pkg: AdminLegacyPackage): FormGroup {
-    const { base, increased } = packageMonthlyDisplay(pkg);
     return this.fb.group({
-      purchaseAmount: [pkg.purchaseAmount ?? 0, [Validators.required, Validators.min(0)]],
-      instantCommission: [
-        pkg.instantCommission ?? 0,
+      purchaseAmountNgn: [
+        pkg.purchaseAmountNgn ?? 0,
         [Validators.required, Validators.min(0)],
       ],
-      monthlyCommissionBase: [base, [Validators.required, Validators.min(0)]],
-      monthlyCommissionIncreased: [
-        increased,
+      instantCommissionNgn: [
+        pkg.instantCommissionNgn ?? 0,
+        [Validators.required, Validators.min(0)],
+      ],
+      monthlyCommissionBaseNgn: [
+        pkg.monthlyCommissionBaseNgn ?? 0,
+        [Validators.required, Validators.min(0)],
+      ],
+      monthlyCommissionIncreasedNgn: [
+        pkg.monthlyCommissionIncreasedNgn ?? 0,
         [Validators.required, Validators.min(0)],
       ],
       successlineBonusPercent: [
         pkg.successlineBonusPercent ?? 0,
         [Validators.required, Validators.min(0), Validators.max(100)],
       ],
-      autoshipAmount: [pkg.autoshipAmount ?? 0, [Validators.required, Validators.min(0)]],
+      autoshipAmountNgn: [
+        pkg.autoshipAmountNgn ?? 0,
+        [Validators.required, Validators.min(0)],
+      ],
       cycleMonths: [
         pkg.cycleMonths ?? 6,
         [Validators.required, Validators.min(1), Validators.max(24)],
@@ -160,22 +130,17 @@ export class LegacyPackagesComponent implements OnInit {
   }
 
   private patchForm(form: FormGroup, pkg: AdminLegacyPackage): void {
-    const { base, increased } = packageMonthlyDisplay(pkg);
     form.reset({
-      purchaseAmount: pkg.purchaseAmount ?? 0,
-      instantCommission: pkg.instantCommission ?? 0,
-      monthlyCommissionBase: base,
-      monthlyCommissionIncreased: increased,
+      purchaseAmountNgn: pkg.purchaseAmountNgn ?? 0,
+      instantCommissionNgn: pkg.instantCommissionNgn ?? 0,
+      monthlyCommissionBaseNgn: pkg.monthlyCommissionBaseNgn ?? 0,
+      monthlyCommissionIncreasedNgn: pkg.monthlyCommissionIncreasedNgn ?? 0,
       successlineBonusPercent: pkg.successlineBonusPercent ?? 0,
-      autoshipAmount: pkg.autoshipAmount ?? 0,
+      autoshipAmountNgn: pkg.autoshipAmountNgn ?? 0,
       cycleMonths: pkg.cycleMonths ?? 6,
       minDirectsToIncreaseMonthly: pkg.minDirectsToIncreaseMonthly ?? 3,
       isActive: pkg.isActive ?? true,
     });
-  }
-
-  usdPreview(amountNgn: number | null | undefined): number {
-    return ngnToUsd(Number(amountNgn ?? 0), this.fxRate());
   }
 
   packageLabel(code: string): string {
@@ -197,27 +162,27 @@ export class LegacyPackagesComponent implements OnInit {
   }
 
   isEditing(pkg: AdminLegacyPackage): boolean {
-    return this.editingCode() === pkg.code;
+    return this.editingCode() === pkg.package;
   }
 
   isSaving(pkg: AdminLegacyPackage): boolean {
-    return this.savingCode() === pkg.code;
+    return this.savingCode() === pkg.package;
   }
 
   startEdit(pkg: AdminLegacyPackage): void {
-    const form = this.getForm(pkg.code);
+    const form = this.getForm(pkg.package);
     if (form) this.patchForm(form, pkg);
-    this.editingCode.set(pkg.code);
+    this.editingCode.set(pkg.package);
   }
 
   cancelEdit(pkg: AdminLegacyPackage): void {
-    const form = this.getForm(pkg.code);
+    const form = this.getForm(pkg.package);
     if (form) this.patchForm(form, pkg);
     this.editingCode.set(null);
   }
 
   requestSave(pkg: AdminLegacyPackage): void {
-    const form = this.getForm(pkg.code);
+    const form = this.getForm(pkg.package);
     if (!form) return;
     form.markAllAsTouched();
     if (form.invalid) {
@@ -232,9 +197,9 @@ export class LegacyPackagesComponent implements OnInit {
     const v = form.getRawValue();
     const payload: Partial<AdminLegacyPackageUpdatePayload> = {};
     const monthlyChanged =
-      v.monthlyCommissionBase !== packageMonthlyDisplay(pkg).base ||
-      v.monthlyCommissionIncreased !== packageMonthlyDisplay(pkg).increased ||
-      v.autoshipAmount !== (pkg.autoshipAmount ?? 0);
+      v.monthlyCommissionBaseNgn !== pkg.monthlyCommissionBaseNgn ||
+      v.monthlyCommissionIncreasedNgn !== pkg.monthlyCommissionIncreasedNgn ||
+      v.autoshipAmountNgn !== pkg.autoshipAmountNgn;
 
     const assign = <K extends keyof AdminLegacyPackageUpdatePayload>(
       key: K,
@@ -246,24 +211,20 @@ export class LegacyPackagesComponent implements OnInit {
       }
     };
 
-    assign('purchaseAmount', v.purchaseAmount, pkg.purchaseAmount);
-    assign('instantCommission', v.instantCommission, pkg.instantCommission);
+    assign('purchaseAmountNgn', v.purchaseAmountNgn, pkg.purchaseAmountNgn);
+    assign('instantCommissionNgn', v.instantCommissionNgn, pkg.instantCommissionNgn);
     assign(
-      'monthlyCommissionBase',
-      v.monthlyCommissionBase,
-      pkg.monthlyCommissionBase ?? packageMonthlyDisplay(pkg).base
+      'monthlyCommissionBaseNgn',
+      v.monthlyCommissionBaseNgn,
+      pkg.monthlyCommissionBaseNgn
     );
     assign(
-      'monthlyCommissionIncreased',
-      v.monthlyCommissionIncreased,
-      pkg.monthlyCommissionIncreased ?? packageMonthlyDisplay(pkg).increased
+      'monthlyCommissionIncreasedNgn',
+      v.monthlyCommissionIncreasedNgn,
+      pkg.monthlyCommissionIncreasedNgn
     );
-    assign(
-      'successlineBonusPercent',
-      v.successlineBonusPercent,
-      pkg.successlineBonusPercent
-    );
-    assign('autoshipAmount', v.autoshipAmount, pkg.autoshipAmount);
+    assign('successlineBonusPercent', v.successlineBonusPercent, pkg.successlineBonusPercent);
+    assign('autoshipAmountNgn', v.autoshipAmountNgn, pkg.autoshipAmountNgn);
     assign('cycleMonths', v.cycleMonths, pkg.cycleMonths);
     assign(
       'minDirectsToIncreaseMonthly',
@@ -282,7 +243,7 @@ export class LegacyPackagesComponent implements OnInit {
       return;
     }
 
-    this.pendingCode.set(pkg.code);
+    this.pendingCode.set(pkg.package);
     this.pendingPayload.set(payload);
     this.monthlyFieldsChanged.set(monthlyChanged);
     this.showConfirm.set(true);
@@ -305,6 +266,7 @@ export class LegacyPackagesComponent implements OnInit {
     this.savingCode.set(code);
     this.legacyService.updatePackage(code, payload).subscribe({
       next: () => {
+        this.ensureForms(this.packages());
         this.messageService.add({
           severity: 'success',
           summary: 'Updated',
@@ -341,13 +303,5 @@ export class LegacyPackagesComponent implements OnInit {
     this.legacyService.loadPackages().subscribe({
       next: (pkgs) => this.ensureForms(pkgs),
     });
-  }
-
-  displayBase(pkg: AdminLegacyPackage): number {
-    return packageMonthlyDisplay(pkg).base;
-  }
-
-  displayIncreased(pkg: AdminLegacyPackage): number {
-    return packageMonthlyDisplay(pkg).increased;
   }
 }
