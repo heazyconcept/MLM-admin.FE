@@ -79,20 +79,17 @@ export class LegacyMembersListComponent implements OnInit {
 
   tableHeaders = computed(() => [
     'Username',
+    'Status',
     'Segulah',
     'Legacy',
     'Sponsor',
     'Placement',
     'Successlines',
-    ...(this.canViewWallets() ? ['Legacy account', 'Legacy voucher'] : []),
-    'Joined',
     'Progress',
     'Pending',
     'Next rate',
-    'Last Autoship',
-    'Cycle start',
-    'Last event',
-    'Qualified',
+    ...(this.canViewWallets() ? ['Legacy account', 'Legacy voucher'] : []),
+    'Joined',
   ]);
 
   ngOnInit(): void {
@@ -144,13 +141,18 @@ export class LegacyMembersListComponent implements OnInit {
   }
 
   monthProgress(row: AdminLegacyMemberListItem): string {
-    if (row.issuedCount == null || row.cycleMonths == null) return '—';
-    return `${row.issuedCount}/${row.cycleMonths}`;
+    const issued = row.issuedCount ?? 0;
+    const cycle = row.cycleMonths ?? 6;
+    return `${issued}/${cycle}`;
   }
 
-  formatMoney(value: number | null | undefined): string {
+  formatMoney(
+    value: number | null | undefined,
+    currency: string | undefined = 'NGN'
+  ): string {
     if (value == null) return '—';
-    return `₦${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+    const prefix = currency === 'USD' ? '$' : '₦';
+    return `${prefix}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   }
 
   packageLabel(code: string | undefined): string {
@@ -161,6 +163,23 @@ export class LegacyMembersListComponent implements OnInit {
       SUPREME: 'Supreme',
     };
     return labels[code] ?? code;
+  }
+
+  statusClass(status: string | undefined): string {
+    switch (status) {
+      case 'ACTIVE':
+        return 'bg-emerald-100 text-emerald-800';
+      case 'PENDING_JOIN':
+        return 'bg-amber-100 text-amber-800';
+      default:
+        return 'bg-slate-100 text-slate-600';
+    }
+  }
+
+  statusLabel(status: string | undefined): string {
+    if (!status) return '—';
+    if (status === 'PENDING_JOIN') return 'Pending join';
+    return status;
   }
 
   retry(): void {

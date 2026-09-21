@@ -48,28 +48,26 @@ export interface AdminLegacyWalletSnapshot {
   currency?: LegacyCurrency;
 }
 
+export type LegacyMemberStatus = 'NONE' | 'PENDING_JOIN' | 'ACTIVE' | 'EXPIRED';
+
 export interface AdminLegacyMemberListItem {
   userId: string;
   username: string;
-  fullName?: string;
-  segulahPackage?: string;
-  legacyPackage: LegacyPackageCode;
+  registrationPackage?: string;
+  package: LegacyPackageCode;
+  status: LegacyMemberStatus | string;
   sponsorUsername?: string | null;
   sponsorSource: LegacySponsorSource;
-  directSuccesslineCount: number;
-  legacyCashoutBalance?: number | null;
-  legacyVoucherBalance?: number | null;
-  joinedAt: string;
-  /** Phase 2+ */
-  cycleMonths?: number;
+  successlineCount: number;
   issuedCount?: number;
+  cycleMonths?: number;
   pendingAmount?: number | null;
   nextDueRateTier?: LegacyRateTier | null;
   lastAutoshipAt?: string | null;
-  cycleStartedAt?: string | null;
-  lastEventKind?: LegacyHistoryKind | null;
-  lastEventAt?: string | null;
-  monthlyQualifiedAt?: string | null;
+  legacyCashoutBalance?: number | null;
+  legacyVoucherBalance?: number | null;
+  currency?: LegacyCurrency;
+  joinedAt?: string | null;
 }
 
 export interface AdminLegacyMembersListResponse {
