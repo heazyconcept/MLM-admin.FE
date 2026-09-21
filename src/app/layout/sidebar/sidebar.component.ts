@@ -86,6 +86,31 @@ export class SidebarComponent {
           ],
         },
         {
+          label: 'Legacy Club',
+          icon: 'pi pi-star',
+          feature: Feature.LegacyClub,
+          submenu: [
+            {
+              label: 'Members',
+              icon: 'pi pi-users',
+              route: '/admin/legacy/members',
+              permissionKey: 'legacy.view_members',
+            },
+            {
+              label: 'Packages',
+              icon: 'pi pi-box',
+              route: '/admin/legacy/packages',
+              permissionKey: 'legacy.configure_packages',
+            },
+            {
+              label: 'Seed enroll',
+              icon: 'pi pi-user-plus',
+              route: '/admin/legacy/enroll',
+              permissionKey: 'legacy.enroll_seed',
+            },
+          ],
+        },
+        {
           label: 'Earnings Payouts',
           icon: 'pi pi-percentage',
           feature: Feature.ReportsAudit,

@@ -160,6 +160,7 @@ export const PERMISSION_MODULES = [
   'System',
   'Admin Management',
   'Consultants',
+  'Legacy Club',
 ] as const;
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[number];
@@ -184,6 +185,7 @@ export const FEATURE_TO_PERMISSION_PREFIX: Record<string, string> = {
   'SystemConfig': 'system.',
   'AdminManagement': 'admin_management.',
   'BusinessConsultants': 'consultants.',
+  'LegacyClub': 'legacy.',
 };
 
 /**
@@ -287,4 +289,10 @@ export const ALL_PERMISSION_KEYS: Permission[] = [
   { id: 'p-64', key: 'consultants.view', label: 'View Consultants', module: 'Consultants', type: 'view' },
   { id: 'p-65', key: 'consultants.view_details', label: 'View Consultant Details', module: 'Consultants', type: 'view' },
   { id: 'p-66', key: 'consultants.approve', label: 'Approve / Grant / Revoke Consultant', module: 'Consultants', type: 'action' },
+
+  // Legacy Club
+  { id: 'p-67', key: 'legacy.view_members', label: 'View Legacy members', module: 'Legacy Club', type: 'view' },
+  { id: 'p-68', key: 'legacy.configure_packages', label: 'Configure Legacy packages', module: 'Legacy Club', type: 'action' },
+  { id: 'p-69', key: 'legacy.enroll_seed', label: 'Seed enroll Legacy member', module: 'Legacy Club', type: 'action' },
+  { id: 'p-70', key: 'legacy.view_wallets', label: 'View Legacy wallets', module: 'Legacy Club', type: 'view' },
 ];

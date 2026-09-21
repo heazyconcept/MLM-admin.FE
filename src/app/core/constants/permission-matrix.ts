@@ -24,6 +24,7 @@ export const FEATURE_MIN_VIEW_PERMISSION: Record<Feature, string> = {
   [Feature.SystemConfig]: 'system.view',
   [Feature.AdminManagement]: 'admin_management.view',
   [Feature.BusinessConsultants]: 'consultants.view',
+  [Feature.LegacyClub]: 'legacy.view_members',
 };
 
 /** Maps legacy Action enum values to backend permission keys */

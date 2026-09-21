@@ -1,0 +1,144 @@
+<p-toast></p-toast>
+
+<app-confirmation-modal
+  [visible]="showConfirm()"
+  title="Confirm seed enroll"
+  message="Seed enroll creates Legacy membership without a marketplace order. Use only to start the tree."
+  confirmLabel="Seed enroll"
+  confirmClass="p-button-primary"
+  icon="pi pi-user-plus"
+  [loading]="submitting()"
+  (confirm)="onConfirm($event)"
+  (cancel)="onCancelConfirm()"
+  (visibleChange)="showConfirm.set($event)">
+</app-confirmation-modal>
+
+<div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
+
+  <div class="mb-6 md:mb-8 max-w-2xl">
+    <div class="flex items-center gap-3 text-xs text-slate-400 mb-3">
+      <a
+        routerLink="/admin/legacy/members"
+        class="p-2 rounded-md hover:bg-slate-100 shrink-0 text-slate-500"
+        aria-label="Back to Legacy members">
+        <i class="pi pi-arrow-left" aria-hidden="true"></i>
+      </a>
+      Back to Legacy members
+    </div>
+    <h1 class="text-xl sm:text-2xl md:text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+      Seed enroll
+    </h1>
+    <p class="text-sm text-mlm-secondary">
+      Create the first ACTIVE Legacy members without a marketplace order.
+    </p>
+  </div>
+
+  <div class="max-w-2xl space-y-4">
+    <app-info-banner
+      type="info"
+      message="Sponsor username is optional for the first seed only. If omitted and the user has a Segulah upline already in Legacy, AUTO placement is used. The tree root may have no sponsor.">
+    </app-info-banner>
+
+    @if (formError()) {
+      <div
+        class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        role="alert">
+        {{ formError() }}
+      </div>
+    }
+
+    <form
+      class="bg-white rounded-xl border border-slate-200 overflow-hidden"
+      [formGroup]="form"
+      (ngSubmit)="openConfirm()">
+
+      <div class="px-6 py-5 border-b border-slate-100">
+        <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
+          Enrollment details
+        </p>
+      </div>
+
+      <div class="px-6 py-6 space-y-5">
+        <div>
+          <label for="seed-username" class="block text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+            Target username
+          </label>
+          <input
+            id="seed-username"
+            pInputText
+            formControlName="username"
+            placeholder="Paid Segulah username"
+            autocomplete="off"
+            class="w-full h-10 text-sm rounded-lg border-slate-200"
+            [class.ng-invalid]="isInvalid('username')"
+            [class.ng-dirty]="isInvalid('username')" />
+          @if (isInvalid('username')) {
+            <p class="mt-1 text-xs text-red-600">Username is required (paid Segulah, not already Legacy).</p>
+          }
+        </div>
+
+        <div>
+          <label for="seed-package" class="block text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+            Legacy package
+          </label>
+          <p-select
+            inputId="seed-package"
+            formControlName="package"
+            [options]="packageOptions"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full !text-sm !rounded-lg !border-slate-200"
+            appendTo="body">
+          </p-select>
+        </div>
+
+        <div>
+          <label for="seed-sponsor" class="block text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+            Sponsor username
+            <span class="font-normal normal-case tracking-normal text-slate-400">(optional for first seed)</span>
+          </label>
+          <input
+            id="seed-sponsor"
+            pInputText
+            formControlName="sponsorUsername"
+            placeholder="ACTIVE Legacy sponsor username"
+            autocomplete="off"
+            class="w-full h-10 text-sm rounded-lg border-slate-200" />
+        </div>
+
+        <div class="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
+          <p-checkbox
+            formControlName="waiveProductPurchase"
+            [binary]="true"
+            inputId="seed-waive">
+          </p-checkbox>
+          <label for="seed-waive" class="text-sm text-mlm-text cursor-pointer">
+            <span class="font-medium">Waive product purchase</span>
+            <span class="block text-xs text-mlm-secondary mt-0.5">
+              Seed only — no marketplace order or PV when waived.
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-slate-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 bg-slate-50/50">
+        <a
+          routerLink="/admin/legacy/members"
+          class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
+                 text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+                 flex items-center justify-center transition-colors duration-150">
+          Cancel
+        </a>
+        <button
+          type="submit"
+          class="h-9 px-4 rounded-lg bg-mlm-primary hover:bg-brand-green-dark text-white text-sm font-semibold
+                 flex items-center justify-center gap-2 transition-colors duration-150
+                 border border-mlm-primary hover:border-brand-green-dark disabled:opacity-60"
+          [disabled]="submitting()">
+          <i class="pi pi-user-plus text-xs" aria-hidden="true"></i>
+          Seed enroll
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
