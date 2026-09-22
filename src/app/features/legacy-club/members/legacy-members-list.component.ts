@@ -142,6 +142,9 @@ export class LegacyMembersListComponent implements OnInit {
 
   monthProgress(row: AdminLegacyMemberListItem): string {
     const issued = row.issuedCount ?? 0;
+    if (row.cycleWeeks != null && row.cycleWeeks > 0) {
+      return `${issued}/${row.cycleWeeks}`;
+    }
     const cycle = row.cycleMonths ?? 6;
     return `${issued}/${cycle}`;
   }

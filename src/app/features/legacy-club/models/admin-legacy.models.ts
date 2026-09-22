@@ -73,6 +73,7 @@ export interface AdminLegacyMemberListItem {
   successlineCount: number;
   issuedCount?: number;
   cycleMonths?: number;
+  cycleWeeks?: number;
   pendingAmount?: number | null;
   nextDueRateTier?: LegacyRateTier | null;
   lastAutoshipAt?: string | null;
@@ -114,6 +115,10 @@ export interface AdminLegacyPeriod {
   periodIndex: number;
   dueAt: string;
   amount: number;
+  cashoutAmount?: number | null;
+  voucherGross?: number | null;
+  voucherFee?: number | null;
+  voucherNet?: number | null;
   rateTier: LegacyRateTier;
   status: LegacyMonthStatus;
   droppedAt?: string | null;
@@ -124,6 +129,10 @@ export interface AdminLegacyPriorPending {
   cyclePackage?: LegacyPackageCode;
   periodIndex: number;
   amount: number;
+  cashoutAmount?: number | null;
+  voucherGross?: number | null;
+  voucherFee?: number | null;
+  voucherNet?: number | null;
   rateTier: LegacyRateTier;
   dueAt: string;
   status: LegacyMonthStatus;
@@ -166,6 +175,8 @@ export interface AdminLegacyMemberDetail {
   priorPending?: AdminLegacyPriorPending[];
   events?: AdminLegacyEvent[];
   cycleMonths?: number;
+  cycleWeeks?: number;
+  issuedCount?: number;
   pendingAmount?: number | null;
   nextDueRateTier?: LegacyRateTier | null;
 }
@@ -184,5 +195,37 @@ export interface AdminLegacyEnrollResponse {
   membershipId?: string;
   sponsorUsername?: string | null;
   sponsorSource?: LegacySponsorSource;
+}
+
+/** Monthly flyer amount → weekly (backend ÷ 4). */
+export function weeklyFromMonthly(monthlyNgn: number): number {
+  return Number(monthlyNgn || 0) / 4;
+}
+
+export interface WeeklyCommissionPreview {
+  weeklyCommission: number;
+  weeklyAutoship: number;
+  cashout: number;
+  voucherNet: number;
+}
+
+/**
+ * Read-only weekly breakdown from monthly config.
+ * Cashout = weekly commission − weekly Autoship; voucher net = weekly Autoship × 0.9.
+ */
+export function weeklyCommissionPreview(
+  monthlyCommissionNgn: number,
+  autoshipMonthlyNgn: number
+): WeeklyCommissionPreview {
+  const weeklyCommission = weeklyFromMonthly(monthlyCommissionNgn);
+  const weeklyAutoship = weeklyFromMonthly(autoshipMonthlyNgn);
+  const cashout = Math.max(0, weeklyCommission - weeklyAutoship);
+  const voucherNet = weeklyAutoship * 0.9;
+  return { weeklyCommission, weeklyAutoship, cashout, voucherNet };
+}
+
+export function ngnToUsdPreview(amountNgn: number, fxRate = 1000): number {
+  if (!fxRate || fxRate <= 0) return 0;
+  return amountNgn / fxRate;
 }
 

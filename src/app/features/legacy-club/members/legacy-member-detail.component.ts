@@ -133,4 +133,21 @@ export class LegacyMemberDetailComponent implements OnInit {
   successlines() {
     return this.detail()?.successlines ?? [];
   }
+
+  /** Prefer API cycleWeeks; default 24 when periods look weekly. */
+  cycleWeeksTotal(): number {
+    const m = this.detail();
+    if (!m) return 24;
+    if (m.cycleWeeks != null && m.cycleWeeks > 0) return m.cycleWeeks;
+    const periods = m.periods ?? [];
+    if (periods.length > 6) return 24;
+    return m.cycleMonths != null && m.cycleMonths > 0 ? m.cycleMonths * 4 : 24;
+  }
+
+  weekProgressLabel(): string {
+    const m = this.detail();
+    if (!m) return '';
+    const issued = m.issuedCount ?? 0;
+    return `week ${issued} of ${this.cycleWeeksTotal()}`;
+  }
 }

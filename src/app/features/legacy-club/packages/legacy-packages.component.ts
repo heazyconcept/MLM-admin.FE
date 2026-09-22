@@ -1,6 +1,7 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  OnDestroy,
   OnInit,
   computed,
   inject,
@@ -13,6 +14,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
@@ -28,6 +30,9 @@ import {
   AdminLegacyPackage,
   AdminLegacyPackageUpdatePayload,
   LegacyPackageCode,
+  WeeklyCommissionPreview,
+  ngnToUsdPreview,
+  weeklyCommissionPreview,
 } from '../models/admin-legacy.models';
 
 @Component({
@@ -46,7 +51,7 @@ import {
   templateUrl: './legacy-packages.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LegacyPackagesComponent implements OnInit {
+export class LegacyPackagesComponent implements OnInit, OnDestroy {
   private readonly legacyService = inject(AdminLegacyService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
@@ -62,6 +67,14 @@ export class LegacyPackagesComponent implements OnInit {
   pendingPayload = signal<Partial<AdminLegacyPackageUpdatePayload> | null>(null);
   pendingCode = signal<LegacyPackageCode | null>(null);
   monthlyFieldsChanged = signal(false);
+  /** Bumps when edit form values change so weekly preview stays live. */
+  private formTick = signal(0);
+  private editSub: Subscription | null = null;
+
+  readonly previewRates: { key: 'base' | 'increased'; label: string }[] = [
+    { key: 'base', label: 'Base rate' },
+    { key: 'increased', label: 'Increased rate' },
+  ];
 
   private formMap = signal<Record<string, FormGroup>>({});
 
@@ -73,6 +86,10 @@ export class LegacyPackagesComponent implements OnInit {
     this.legacyService.loadPackages().subscribe({
       next: (pkgs) => this.ensureForms(pkgs),
     });
+  }
+
+  ngOnDestroy(): void {
+    this.editSub?.unsubscribe();
   }
 
   ensureForms(pkgs: AdminLegacyPackage[]): void {
@@ -173,12 +190,19 @@ export class LegacyPackagesComponent implements OnInit {
     const form = this.getForm(pkg.package);
     if (form) this.patchForm(form, pkg);
     this.editingCode.set(pkg.package);
+    this.editSub?.unsubscribe();
+    this.editSub =
+      form?.valueChanges.subscribe(() => {
+        this.formTick.update((n) => n + 1);
+      }) ?? null;
   }
 
   cancelEdit(pkg: AdminLegacyPackage): void {
     const form = this.getForm(pkg.package);
     if (form) this.patchForm(form, pkg);
     this.editingCode.set(null);
+    this.editSub?.unsubscribe();
+    this.editSub = null;
   }
 
   requestSave(pkg: AdminLegacyPackage): void {
@@ -235,6 +259,8 @@ export class LegacyPackagesComponent implements OnInit {
 
     if (Object.keys(payload).length === 0) {
       this.editingCode.set(null);
+      this.editSub?.unsubscribe();
+      this.editSub = null;
       this.messageService.add({
         severity: 'info',
         summary: 'No changes',
@@ -253,9 +279,38 @@ export class LegacyPackagesComponent implements OnInit {
     const base =
       'Members who already joined keep their current package until they upgrade (Phase 3). New joins use these figures.';
     if (this.monthlyFieldsChanged()) {
-      return `${base} Waiting months keep the amount they already have. Only months not yet due use new figures.`;
+      return `${base} Waiting weeks keep the amount they already have. Only weeks not yet due use new figures.`;
     }
     return base;
+  }
+
+  /**
+   * Read-only weekly split from monthly editors (or saved package when not editing).
+   */
+  weeklyPreview(
+    pkg: AdminLegacyPackage,
+    rate: 'base' | 'increased'
+  ): WeeklyCommissionPreview {
+    this.formTick();
+    const form = this.getForm(pkg.package);
+    const editing = this.isEditing(pkg) && form;
+    const monthly =
+      rate === 'base'
+        ? editing
+          ? Number(form!.getRawValue().monthlyCommissionBaseNgn ?? 0)
+          : pkg.monthlyCommissionBaseNgn
+        : editing
+          ? Number(form!.getRawValue().monthlyCommissionIncreasedNgn ?? 0)
+          : pkg.monthlyCommissionIncreasedNgn;
+    const autoship = editing
+      ? Number(form!.getRawValue().autoshipAmountNgn ?? 0)
+      : pkg.autoshipAmountNgn;
+    return weeklyCommissionPreview(monthly, autoship);
+  }
+
+  formatNgnUsd(amountNgn: number): string {
+    const usd = ngnToUsdPreview(amountNgn);
+    return `₦${amountNgn.toLocaleString(undefined, { maximumFractionDigits: 2 })} · $${usd.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   }
 
   onConfirmSave(_result: ConfirmationResult): void {
@@ -274,6 +329,8 @@ export class LegacyPackagesComponent implements OnInit {
         });
         this.savingCode.set(null);
         this.editingCode.set(null);
+        this.editSub?.unsubscribe();
+        this.editSub = null;
         this.showConfirm.set(false);
         this.pendingCode.set(null);
         this.pendingPayload.set(null);
