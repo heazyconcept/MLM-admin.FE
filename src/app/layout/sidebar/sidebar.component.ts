@@ -97,6 +97,12 @@ export class SidebarComponent {
               permissionKey: 'legacy.view_members',
             },
             {
+              label: 'Payments',
+              icon: 'pi pi-wallet',
+              route: '/admin/legacy/payments',
+              permissionKey: 'legacy.view_members',
+            },
+            {
               label: 'Packages',
               icon: 'pi pi-box',
               route: '/admin/legacy/packages',

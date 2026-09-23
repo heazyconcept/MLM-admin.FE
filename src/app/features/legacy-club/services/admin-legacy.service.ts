@@ -12,6 +12,9 @@ import {
   AdminLegacyPackage,
   AdminLegacyPackageUpdatePayload,
   AdminLegacyPackagesResponse,
+  AdminLegacyPayment,
+  AdminLegacyPaymentsListResponse,
+  AdminLegacyPaymentsQuery,
   AdminLegacyUpgradeDifference,
   LegacyPackageCode,
 } from '../models/admin-legacy.models';
@@ -51,6 +54,14 @@ export class AdminLegacyService {
   memberDetail = signal<AdminLegacyMemberDetail | null>(null);
   detailLoading = signal(false);
   detailError = signal<string | null>(null);
+
+  payments = signal<AdminLegacyPayment[]>([]);
+  paymentsTotal = signal(0);
+  paymentsLoading = signal(false);
+  paymentsError = signal<string | null>(null);
+  paymentDetail = signal<AdminLegacyPayment | null>(null);
+  paymentDetailLoading = signal(false);
+  paymentDetailError = signal<string | null>(null);
 
   loadPackages(): Observable<AdminLegacyPackage[]> {
     this.packagesLoading.set(true);
@@ -260,5 +271,79 @@ export class AdminLegacyService {
       map((raw) => unwrapData<AdminLegacyEnrollResponse>(raw)),
       catchError((err) => throwError(() => err))
     );
+  }
+
+  loadPayments(query: AdminLegacyPaymentsQuery = {}): Observable<AdminLegacyPayment[]> {
+    this.paymentsLoading.set(true);
+    this.paymentsError.set(null);
+
+    const params: Record<string, unknown> = {
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
+    };
+    if (query.status) params['status'] = query.status;
+    if (query.search?.trim()) params['search'] = query.search.trim();
+
+    return this.api.get<unknown>('admin/legacy/payments', params).pipe(
+      map((raw) => {
+        const data = unwrapData<AdminLegacyPaymentsListResponse | AdminLegacyPayment[]>(raw);
+        if (Array.isArray(data)) {
+          return { items: data, total: data.length };
+        }
+        const items = data.items ?? data.payments ?? [];
+        const total =
+          data.total ??
+          data.pagination?.totalRecords ??
+          items.length;
+        return { items, total };
+      }),
+      tap((res) => {
+        this.payments.set(res.items);
+        this.paymentsTotal.set(res.total);
+        this.paymentsLoading.set(false);
+      }),
+      map((res) => res.items),
+      catchError((err) => {
+        this.paymentsError.set(extractErrorMessage(err));
+        this.paymentsLoading.set(false);
+        this.payments.set([]);
+        this.paymentsTotal.set(0);
+        return of([]);
+      })
+    );
+  }
+
+  getPayment(id: string): Observable<AdminLegacyPayment | null> {
+    this.paymentDetailLoading.set(true);
+    this.paymentDetailError.set(null);
+    this.paymentDetail.set(null);
+
+    return this.api
+      .get<unknown>(`admin/legacy/payments/${encodeURIComponent(id)}`)
+      .pipe(
+        map((raw) => unwrapData<AdminLegacyPayment>(raw)),
+        tap((payment) => {
+          this.paymentDetail.set(payment);
+          this.paymentDetailLoading.set(false);
+        }),
+        catchError((err) => {
+          this.paymentDetailError.set(extractErrorMessage(err));
+          this.paymentDetailLoading.set(false);
+          this.paymentDetail.set(null);
+          return of(null);
+        })
+      );
+  }
+
+  approvePayment(id: string): Observable<void> {
+    return this.api
+      .post<void>(`admin/legacy/payments/${encodeURIComponent(id)}/approve`, {})
+      .pipe(catchError((err) => throwError(() => err)));
+  }
+
+  rejectPayment(id: string, reason: string): Observable<void> {
+    return this.api
+      .post<void>(`admin/legacy/payments/${encodeURIComponent(id)}/reject`, { reason })
+      .pipe(catchError((err) => throwError(() => err)));
   }
 }
