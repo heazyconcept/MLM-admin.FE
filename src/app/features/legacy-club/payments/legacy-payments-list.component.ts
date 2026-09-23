@@ -78,10 +78,9 @@ export class LegacyPaymentsListComponent implements OnInit {
   }
 
   load(): void {
-    const page = Math.floor(this.tableFirst() / this.pageRows()) + 1;
     this.legacyService
       .loadPayments({
-        page,
+        offset: this.tableFirst(),
         limit: this.pageRows(),
         search: this.searchVal(),
         status: this.statusFilter(),
