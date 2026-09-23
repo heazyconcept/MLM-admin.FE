@@ -5,9 +5,13 @@ import {
   model,
   computed,
   signal,
+  DestroyRef,
+  OnInit,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { NavigationEnd, Router, RouterModule } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { PermissionService } from '../../core/services/permission.service';
@@ -39,8 +43,9 @@ interface MenuSection {
   providers: [ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit {
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
   private confirmationService = inject(ConfirmationService);
   private permission = inject(PermissionService);
   private auth = inject(AuthService);
@@ -480,6 +485,16 @@ export class SidebarComponent {
       .filter((section) => section.items.length > 0)
   );
 
+  ngOnInit(): void {
+    this.syncExpandedFromRoute(this.router.url);
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((event) => this.syncExpandedFromRoute(event.urlAfterRedirects));
+  }
+
   private filterMenuItem(item: MenuItem): MenuItem | null {
     if (item.submenu?.length) {
       const submenu = item.submenu
@@ -536,15 +551,57 @@ export class SidebarComponent {
     this.mobileOpen.set(false);
   }
 
+  /** Close mobile drawer only — do not collapse submenus on click (destroys routerLink target). */
   onNavClick() {
-    this.expandedLabels.set(new Set());
     if (this.mobileOpen()) {
       this.mobileOpen.set(false);
     }
   }
 
-  submenuLinkClass(): string {
-    return 'flex items-center gap-3 px-3 py-2 rounded-lg text-mlm-text hover:bg-mlm-green-50 transition-colors text-sm';
+  private syncExpandedFromRoute(url: string): void {
+    const next = new Set<string>();
+    for (const section of this.menuSections) {
+      for (const item of section.items) {
+        if (
+          item.submenu?.some(
+            (sub) => sub.route && (url === sub.route || url.startsWith(`${sub.route}/`))
+          )
+        ) {
+          next.add(item.label);
+        }
+      }
+    }
+    this.expandedLabels.set(next);
+  }
+
+  isRouteActive(route: string | undefined): boolean {
+    if (!route) return false;
+    const current = this.router.url.split('?')[0];
+    return current === route || current.startsWith(`${route}/`);
+  }
+
+  navigateTo(item: MenuItem, event: MouseEvent): void {
+    if (!item.route || event.defaultPrevented) return;
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+      return;
+    }
+
+    event.preventDefault();
+    void this.router.navigateByUrl(item.route).then((ok) => {
+      if (!ok) {
+        window.location.assign(item.route!);
+        return;
+      }
+      if (this.mobileOpen()) {
+        this.mobileOpen.set(false);
+      }
+    });
+  }
+
+  submenuLinkClass(route: string | undefined): string {
+    const base =
+      'flex items-center gap-3 px-3 py-2 rounded-lg text-mlm-text hover:bg-mlm-green-50 transition-colors text-sm';
+    return this.isRouteActive(route) ? `${base} bg-mlm-green-100 text-mlm-primary` : base;
   }
 
   logout() {
