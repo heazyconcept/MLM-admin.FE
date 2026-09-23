@@ -91,6 +91,24 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'payments',
+            canActivate: [permissionGuard],
+            data: { permissionKey: 'legacy.view_members' },
+            loadComponent: () =>
+              import('./features/legacy-club/payments/legacy-payments-list.component').then(
+                (m) => m.LegacyPaymentsListComponent
+              ),
+          },
+          {
+            path: 'payments/:id',
+            canActivate: [permissionGuard],
+            data: { permissionKey: 'legacy.view_members' },
+            loadComponent: () =>
+              import('./features/legacy-club/payments/legacy-payment-detail.component').then(
+                (m) => m.LegacyPaymentDetailComponent
+              ),
+          },
+          {
             path: 'members',
             canActivate: [permissionGuard],
             data: { permissionKey: 'legacy.view_members' },

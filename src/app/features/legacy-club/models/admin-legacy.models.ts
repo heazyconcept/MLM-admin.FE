@@ -197,6 +197,47 @@ export interface AdminLegacyEnrollResponse {
   sponsorSource?: LegacySponsorSource;
 }
 
+export type LegacyPaymentPurpose = 'JOIN' | 'UPGRADE' | 'REACTIVATE';
+export type LegacyPaymentStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface AdminLegacyPayment {
+  id: string;
+  userId: string;
+  username?: string;
+  userEmail?: string;
+  purpose: LegacyPaymentPurpose;
+  package?: LegacyPackageCode;
+  amount: number;
+  currency: LegacyCurrency;
+  depositorName?: string;
+  evidenceUrl?: string;
+  status: LegacyPaymentStatus;
+  rejectionReason?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+  reviewedAt?: string | null;
+}
+
+export interface AdminLegacyPaymentsListResponse {
+  items?: AdminLegacyPayment[];
+  payments?: AdminLegacyPayment[];
+  total?: number;
+  page?: number;
+  limit?: number;
+  pagination?: {
+    totalRecords: number;
+    currentPage: number;
+    totalPages: number;
+  };
+}
+
+export interface AdminLegacyPaymentsQuery {
+  status?: LegacyPaymentStatus | '';
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
 /** Monthly flyer amount → weekly (backend ÷ 4). */
 export function weeklyFromMonthly(monthlyNgn: number): number {
   return Number(monthlyNgn || 0) / 4;
