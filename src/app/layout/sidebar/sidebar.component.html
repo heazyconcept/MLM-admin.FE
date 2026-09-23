@@ -64,12 +64,9 @@
                         @for (subitem of item.submenu; track subitem.label) {
                           <li>
                             <a
-                              [routerLink]="subitem.route"
-                              [queryParams]="subitem.queryParams ?? null"
-                              (click)="onNavClick()"
-                              routerLinkActive="bg-mlm-green-100 text-mlm-primary"
-                              [routerLinkActiveOptions]="{ paths: 'exact', queryParams: 'exact', fragment: 'ignored', matrixParams: 'ignored' }"
-                              [class]="submenuLinkClass()">
+                              [href]="subitem.route"
+                              [class]="submenuLinkClass(subitem.route)"
+                              (click)="navigateTo(subitem, $event)">
                               <i [class]="subitem.icon" class="text-base"></i>
                               <span>{{ subitem.label }}</span>
                             </a>
@@ -81,13 +78,10 @@
                         @for (subitem of item.submenu; track subitem.label) {
                           <li role="none">
                             <a
-                              [routerLink]="subitem.route"
-                              [queryParams]="subitem.queryParams ?? null"
-                              (click)="onNavClick()"
-                              routerLinkActive="bg-mlm-green-100 text-mlm-primary"
-                              [routerLinkActiveOptions]="{ paths: 'exact', queryParams: 'exact', fragment: 'ignored', matrixParams: 'ignored' }"
-                              [class]="submenuLinkClass()"
-                              role="menuitem">
+                              [href]="subitem.route"
+                              [class]="submenuLinkClass(subitem.route)"
+                              role="menuitem"
+                              (click)="navigateTo(subitem, $event)">
                               <i [class]="subitem.icon" class="text-base"></i>
                               <span>{{ subitem.label }}</span>
                             </a>
