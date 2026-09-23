@@ -199,23 +199,60 @@ export interface AdminLegacyEnrollResponse {
 
 export type LegacyPaymentPurpose = 'JOIN' | 'UPGRADE' | 'REACTIVATE';
 export type LegacyPaymentStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type LegacyPaymentMethod = 'REGISTRATION_WALLET' | 'MANUAL_BANK';
+
+export interface AdminLegacyPaymentMembership {
+  userId: string;
+  user?: {
+    username?: string;
+    email?: string;
+  };
+}
 
 export interface AdminLegacyPayment {
   id: string;
-  userId: string;
-  username?: string;
-  userEmail?: string;
+  membershipId?: string;
+  requestKey?: string;
   purpose: LegacyPaymentPurpose;
+  method?: LegacyPaymentMethod;
+  status: LegacyPaymentStatus;
   package?: LegacyPackageCode;
-  amount: number;
-  currency: LegacyCurrency;
+  amountNgn?: number | string;
+  amountBaseUsd?: number | string;
+  instantNgn?: number | string;
+  configSnapshot?: {
+    autoship?: number;
+    monthlyBase?: number;
+    monthlyIncreased?: number;
+  };
   depositorName?: string;
   evidenceUrl?: string;
-  status: LegacyPaymentStatus;
   rejectionReason?: string | null;
+  reviewedById?: string | null;
+  reviewedAt?: string | null;
   createdAt: string;
   updatedAt?: string;
-  reviewedAt?: string | null;
+  membership?: AdminLegacyPaymentMembership;
+  /** Flat legacy shapes */
+  userId?: string;
+  username?: string;
+  userEmail?: string;
+  amount?: number;
+  currency?: LegacyCurrency;
+}
+
+export function legacyPaymentUsername(p: AdminLegacyPayment): string | undefined {
+  return p.membership?.user?.username ?? p.username;
+}
+
+export function legacyPaymentUserId(p: AdminLegacyPayment): string | undefined {
+  return p.membership?.userId ?? p.userId;
+}
+
+export function legacyPaymentAmountNgn(p: AdminLegacyPayment): number {
+  const raw = p.amountNgn ?? p.amount ?? 0;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
 }
 
 export interface AdminLegacyPaymentsListResponse {

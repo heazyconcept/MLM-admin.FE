@@ -1,5 +1,28 @@
 <p-toast></p-toast>
 
+<app-confirmation-modal
+  [visible]="showApproveConfirm()"
+  title="Approve Legacy payment"
+  [message]="approveMessage()"
+  confirmLabel="Approve"
+  confirmClass="p-button-success"
+  icon="pi pi-check"
+  [loading]="!!actionPaymentId()"
+  (confirm)="onConfirmApprove($event)"
+  (cancel)="onCancelApprove()"
+  (visibleChange)="showApproveConfirm.set($event)">
+</app-confirmation-modal>
+
+@if (rejectSubmission(); as submission) {
+  <app-manual-payment-reject-modal
+    [visible]="showRejectModal()"
+    header="Reject Legacy payment"
+    [submission]="submission"
+    (confirmed)="handleRejectConfirmed($event)"
+    (cancelled)="handleRejectCancelled()">
+  </app-manual-payment-reject-modal>
+}
+
 <div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
 
   <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 md:mb-8">
@@ -8,7 +31,7 @@
         Legacy payments
       </h1>
       <p class="text-sm text-mlm-secondary">
-        Review manual bank payments for join, upgrade, and reactivate
+        Review and approve manual bank payments for join, upgrade, and reactivate
       </p>
     </div>
   </div>
@@ -103,20 +126,10 @@
       (pageChange)="onPageChange($event)">
 
       <ng-template pTemplate="body" let-row>
-        <tr
-          class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100 cursor-pointer"
-          (click)="openDetail(row)"
-          (keydown.enter)="openDetail(row)"
-          tabindex="0"
-          role="link"
-          [attr.aria-label]="'Open Legacy payment ' + row.id">
+        <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100">
           <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[120px]">
             <p class="text-sm font-semibold text-mlm-text leading-tight truncate">
-              @if (row.username) {
-                &#64;{{ row.username }}
-              } @else {
-                <span class="font-mono text-xs text-slate-400">{{ row.userId | slice:0:8 }}…</span>
-              }
+              &#64;{{ paymentUsername(row) }}
             </p>
           </td>
           <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary">
@@ -125,11 +138,26 @@
           <td class="px-3 py-3 sm:px-4 text-sm font-medium text-mlm-text">
             {{ packageLabel(row.package) }}
           </td>
-          <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text">
-            {{ formatMoney(row.amount, row.currency) }}
+          <td class="px-3 py-3 sm:px-4 text-sm tabular-nums text-mlm-text font-semibold">
+            {{ formatMoney(paymentAmount(row)) }}
           </td>
           <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary">
             {{ row.depositorName || '—' }}
+          </td>
+          <td class="px-3 py-3 sm:px-4">
+            @if (row.evidenceUrl) {
+              <a
+                [href]="row.evidenceUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1 text-xs text-mlm-primary hover:underline"
+                (click)="$event.stopPropagation()">
+                <i class="pi pi-image text-[10px]" aria-hidden="true"></i>
+                View
+              </a>
+            } @else {
+              <span class="text-sm text-slate-400">—</span>
+            }
           </td>
           <td class="px-3 py-3 sm:px-4">
             <span
@@ -140,6 +168,33 @@
           </td>
           <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary whitespace-nowrap">
             {{ formatDate(row.createdAt) }}
+          </td>
+          <td class="px-3 py-3 sm:px-4 whitespace-nowrap">
+            @if (row.status === 'PENDING') {
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  pButton
+                  label="Approve"
+                  icon="pi pi-check"
+                  class="p-button-sm p-button-success"
+                  [loading]="isRowBusy(row)"
+                  [disabled]="!!actionPaymentId() && !isRowBusy(row)"
+                  (click)="requestApprove(row, $event)">
+                </button>
+                <button
+                  type="button"
+                  pButton
+                  label="Reject"
+                  icon="pi pi-times"
+                  class="p-button-sm p-button-outlined p-button-danger"
+                  [disabled]="!!actionPaymentId()"
+                  (click)="requestReject(row, $event)">
+                </button>
+              </div>
+            } @else {
+              <span class="text-xs text-slate-400">—</span>
+            }
           </td>
         </tr>
       </ng-template>
