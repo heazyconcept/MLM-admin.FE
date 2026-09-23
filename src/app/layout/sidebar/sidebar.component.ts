@@ -4,6 +4,7 @@ import {
   ChangeDetectionStrategy,
   model,
   computed,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -23,7 +24,6 @@ interface MenuItem {
   badge?: number;
   action?: () => void;
   submenu?: MenuItem[];
-  expanded?: boolean;
 }
 
 interface MenuSection {
@@ -47,6 +47,7 @@ export class SidebarComponent {
 
   collapsed = model(false);
   mobileOpen = model(false);
+  private expandedLabels = signal<Set<string>>(new Set());
 
   private menuSections: MenuSection[] = [
     {
@@ -511,6 +512,22 @@ export class SidebarComponent {
     return true;
   }
 
+  isExpanded(label: string): boolean {
+    return this.expandedLabels().has(label);
+  }
+
+  toggleExpanded(label: string): void {
+    this.expandedLabels.update((current) => {
+      const next = new Set(current);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      return next;
+    });
+  }
+
   toggleCollapse() {
     this.collapsed.update((v) => !v);
   }
@@ -520,9 +537,14 @@ export class SidebarComponent {
   }
 
   onNavClick() {
+    this.expandedLabels.set(new Set());
     if (this.mobileOpen()) {
       this.mobileOpen.set(false);
     }
+  }
+
+  submenuLinkClass(): string {
+    return 'flex items-center gap-3 px-3 py-2 rounded-lg text-mlm-text hover:bg-mlm-green-50 transition-colors text-sm';
   }
 
   logout() {

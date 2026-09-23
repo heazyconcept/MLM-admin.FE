@@ -18,8 +18,9 @@
     <!-- Header -->
     <app-header (menuToggle)="toggleMobileSidebar()"></app-header>
 
-    <!-- Page Content -->
-    <main class="flex-1 overflow-y-auto">
+    <!-- Page Content (loading overlay scoped here so sidebar stays clickable) -->
+    <main class="flex-1 overflow-y-auto relative">
+      <app-loading></app-loading>
       <router-outlet></router-outlet>
     </main>
   </div>
