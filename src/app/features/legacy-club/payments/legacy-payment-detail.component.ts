@@ -18,6 +18,11 @@ import {
 import { ManualPaymentRejectModalComponent } from '../../payments/modals/manual-payment-reject-modal.component';
 import { RejectableSubmission } from '../../payments/models/rejectable-submission.model';
 import { AdminLegacyService } from '../services/admin-legacy.service';
+import {
+  legacyPaymentAmountNgn,
+  legacyPaymentUserId,
+  legacyPaymentUsername,
+} from '../models/admin-legacy.models';
 
 @Component({
   selector: 'app-legacy-payment-detail',
@@ -55,9 +60,9 @@ export class LegacyPaymentDetailComponent implements OnInit {
     if (!p) return null;
     return {
       id: p.id,
-      depositorName: p.depositorName ?? '—',
-      amount: p.amount,
-      currency: p.currency,
+      depositorName: p.depositorName ?? legacyPaymentUsername(p) ?? '—',
+      amount: legacyPaymentAmountNgn(p),
+      currency: 'NGN',
     };
   });
 
@@ -168,6 +173,18 @@ export class LegacyPaymentDetailComponent implements OnInit {
     if (value == null) return '—';
     const prefix = currency === 'USD' ? '$' : '₦';
     return `${prefix}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  }
+
+  paymentAmount(p = this.payment()): number {
+    return p ? legacyPaymentAmountNgn(p) : 0;
+  }
+
+  paymentUsername(p = this.payment()): string {
+    return p ? legacyPaymentUsername(p) ?? '—' : '—';
+  }
+
+  paymentUserId(p = this.payment()): string | undefined {
+    return p ? legacyPaymentUserId(p) : undefined;
   }
 
   packageLabel(code: string | undefined | null): string {
