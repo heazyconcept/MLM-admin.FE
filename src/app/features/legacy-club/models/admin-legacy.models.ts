@@ -234,7 +234,7 @@ export interface AdminLegacyPaymentsListResponse {
 export interface AdminLegacyPaymentsQuery {
   status?: LegacyPaymentStatus | '';
   search?: string;
-  page?: number;
+  offset?: number;
   limit?: number;
 }
 

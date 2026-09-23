@@ -278,7 +278,7 @@ export class AdminLegacyService {
     this.paymentsError.set(null);
 
     const params: Record<string, unknown> = {
-      page: query.page ?? 1,
+      offset: query.offset ?? 0,
       limit: query.limit ?? 20,
     };
     if (query.status) params['status'] = query.status;
