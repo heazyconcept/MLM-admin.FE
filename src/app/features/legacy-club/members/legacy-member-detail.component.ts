@@ -4,6 +4,7 @@ import {
   OnInit,
   inject,
   computed,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -12,6 +13,10 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { PermissionService } from '../../../core/services/permission.service';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
+import {
+  ConfirmationModalComponent,
+  ConfirmationResult,
+} from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { AdminLegacyService } from '../services/admin-legacy.service';
 import {
   AdminLegacyEvent,
@@ -27,6 +32,7 @@ import {
     ButtonModule,
     ToastModule,
     InfoBannerComponent,
+    ConfirmationModalComponent,
   ],
   providers: [MessageService],
   templateUrl: './legacy-member-detail.component.html',
@@ -35,6 +41,7 @@ import {
 export class LegacyMemberDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly legacyService = inject(AdminLegacyService);
+  private readonly messageService = inject(MessageService);
   protected readonly permission = inject(PermissionService);
 
   detail = this.legacyService.memberDetail;
@@ -46,6 +53,17 @@ export class LegacyMemberDetailComponent implements OnInit {
   );
 
   userId = '';
+  showCancelModal = signal(false);
+  cancelling = signal(false);
+
+  isPendingJoin = computed(() => this.detail()?.status === 'PENDING_JOIN');
+
+  canCancelJoin = computed(
+    () =>
+      this.isPendingJoin() &&
+      (this.permission.hasPermission('legacy.cancel_pending_join') ||
+        this.permission.hasPermission('legacy.view_members')),
+  );
 
   ngOnInit(): void {
     this.userId = this.route.snapshot.paramMap.get('userId') ?? '';
@@ -114,8 +132,64 @@ export class LegacyMemberDetailComponent implements OnInit {
       SEED: 'bg-amber-100 text-amber-800',
       UPGRADE: 'bg-sky-100 text-sky-800',
       REACTIVATE: 'bg-violet-100 text-violet-800',
+      JOIN_CANCELLED: 'bg-red-100 text-red-800',
     };
     return map[kind] ?? 'bg-slate-100 text-slate-600';
+  }
+
+  membershipStatusClass(status: string | undefined): string {
+    switch (status) {
+      case 'ACTIVE':
+        return 'bg-emerald-100 text-emerald-800';
+      case 'PENDING_JOIN':
+        return 'bg-amber-100 text-amber-800';
+      default:
+        return 'bg-slate-100 text-slate-600';
+    }
+  }
+
+  membershipStatusLabel(status: string | undefined): string {
+    if (!status) return 'Unknown';
+    if (status === 'PENDING_JOIN') return 'Pending join';
+    return status;
+  }
+
+  openCancelModal(): void {
+    this.showCancelModal.set(true);
+  }
+
+  closeCancelModal(): void {
+    if (!this.cancelling()) {
+      this.showCancelModal.set(false);
+    }
+  }
+
+  confirmCancelJoin(result: ConfirmationResult): void {
+    if (!result.confirmed || !result.reason?.trim() || !this.userId) return;
+
+    this.cancelling.set(true);
+    this.legacyService.cancelPendingJoin(this.userId, { reason: result.reason.trim() }).subscribe({
+      next: (res) => {
+        this.cancelling.set(false);
+        this.showCancelModal.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Registration cancelled',
+          detail: `@${res.username ?? this.detail()?.username ?? 'member'} can start Legacy join again.`,
+        });
+        this.legacyService.loadMemberDetail(this.userId).subscribe();
+      },
+      error: (err: unknown) => {
+        this.cancelling.set(false);
+        const http = err as { error?: { message?: string | string[] } };
+        const msg = http?.error?.message;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Cancel failed',
+          detail: Array.isArray(msg) ? msg.join(', ') : msg ?? 'Could not cancel registration.',
+        });
+      },
+    });
   }
 
   periods(): AdminLegacyPeriod[] {
