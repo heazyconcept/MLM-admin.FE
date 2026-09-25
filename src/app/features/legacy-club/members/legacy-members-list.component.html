@@ -1,5 +1,24 @@
 <p-toast></p-toast>
 
+<app-confirmation-modal
+  [visible]="showCancelModal()"
+  (visibleChange)="showCancelModal.set($event)"
+  title="Cancel Legacy registration"
+  [message]="cancelModalMessage()"
+  icon="pi pi-exclamation-triangle"
+  iconClass="text-red-500"
+  confirmLabel="Cancel registration"
+  cancelLabel="Keep pending"
+  confirmClass="p-button-danger"
+  [showReasonField]="true"
+  [reasonRequired]="true"
+  [reasonMinLength]="5"
+  reasonPlaceholder="Explain why this registration is being cancelled (shown to the user)…"
+  [loading]="cancelling()"
+  (confirm)="confirmCancelJoin($event)"
+  (cancel)="closeCancelModal()">
+</app-confirmation-modal>
+
 <div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
 
   <!-- ── Header ── -->
@@ -188,6 +207,22 @@
           }
           <td class="px-3 py-3 sm:px-4 text-sm text-mlm-secondary whitespace-nowrap">
             {{ formatDate(row.joinedAt) }}
+          </td>
+          <td class="px-3 py-3 sm:px-4 whitespace-nowrap">
+            @if (canCancelRow(row)) {
+              <button
+                type="button"
+                pButton
+                label="Cancel registration"
+                icon="pi pi-times-circle"
+                class="p-button-sm p-button-outlined p-button-danger"
+                [loading]="isRowCancelling(row)"
+                [disabled]="!!cancellingUserId() && !isRowCancelling(row)"
+                (click)="requestCancelJoin(row, $event)">
+              </button>
+            } @else {
+              <span class="text-xs text-slate-400">—</span>
+            }
           </td>
         </tr>
       </ng-template>

@@ -17,6 +17,10 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { PermissionService } from '../../../core/services/permission.service';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
+import {
+  ConfirmationModalComponent,
+  ConfirmationResult,
+} from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { AdminLegacyService } from '../services/admin-legacy.service';
 import {
   AdminLegacyMemberListItem,
@@ -35,6 +39,7 @@ import {
     SelectModule,
     ToastModule,
     DataTableComponent,
+    ConfirmationModalComponent,
   ],
   providers: [MessageService],
   templateUrl: './legacy-members-list.component.html',
@@ -43,6 +48,7 @@ import {
 export class LegacyMembersListComponent implements OnInit {
   private readonly legacyService = inject(AdminLegacyService);
   private readonly router = inject(Router);
+  private readonly messageService = inject(MessageService);
   protected readonly permission = inject(PermissionService);
 
   members = this.legacyService.members;
@@ -55,6 +61,10 @@ export class LegacyMembersListComponent implements OnInit {
   sponsorSourceFilter = signal<LegacySponsorSource | ''>('');
   tableFirst = signal(0);
   pageRows = signal(20);
+  showCancelModal = signal(false);
+  cancelling = signal(false);
+  cancellingUserId = signal<string | null>(null);
+  pendingCancelMember = signal<AdminLegacyMemberListItem | null>(null);
 
   canEnroll = computed(() =>
     this.permission.hasPermission('legacy.enroll_seed')
@@ -62,6 +72,19 @@ export class LegacyMembersListComponent implements OnInit {
   canViewWallets = computed(() =>
     this.permission.hasPermission('legacy.view_wallets')
   );
+  canCancelJoin = computed(
+    () =>
+      this.permission.hasPermission('legacy.cancel_pending_join') ||
+      this.permission.hasPermission('legacy.view_members'),
+  );
+
+  cancelModalMessage = computed(() => {
+    const row = this.pendingCancelMember();
+    if (!row) {
+      return 'This removes the pending Legacy Club join. The user will need to start registration again.';
+    }
+    return `Cancel pending Legacy registration for @${row.username}? They will be notified and can start again.`;
+  });
 
   packageOptions: { label: string; value: LegacyPackageCode | '' }[] = [
     { label: 'All packages', value: '' },
@@ -90,6 +113,7 @@ export class LegacyMembersListComponent implements OnInit {
     'Next rate',
     ...(this.canViewWallets() ? ['Legacy account', 'Legacy voucher'] : []),
     'Joined',
+    'Actions',
   ]);
 
   ngOnInit(): void {
@@ -127,6 +151,60 @@ export class LegacyMembersListComponent implements OnInit {
 
   openDetail(row: AdminLegacyMemberListItem): void {
     void this.router.navigate(['/admin/legacy/members', row.userId]);
+  }
+
+  canCancelRow(row: AdminLegacyMemberListItem): boolean {
+    return this.canCancelJoin() && row.status === 'PENDING_JOIN';
+  }
+
+  isRowCancelling(row: AdminLegacyMemberListItem): boolean {
+    return this.cancellingUserId() === row.userId;
+  }
+
+  requestCancelJoin(row: AdminLegacyMemberListItem, event: Event): void {
+    event.stopPropagation();
+    this.pendingCancelMember.set(row);
+    this.showCancelModal.set(true);
+  }
+
+  closeCancelModal(): void {
+    if (!this.cancelling()) {
+      this.showCancelModal.set(false);
+      this.pendingCancelMember.set(null);
+    }
+  }
+
+  confirmCancelJoin(result: ConfirmationResult): void {
+    const row = this.pendingCancelMember();
+    if (!result.confirmed || !result.reason?.trim() || !row) return;
+
+    this.cancelling.set(true);
+    this.cancellingUserId.set(row.userId);
+    this.legacyService.cancelPendingJoin(row.userId, { reason: result.reason.trim() }).subscribe({
+      next: (res) => {
+        this.cancelling.set(false);
+        this.cancellingUserId.set(null);
+        this.showCancelModal.set(false);
+        this.pendingCancelMember.set(null);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Registration cancelled',
+          detail: `@${res.username ?? row.username} can start Legacy join again.`,
+        });
+        this.load();
+      },
+      error: (err: unknown) => {
+        this.cancelling.set(false);
+        this.cancellingUserId.set(null);
+        const http = err as { error?: { message?: string | string[] } };
+        const msg = http?.error?.message;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Cancel failed',
+          detail: Array.isArray(msg) ? msg.join(', ') : msg ?? 'Could not cancel registration.',
+        });
+      },
+    });
   }
 
   formatDate(value: string | null | undefined): string {
