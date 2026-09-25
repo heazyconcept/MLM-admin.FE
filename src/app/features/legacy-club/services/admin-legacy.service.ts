@@ -3,6 +3,8 @@ import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ApiService } from '../../../core/services/api.service';
 import {
+  AdminLegacyCancelJoinRequest,
+  AdminLegacyCancelJoinResponse,
   AdminLegacyEnrollRequest,
   AdminLegacyEnrollResponse,
   AdminLegacyMemberDetail,
@@ -271,6 +273,18 @@ export class AdminLegacyService {
       map((raw) => unwrapData<AdminLegacyEnrollResponse>(raw)),
       catchError((err) => throwError(() => err))
     );
+  }
+
+  cancelPendingJoin(
+    userId: string,
+    body: AdminLegacyCancelJoinRequest,
+  ): Observable<AdminLegacyCancelJoinResponse> {
+    return this.api
+      .post<unknown>(`admin/legacy/members/${encodeURIComponent(userId)}/cancel-join`, body)
+      .pipe(
+        map((raw) => unwrapData<AdminLegacyCancelJoinResponse>(raw)),
+        catchError((err) => throwError(() => err)),
+      );
   }
 
   loadPayments(query: AdminLegacyPaymentsQuery = {}): Observable<AdminLegacyPayment[]> {

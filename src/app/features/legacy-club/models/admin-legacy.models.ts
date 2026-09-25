@@ -2,7 +2,7 @@ export type LegacyPackageCode = 'VIP' | 'EXECUTIVE' | 'SUPREME';
 export type LegacySponsorSource = 'AUTO' | 'CHOSEN' | 'SEED';
 export type LegacyRateTier = 'BASE' | 'INCREASED';
 export type LegacyMonthStatus = 'SCHEDULED' | 'PENDING' | 'DROPPED';
-export type LegacyHistoryKind = 'JOIN' | 'UPGRADE' | 'REACTIVATE' | 'SEED';
+export type LegacyHistoryKind = 'JOIN' | 'UPGRADE' | 'REACTIVATE' | 'SEED' | 'JOIN_CANCELLED';
 export type LegacyWalletStatus = 'ACTIVE' | 'LOCKED';
 export type LegacyCurrency = 'NGN' | 'USD';
 
@@ -179,6 +179,21 @@ export interface AdminLegacyMemberDetail {
   issuedCount?: number;
   pendingAmount?: number | null;
   nextDueRateTier?: LegacyRateTier | null;
+}
+
+export interface AdminLegacyCancelJoinRequest {
+  reason: string;
+}
+
+export interface AdminLegacyCancelJoinResponse {
+  userId: string;
+  username?: string;
+  previousStatus: 'PENDING_JOIN';
+  status: 'NONE';
+  package?: LegacyPackageCode;
+  cancelledAt: string;
+  cancelledByAdminId?: string;
+  reason: string;
 }
 
 export interface AdminLegacyEnrollRequest {
