@@ -17,6 +17,7 @@ import {
   ConfirmationModalComponent,
   ConfirmationResult,
 } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
+import { LegacyWaiveJoinModalComponent } from '../modals/legacy-waive-join-modal.component';
 import { AdminLegacyService } from '../services/admin-legacy.service';
 import {
   AdminLegacyEvent,
@@ -33,6 +34,7 @@ import {
     ToastModule,
     InfoBannerComponent,
     ConfirmationModalComponent,
+    LegacyWaiveJoinModalComponent,
   ],
   providers: [MessageService],
   templateUrl: './legacy-member-detail.component.html',
@@ -54,7 +56,9 @@ export class LegacyMemberDetailComponent implements OnInit {
 
   userId = '';
   showCancelModal = signal(false);
+  showWaiveModal = signal(false);
   cancelling = signal(false);
+  waiving = signal(false);
 
   isPendingJoin = computed(() => this.detail()?.status === 'PENDING_JOIN');
 
@@ -63,6 +67,13 @@ export class LegacyMemberDetailComponent implements OnInit {
       this.isPendingJoin() &&
       (this.permission.hasPermission('legacy.cancel_pending_join') ||
         this.permission.hasPermission('legacy.view_members')),
+  );
+
+  canWaiveJoin = computed(
+    () =>
+      this.isPendingJoin() &&
+      (this.permission.hasPermission('legacy.waive_join') ||
+        this.permission.hasPermission('legacy.enroll_seed')),
   );
 
   ngOnInit(): void {
@@ -133,6 +144,7 @@ export class LegacyMemberDetailComponent implements OnInit {
       UPGRADE: 'bg-sky-100 text-sky-800',
       REACTIVATE: 'bg-violet-100 text-violet-800',
       JOIN_CANCELLED: 'bg-red-100 text-red-800',
+      JOIN_WAIVED: 'bg-violet-100 text-violet-800',
     };
     return map[kind] ?? 'bg-slate-100 text-slate-600';
   }
@@ -187,6 +199,44 @@ export class LegacyMemberDetailComponent implements OnInit {
           severity: 'error',
           summary: 'Cancel failed',
           detail: Array.isArray(msg) ? msg.join(', ') : msg ?? 'Could not cancel registration.',
+        });
+      },
+    });
+  }
+
+  openWaiveModal(): void {
+    this.showWaiveModal.set(true);
+  }
+
+  onWaiveCancelled(): void {
+    if (!this.waiving()) {
+      this.showWaiveModal.set(false);
+    }
+  }
+
+  onWaiveConfirmed(reason: string): void {
+    if (!this.userId) return;
+
+    this.waiving.set(true);
+    this.legacyService.waivePendingJoin(this.userId, { reason }).subscribe({
+      next: (res) => {
+        this.waiving.set(false);
+        this.showWaiveModal.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Legacy activated',
+          detail: `@${res.username ?? this.detail()?.username ?? 'member'} is now an ACTIVE Legacy member.`,
+        });
+        this.legacyService.loadMemberDetail(this.userId).subscribe();
+      },
+      error: (err: unknown) => {
+        this.waiving.set(false);
+        const http = err as { error?: { message?: string | string[] } };
+        const msg = http?.error?.message;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Activation failed',
+          detail: Array.isArray(msg) ? msg.join(', ') : msg ?? 'Could not waive and activate.',
         });
       },
     });

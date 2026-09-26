@@ -1,0 +1,57 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [header]="'Waive & activate — @' + userName()"
+  [style]="{ width: '28rem' }"
+  (onShow)="resetForm()"
+  (onHide)="onCancel()">
+  <div class="space-y-4">
+    @if (packageLabel()) {
+      <p class="text-sm text-mlm-secondary">
+        Legacy package: <span class="font-medium text-mlm-text">{{ packageLabel() }}</span>
+      </p>
+    }
+
+    <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+      <p class="font-semibold">Complimentary activation</p>
+      <p class="mt-1">
+        No Legacy voucher debit and no marketplace order. Instant commission and sponsor bonus
+        apply per package rules.
+      </p>
+    </div>
+
+    <div>
+      <label for="legacy-waive-reason" class="block text-sm font-medium text-gray-700 mb-1">
+        Reason
+      </label>
+      <textarea
+        id="legacy-waive-reason"
+        pTextarea
+        rows="3"
+        class="w-full"
+        [(ngModel)]="reason"
+        [disabled]="submitting()"
+        placeholder="Support ticket #... (min 10 chars)">
+      </textarea>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Cancel"
+      class="p-button-outlined"
+      [disabled]="submitting()"
+      (click)="onCancel()">
+    </button>
+    <button
+      pButton
+      type="button"
+      label="Waive & activate"
+      class="p-button-primary"
+      [disabled]="reason.trim().length < 10 || submitting()"
+      [loading]="submitting()"
+      (click)="onConfirm()">
+    </button>
+  </ng-template>
+</p-dialog>

@@ -21,6 +21,7 @@ import {
   ConfirmationModalComponent,
   ConfirmationResult,
 } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
+import { LegacyWaiveJoinModalComponent } from '../modals/legacy-waive-join-modal.component';
 import { AdminLegacyService } from '../services/admin-legacy.service';
 import {
   AdminLegacyMemberListItem,
@@ -40,6 +41,7 @@ import {
     ToastModule,
     DataTableComponent,
     ConfirmationModalComponent,
+    LegacyWaiveJoinModalComponent,
   ],
   providers: [MessageService],
   templateUrl: './legacy-members-list.component.html',
@@ -62,9 +64,13 @@ export class LegacyMembersListComponent implements OnInit {
   tableFirst = signal(0);
   pageRows = signal(20);
   showCancelModal = signal(false);
+  showWaiveModal = signal(false);
   cancelling = signal(false);
+  waiving = signal(false);
   cancellingUserId = signal<string | null>(null);
+  waivingUserId = signal<string | null>(null);
   pendingCancelMember = signal<AdminLegacyMemberListItem | null>(null);
+  pendingWaiveMember = signal<AdminLegacyMemberListItem | null>(null);
 
   canEnroll = computed(() =>
     this.permission.hasPermission('legacy.enroll_seed')
@@ -76,6 +82,11 @@ export class LegacyMembersListComponent implements OnInit {
     () =>
       this.permission.hasPermission('legacy.cancel_pending_join') ||
       this.permission.hasPermission('legacy.view_members'),
+  );
+  canWaiveJoin = computed(
+    () =>
+      this.permission.hasPermission('legacy.waive_join') ||
+      this.permission.hasPermission('legacy.enroll_seed'),
   );
 
   cancelModalMessage = computed(() => {
@@ -157,8 +168,16 @@ export class LegacyMembersListComponent implements OnInit {
     return this.canCancelJoin() && row.status === 'PENDING_JOIN';
   }
 
+  canWaiveRow(row: AdminLegacyMemberListItem): boolean {
+    return this.canWaiveJoin() && row.status === 'PENDING_JOIN';
+  }
+
   isRowCancelling(row: AdminLegacyMemberListItem): boolean {
     return this.cancellingUserId() === row.userId;
+  }
+
+  isRowWaiving(row: AdminLegacyMemberListItem): boolean {
+    return this.waivingUserId() === row.userId;
   }
 
   requestCancelJoin(row: AdminLegacyMemberListItem, event: Event): void {
@@ -202,6 +221,52 @@ export class LegacyMembersListComponent implements OnInit {
           severity: 'error',
           summary: 'Cancel failed',
           detail: Array.isArray(msg) ? msg.join(', ') : msg ?? 'Could not cancel registration.',
+        });
+      },
+    });
+  }
+
+  requestWaiveJoin(row: AdminLegacyMemberListItem, event: Event): void {
+    event.stopPropagation();
+    this.pendingWaiveMember.set(row);
+    this.showWaiveModal.set(true);
+  }
+
+  closeWaiveModal(): void {
+    if (!this.waiving()) {
+      this.showWaiveModal.set(false);
+      this.pendingWaiveMember.set(null);
+    }
+  }
+
+  confirmWaiveJoin(reason: string): void {
+    const row = this.pendingWaiveMember();
+    if (!row) return;
+
+    this.waiving.set(true);
+    this.waivingUserId.set(row.userId);
+    this.legacyService.waivePendingJoin(row.userId, { reason }).subscribe({
+      next: (res) => {
+        this.waiving.set(false);
+        this.waivingUserId.set(null);
+        this.showWaiveModal.set(false);
+        this.pendingWaiveMember.set(null);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Legacy activated',
+          detail: `@${res.username ?? row.username} is now an ACTIVE Legacy member.`,
+        });
+        this.load();
+      },
+      error: (err: unknown) => {
+        this.waiving.set(false);
+        this.waivingUserId.set(null);
+        const http = err as { error?: { message?: string | string[] } };
+        const msg = http?.error?.message;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Activation failed',
+          detail: Array.isArray(msg) ? msg.join(', ') : msg ?? 'Could not waive and activate.',
         });
       },
     });

@@ -295,4 +295,6 @@ export const ALL_PERMISSION_KEYS: Permission[] = [
   { id: 'p-68', key: 'legacy.configure_packages', label: 'Configure Legacy packages', module: 'Legacy Club', type: 'action' },
   { id: 'p-69', key: 'legacy.enroll_seed', label: 'Seed enroll Legacy member', module: 'Legacy Club', type: 'action' },
   { id: 'p-70', key: 'legacy.view_wallets', label: 'View Legacy wallets', module: 'Legacy Club', type: 'view' },
+  { id: 'p-71', key: 'legacy.cancel_pending_join', label: 'Cancel Legacy pending join', module: 'Legacy Club', type: 'action' },
+  { id: 'p-72', key: 'legacy.waive_join', label: 'Waive & activate Legacy join', module: 'Legacy Club', type: 'action' },
 ];
