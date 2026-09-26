@@ -5,6 +5,8 @@ import { ApiService } from '../../../core/services/api.service';
 import {
   AdminLegacyCancelJoinRequest,
   AdminLegacyCancelJoinResponse,
+  AdminLegacyWaiveJoinRequest,
+  AdminLegacyWaiveJoinResponse,
   AdminLegacyEnrollRequest,
   AdminLegacyEnrollResponse,
   AdminLegacyMemberDetail,
@@ -283,6 +285,18 @@ export class AdminLegacyService {
       .post<unknown>(`admin/legacy/members/${encodeURIComponent(userId)}/cancel-join`, body)
       .pipe(
         map((raw) => unwrapData<AdminLegacyCancelJoinResponse>(raw)),
+        catchError((err) => throwError(() => err)),
+      );
+  }
+
+  waivePendingJoin(
+    userId: string,
+    body: AdminLegacyWaiveJoinRequest,
+  ): Observable<AdminLegacyWaiveJoinResponse> {
+    return this.api
+      .post<unknown>(`admin/legacy/members/${encodeURIComponent(userId)}/waive-join`, body)
+      .pipe(
+        map((raw) => unwrapData<AdminLegacyWaiveJoinResponse>(raw)),
         catchError((err) => throwError(() => err)),
       );
   }

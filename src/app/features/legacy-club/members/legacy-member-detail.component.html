@@ -66,6 +66,16 @@
               {{ membershipStatusLabel(m.status) }}
             </span>
           }
+          @if (canWaiveJoin()) {
+            <button
+              type="button"
+              pButton
+              label="Waive & activate"
+              icon="pi pi-check"
+              class="p-button-sm p-button-primary"
+              (click)="openWaiveModal()">
+            </button>
+          }
           @if (canCancelJoin()) {
             <button
               type="button"
@@ -80,6 +90,15 @@
       }
     </div>
   </div>
+
+  <app-legacy-waive-join-modal
+    [(visible)]="showWaiveModal"
+    [userName]="detail()?.username ?? ''"
+    [packageLabel]="packageLabel(detail()?.legacyPackage)"
+    [submitting]="waiving()"
+    (confirmed)="onWaiveConfirmed($event)"
+    (cancelled)="onWaiveCancelled()">
+  </app-legacy-waive-join-modal>
 
   <app-confirmation-modal
     [visible]="showCancelModal()"
@@ -136,7 +155,7 @@
           <div class="px-6 pt-5">
             <app-info-banner
               type="warning"
-              message="This user has started Legacy Club join but not completed payment. You can cancel the registration if they need to start over.">
+              message="This user has started Legacy Club join but not completed payment. You can waive and activate (complimentary) or cancel the registration if they need to start over.">
             </app-info-banner>
           </div>
         }
