@@ -78,11 +78,12 @@ export class MerchantDetailsComponent implements OnInit {
   showInTransitModal = signal(false);
   showDeliveredModal = signal(false);
 
-  /** Rows shown in the selective refill dialog */
+  /** Rows shown in the adjustable restock dialog */
   refillRows = signal<Array<{
     productId: string;
     productName: string;
     quantity: number;
+    configDefaultQuantity: number;
     available: number;
     selected: boolean;
   }>>([]);
@@ -193,6 +194,15 @@ export class MerchantDetailsComponent implements OnInit {
     if (this.selectedRefillShortages().length > 0) return false;
     return selected.every((row) => Number.isInteger(row.quantity) && row.quantity >= 1);
   });
+
+  allRefillSelected = computed(() => {
+    const rows = this.refillRows();
+    return rows.length > 0 && rows.every((row) => row.selected);
+  });
+
+  hasCustomRefillQuantities = computed(() =>
+    this.refillRows().some((row) => row.quantity !== row.configDefaultQuantity)
+  );
 
   // Computed
   canApprove = computed(() => this.merchant()?.status === 'PENDING');
@@ -512,7 +522,7 @@ export class MerchantDetailsComponent implements OnInit {
       this.messageService.add({
         severity: 'warn',
         summary: 'No Onboarding Products',
-        detail: 'This merchant type has no onboarding products configured for refill.',
+        detail: 'This merchant type has no onboarding products configured for restock.',
       });
       return;
     }
@@ -526,15 +536,45 @@ export class MerchantDetailsComponent implements OnInit {
     this.refillRows.set(
       items.map((item) => {
         const product = products.find((p) => p.id === item.productId);
+        const configDefaultQuantity = Math.max(1, Number(item.quantity) || 1);
         return {
           productId: item.productId,
           productName: product?.name ?? item.productName ?? item.productId,
-          quantity: Math.max(1, Number(item.quantity) || 1),
+          quantity: configDefaultQuantity,
+          configDefaultQuantity,
           available: Math.max(0, Number(product?.adminPoolQuantity ?? 0)),
           selected: false,
         };
       })
     );
+  }
+
+  selectAllRefillProducts(): void {
+    this.refillRows.update((rows) => rows.map((row) => ({ ...row, selected: true })));
+  }
+
+  deselectAllRefillProducts(): void {
+    this.refillRows.update((rows) => rows.map((row) => ({ ...row, selected: false })));
+  }
+
+  resetRefillQuantitiesToConfig(): void {
+    this.refillRows.update((rows) =>
+      rows.map((row) => ({ ...row, quantity: row.configDefaultQuantity }))
+    );
+  }
+
+  useConfigQuantitiesForRefill(): void {
+    this.refillRows.update((rows) =>
+      rows.map((row) => ({
+        ...row,
+        selected: true,
+        quantity: row.configDefaultQuantity,
+      }))
+    );
+  }
+
+  isRefillQuantityCustom(row: { quantity: number; configDefaultQuantity: number }): boolean {
+    return row.quantity !== row.configDefaultQuantity;
   }
 
   toggleRefillProduct(productId: string, selected: boolean): void {
@@ -700,10 +740,10 @@ export class MerchantDetailsComponent implements OnInit {
         const allocationsCount = Array.isArray(res?.allocationIds) ? res.allocationIds.length : 0;
         this.messageService.add({
           severity: 'success',
-          summary: 'Merchant Refilled',
+          summary: 'Restock Created',
           detail: allocationsCount > 0
-            ? `Refill created ${allocationsCount} allocation(s)`
-            : (res?.message ?? 'Merchant refill completed successfully')
+            ? `Created ${allocationsCount} allocation(s). Dispatch each from Stock Allocations below.`
+            : (res?.message ?? 'Merchant restock completed successfully')
         });
         this.loadAllocations(id);
       },
@@ -712,7 +752,7 @@ export class MerchantDetailsComponent implements OnInit {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: err?.error?.message ?? 'Failed to refill merchant',
+          detail: err?.error?.message ?? 'Failed to restock merchant',
         });
       }
     });
