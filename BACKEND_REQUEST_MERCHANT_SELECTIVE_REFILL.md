@@ -5,7 +5,7 @@
 **Scope:** Extend `POST /admin/merchants/{id}/refill` so admins can refill **selected** onboarding products (with quantities), not the full category-config set  
 **Related:** [ADMIN_MERCHANTS_FRONTEND_GUIDE.md](./ADMIN_MERCHANTS_FRONTEND_GUIDE.md) §7, [MERCHANT_INTEGRATION_AND_TESTING.md](./MERCHANT_INTEGRATION_AND_TESTING.md)  
 **Priority:** High — management must refill specific products without creating allocations for every onboarding item  
-**Status:** Waiting on backend
+**Status:** Implemented — route verified (`POST /admin/merchants/{id}/refill` accepts `{ items: [{ productId, quantity }] }`; 401 without auth confirms endpoint exists). Admin FE ships selective restock UX.
 
 ---
 
