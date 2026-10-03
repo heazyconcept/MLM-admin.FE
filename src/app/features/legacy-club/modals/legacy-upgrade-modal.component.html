@@ -1,0 +1,137 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [header]="'Upgrade package — @' + userName()"
+  [style]="{ width: '32rem', maxWidth: '95vw' }"
+  (onShow)="resetForm()"
+  (onHide)="onCancel()">
+  <div class="space-y-4">
+    <p class="text-sm text-mlm-secondary">
+      Current package:
+      <span class="font-medium text-mlm-text">{{ packageLabel(currentPackage()) }}</span>
+    </p>
+
+    <div>
+      <label for="legacy-upgrade-package" class="block text-sm font-medium text-gray-700 mb-1">
+        Upgrade to
+      </label>
+      <p-select
+        inputId="legacy-upgrade-package"
+        [options]="packageOptions()"
+        [ngModel]="selectedPackage"
+        (ngModelChange)="onPackageChange($event)"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select package"
+        appendTo="body"
+        styleClass="w-full"
+        [disabled]="submitting()">
+      </p-select>
+    </div>
+
+    @if (quoteLoading()) {
+      <p class="text-sm text-mlm-secondary">Loading quote…</p>
+    } @else if (quoteError()) {
+      <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+        {{ quoteError() }}
+      </div>
+    } @else if (quote(); as q) {
+      <div class="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2 text-sm">
+        <p class="font-semibold text-mlm-text">Upgrade summary</p>
+        <div class="flex justify-between gap-3">
+          <span class="text-mlm-secondary">Package change</span>
+          <span class="font-medium text-mlm-text text-right">
+            {{ packageLabel(q.fromPackage) }} → {{ packageLabel(q.toPackage) }}
+          </span>
+        </div>
+        <div class="flex justify-between gap-3">
+          <span class="text-mlm-secondary">Upgrade difference</span>
+          <span class="font-semibold text-mlm-text tabular-nums">
+            {{ formatMoney(q.payAmount, q.currency) }}
+          </span>
+        </div>
+        <div class="flex justify-between gap-3">
+          <span class="text-mlm-secondary">Instant commission</span>
+          <span class="font-medium text-mlm-text tabular-nums">
+            {{ formatMoney(q.instantCommission, q.currency) }}
+          </span>
+        </div>
+        <div class="flex justify-between gap-3">
+          <span class="text-mlm-secondary">Registration wallet</span>
+          <span class="font-medium text-mlm-text tabular-nums text-right">
+            {{ formatMoney(q.registrationWalletBalance, q.currency) }}
+            @if (q.registrationWalletStatus) {
+              <span class="block text-xs text-mlm-secondary">{{ q.registrationWalletStatus }}</span>
+            } @else {
+              <span class="block text-xs text-mlm-secondary">Not available</span>
+            }
+          </span>
+        </div>
+      </div>
+
+      @if (!q.canDebit) {
+        <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          Registration wallet is missing, locked, or has insufficient balance. Only complimentary
+          upgrade is available.
+        </div>
+      }
+    }
+
+    <div class="flex items-start justify-between gap-4 rounded-lg border border-slate-200 px-4 py-3">
+      <div>
+        <p class="text-sm font-medium text-mlm-text">Debit customer</p>
+        <p class="text-xs text-mlm-secondary mt-0.5">
+          Charge the upgrade difference from the customer's registration wallet.
+        </p>
+      </div>
+      <p-toggleswitch
+        [ngModel]="debitCustomer"
+        (ngModelChange)="onDebitCustomerChange($event)"
+        [disabled]="submitting() || !canEnableDebitToggle()"
+        ariaLabel="Debit customer registration wallet">
+      </p-toggleswitch>
+    </div>
+
+    @if (!debitCustomer) {
+      <div class="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900">
+        Complimentary upgrade — no wallet debit. Voucher credit, instant commission, and cycle
+        reset still apply.
+      </div>
+    }
+
+    <div>
+      <label for="legacy-upgrade-reason" class="block text-sm font-medium text-gray-700 mb-1">
+        Reason
+      </label>
+      <textarea
+        id="legacy-upgrade-reason"
+        pTextarea
+        rows="3"
+        class="w-full"
+        [(ngModel)]="reason"
+        [disabled]="submitting()"
+        placeholder="Support ticket #... (min 10 chars)">
+      </textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Cancel"
+      class="p-button-outlined"
+      [disabled]="submitting()"
+      (click)="onCancel()">
+    </button>
+    <button
+      pButton
+      type="button"
+      label="Upgrade package"
+      class="p-button-primary"
+      [disabled]="!canSubmit() || submitting()"
+      [loading]="submitting()"
+      (click)="onConfirm()">
+    </button>
+  </ng-template>
+</p-dialog>

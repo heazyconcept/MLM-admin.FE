@@ -60,6 +60,20 @@
       </p-select>
     </div>
 
+    <!-- Source Filter -->
+    <div>
+      <p-select
+        [options]="channelOptions"
+        [formControl]="selectedChannelControl"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All Sources"
+        class="w-full"
+        styleClass="w-full"
+        appendTo="body">
+      </p-select>
+    </div>
+
     <!-- Customer Type Filter -->
     <div>
       <p-select
@@ -140,6 +154,20 @@
               <div class="flex flex-col">
                 <span class="font-semibold text-slate-900">{{ row.totalAmount | currency:row.currency:'symbol-narrow' }}</span>
               </div>
+            </td>
+
+            <!-- Source -->
+            <td class="px-5 py-4 whitespace-nowrap">
+              <span
+                class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap"
+                [class]="getSourceBadgeClass(row)">
+                {{ getSourceLabel(row) }}
+              </span>
+            </td>
+
+            <!-- Paid from -->
+            <td class="px-5 py-4 whitespace-nowrap">
+              <span class="text-sm text-slate-700">{{ getPaidFromLabel(row) }}</span>
             </td>
 
             <!-- Fulfilment -->

@@ -21,6 +21,10 @@ export type CustomerType = 'MEMBER' | 'NON_MEMBER';
 
 export type MerchantRoute = 'CLOSEST' | 'OTHER';
 
+export type ShopChannel = 'NETWORK' | 'LEGACY';
+
+export type PaidFromWalletType = 'VOUCHER' | 'LEGACY_VOUCHER' | null;
+
 export type OrderDisputeStatus = 'OPEN' | 'RESOLVED' | 'CLOSED';
 
 export type OrderDisputeOutcome = 'MERCHANT' | 'CUSTOMER';
@@ -60,11 +64,16 @@ export interface OrderDisputeSummary {
 
 export interface Order {
   id: string;
+  reference?: string | null;
   status: OrderStatus;
   totalAmount: number;
   baseAmount: number;
   currency: string;
   paymentMethod: string;
+  channel?: ShopChannel;
+  sourceLabel?: string;
+  paidFromWalletType?: PaidFromWalletType;
+  paidFromLabel?: string;
   fulfilmentMode: FulfilmentMode;
   customerType: CustomerType;
   guestFullName?: string | null;
@@ -127,6 +136,7 @@ export interface ResolveOrderDisputeBody {
 
 export interface AdminOrderFilters {
   userId?: string;
+  channel?: ShopChannel;
   status?: OrderStatus;
   fulfilmentMode?: FulfilmentMode;
   selectedMerchantId?: string;

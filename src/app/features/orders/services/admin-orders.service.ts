@@ -53,6 +53,7 @@ export class AdminOrdersService {
 
     const params: Record<string, string | number> = {};
     if (filters?.userId) params['userId'] = filters.userId;
+    if (filters?.channel) params['channel'] = filters.channel;
     if (filters?.status) params['status'] = filters.status;
     if (filters?.fulfilmentMode) params['fulfilmentMode'] = filters.fulfilmentMode;
     if (filters?.selectedMerchantId) params['selectedMerchantId'] = filters.selectedMerchantId;

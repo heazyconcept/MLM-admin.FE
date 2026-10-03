@@ -18,11 +18,18 @@ import {
   ConfirmationResult,
 } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { LegacyWaiveJoinModalComponent } from '../modals/legacy-waive-join-modal.component';
+import {
+  LegacyUpgradeConfirmPayload,
+  LegacyUpgradeModalComponent,
+} from '../modals/legacy-upgrade-modal.component';
 import { AdminLegacyService } from '../services/admin-legacy.service';
 import {
   AdminLegacyEvent,
   AdminLegacyPeriod,
   AdminLegacyPriorPending,
+  higherLegacyPackages,
+  legacyPackageLabel,
+  resolveMemberLegacyPackage,
 } from '../models/admin-legacy.models';
 
 @Component({
@@ -35,6 +42,7 @@ import {
     InfoBannerComponent,
     ConfirmationModalComponent,
     LegacyWaiveJoinModalComponent,
+    LegacyUpgradeModalComponent,
   ],
   providers: [MessageService],
   templateUrl: './legacy-member-detail.component.html',
@@ -57,10 +65,15 @@ export class LegacyMemberDetailComponent implements OnInit {
   userId = '';
   showCancelModal = signal(false);
   showWaiveModal = signal(false);
+  showUpgradeModal = signal(false);
   cancelling = signal(false);
   waiving = signal(false);
+  upgrading = signal(false);
+
+  packages = this.legacyService.packages;
 
   isPendingJoin = computed(() => this.detail()?.status === 'PENDING_JOIN');
+  isActive = computed(() => this.detail()?.status === 'ACTIVE');
 
   canCancelJoin = computed(
     () =>
@@ -76,8 +89,50 @@ export class LegacyMemberDetailComponent implements OnInit {
         this.permission.hasPermission('legacy.enroll_seed')),
   );
 
+  memberLegacyPackage = computed(() => resolveMemberLegacyPackage(this.detail()));
+
+  canUpgradeMember = computed(
+    () =>
+      this.isActive() &&
+      this.canPerformUpgrade() &&
+      this.upgradePackageOptions().length > 0,
+  );
+
+  canPerformUpgrade = computed(() =>
+    this.permission.hasAnyPermission(
+      'legacy.upgrade_member',
+      'legacy.enroll_seed',
+      'legacy.configure_packages',
+    ),
+  );
+
+  upgradePackageOptions = computed(() => {
+    const current = this.memberLegacyPackage();
+    if (!current) return [];
+
+    const higher = higherLegacyPackages(current);
+    const loaded = this.packages();
+    if (loaded.length === 0) {
+      return higher.map((pkg) => ({
+        label: legacyPackageLabel(pkg),
+        value: pkg,
+      }));
+    }
+
+    const active = new Set(
+      loaded.filter((pkg) => pkg.isActive).map((pkg) => pkg.package),
+    );
+    return higher
+      .filter((pkg) => active.has(pkg))
+      .map((pkg) => ({
+        label: legacyPackageLabel(pkg),
+        value: pkg,
+      }));
+  });
+
   ngOnInit(): void {
     this.userId = this.route.snapshot.paramMap.get('userId') ?? '';
+    this.legacyService.loadPackages().subscribe();
     if (this.userId) {
       this.legacyService.loadMemberDetail(this.userId).subscribe();
     }
@@ -90,13 +145,7 @@ export class LegacyMemberDetailComponent implements OnInit {
   }
 
   packageLabel(code: string | undefined | null): string {
-    if (!code) return '—';
-    const labels: Record<string, string> = {
-      VIP: 'VIP',
-      EXECUTIVE: 'Executive',
-      SUPREME: 'Supreme',
-    };
-    return labels[code] ?? code;
+    return legacyPackageLabel(code);
   }
 
   formatDate(value: string | null | undefined): string {
@@ -212,6 +261,44 @@ export class LegacyMemberDetailComponent implements OnInit {
     if (!this.waiving()) {
       this.showWaiveModal.set(false);
     }
+  }
+
+  openUpgradeModal(): void {
+    this.showUpgradeModal.set(true);
+  }
+
+  onUpgradeCancelled(): void {
+    if (!this.upgrading()) {
+      this.showUpgradeModal.set(false);
+    }
+  }
+
+  onUpgradeConfirmed(payload: LegacyUpgradeConfirmPayload): void {
+    if (!this.userId) return;
+
+    this.upgrading.set(true);
+    this.legacyService.upgradeMember(this.userId, payload).subscribe({
+      next: (res) => {
+        this.upgrading.set(false);
+        this.showUpgradeModal.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Package upgraded',
+          detail: `@${res.username ?? this.detail()?.username ?? 'member'} upgraded to ${this.packageLabel(res.toPackage)}.`,
+        });
+        this.legacyService.loadMemberDetail(this.userId).subscribe();
+      },
+      error: (err: unknown) => {
+        this.upgrading.set(false);
+        const http = err as { error?: { message?: string | string[] } };
+        const msg = http?.error?.message;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Upgrade failed',
+          detail: Array.isArray(msg) ? msg.join(', ') : msg ?? 'Could not upgrade package.',
+        });
+      },
+    });
   }
 
   onWaiveConfirmed(reason: string): void {

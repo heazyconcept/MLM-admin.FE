@@ -36,6 +36,7 @@ Endpoints for backoffice order management: list orders with filters, get order d
 | `customerType` | string | `MEMBER` \| `NON_MEMBER` |
 | `merchantRoute` | string | `CLOSEST` \| `OTHER` |
 | `productId` | UUID | Orders that contain this product |
+| `channel` | string | `NETWORK` \| `LEGACY` — filter by marketplace source (omit for both) |
 | `fromDate` | ISO date string | Orders created on or after this date |
 | `toDate` | ISO date string | Orders created on or before this date |
 | `limit` | number | Page size (default 20) |
@@ -53,6 +54,11 @@ Endpoints for backoffice order management: list orders with filters, get order d
       "baseAmount": 89.99,
       "currency": "USD",
       "paymentMethod": "REGISTRATION_WALLET",
+      "channel": "NETWORK",
+      "sourceLabel": "Network Marketplace",
+      "paidFromWalletType": "VOUCHER",
+      "paidFromLabel": "Product voucher",
+      "reference": "ORD-REF-001",
       "fulfilmentMode": "OFFLINE_DELIVERY",
       "customerType": "MEMBER",
       "merchantRoute": null,
@@ -91,7 +97,17 @@ Endpoints for backoffice order management: list orders with filters, get order d
 **Order statuses (examples):** `PENDING`, `CREATED`, `PAID`, `ASSIGNED_TO_MERCHANT`, `READY_FOR_PICKUP`, `OFFLINE_DELIVERY_REQUESTED`, `FULFILLED`, `DELIVERED`.  
 **FulfilmentMode:** `PICKUP`, `OFFLINE_DELIVERY`, etc.
 
-**Frontend:** Use for order list table; filter by status/fulfilment/date; link each row to order detail.
+**Marketplace source fields (every order):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `channel` | `NETWORK` \| `LEGACY` | Marketplace the order came from |
+| `sourceLabel` | string | Display label (e.g. `"Legacy Marketplace"`) |
+| `paidFromWalletType` | `VOUCHER` \| `LEGACY_VOUCHER` \| `null` | Wallet used when paid from balance |
+| `paidFromLabel` | string | Display label (e.g. `"Online payment"`, `"Legacy product voucher"`) |
+| `reference` | string | Order reference shown in lists and wallet debits |
+
+**Frontend:** Use for order list table; filter by status, fulfilment, **channel (Source)**, and date; show **Source** and **Paid from** on list and detail; link each row to order detail.
 
 ---
 
@@ -122,6 +138,11 @@ Example:
   "baseAmount": 89.99,
   "currency": "USD",
   "paymentMethod": "REGISTRATION_WALLET",
+  "channel": "LEGACY",
+  "sourceLabel": "Legacy Marketplace",
+  "paidFromWalletType": "LEGACY_VOUCHER",
+  "paidFromLabel": "Legacy product voucher",
+  "reference": "ORD-REF-001",
   "fulfilmentMode": "OFFLINE_DELIVERY",
   "customerType": "MEMBER",
   "guestFullName": null,
@@ -200,6 +221,7 @@ Example:
 
 ## Guidelines for frontend
 
-1. **List:** Use `GET /admin/orders` with query params for status, fulfilmentMode, date range, userId, productId, etc. Paginate with `limit` and `offset`; use `total` for total count.
-2. **Detail:** Use `GET /admin/orders/{id}` for the full order, user, and payment. Use `status` and `fulfilmentMode` to decide which actions to show.
-3. **Assign merchant:** Only for `fulfilmentMode === OFFLINE_DELIVERY` and status `PENDING`, `PAID`, or `ASSIGNED_TO_MERCHANT`. Send `POST /admin/orders/{id}/assign-merchant` with `{ "merchantId": "uuid" }`. Ensure the chosen merchant is ACTIVE and has the order’s products assigned (e.g. from `GET /admin/merchants/{id}/products`).
+1. **List:** Use `GET /admin/orders` with query params for status, fulfilmentMode, **channel**, date range, userId, productId, etc. Paginate with `limit` and `offset`; use `total` for total count. Display `sourceLabel` and `paidFromLabel` on each row.
+2. **Detail:** Use `GET /admin/orders/{id}` for the full order, user, and payment. Show **Source** (`sourceLabel`) and **Paid from** (`paidFromLabel`) in the payment summary. Use `status` and `fulfilmentMode` to decide which actions to show.
+3. **User support:** Combine `userId` + `channel` filters on the user detail Orders tab when investigating disputes.
+4. **Assign merchant:** Only for `fulfilmentMode === OFFLINE_DELIVERY` and status `PENDING`, `PAID`, or `ASSIGNED_TO_MERCHANT`. Send `POST /admin/orders/{id}/assign-merchant` with `{ "merchantId": "uuid" }`. Ensure the chosen merchant is ACTIVE and has the order’s products assigned (e.g. from `GET /admin/merchants/{id}/products`).
