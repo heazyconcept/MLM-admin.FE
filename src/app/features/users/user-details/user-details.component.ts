@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy, computed, DestroyRef } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
@@ -30,6 +31,14 @@ import { UpgradePackageModalComponent } from '../modals/upgrade-package-modal.co
 import { CreditVolumeModalComponent } from '../modals/credit-volume-modal.component';
 import { SetUserPasswordModalComponent } from '../modals/set-user-password-modal.component';
 import { formatAuditTimestamp } from '../../../core/models/audit.model';
+import { AdminOrdersService } from '../../orders/services/admin-orders.service';
+import { Order, ShopChannel } from '../../../core/models/order.model';
+import { CHANNEL_FILTER_OPTIONS } from '../../../core/constants/order.constants';
+import {
+  marketplaceBadgeClass,
+  marketplacePaidFromLabel,
+  marketplaceSourceLabel,
+} from '../../../core/utils/order-marketplace.util';
 
 @Component({
   selector: 'app-user-details',
@@ -37,8 +46,10 @@ import { formatAuditTimestamp } from '../../../core/models/audit.model';
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     RouterModule,
     ButtonModule,
+    SelectModule,
     DatePickerModule,
     ToastModule,
     DialogModule,
@@ -62,6 +73,7 @@ export class UserDetailsComponent implements OnInit {
   private usersService = inject(UsersService);
   private walletService = inject(WalletService);
   private earningsService = inject(EarningsService);
+  private ordersService = inject(AdminOrdersService);
   private messageService = inject(MessageService);
   protected permission = inject(PermissionService);
 
@@ -126,6 +138,14 @@ export class UserDetailsComponent implements OnInit {
   eaLimit = 50;
   eaOffset = signal(0);
   eaDateRange = signal<Date[] | null>(null);
+
+  /** User orders tab */
+  userOrders = signal<Order[]>([]);
+  userOrdersLoading = signal(false);
+  userOrdersError = signal<string | null>(null);
+  userOrdersTotal = signal(0);
+  userOrdersChannelControl = new FormControl<string>('all');
+  channelFilterOptions = CHANNEL_FILTER_OPTIONS;
 
   walletActionLoading = signal(false);
 
@@ -595,6 +615,67 @@ export class UserDetailsComponent implements OnInit {
       return Number.isNaN(num) ? '—' : Math.round(num) + '%';
     }
     return '—';
+  }
+
+  /** ────────── Orders tab ────────── */
+
+  onOrdersTabClick(): void {
+    this.activeTab.set('orders');
+    this.loadUserOrders();
+  }
+
+  loadUserOrders(): void {
+    const u = this.user();
+    if (!u?.id) return;
+
+    this.userOrdersLoading.set(true);
+    this.userOrdersError.set(null);
+
+    const channel = this.userOrdersChannelControl.value;
+    this.ordersService
+      .loadOrders({
+        userId: u.id,
+        channel: channel === 'NETWORK' || channel === 'LEGACY' ? (channel as ShopChannel) : undefined,
+        limit: 50,
+        offset: 0,
+      })
+      .subscribe({
+        next: ({ orders, total }) => {
+          this.userOrdersLoading.set(false);
+          this.userOrders.set(orders);
+          this.userOrdersTotal.set(total);
+        },
+        error: () => {
+          this.userOrdersLoading.set(false);
+          this.userOrdersError.set('Failed to load orders.');
+          this.userOrders.set([]);
+          this.userOrdersTotal.set(0);
+        },
+      });
+  }
+
+  onUserOrdersChannelChange(): void {
+    this.loadUserOrders();
+  }
+
+  viewUserOrder(order: Order): void {
+    void this.router.navigate(['/admin/orders', order.id]);
+  }
+
+  getOrderSourceLabel(order: Order): string {
+    return marketplaceSourceLabel(order);
+  }
+
+  getOrderPaidFromLabel(order: Order): string {
+    return marketplacePaidFromLabel(order);
+  }
+
+  getOrderSourceBadgeClass(order: Order): string {
+    return marketplaceBadgeClass(order.channel);
+  }
+
+  getOrderStatusLabel(status: Order['status']): string {
+    return this.ordersService.getStatusLabel(status);
   }
 
   /** ────────── Wallet helpers ────────── */

@@ -206,11 +206,12 @@
         @for (tab of [
           { key: 'basic', label: 'Account Info' },
           { key: 'network', label: 'Network Details' },
+          { key: 'orders', label: 'Orders' },
           { key: 'activity', label: 'Activity Log' },
           { key: 'earnings', label: 'Earnings Activity' }
         ]; track tab.key) {
           <button
-            (click)="tab.key === 'earnings' ? onEarningsTabClick() : activeTab.set(tab.key)"
+            (click)="tab.key === 'earnings' ? onEarningsTabClick() : tab.key === 'orders' ? onOrdersTabClick() : activeTab.set(tab.key)"
             class="pb-4 text-sm font-medium transition-colors duration-150"
             [class.border-b-2]="activeTab() === tab.key"
             [class.border-mlm-primary]="activeTab() === tab.key"
@@ -447,6 +448,91 @@
                       </tbody>
                     </table>
                   </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- ── Orders Tab ── -->
+          @if (activeTab() === 'orders') {
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div class="px-6 py-5 border-b border-slate-100 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-0.5">
+                    Orders
+                  </p>
+                  <p class="text-xs text-slate-400">Marketplace source and wallet used for each purchase</p>
+                </div>
+                <div class="w-full sm:w-56">
+                  <label class="block text-xs font-medium text-slate-600 mb-1.5">Source</label>
+                  <p-select
+                    [options]="channelFilterOptions"
+                    [formControl]="userOrdersChannelControl"
+                    optionLabel="label"
+                    optionValue="value"
+                    appendTo="body"
+                    styleClass="w-full"
+                    (onChange)="onUserOrdersChannelChange()">
+                  </p-select>
+                </div>
+              </div>
+
+              <div class="px-6 py-5">
+                @if (userOrdersError()) {
+                  <div class="px-4 py-3 rounded-lg bg-mlm-red-50 border border-mlm-red-200 text-mlm-red-700 text-sm flex items-center justify-between">
+                    <span>{{ userOrdersError() }}</span>
+                    <button (click)="loadUserOrders()" class="underline font-medium ml-4 shrink-0">Retry</button>
+                  </div>
+                } @else if (userOrdersLoading()) {
+                  <p class="text-sm text-slate-400">Loading orders…</p>
+                } @else if (userOrders().length === 0) {
+                  <p class="text-sm text-slate-400">No orders found for this member.</p>
+                } @else {
+                  <div class="overflow-x-auto rounded-lg border border-slate-200">
+                    <table class="w-full text-sm">
+                      <thead>
+                        <tr class="border-b border-slate-100">
+                          <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Reference</th>
+                          <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Source</th>
+                          <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 whitespace-nowrap">Paid from</th>
+                          <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Status</th>
+                          <th class="px-4 py-3 text-right text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Amount</th>
+                          <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (order of userOrders(); track order.id) {
+                          <tr
+                            class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100 cursor-pointer"
+                            (click)="viewUserOrder(order)">
+                            <td class="px-4 py-3 font-mono text-xs text-slate-600">
+                              {{ order.reference || (order.id | slice:0:8) + '…' }}
+                            </td>
+                            <td class="px-4 py-3">
+                              <span
+                                class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+                                [class]="getOrderSourceBadgeClass(order)">
+                                {{ getOrderSourceLabel(order) }}
+                              </span>
+                            </td>
+                            <td class="px-4 py-3 text-slate-700 whitespace-nowrap">{{ getOrderPaidFromLabel(order) }}</td>
+                            <td class="px-4 py-3 text-slate-700">{{ getOrderStatusLabel(order.status) }}</td>
+                            <td class="px-4 py-3 text-right font-semibold tabular-nums">
+                              {{ order.totalAmount | currency:order.currency:'symbol-narrow' }}
+                            </td>
+                            <td class="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                              {{ order.createdAt | date:'mediumDate' }}
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                  @if (userOrdersTotal() > userOrders().length) {
+                    <p class="mt-3 text-xs text-slate-400">
+                      Showing {{ userOrders().length }} of {{ userOrdersTotal() }} orders.
+                    </p>
+                  }
                 }
               </div>
             </div>

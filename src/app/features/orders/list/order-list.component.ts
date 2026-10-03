@@ -20,8 +20,14 @@ import { AdminOrdersService } from '../services/admin-orders.service';
 import { Order, OrderStatus, FulfilmentMode, CustomerType, AdminOrderFilters } from '../../../core/models/order.model';
 import {
   ACTIVE_ORDER_STATUS_SET,
+  CHANNEL_FILTER_OPTIONS,
   ORDER_STATUS_FILTER_OPTIONS,
 } from '../../../core/constants/order.constants';
+import {
+  marketplaceBadgeClass,
+  marketplacePaidFromLabel,
+  marketplaceSourceLabel,
+} from '../../../core/utils/order-marketplace.util';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 
 @Component({
@@ -62,6 +68,7 @@ export class OrderListComponent implements OnInit {
   selectedStatusControl = new FormControl<string>('all');
   selectedFulfilmentControl = new FormControl<string>('all');
   selectedCustomerTypeControl = new FormControl<string>('all');
+  selectedChannelControl = new FormControl<string>('all');
   fromDateControl = new FormControl<Date | null>(null);
   toDateControl = new FormControl<Date | null>(null);
 
@@ -80,6 +87,8 @@ export class OrderListComponent implements OnInit {
     { label: 'Non-member', value: 'NON_MEMBER' },
   ];
 
+  channelOptions = CHANNEL_FILTER_OPTIONS;
+
   filteredOrders = computed(() => {
     return this.orders();
   });
@@ -88,6 +97,8 @@ export class OrderListComponent implements OnInit {
   tableHeaders = signal<string[]>([
     'Customer',
     'Amount',
+    'Source',
+    'Paid from',
     'Fulfilment',
     'Batch',
     'Customer Type',
@@ -122,6 +133,10 @@ export class OrderListComponent implements OnInit {
       .subscribe(() => this.loadOrders());
 
     this.selectedCustomerTypeControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadOrders());
+
+    this.selectedChannelControl.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadOrders());
   }
@@ -177,6 +192,18 @@ export class OrderListComponent implements OnInit {
     return this.ordersService.getOrderCustomerUsername(order);
   }
 
+  getSourceLabel(order: Order): string {
+    return marketplaceSourceLabel(order);
+  }
+
+  getPaidFromLabel(order: Order): string {
+    return marketplacePaidFromLabel(order);
+  }
+
+  getSourceBadgeClass(order: Order): string {
+    return marketplaceBadgeClass(order.channel);
+  }
+
   private syncStatusToUrl(status: string | null): void {
     const next = status && status !== 'all' ? status : null;
     const current = this.route.snapshot.queryParamMap.get('status');
@@ -204,6 +231,11 @@ export class OrderListComponent implements OnInit {
 
     const customerType = this.selectedCustomerTypeControl.value;
     if (customerType && customerType !== 'all') filters.customerType = customerType as CustomerType;
+
+    const channel = this.selectedChannelControl.value;
+    if (channel === 'NETWORK' || channel === 'LEGACY') {
+      filters.channel = channel;
+    }
 
     const from = this.fromDateControl.value;
     if (from) filters.fromDate = from.toISOString();

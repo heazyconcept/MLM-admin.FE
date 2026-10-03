@@ -10,6 +10,7 @@ import {
   AdminLegacyEnrollRequest,
   AdminLegacyEnrollResponse,
   AdminLegacyMemberDetail,
+  resolveMemberLegacyPackage,
   AdminLegacyMemberListItem,
   AdminLegacyMembersListResponse,
   AdminLegacyMembersQuery,
@@ -20,6 +21,9 @@ import {
   AdminLegacyPaymentsListResponse,
   AdminLegacyPaymentsQuery,
   AdminLegacyUpgradeDifference,
+  AdminLegacyUpgradeQuote,
+  AdminLegacyUpgradeRequest,
+  AdminLegacyUpgradeResponse,
   LegacyPackageCode,
 } from '../models/admin-legacy.models';
 
@@ -66,6 +70,15 @@ export class AdminLegacyService {
   paymentDetail = signal<AdminLegacyPayment | null>(null);
   paymentDetailLoading = signal(false);
   paymentDetailError = signal<string | null>(null);
+
+  private mapMemberDetail(raw: AdminLegacyMemberDetail): AdminLegacyMemberDetail {
+    const legacyPackage = resolveMemberLegacyPackage(raw) ?? undefined;
+    return {
+      ...raw,
+      legacyPackage,
+      package: raw.package ?? legacyPackage,
+    };
+  }
 
   loadPackages(): Observable<AdminLegacyPackage[]> {
     this.packagesLoading.set(true);
@@ -256,7 +269,7 @@ export class AdminLegacyService {
     return this.api
       .get<unknown>(`admin/legacy/members/${encodeURIComponent(userId)}`)
       .pipe(
-        map((raw) => unwrapData<AdminLegacyMemberDetail>(raw)),
+        map((raw) => this.mapMemberDetail(unwrapData<AdminLegacyMemberDetail>(raw))),
         tap((detail) => {
           this.memberDetail.set(detail);
           this.detailLoading.set(false);
@@ -297,6 +310,32 @@ export class AdminLegacyService {
       .post<unknown>(`admin/legacy/members/${encodeURIComponent(userId)}/waive-join`, body)
       .pipe(
         map((raw) => unwrapData<AdminLegacyWaiveJoinResponse>(raw)),
+        catchError((err) => throwError(() => err)),
+      );
+  }
+
+  getUpgradeQuote(
+    userId: string,
+    targetPackage: LegacyPackageCode,
+  ): Observable<AdminLegacyUpgradeQuote> {
+    return this.api
+      .get<unknown>(`admin/legacy/members/${encodeURIComponent(userId)}/upgrade/quote`, {
+        package: targetPackage,
+      })
+      .pipe(
+        map((raw) => unwrapData<AdminLegacyUpgradeQuote>(raw)),
+        catchError((err) => throwError(() => err)),
+      );
+  }
+
+  upgradeMember(
+    userId: string,
+    body: AdminLegacyUpgradeRequest,
+  ): Observable<AdminLegacyUpgradeResponse> {
+    return this.api
+      .post<unknown>(`admin/legacy/members/${encodeURIComponent(userId)}/upgrade`, body)
+      .pipe(
+        map((raw) => unwrapData<AdminLegacyUpgradeResponse>(raw)),
         catchError((err) => throwError(() => err)),
       );
   }

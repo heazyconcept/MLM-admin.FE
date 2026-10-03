@@ -1,4 +1,4 @@
-import { OrderStatus } from '../models/order.model';
+import { OrderStatus, ShopChannel } from '../models/order.model';
 
 /** Statuses used in production today (backend + admin filters). */
 export const ACTIVE_ORDER_STATUSES: readonly OrderStatus[] = [
@@ -10,6 +10,12 @@ export const ACTIVE_ORDER_STATUSES: readonly OrderStatus[] = [
 ] as const;
 
 export const ACTIVE_ORDER_STATUS_SET = new Set<string>(ACTIVE_ORDER_STATUSES);
+
+export const CHANNEL_FILTER_OPTIONS: { label: string; value: 'all' | ShopChannel }[] = [
+  { label: 'All Sources', value: 'all' },
+  { label: 'Network Marketplace', value: 'NETWORK' },
+  { label: 'Legacy Marketplace', value: 'LEGACY' },
+];
 
 export const ORDER_STATUS_FILTER_OPTIONS: { label: string; value: OrderStatus }[] = [
   { label: 'Paid', value: 'PAID' },

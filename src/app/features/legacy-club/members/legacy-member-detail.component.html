@@ -29,7 +29,7 @@
               </h1>
               <span class="text-[10px] font-semibold tracking-[0.08em] uppercase
                            px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 shrink-0">
-                {{ packageLabel(m.legacyPackage) }}
+                {{ packageLabel(memberLegacyPackage()) }}
               </span>
               @if (m.seedWaivedPurchase) {
                 <span class="text-[10px] font-semibold tracking-[0.08em] uppercase
@@ -66,6 +66,16 @@
               {{ membershipStatusLabel(m.status) }}
             </span>
           }
+          @if (canUpgradeMember()) {
+            <button
+              type="button"
+              pButton
+              label="Upgrade package"
+              icon="pi pi-arrow-up"
+              class="p-button-sm p-button-primary"
+              (click)="openUpgradeModal()">
+            </button>
+          }
           @if (canWaiveJoin()) {
             <button
               type="button"
@@ -90,6 +100,17 @@
       }
     </div>
   </div>
+
+  <app-legacy-upgrade-modal
+    [(visible)]="showUpgradeModal"
+    [userId]="userId"
+    [userName]="detail()?.username ?? ''"
+    [currentPackage]="memberLegacyPackage() ?? 'VIP'"
+    [packageOptions]="upgradePackageOptions()"
+    [submitting]="upgrading()"
+    (confirmed)="onUpgradeConfirmed($event)"
+    (cancelled)="onUpgradeCancelled()">
+  </app-legacy-upgrade-modal>
 
   <app-legacy-waive-join-modal
     [(visible)]="showWaiveModal"

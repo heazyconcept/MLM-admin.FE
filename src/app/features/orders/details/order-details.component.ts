@@ -22,6 +22,11 @@ import {
   ConfirmationResult,
 } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { Order, OrderStatus, FulfilmentMode, CustomerType } from '../../../core/models/order.model';
+import {
+  marketplaceBadgeClass,
+  marketplacePaidFromLabel,
+  marketplaceSourceLabel,
+} from '../../../core/utils/order-marketplace.util';
 import { PermissionService } from '../../../core/services/permission.service';
 import { Feature, Action } from '../../../core/models/admin-permission.model';
 import { StockRefreshService } from '../../products/services/stock-refresh.service';
@@ -434,5 +439,17 @@ export class OrderDetailsComponent implements OnInit {
     if (!o?.selectedMerchantId) return 'Not selected';
     const merchant = this.merchants().find((m) => m.id === o.selectedMerchantId);
     return merchant ? this.merchantService.getMerchantDisplayName(merchant) : o.selectedMerchantId;
+  }
+
+  getSourceLabel(order: Order): string {
+    return marketplaceSourceLabel(order);
+  }
+
+  getPaidFromLabel(order: Order): string {
+    return marketplacePaidFromLabel(order);
+  }
+
+  getSourceBadgeClass(order: Order): string {
+    return marketplaceBadgeClass(order.channel);
   }
 }

@@ -1,4 +1,46 @@
 export type LegacyPackageCode = 'VIP' | 'EXECUTIVE' | 'SUPREME';
+
+export const LEGACY_PACKAGE_ORDER: readonly LegacyPackageCode[] = [
+  'VIP',
+  'EXECUTIVE',
+  'SUPREME',
+] as const;
+
+export function higherLegacyPackages(
+  current: LegacyPackageCode,
+): LegacyPackageCode[] {
+  const idx = LEGACY_PACKAGE_ORDER.indexOf(current);
+  if (idx < 0) return [];
+  return LEGACY_PACKAGE_ORDER.slice(idx + 1);
+}
+
+export function resolveMemberLegacyPackage(
+  detail: Pick<AdminLegacyMemberDetail, 'legacyPackage' | 'package' | 'events'> | null | undefined,
+): LegacyPackageCode | null {
+  if (!detail) return null;
+  const direct = detail.legacyPackage ?? detail.package;
+  if (direct && LEGACY_PACKAGE_ORDER.includes(direct)) {
+    return direct;
+  }
+  const events = detail.events ?? [];
+  for (let i = events.length - 1; i >= 0; i--) {
+    const pkg = events[i]?.package;
+    if (pkg && LEGACY_PACKAGE_ORDER.includes(pkg)) {
+      return pkg;
+    }
+  }
+  return null;
+}
+
+export function legacyPackageLabel(code: LegacyPackageCode | string | null | undefined): string {
+  if (!code) return '—';
+  const labels: Record<string, string> = {
+    VIP: 'VIP',
+    EXECUTIVE: 'Executive',
+    SUPREME: 'Supreme',
+  };
+  return labels[code] ?? code;
+}
 export type LegacySponsorSource = 'AUTO' | 'CHOSEN' | 'SEED';
 export type LegacyRateTier = 'BASE' | 'INCREASED';
 export type LegacyMonthStatus = 'SCHEDULED' | 'PENDING' | 'DROPPED';
@@ -160,7 +202,10 @@ export interface AdminLegacyMemberDetail {
   username: string;
   fullName?: string;
   segulahPackage?: string;
-  legacyPackage: LegacyPackageCode;
+  /** Preferred detail field; list API uses `package`. */
+  legacyPackage?: LegacyPackageCode;
+  /** Present on some API responses instead of legacyPackage. */
+  package?: LegacyPackageCode;
   status?: string;
   sponsorUsername?: string | null;
   sponsorSource: LegacySponsorSource;
@@ -236,7 +281,48 @@ export interface AdminLegacyEnrollResponse {
 
 export type LegacyPaymentPurpose = 'JOIN' | 'UPGRADE' | 'REACTIVATE';
 export type LegacyPaymentStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
-export type LegacyPaymentMethod = 'REGISTRATION_WALLET' | 'MANUAL_BANK';
+export type LegacyPaymentMethod =
+  | 'REGISTRATION_WALLET'
+  | 'MANUAL_BANK'
+  | 'ADMIN_WAIVED';
+
+export interface AdminLegacyUpgradeQuote {
+  userId: string;
+  username: string;
+  fromPackage: LegacyPackageCode;
+  toPackage: LegacyPackageCode;
+  currency: LegacyCurrency;
+  payAmount: number;
+  instantCommission: number;
+  registrationWalletBalance: number;
+  registrationWalletStatus: LegacyWalletStatus | null;
+  canDebit: boolean;
+}
+
+export interface AdminLegacyUpgradeRequest {
+  package: LegacyPackageCode;
+  debitCustomer: boolean;
+  reason: string;
+  requestKey: string;
+}
+
+export interface AdminLegacyUpgradeResponse {
+  userId: string;
+  username: string;
+  fromPackage: LegacyPackageCode;
+  toPackage: LegacyPackageCode;
+  debitCustomer: boolean;
+  paymentMethod: LegacyPaymentMethod;
+  upgradeAmount: number;
+  amountCharged: number;
+  instantCommission: number;
+  currency: LegacyCurrency;
+  paymentId: string;
+  cycleId: string;
+  upgradedAt: string;
+  upgradedByAdminId: string;
+  reason: string;
+}
 
 export interface AdminLegacyPaymentMembership {
   userId: string;
