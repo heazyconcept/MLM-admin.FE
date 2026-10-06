@@ -2,9 +2,10 @@
 
 <div class="min-h-screen bg-mlm-background font-geist">
 
-  <!-- ── Page Header (full width, matches wallet/user detail) ── -->
-  <div class="bg-white border-b border-slate-100 px-4 py-3 sm:px-6 md:px-8 2xl:px-12 sm:py-4">
-    <div class="w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+  <!-- ── Page Header ── -->
+  <div class="bg-white border-b border-slate-100 px-4 py-3 sm:px-6 md:px-8 sm:py-4">
+    <div class="max-w-7xl mx-auto">
+    <div class="w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
 
       <div class="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
         <a
@@ -99,6 +100,27 @@
         </div>
       }
     </div>
+
+      <!-- Tab Navigation -->
+      @if (detail()) {
+        <div class="flex gap-6 sm:gap-8 overflow-x-auto -mb-[21px]">
+          @for (tab of detailTabs; track tab.key) {
+            <button
+              type="button"
+              (click)="onTabClick(tab.key)"
+              class="pb-4 text-sm font-medium transition-colors duration-150 whitespace-nowrap shrink-0"
+              [class.border-b-2]="activeTab() === tab.key"
+              [class.border-mlm-primary]="activeTab() === tab.key"
+              [class.text-mlm-primary]="activeTab() === tab.key"
+              [class.font-semibold]="activeTab() === tab.key"
+              [class.text-mlm-secondary]="activeTab() !== tab.key"
+              [class.hover:text-mlm-text]="activeTab() !== tab.key">
+              {{ tab.label }}
+            </button>
+          }
+        </div>
+      }
+    </div>
   </div>
 
   <app-legacy-upgrade-modal
@@ -140,8 +162,8 @@
     (cancel)="closeCancelModal()">
   </app-confirmation-modal>
 
-  <!-- ── Body (full width) ── -->
-  <div class="w-full px-4 py-5 sm:px-6 md:px-8 2xl:px-12 sm:py-6 space-y-5 md:space-y-6">
+  <!-- ── Body ── -->
+  <div class="max-w-7xl mx-auto px-4 py-5 sm:px-6 md:px-8 sm:py-6 space-y-5 md:space-y-6">
 
     @if (error()) {
       <div class="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center justify-between gap-3">
@@ -165,6 +187,7 @@
       </div>
     } @else if (detail(); as m) {
 
+      @if (activeTab() === 'basic') {
       <!-- Membership -->
       <section class="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div class="px-6 py-5 border-b border-slate-100">
@@ -310,43 +333,8 @@
         </div>
       </section>
 
-      <!-- Successlines -->
-      <section class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div class="px-6 py-5 border-b border-slate-100">
-          <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
-            Direct Successlines
-          </p>
-        </div>
-        @if (successlines().length === 0) {
-          <p class="px-6 py-8 text-sm text-slate-400 text-center">No Successlines yet.</p>
-        } @else {
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="border-b border-slate-100">
-                  <th class="px-6 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Username</th>
-                  <th class="px-6 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Package</th>
-                  <th class="px-6 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Joined</th>
-                  <th class="px-6 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Placement</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (s of successlines(); track s.username) {
-                  <tr class="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60">
-                    <td class="px-6 py-3.5 font-medium text-mlm-text">&#64;{{ s.username }}</td>
-                    <td class="px-6 py-3.5 text-mlm-secondary">{{ packageLabel(s.package) }}</td>
-                    <td class="px-6 py-3.5 text-mlm-secondary">{{ formatDate(s.joinedAt) }}</td>
-                    <td class="px-6 py-3.5 text-mlm-secondary">{{ s.sponsorSource || '—' }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
-      </section>
-
       <!-- This-cycle weeks -->
-      <section class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <section class="bg-white rounded-xl border border-slate-200 overflow-hidden mt-5 md:mt-6">
         <div class="px-6 py-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
           <div>
             <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
@@ -386,38 +374,20 @@
                 @for (p of periods(); track p.periodIndex) {
                   <tr class="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60">
                     <td class="px-6 py-3.5 tabular-nums text-mlm-text">{{ p.periodIndex }}</td>
-                    <td class="px-6 py-3.5 text-right tabular-nums text-mlm-text">
-                      {{ formatMoney(p.amount, m.currency) }}
-                    </td>
-                    <td class="px-6 py-3.5 text-right tabular-nums text-mlm-text">
-                      {{ formatMoney(p.cashoutAmount, m.currency) }}
-                    </td>
-                    <td class="px-6 py-3.5 text-right tabular-nums text-mlm-text">
-                      {{ formatMoney(p.voucherNet, m.currency) }}
+                    <td class="px-6 py-3.5 text-right tabular-nums text-mlm-text">{{ formatMoney(p.amount, m.currency) }}</td>
+                    <td class="px-6 py-3.5 text-right tabular-nums text-mlm-text">{{ formatMoney(p.cashoutAmount, m.currency) }}</td>
+                    <td class="px-6 py-3.5 text-right tabular-nums text-mlm-text">{{ formatMoney(p.voucherNet, m.currency) }}</td>
+                    <td class="px-6 py-3.5">
+                      <span class="inline-flex text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md" [class]="rateTierClass(p.rateTier)">{{ p.rateTier }}</span>
                     </td>
                     <td class="px-6 py-3.5">
-                      <span
-                        class="inline-flex text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md"
-                        [class]="rateTierClass(p.rateTier)">
-                        {{ p.rateTier }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-3.5">
-                      <span
-                        class="inline-flex text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md"
-                        [class]="statusClass(p.status)">
-                        {{ p.status }}
-                      </span>
+                      <span class="inline-flex text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md" [class]="statusClass(p.status)">{{ p.status }}</span>
                     </td>
                     <td class="px-6 py-3.5 text-mlm-secondary whitespace-nowrap">{{ formatDate(p.dueAt) }}</td>
                     <td class="px-6 py-3.5 text-mlm-secondary whitespace-nowrap">
                       <div>{{ formatDate(p.droppedAt) }}</div>
                       @if (p.autoshipOrderId) {
-                        <a
-                          [routerLink]="['/admin/orders', p.autoshipOrderId]"
-                          class="text-xs text-mlm-primary hover:underline font-mono">
-                          {{ p.autoshipOrderId }}
-                        </a>
+                        <a [routerLink]="['/admin/orders', p.autoshipOrderId]" class="text-xs text-mlm-primary hover:underline font-mono">{{ p.autoshipOrderId }}</a>
                       }
                     </td>
                   </tr>
@@ -429,14 +399,10 @@
       </section>
 
       @if (priorPending().length > 0) {
-        <section class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <section class="bg-white rounded-xl border border-slate-200 overflow-hidden mt-5 md:mt-6">
           <div class="px-6 py-5 border-b border-slate-100">
-            <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
-              Waiting weeks (previous cycle)
-            </p>
-            <p class="text-xs text-mlm-secondary mt-1">
-              Pending weeks carried from a previous cycle.
-            </p>
+            <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">Waiting weeks (previous cycle)</p>
+            <p class="text-xs text-mlm-secondary mt-1">Pending weeks carried from a previous cycle.</p>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
@@ -457,29 +423,15 @@
                   <tr class="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60">
                     <td class="px-6 py-3.5 text-mlm-secondary">{{ packageLabel(p.cyclePackage) }}</td>
                     <td class="px-6 py-3.5 tabular-nums">{{ p.periodIndex }}</td>
-                    <td class="px-6 py-3.5 text-right tabular-nums">
-                      {{ formatMoney(p.amount, m.currency) }}
-                    </td>
-                    <td class="px-6 py-3.5 text-right tabular-nums">
-                      {{ formatMoney(p.cashoutAmount, m.currency) }}
-                    </td>
-                    <td class="px-6 py-3.5 text-right tabular-nums">
-                      {{ formatMoney(p.voucherNet, m.currency) }}
-                    </td>
+                    <td class="px-6 py-3.5 text-right tabular-nums">{{ formatMoney(p.amount, m.currency) }}</td>
+                    <td class="px-6 py-3.5 text-right tabular-nums">{{ formatMoney(p.cashoutAmount, m.currency) }}</td>
+                    <td class="px-6 py-3.5 text-right tabular-nums">{{ formatMoney(p.voucherNet, m.currency) }}</td>
                     <td class="px-6 py-3.5">
-                      <span
-                        class="inline-flex text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md"
-                        [class]="rateTierClass(p.rateTier)">
-                        {{ p.rateTier }}
-                      </span>
+                      <span class="inline-flex text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md" [class]="rateTierClass(p.rateTier)">{{ p.rateTier }}</span>
                     </td>
                     <td class="px-6 py-3.5 text-mlm-secondary">{{ formatDate(p.dueAt) }}</td>
                     <td class="px-6 py-3.5">
-                      <span
-                        class="inline-flex text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md"
-                        [class]="statusClass(p.status)">
-                        {{ p.status }}
-                      </span>
+                      <span class="inline-flex text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md" [class]="statusClass(p.status)">{{ p.status }}</span>
                     </td>
                   </tr>
                 }
@@ -488,57 +440,364 @@
           </div>
         </section>
       }
+      }
 
-      <!-- Event timeline -->
+      @if (activeTab() === 'network') {
+      <!-- Successlines -->
       <section class="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div class="px-6 py-5 border-b border-slate-100">
           <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
-            Event timeline
+            Direct Successlines
           </p>
         </div>
-        @if (events().length === 0) {
-          <p class="px-6 py-8 text-sm text-slate-400 text-center">No events recorded.</p>
+        @if (successlines().length === 0) {
+          <p class="px-6 py-8 text-sm text-slate-400 text-center">No Successlines yet.</p>
         } @else {
-          <ul class="divide-y divide-slate-100" role="list">
-            @for (e of events(); track e.id || e.at + e.kind) {
-              <li class="px-6 py-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 hover:bg-slate-50/60">
-                <div class="flex items-start gap-3 min-w-0">
-                  <span
-                    class="inline-flex text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md shrink-0 mt-0.5"
-                    [class]="eventKindClass(e.kind)">
-                    {{ e.kind }}
-                  </span>
-                  <div class="min-w-0">
-                    <p class="text-sm font-medium text-mlm-text">
-                      {{ packageLabel(e.package) }}
-                      @if (e.fromPackage) {
-                        <span class="font-normal text-mlm-secondary">
-                          (from {{ packageLabel(e.fromPackage) }})
-                        </span>
-                      }
-                    </p>
-                    @if (e.instantAmount != null) {
-                      <p class="text-xs text-mlm-secondary mt-0.5">
-                        Instant {{ formatMoney(e.instantAmount, e.currency ?? m.currency) }}
-                      </p>
-                    }
-                    @if (e.orderId) {
-                      <a
-                        [routerLink]="['/admin/orders', e.orderId]"
-                        class="text-xs text-mlm-primary hover:underline font-mono">
-                        Order {{ e.orderId }}
-                      </a>
-                    }
-                  </div>
-                </div>
-                <time class="text-xs text-slate-400 whitespace-nowrap shrink-0">
-                  {{ formatDate(e.at) }}
-                </time>
-              </li>
-            }
-          </ul>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-slate-100">
+                  <th class="px-6 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Username</th>
+                  <th class="px-6 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Package</th>
+                  <th class="px-6 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Joined</th>
+                  <th class="px-6 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Placement</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (s of successlines(); track s.username) {
+                  <tr class="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60">
+                    <td class="px-6 py-3.5 font-medium text-mlm-text">&#64;{{ s.username }}</td>
+                    <td class="px-6 py-3.5 text-mlm-secondary">{{ packageLabel(s.package) }}</td>
+                    <td class="px-6 py-3.5 text-mlm-secondary">{{ formatDate(s.joinedAt) }}</td>
+                    <td class="px-6 py-3.5 text-mlm-secondary">{{ s.sponsorSource || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         }
       </section>
+      }
+
+      @if (activeTab() === 'orders') {
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div class="px-6 py-5 border-b border-slate-100 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-0.5">Orders</p>
+              <p class="text-xs text-slate-400">Marketplace source and wallet used for each purchase</p>
+            </div>
+            <div class="w-full sm:w-56">
+              <label class="block text-xs font-medium text-slate-600 mb-1.5">Source</label>
+              <p-select
+                [options]="channelFilterOptions"
+                [formControl]="memberOrdersChannelControl"
+                optionLabel="label"
+                optionValue="value"
+                appendTo="body"
+                styleClass="w-full"
+                (onChange)="onMemberOrdersChannelChange()">
+              </p-select>
+            </div>
+          </div>
+          <div class="px-6 py-5">
+            @if (memberOrdersError()) {
+              <div class="px-4 py-3 rounded-lg bg-mlm-red-50 border border-mlm-red-200 text-mlm-red-700 text-sm flex items-center justify-between">
+                <span>{{ memberOrdersError() }}</span>
+                <button type="button" (click)="loadMemberOrders()" class="underline font-medium ml-4 shrink-0">Retry</button>
+              </div>
+            } @else if (memberOrdersLoading()) {
+              <p class="text-sm text-slate-400">Loading orders…</p>
+            } @else if (memberOrders().length === 0) {
+              <p class="text-sm text-slate-400">No orders found for this member.</p>
+            } @else {
+              <div class="overflow-x-auto rounded-lg border border-slate-200">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-slate-100">
+                      <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Reference</th>
+                      <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Source</th>
+                      <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 whitespace-nowrap">Paid from</th>
+                      <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Status</th>
+                      <th class="px-4 py-3 text-right text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Amount</th>
+                      <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (order of memberOrders(); track order.id) {
+                      <tr
+                        class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100 cursor-pointer"
+                        (click)="viewMemberOrder(order)">
+                        <td class="px-4 py-3 font-mono text-xs text-slate-600">
+                          {{ order.reference || (order.id | slice:0:8) + '…' }}
+                        </td>
+                        <td class="px-4 py-3">
+                          <span
+                            class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+                            [class]="getOrderSourceBadgeClass(order)">
+                            {{ getOrderSourceLabel(order) }}
+                          </span>
+                        </td>
+                        <td class="px-4 py-3 text-slate-700 whitespace-nowrap">{{ getOrderPaidFromLabel(order) }}</td>
+                        <td class="px-4 py-3 text-slate-700">{{ getOrderStatusLabel(order.status) }}</td>
+                        <td class="px-4 py-3 text-right font-semibold tabular-nums">
+                          {{ order.totalAmount | currency:order.currency:'symbol-narrow' }}
+                        </td>
+                        <td class="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                          {{ order.createdAt | date:'mediumDate' }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              @if (memberOrdersTotal() > memberOrders().length) {
+                <p class="mt-3 text-xs text-slate-400">
+                  Showing {{ memberOrders().length }} of {{ memberOrdersTotal() }} orders.
+                </p>
+              }
+            }
+          </div>
+        </div>
+      }
+
+      @if (activeTab() === 'activity') {
+        <section class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div class="px-6 py-5 border-b border-slate-100">
+            <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-0.5">Activity Log</p>
+            <p class="text-xs text-slate-400">Legacy membership events and lifecycle changes</p>
+          </div>
+          @if (events().length === 0) {
+            <p class="px-6 py-8 text-sm text-slate-400 text-center">No events recorded.</p>
+          } @else {
+            <ul class="divide-y divide-slate-100" role="list">
+              @for (e of events(); track e.id || e.at + e.kind) {
+                <li class="px-6 py-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 hover:bg-slate-50/60">
+                  <div class="flex items-start gap-3 min-w-0">
+                    <span
+                      class="inline-flex text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md shrink-0 mt-0.5"
+                      [class]="eventKindClass(e.kind)">
+                      {{ e.kind }}
+                    </span>
+                    <div class="min-w-0">
+                      <p class="text-sm font-medium text-mlm-text">
+                        {{ packageLabel(e.package) }}
+                        @if (e.fromPackage) {
+                          <span class="font-normal text-mlm-secondary">(from {{ packageLabel(e.fromPackage) }})</span>
+                        }
+                      </p>
+                      @if (e.instantAmount != null) {
+                        <p class="text-xs text-mlm-secondary mt-0.5">
+                          Instant {{ formatMoney(e.instantAmount, e.currency ?? m.currency) }}
+                        </p>
+                      }
+                      @if (e.orderId) {
+                        <a [routerLink]="['/admin/orders', e.orderId]" class="text-xs text-mlm-primary hover:underline font-mono">
+                          Order {{ e.orderId }}
+                        </a>
+                      }
+                    </div>
+                  </div>
+                  <time class="text-xs text-slate-400 whitespace-nowrap shrink-0">{{ formatDate(e.at) }}</time>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+
+      @if (activeTab() === 'earnings') {
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div class="px-6 py-5 border-b border-slate-100">
+            <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-0.5">Earnings Activity</p>
+            <p class="text-xs text-slate-400">Read-only log from earnings API</p>
+          </div>
+          <div class="px-6 py-5 space-y-5">
+            @if (eaError()) {
+              <div class="px-4 py-3 rounded-lg bg-mlm-red-50 border border-mlm-red-200 text-mlm-red-700 text-sm flex items-center justify-between">
+                <span>{{ eaError() }}</span>
+                <button type="button" (click)="loadEarningsActivity(true)" [disabled]="eaLoading()" class="underline font-medium ml-4 shrink-0">Retry</button>
+              </div>
+            }
+            <div class="flex flex-wrap items-end gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1.5">
+                  Date range <span class="text-slate-400 font-normal ml-1">optional</span>
+                </label>
+                <p-datepicker
+                  [ngModel]="eaDateRange()"
+                  (ngModelChange)="eaDateRange.set($event)"
+                  selectionMode="range"
+                  placeholder="From – To"
+                  [showIcon]="true"
+                  iconDisplay="input"
+                  appendTo="body"
+                  inputStyleClass="h-9 text-sm border-slate-200 rounded-lg w-56">
+                </p-datepicker>
+              </div>
+              <button
+                type="button"
+                (click)="loadEarningsActivity(true)"
+                [disabled]="eaLoading()"
+                class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text disabled:opacity-40 transition-colors duration-150">
+                Apply
+              </button>
+            </div>
+            @if (eaLoading() && eaItems().length === 0) {
+              <p class="text-sm text-slate-400">Loading…</p>
+            } @else if (!eaLoading() && eaItems().length === 0 && !eaError()) {
+              <p class="text-sm text-slate-400">No earnings activity for this range.</p>
+            } @else if (eaItems().length > 0) {
+              <div class="overflow-x-auto rounded-lg border border-slate-200">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-slate-100">
+                      <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[140px]">Date</th>
+                      <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[90px]">Type</th>
+                      <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[90px]">Direction</th>
+                      <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400">Source</th>
+                      <th class="px-4 py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[90px]">Wallet</th>
+                      <th class="px-4 py-3 text-right text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[130px]">Amount</th>
+                      <th class="px-4 py-3 w-[36px]"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of eaItems(); track activityTrack($index, row)) {
+                      <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100 cursor-pointer" (click)="toggleExpandedRow(row)">
+                        <td class="px-4 py-3 text-[11px] font-mono text-slate-400 tabular-nums whitespace-nowrap">
+                          {{ row.createdAt | date:'MMM d, y HH:mm' }}
+                        </td>
+                        <td class="px-4 py-3">
+                          <span
+                            class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
+                            [class]="row.type === 'ledger' ? 'bg-mlm-blue-50 text-mlm-blue-700 border-mlm-blue-200' : 'bg-slate-100 text-slate-600 border-slate-200'">
+                            {{ row.type === 'ledger' ? 'Ledger' : 'PV' }}
+                          </span>
+                        </td>
+                        <td class="px-4 py-3">
+                          @if (row.direction) {
+                            <span
+                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border"
+                              [class]="row.direction === 'CREDIT' ? 'bg-brand-green-light text-brand-green-dark border-brand-green-primary/20' : 'bg-mlm-red-50 text-mlm-red-700 border-mlm-red-200'">
+                              {{ row.direction === 'CREDIT' ? 'Credit' : 'Debit' }}
+                            </span>
+                          } @else {
+                            <span class="text-xs text-slate-300">—</span>
+                          }
+                        </td>
+                        <td class="px-4 py-3">
+                          <p class="text-xs font-medium text-mlm-text">{{ getSourceLabel(row) }}</p>
+                          @if (getSourceSublabel(row); as sub) {
+                            <p class="text-[10px] text-slate-400 mt-0.5">{{ sub }}</p>
+                          }
+                        </td>
+                        <td class="px-4 py-3">
+                          @if (row.walletType) {
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-slate-100 text-slate-600 border border-slate-200">
+                              {{ row.walletType === 'AUTOSHIP' ? 'Autoship' : (row.walletType | titlecase) }}
+                            </span>
+                          } @else {
+                            <span class="text-xs text-slate-300">—</span>
+                          }
+                        </td>
+                        <td class="px-4 py-3 text-right tabular-nums whitespace-nowrap">
+                          <span
+                            class="text-sm font-semibold font-mono"
+                            [class.text-brand-green-dark]="row.direction === 'CREDIT'"
+                            [class.text-mlm-error]="row.direction === 'DEBIT'"
+                            [class.text-mlm-text]="!row.direction">
+                            {{ formatActivityAmount(row) }}
+                          </span>
+                        </td>
+                        <td class="px-3 py-3 text-center">
+                          <i
+                            class="pi text-[10px] text-slate-400 transition-transform duration-150"
+                            [class.pi-chevron-down]="!isRowExpanded(row)"
+                            [class.pi-chevron-up]="isRowExpanded(row)"
+                            aria-hidden="true"></i>
+                        </td>
+                      </tr>
+                      @if (isRowExpanded(row)) {
+                        <tr class="border-b border-slate-100 bg-slate-50/60">
+                          <td [attr.colspan]="7" class="px-4 py-4">
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-3">
+                              @if (row.reference) {
+                                <div>
+                                  <p class="text-[10px] font-semibold tracking-[0.1em] text-slate-400 uppercase mb-1">Reference</p>
+                                  <p class="text-[11px] font-mono text-mlm-text break-all">{{ row.reference }}</p>
+                                </div>
+                              }
+                              @if (row.id) {
+                                <div>
+                                  <p class="text-[10px] font-semibold tracking-[0.1em] text-slate-400 uppercase mb-1">Entry ID</p>
+                                  <p class="text-[11px] font-mono text-mlm-text">{{ row.id | slice:0:12 }}…</p>
+                                </div>
+                              }
+                              @if (row.source) {
+                                <div>
+                                  <p class="text-[10px] font-semibold tracking-[0.1em] text-slate-400 uppercase mb-1">Raw Source</p>
+                                  <p class="text-[11px] font-mono text-mlm-text">{{ row.source }}</p>
+                                </div>
+                              }
+                              @if (row.earningType) {
+                                <div>
+                                  <p class="text-[10px] font-semibold tracking-[0.1em] text-slate-400 uppercase mb-1">Earning Type</p>
+                                  <p class="text-[11px] font-mono text-mlm-text">{{ row.earningType }}</p>
+                                </div>
+                              }
+                              @if (getMetaValue(row, 'purpose')) {
+                                <div>
+                                  <p class="text-[10px] font-semibold tracking-[0.1em] text-slate-400 uppercase mb-1">Purpose</p>
+                                  <p class="text-[11px] text-mlm-text">{{ formatPurpose(getMetaValue(row, 'purpose')) }}</p>
+                                </div>
+                              }
+                              @if (getMetaValue(row, 'orderId')) {
+                                <div>
+                                  <p class="text-[10px] font-semibold tracking-[0.1em] text-slate-400 uppercase mb-1">Order ID</p>
+                                  <p class="text-[11px] font-mono text-mlm-text">{{ getMetaValue(row, 'orderId') }}</p>
+                                </div>
+                              }
+                              @if (getMetaValue(row, 'ratePct') || getMetaValue(row, 'rate')) {
+                                <div>
+                                  <p class="text-[10px] font-semibold tracking-[0.1em] text-slate-400 uppercase mb-1">Rate</p>
+                                  <p class="text-[11px] text-mlm-text">{{ formatRate(row) }}</p>
+                                </div>
+                              }
+                              @if (getMetaValue(row, 'baseAmount')) {
+                                <div>
+                                  <p class="text-[10px] font-semibold tracking-[0.1em] text-slate-400 uppercase mb-1">Base Amount</p>
+                                  <p class="text-[11px] text-mlm-text">{{ getMetaValue(row, 'baseAmount') }}</p>
+                                </div>
+                              }
+                            </div>
+                          </td>
+                        </tr>
+                      }
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <div class="flex items-center justify-between text-xs text-slate-400">
+                <span>
+                  @if (eaServerTotal() !== null) {
+                    {{ eaItems().length }} of {{ eaServerTotal() }} entries
+                  } @else {
+                    {{ eaItems().length }} entries loaded
+                  }
+                </span>
+                @if (eaHasMore()) {
+                  <button
+                    type="button"
+                    (click)="loadMoreEarningsActivity()"
+                    [disabled]="eaLoading()"
+                    class="h-8 px-4 rounded-lg border border-slate-200 text-xs font-medium text-mlm-secondary hover:border-slate-300 hover:text-mlm-text disabled:opacity-40 transition-colors duration-150">
+                    Load more
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
     }
   </div>
 </div>

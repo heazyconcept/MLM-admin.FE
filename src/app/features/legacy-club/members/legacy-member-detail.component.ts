@@ -7,11 +7,31 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { SelectModule } from 'primeng/select';
+import { DatePickerModule } from 'primeng/datepicker';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { PermissionService } from '../../../core/services/permission.service';
+import { AdminOrdersService } from '../../orders/services/admin-orders.service';
+import { Order, ShopChannel } from '../../../core/models/order.model';
+import { CHANNEL_FILTER_OPTIONS } from '../../../core/constants/order.constants';
+import {
+  marketplaceBadgeClass,
+  marketplacePaidFromLabel,
+  marketplaceSourceLabel,
+} from '../../../core/utils/order-marketplace.util';
+import {
+  EarningsService,
+  UserEarningsActivityItem,
+  formatUserEarningsActivityAmount,
+  getUserEarningsActivityDetail,
+  getUserEarningsActivityKind,
+  userEarningsActivityTrackId,
+} from '../../earnings/services/earnings.service';
+import { getEarningTypeLabel } from '../../../core/constants/earning-type-labels';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import {
   ConfirmationModalComponent,
@@ -45,6 +65,10 @@ import {
     ConfirmationModalComponent,
     LegacyWaiveJoinModalComponent,
     LegacyUpgradeModalComponent,
+    FormsModule,
+    ReactiveFormsModule,
+    SelectModule,
+    DatePickerModule,
   ],
   providers: [MessageService],
   templateUrl: './legacy-member-detail.component.html',
@@ -52,9 +76,22 @@ import {
 })
 export class LegacyMemberDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly legacyService = inject(AdminLegacyService);
+  private readonly ordersService = inject(AdminOrdersService);
+  private readonly earningsService = inject(EarningsService);
   private readonly messageService = inject(MessageService);
   protected readonly permission = inject(PermissionService);
+
+  readonly detailTabs = [
+    { key: 'basic', label: 'Account Info' },
+    { key: 'network', label: 'Network Details' },
+    { key: 'orders', label: 'Orders' },
+    { key: 'activity', label: 'Activity Log' },
+    { key: 'earnings', label: 'Earnings Activity' },
+  ] as const;
+
+  activeTab = signal<(typeof this.detailTabs)[number]['key']>('basic');
 
   detail = this.legacyService.memberDetail;
   loading = this.legacyService.detailLoading;
@@ -73,6 +110,28 @@ export class LegacyMemberDetailComponent implements OnInit {
   upgrading = signal(false);
 
   packages = this.legacyService.packages;
+
+  memberOrders = signal<Order[]>([]);
+  memberOrdersLoading = signal(false);
+  memberOrdersError = signal<string | null>(null);
+  memberOrdersTotal = signal(0);
+  memberOrdersChannelControl = new FormControl<string>('LEGACY');
+  channelFilterOptions = CHANNEL_FILTER_OPTIONS;
+
+  eaItems = signal<UserEarningsActivityItem[]>([]);
+  eaLoading = signal(false);
+  eaError = signal<string | null>(null);
+  eaServerTotal = signal<number | null>(null);
+  eaHasMore = signal(false);
+  eaLimit = 50;
+  eaOffset = signal(0);
+  eaDateRange = signal<Date[] | null>(null);
+  expandedRowIds = signal<Set<string>>(new Set());
+
+  formatActivityAmount = formatUserEarningsActivityAmount;
+  activityKind = getUserEarningsActivityKind;
+  activityDetail = getUserEarningsActivityDetail;
+  activityTrack = userEarningsActivityTrackId;
 
   isPendingJoin = computed(() => this.detail()?.status === 'PENDING_JOIN');
   isActive = computed(() => this.detail()?.status === 'ACTIVE');
@@ -370,5 +429,200 @@ export class LegacyMemberDetailComponent implements OnInit {
     if (!m) return '';
     const issued = m.issuedCount ?? 0;
     return `week ${issued} of ${this.cycleWeeksTotal()}`;
+  }
+
+  onTabClick(key: (typeof this.detailTabs)[number]['key']): void {
+    if (key === 'orders') {
+      this.onOrdersTabClick();
+      return;
+    }
+    if (key === 'earnings') {
+      this.onEarningsTabClick();
+      return;
+    }
+    this.activeTab.set(key);
+  }
+
+  onOrdersTabClick(): void {
+    this.activeTab.set('orders');
+    this.loadMemberOrders();
+  }
+
+  loadMemberOrders(): void {
+    if (!this.userId) return;
+
+    this.memberOrdersLoading.set(true);
+    this.memberOrdersError.set(null);
+
+    const channel = this.memberOrdersChannelControl.value;
+    this.ordersService
+      .loadOrders({
+        userId: this.userId,
+        channel: channel === 'NETWORK' || channel === 'LEGACY' ? (channel as ShopChannel) : undefined,
+        limit: 50,
+        offset: 0,
+      })
+      .subscribe({
+        next: ({ orders, total }) => {
+          this.memberOrdersLoading.set(false);
+          this.memberOrders.set(orders);
+          this.memberOrdersTotal.set(total);
+        },
+        error: () => {
+          this.memberOrdersLoading.set(false);
+          this.memberOrdersError.set('Failed to load orders.');
+          this.memberOrders.set([]);
+          this.memberOrdersTotal.set(0);
+        },
+      });
+  }
+
+  onMemberOrdersChannelChange(): void {
+    this.loadMemberOrders();
+  }
+
+  viewMemberOrder(order: Order): void {
+    void this.router.navigate(['/admin/orders', order.id]);
+  }
+
+  getOrderSourceLabel(order: Order): string {
+    return marketplaceSourceLabel(order);
+  }
+
+  getOrderPaidFromLabel(order: Order): string {
+    return marketplacePaidFromLabel(order);
+  }
+
+  getOrderSourceBadgeClass(order: Order): string {
+    return marketplaceBadgeClass(order.channel);
+  }
+
+  getOrderStatusLabel(status: Order['status']): string {
+    return this.ordersService.getStatusLabel(status);
+  }
+
+  onEarningsTabClick(): void {
+    this.activeTab.set('earnings');
+    this.loadEarningsActivity(true);
+  }
+
+  loadEarningsActivity(resetOffset: boolean): void {
+    if (!this.userId) return;
+    if (resetOffset) this.eaOffset.set(0);
+
+    this.eaLoading.set(true);
+    this.eaError.set(null);
+
+    const range = this.eaDateRange();
+    let from: string | undefined;
+    let to: string | undefined;
+    if (range && range.length >= 2 && range[0] && range[1]) {
+      const start = new Date(range[0]);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(range[1]);
+      end.setHours(23, 59, 59, 999);
+      from = start.toISOString();
+      to = end.toISOString();
+    }
+
+    this.earningsService
+      .getUserEarningsActivity({
+        userId: this.userId,
+        limit: this.eaLimit,
+        offset: this.eaOffset(),
+        from,
+        to,
+      })
+      .subscribe({
+        next: (res) => {
+          this.eaLoading.set(false);
+          if (res === null) {
+            this.eaError.set('Failed to load earnings activity.');
+            this.eaItems.set([]);
+            this.eaServerTotal.set(null);
+            this.eaHasMore.set(false);
+            return;
+          }
+          const batch = res.items ?? [];
+          if (resetOffset) this.eaItems.set(batch);
+          else this.eaItems.update((prev) => [...prev, ...batch]);
+
+          const loaded = this.eaItems().length;
+          const total = res.total;
+          if (total != null) {
+            this.eaServerTotal.set(total);
+            this.eaHasMore.set(loaded < total);
+          } else {
+            this.eaServerTotal.set(null);
+            this.eaHasMore.set(batch.length >= this.eaLimit);
+          }
+        },
+        error: () => {
+          this.eaLoading.set(false);
+          this.eaError.set('Failed to load earnings activity.');
+          this.eaItems.set([]);
+        },
+      });
+  }
+
+  loadMoreEarningsActivity(): void {
+    this.eaOffset.update((offset) => offset + this.eaLimit);
+    this.loadEarningsActivity(false);
+  }
+
+  toggleExpandedRow(row: UserEarningsActivityItem): void {
+    const key = row.id || row.reference || row.sourceId || '';
+    if (!key) return;
+    this.expandedRowIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  isRowExpanded(row: UserEarningsActivityItem): boolean {
+    const key = row.id || row.reference || row.sourceId || '';
+    return this.expandedRowIds().has(key);
+  }
+
+  getSourceLabel(row: UserEarningsActivityItem): string {
+    if (row.earningType) return getEarningTypeLabel(row.earningType);
+    if (row.source) return getEarningTypeLabel(row.source);
+    return '—';
+  }
+
+  getSourceSublabel(row: UserEarningsActivityItem): string {
+    const meta = row.metadata as Record<string, unknown> | undefined;
+    const metaSource = meta?.['source'] as string | undefined;
+    const pkg = meta?.['package'] as string | undefined;
+    const parts: string[] = [];
+    if (metaSource) parts.push(metaSource);
+    if (pkg) parts.push(pkg);
+    return parts.join(' · ');
+  }
+
+  getMetaValue(row: UserEarningsActivityItem, key: string): unknown {
+    const meta = row.metadata as Record<string, unknown> | undefined;
+    return meta?.[key] ?? null;
+  }
+
+  formatPurpose(purpose: unknown): string {
+    if (typeof purpose !== 'string' || !purpose) return '—';
+    return purpose
+      .split('_')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  formatRate(row: UserEarningsActivityItem): string {
+    const pct = this.getMetaValue(row, 'ratePct');
+    if (pct != null) return `${pct}%`;
+    const rate = this.getMetaValue(row, 'rate');
+    if (rate != null) {
+      const num = typeof rate === 'number' ? rate * 100 : parseFloat(`${rate}`) * 100;
+      return Number.isNaN(num) ? '—' : `${Math.round(num)}%`;
+    }
+    return '—';
   }
 }
