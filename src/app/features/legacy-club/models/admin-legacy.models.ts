@@ -219,6 +219,9 @@ export interface AdminLegacyMemberDetail {
   lastAutoshipAt?: string | null;
   lastAutoshipOrderId?: string | null;
   currency?: LegacyCurrency;
+  /** Flat balance fields returned by list/detail APIs. */
+  legacyCashoutBalance?: number | null;
+  legacyVoucherBalance?: number | null;
   legacyCashout?: AdminLegacyWalletSnapshot | null;
   legacyVoucher?: AdminLegacyWalletSnapshot | null;
   successlines?: AdminLegacySuccessline[];
@@ -230,6 +233,95 @@ export interface AdminLegacyMemberDetail {
   issuedCount?: number;
   pendingAmount?: number | null;
   nextDueRateTier?: LegacyRateTier | null;
+}
+
+export function readLegacyBalance(value: unknown): number | null {
+  if (value == null || value === '') return null;
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function extractLegacyWalletFields(
+  raw: Record<string, unknown>,
+): Pick<
+  AdminLegacyMemberDetail,
+  'legacyCashoutBalance' | 'legacyVoucherBalance' | 'legacyCashout' | 'legacyVoucher' | 'currency'
+> {
+  const currency = (raw['currency'] as LegacyCurrency | undefined) ?? undefined;
+  const cashoutSnap = raw['legacyCashout'] as Record<string, unknown> | null | undefined;
+  const voucherSnap = raw['legacyVoucher'] as Record<string, unknown> | null | undefined;
+
+  const legacyCashoutBalance =
+    readLegacyBalance(raw['legacyCashoutBalance']) ??
+    readLegacyBalance(raw['legacy_cashout_balance']) ??
+    readLegacyBalance(cashoutSnap?.['balance']);
+
+  const legacyVoucherBalance =
+    readLegacyBalance(raw['legacyVoucherBalance']) ??
+    readLegacyBalance(raw['legacy_voucher_balance']) ??
+    readLegacyBalance(voucherSnap?.['balance']);
+
+  const legacyCashout =
+    cashoutSnap && typeof cashoutSnap === 'object'
+      ? {
+          walletId:
+            typeof cashoutSnap['walletId'] === 'string'
+              ? cashoutSnap['walletId']
+              : undefined,
+          balance: readLegacyBalance(cashoutSnap['balance']) ?? legacyCashoutBalance ?? 0,
+          status: cashoutSnap['status'] as LegacyWalletStatus | undefined,
+          currency: (cashoutSnap['currency'] as LegacyCurrency | undefined) ?? currency,
+        }
+      : legacyCashoutBalance != null
+        ? { balance: legacyCashoutBalance, currency }
+        : null;
+
+  const legacyVoucher =
+    voucherSnap && typeof voucherSnap === 'object'
+      ? {
+          walletId:
+            typeof voucherSnap['walletId'] === 'string'
+              ? voucherSnap['walletId']
+              : undefined,
+          balance: readLegacyBalance(voucherSnap['balance']) ?? legacyVoucherBalance ?? 0,
+          status: voucherSnap['status'] as LegacyWalletStatus | undefined,
+          currency: (voucherSnap['currency'] as LegacyCurrency | undefined) ?? currency,
+        }
+      : legacyVoucherBalance != null
+        ? { balance: legacyVoucherBalance, currency }
+        : null;
+
+  return {
+    currency,
+    legacyCashoutBalance,
+    legacyVoucherBalance,
+    legacyCashout,
+    legacyVoucher,
+  };
+}
+
+export function legacyMemberCashoutBalance(
+  detail: Pick<
+    AdminLegacyMemberDetail,
+    'legacyCashout' | 'legacyCashoutBalance'
+  > | null | undefined,
+): number | null {
+  if (!detail) return null;
+  if (detail.legacyCashout?.balance != null) return detail.legacyCashout.balance;
+  if (detail.legacyCashoutBalance != null) return detail.legacyCashoutBalance;
+  return null;
+}
+
+export function legacyMemberVoucherBalance(
+  detail: Pick<
+    AdminLegacyMemberDetail,
+    'legacyVoucher' | 'legacyVoucherBalance'
+  > | null | undefined,
+): number | null {
+  if (!detail) return null;
+  if (detail.legacyVoucher?.balance != null) return detail.legacyVoucher.balance;
+  if (detail.legacyVoucherBalance != null) return detail.legacyVoucherBalance;
+  return null;
 }
 
 export interface AdminLegacyCancelJoinRequest {

@@ -10,6 +10,7 @@ import {
   AdminLegacyEnrollRequest,
   AdminLegacyEnrollResponse,
   AdminLegacyMemberDetail,
+  extractLegacyWalletFields,
   resolveMemberLegacyPackage,
   AdminLegacyMemberListItem,
   AdminLegacyMembersListResponse,
@@ -73,11 +74,33 @@ export class AdminLegacyService {
 
   private mapMemberDetail(raw: AdminLegacyMemberDetail): AdminLegacyMemberDetail {
     const legacyPackage = resolveMemberLegacyPackage(raw) ?? undefined;
+    const wallets = extractLegacyWalletFields(raw as unknown as Record<string, unknown>);
+
     return {
       ...raw,
+      ...wallets,
       legacyPackage,
       package: raw.package ?? legacyPackage,
     };
+  }
+
+  private findMemberListRow(
+    userId: string,
+    username?: string,
+  ): Observable<AdminLegacyMemberListItem | null> {
+    const search = username?.trim() || userId;
+    return this.api
+      .get<unknown>('admin/legacy/members', { search, limit: 50, page: 1 })
+      .pipe(
+        map((raw) => {
+          const data = unwrapData<AdminLegacyMembersListResponse | AdminLegacyMemberListItem[]>(
+            raw,
+          );
+          const members = Array.isArray(data) ? data : (data?.members ?? []);
+          return members.find((member) => member.userId === userId) ?? null;
+        }),
+        catchError(() => of(null)),
+      );
   }
 
   loadPackages(): Observable<AdminLegacyPackage[]> {
@@ -269,7 +292,22 @@ export class AdminLegacyService {
     return this.api
       .get<unknown>(`admin/legacy/members/${encodeURIComponent(userId)}`)
       .pipe(
-        map((raw) => this.mapMemberDetail(unwrapData<AdminLegacyMemberDetail>(raw))),
+        switchMap((raw) => {
+          const detailData = unwrapData<AdminLegacyMemberDetail>(raw);
+          return this.findMemberListRow(userId, detailData.username).pipe(
+            map((listRow) =>
+              this.mapMemberDetail({
+                ...detailData,
+                package: detailData.package ?? listRow?.package,
+                currency: detailData.currency ?? listRow?.currency,
+                legacyCashoutBalance:
+                  detailData.legacyCashoutBalance ?? listRow?.legacyCashoutBalance,
+                legacyVoucherBalance:
+                  detailData.legacyVoucherBalance ?? listRow?.legacyVoucherBalance,
+              }),
+            ),
+          );
+        }),
         tap((detail) => {
           this.memberDetail.set(detail);
           this.detailLoading.set(false);
@@ -279,7 +317,7 @@ export class AdminLegacyService {
           this.detailLoading.set(false);
           this.memberDetail.set(null);
           return of(null);
-        })
+        }),
       );
   }
 

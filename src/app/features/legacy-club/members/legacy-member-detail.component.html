@@ -278,7 +278,7 @@
                   Legacy account
                 </p>
                 <p class="text-2xl font-bold text-mlm-text tabular-nums tracking-tight">
-                  {{ formatMoney(m.legacyCashout?.balance, m.legacyCashout?.currency ?? m.currency) }}
+                  {{ formatMoney(cashoutBalance(), m.legacyCashout?.currency ?? m.currency) }}
                 </p>
                 @if (m.legacyCashout?.walletId) {
                   <a
@@ -294,7 +294,7 @@
                   Legacy product voucher
                 </p>
                 <p class="text-2xl font-bold text-mlm-text tabular-nums tracking-tight">
-                  {{ formatMoney(m.legacyVoucher?.balance, m.legacyVoucher?.currency ?? m.currency) }}
+                  {{ formatMoney(voucherBalance(), m.legacyVoucher?.currency ?? m.currency) }}
                 </p>
                 @if (m.legacyVoucher?.walletId) {
                   <a

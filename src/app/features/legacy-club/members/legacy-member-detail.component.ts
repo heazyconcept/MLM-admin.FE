@@ -29,6 +29,8 @@ import {
   AdminLegacyPriorPending,
   higherLegacyPackages,
   legacyPackageLabel,
+  legacyMemberCashoutBalance,
+  legacyMemberVoucherBalance,
   resolveMemberLegacyPackage,
 } from '../models/admin-legacy.models';
 
@@ -165,6 +167,14 @@ export class LegacyMemberDetailComponent implements OnInit {
     if (value == null) return '—';
     const prefix = currency === 'USD' ? '$' : '₦';
     return `${prefix}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  }
+
+  cashoutBalance(): number | null {
+    return legacyMemberCashoutBalance(this.detail());
+  }
+
+  voucherBalance(): number | null {
+    return legacyMemberVoucherBalance(this.detail());
   }
 
   statusClass(status: string | undefined): string {
