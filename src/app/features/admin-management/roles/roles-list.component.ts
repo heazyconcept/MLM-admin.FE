@@ -199,6 +199,7 @@ export class RolesListComponent implements OnInit {
         permissions: allPerms.filter(p =>
           p.key.startsWith('users.view') ||
           p.key === 'users.reset_password' ||
+          p.key === 'users.edit_bank' ||
           p.key === 'users.suspend' ||
           p.key.startsWith('notifications.') ||
           p.key === 'dashboard.view'

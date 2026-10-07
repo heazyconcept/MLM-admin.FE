@@ -311,6 +311,68 @@
                 </div>
 
               </div>
+
+              <div class="px-6 py-6 border-t border-slate-100">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
+                  <div>
+                    <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
+                      Payout Bank Details
+                    </p>
+                    <p class="text-xs text-slate-400 mt-1">
+                      Used for withdrawal payouts. Members cannot change this after first save.
+                    </p>
+                  </div>
+                  @if (canEditBank() && u.apiRole !== 'ADMIN') {
+                    <button
+                      type="button"
+                      (click)="openEditBankModal()"
+                      class="h-9 px-3.5 rounded-lg border border-slate-300 text-sm font-medium
+                             text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+                             flex items-center gap-2 transition-colors duration-150 shrink-0">
+                      <i class="pi pi-pencil text-xs" aria-hidden="true"></i>
+                      {{ u.bankDetails ? 'Edit bank details' : 'Add bank details' }}
+                    </button>
+                  }
+                </div>
+
+                @if (u.bankDetails; as bank) {
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-6">
+                    <div>
+                      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+                        Bank Name
+                      </p>
+                      <p class="text-sm font-medium text-mlm-text">{{ bank.bankName }}</p>
+                    </div>
+
+                    <div>
+                      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+                        Account Number
+                      </p>
+                      <p class="text-sm font-medium text-mlm-text font-mono tracking-wide">
+                        {{ bank.accountNumber }}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+                        Account Name
+                      </p>
+                      <p class="text-sm font-medium text-mlm-text">{{ bank.accountName }}</p>
+                    </div>
+
+                    <div>
+                      <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+                        Account Type
+                      </p>
+                      <p class="text-sm font-medium text-mlm-text">
+                        {{ formatBankAccountType(bank.accountType) }}
+                      </p>
+                    </div>
+                  </div>
+                } @else {
+                  <p class="text-sm text-slate-400">No bank details on file.</p>
+                }
+              </div>
             </div>
           }
 
@@ -1064,3 +1126,12 @@
   (confirmed)="onSetPasswordConfirmed($event)"
   (cancelled)="onSetPasswordCancelled()">
 </app-set-user-password-modal>
+
+<app-edit-user-bank-modal
+  [(visible)]="editBankModalVisible"
+  [userName]="user()?.fullName ?? ''"
+  [initialBank]="user()?.bankDetails ?? null"
+  [loading]="actionLoading()"
+  (confirmed)="onEditBankConfirmed($event)"
+  (cancelled)="onEditBankCancelled()">
+</app-edit-user-bank-modal>

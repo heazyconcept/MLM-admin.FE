@@ -14,7 +14,16 @@ import { Feature } from '../../../core/models/admin-permission.model';
 import { InfoBannerComponent } from '../../../shared/components/info-banner/info-banner.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
-import { UsersService, User, UserWallet, AdminFundWalletType, ActivateRegistrationPayload, CreditVolumePayload, UpdateUserStatusPayload } from '../services/users.service';
+import {
+  UsersService,
+  User,
+  UserWallet,
+  AdminFundWalletType,
+  ActivateRegistrationPayload,
+  CreditVolumePayload,
+  UpdateUserStatusPayload,
+  UpdateUserBankPayload,
+} from '../services/users.service';
 import { WalletService } from '../../wallets/services/wallet.service';
 import {
   EarningsService,
@@ -30,6 +39,7 @@ import { ActivateRegistrationModalComponent } from '../modals/activate-registrat
 import { UpgradePackageModalComponent } from '../modals/upgrade-package-modal.component';
 import { CreditVolumeModalComponent } from '../modals/credit-volume-modal.component';
 import { SetUserPasswordModalComponent } from '../modals/set-user-password-modal.component';
+import { EditUserBankModalComponent } from '../modals/edit-user-bank-modal.component';
 import { formatAuditTimestamp } from '../../../core/models/audit.model';
 import { AdminOrdersService } from '../../orders/services/admin-orders.service';
 import { Order, ShopChannel } from '../../../core/models/order.model';
@@ -61,6 +71,7 @@ import {
     UpgradePackageModalComponent,
     CreditVolumeModalComponent,
     SetUserPasswordModalComponent,
+    EditUserBankModalComponent,
     StatusBadgeComponent,
   ],
   providers: [MessageService],
@@ -86,12 +97,14 @@ export class UserDetailsComponent implements OnInit {
       'users.lock_wallet',
       'users.suspend',
       'users.reset_password',
+      'users.edit_bank',
       'users.impersonate',
       'users.wallet_adjust'
     )
   );
   canSuspendUser = computed(() => this.permission.hasPermission('users.suspend'));
   canResetPassword = computed(() => this.permission.hasPermission('users.reset_password'));
+  canEditBank = computed(() => this.permission.hasPermission('users.edit_bank'));
   canSetPassword = computed(() => {
     const u = this.user();
     return this.canResetPassword() && u?.apiRole !== 'ADMIN';
@@ -116,6 +129,7 @@ export class UserDetailsComponent implements OnInit {
   upgradeModalVisible = signal(false);
   volumeModalVisible = signal(false);
   setPasswordModalVisible = signal(false);
+  editBankModalVisible = signal(false);
 
   /** Confirmation modal state */
   confirmAction = signal('');
@@ -316,6 +330,54 @@ export class UserDetailsComponent implements OnInit {
 
   onSetPasswordCancelled(): void {
     this.setPasswordModalVisible.set(false);
+  }
+
+  /** ────────── Bank details ────────── */
+
+  openEditBankModal(): void {
+    const u = this.user();
+    if (!u || !this.canEditBank() || u.apiRole === 'ADMIN') return;
+    this.editBankModalVisible.set(true);
+  }
+
+  formatBankAccountType(type: 'SAVINGS' | 'CURRENT' | undefined): string {
+    if (type === 'CURRENT') return 'Current';
+    if (type === 'SAVINGS') return 'Savings';
+    return '—';
+  }
+
+  onEditBankConfirmed(payload: UpdateUserBankPayload): void {
+    const u = this.user();
+    if (!u) return;
+
+    this.actionLoading.set(true);
+    this.usersService.updateUserBank(u.id, payload).subscribe({
+      next: (bank) => {
+        this.actionLoading.set(false);
+        this.editBankModalVisible.set(false);
+        this.user.update((current) =>
+          current ? { ...current, bankDetails: bank } : current
+        );
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Bank Details Updated',
+          detail: 'Payout account details saved successfully.',
+        });
+        this.reloadUser();
+      },
+      error: (error) => {
+        this.actionLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error?.error?.message || 'Failed to update bank details',
+        });
+      },
+    });
+  }
+
+  onEditBankCancelled(): void {
+    this.editBankModalVisible.set(false);
   }
 
   /** ────────── Lock / Unlock CASH wallet ────────── */

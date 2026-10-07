@@ -22,6 +22,24 @@ export interface UserWallets {
   autoship?: UserWallet;
 }
 
+export interface UserBankDetails {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  accountType: 'SAVINGS' | 'CURRENT';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateUserBankPayload {
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  accountType: 'SAVINGS' | 'CURRENT';
+  reason?: string;
+}
+
 export interface User {
   id: string;
   fullName: string;
@@ -46,6 +64,7 @@ export interface User {
   isActive: boolean;
   isRegistrationPaid: boolean;
   wallets: UserWallets;
+  bankDetails?: UserBankDetails | null;
   activityLog: ActivityLogItem[];
   directReferralsCount?: number;
 }
@@ -88,6 +107,7 @@ interface AdminUserApi {
   wallets?: Record<string, { walletId: string; balance: number; displayCurrency: string; status: string }>;
   directReferralsCount?: number;
   activityLog?: AuditApiItem[];
+  bankDetails?: UserBankDetails | null;
 }
 
 interface AdminUsersListResponse {
@@ -258,6 +278,16 @@ export class UsersService {
     });
   }
 
+  /** GET /admin/users/:id/bank */
+  getUserBank(userId: string): Observable<UserBankDetails> {
+    return this.api.get<UserBankDetails>(`admin/users/${userId}/bank`);
+  }
+
+  /** PUT /admin/users/:id/bank */
+  updateUserBank(userId: string, payload: UpdateUserBankPayload): Observable<UserBankDetails> {
+    return this.api.put<UserBankDetails>(`admin/users/${userId}/bank`, payload);
+  }
+
   impersonateUser(userId: string): Observable<AdminImpersonationStartResponse> {
     return this.api.post<AdminImpersonationStartResponse>(`admin/users/${userId}/impersonate`, {});
   }
@@ -361,6 +391,7 @@ export class UsersService {
       isActive: apiUser.isActive,
       isRegistrationPaid: apiUser.isRegistrationPaid,
       wallets,
+      bankDetails: apiUser.bankDetails ?? null,
       activityLog: (apiUser.activityLog ?? []).map(mapAuditApiItem),
       directReferralsCount: apiUser.directReferralsCount
     };
