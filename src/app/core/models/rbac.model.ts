@@ -209,6 +209,7 @@ export const ALL_PERMISSION_KEYS: Permission[] = [
   { id: 'p-10', key: 'users.reset_password', label: 'Reset User Password', module: 'Users', type: 'action' },
   { id: 'p-11', key: 'users.wallet_adjust', label: 'Manual Wallet Adjustment', module: 'Users', type: 'action' },
   { id: 'p-12', key: 'users.impersonate', label: 'Impersonate User', module: 'Users', type: 'action' },
+  { id: 'p-73', key: 'users.edit_bank', label: 'Edit User Bank Details', module: 'Users', type: 'action' },
 
   // Earnings
   { id: 'p-13', key: 'earnings.view', label: 'View Earnings Overview', module: 'Earnings', type: 'view' },
