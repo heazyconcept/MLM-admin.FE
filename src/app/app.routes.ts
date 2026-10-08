@@ -224,6 +224,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/reports/profit-reports/profit-reports.component').then(m => m.ProfitReportsComponent)
       },
       {
+        path: 'reports/wallet-credits',
+        canActivate: [permissionGuard],
+        data: { feature: Feature.ReportsAudit },
+        loadComponent: () => import('./features/reports/wallet-credits/wallet-credits-report.component').then(m => m.WalletCreditsReportComponent)
+      },
+      {
         path: 'reports/earnings',
         canActivate: [permissionGuard],
         data: { feature: Feature.ReportsAudit },

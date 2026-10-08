@@ -243,6 +243,35 @@ export interface CpvUsersParams extends CpvSummaryParams {
   offset?: number;
 }
 
+export type WalletCreditType = 'FUND' | 'ADJUST';
+
+export type WalletTypeFilter = '' | 'CASH' | 'REGISTRATION' | 'VOUCHER' | 'AUTOSHIP';
+
+export interface AdminWalletCreditRow {
+  id: string;
+  createdAt: string;
+  creditType: WalletCreditType;
+  adminId: string;
+  adminUsername?: string;
+  adminDisplayName?: string;
+  userId: string;
+  targetUsername?: string;
+  targetFullName?: string;
+  walletType: string;
+  displayAmount: number;
+  displayCurrency: string;
+  reason?: string;
+  reference?: string;
+  walletId?: string;
+}
+
+export interface AdminWalletCreditsReportResponse {
+  items: AdminWalletCreditRow[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface CpvTransactionsParams {
   from?: string;
   to?: string;
@@ -277,6 +306,19 @@ export class ReportsService {
     return this.api.get<AutoshipReportResponse>('admin/reports/autoship', params).pipe(
       catchError(() => of(null))
     );
+  }
+
+  getWalletCredits(params?: {
+    from?: string;
+    to?: string;
+    search?: string;
+    walletType?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<AdminWalletCreditsReportResponse | null> {
+    return this.api
+      .get<AdminWalletCreditsReportResponse>('admin/reports/wallet-credits', params)
+      .pipe(catchError(() => of(null)));
   }
 
   getProfitSummary(params?: { from?: string; to?: string }): Observable<ProfitSummaryResponse | null> {

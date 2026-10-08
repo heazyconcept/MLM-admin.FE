@@ -1,0 +1,195 @@
+<div class="min-h-screen bg-mlm-background p-8">
+  <div class="flex items-start justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        Admin Wallet Credits
+      </h1>
+      <p class="text-sm text-mlm-secondary">
+        History of wallet credits performed by admins — Add Funds and ledger adjustments.
+      </p>
+    </div>
+    <button
+      type="button"
+      (click)="applyFilters()"
+      [disabled]="loading()"
+      class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
+             text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+             flex items-center gap-2 transition-colors duration-150 shrink-0 mt-1">
+      <i class="pi pi-refresh text-xs" [class.pi-spin]="loading()"></i>
+      Refresh
+    </button>
+  </div>
+
+  @if (loadError()) {
+    <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      {{ loadError() }}
+    </div>
+  }
+
+  <div class="bg-white rounded-xl border border-slate-200 px-5 py-4 mb-6">
+    <div class="flex flex-col xl:flex-row xl:items-end gap-4">
+      <div class="flex flex-col gap-1">
+        <label for="wc-date-range" class="text-sm font-medium text-gray-700">Date range</label>
+        <p-datepicker
+          inputId="wc-date-range"
+          [ngModel]="dateRange()"
+          (ngModelChange)="dateRange.set($event)"
+          selectionMode="range"
+          placeholder="From - To"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          styleClass="w-64"
+          inputStyleClass="w-full h-10 border-gray-300"
+          panelStyleClass="p-datepicker-premium">
+        </p-datepicker>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label for="wc-search" class="text-sm font-medium text-gray-700">Search</label>
+        <input
+          id="wc-search"
+          pInputText
+          type="search"
+          class="w-64 h-10"
+          placeholder="Member or admin username"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)">
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label for="wc-wallet-type" class="text-sm font-medium text-gray-700">Wallet type</label>
+        <p-select
+          inputId="wc-wallet-type"
+          [options]="walletTypeOptions"
+          [ngModel]="walletTypeFilter()"
+          (ngModelChange)="walletTypeFilter.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="w-56">
+        </p-select>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          pButton
+          type="button"
+          label="Apply"
+          icon="pi pi-filter"
+          class="p-button-primary"
+          [disabled]="loading()"
+          [loading]="loading()"
+          (click)="applyFilters()">
+        </button>
+        <button
+          pButton
+          type="button"
+          label="Clear"
+          class="p-button-outlined"
+          [disabled]="loading()"
+          (click)="clearFilters()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 px-5 py-5 mb-6">
+    <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1">
+      Current page total
+    </p>
+    <p class="text-2xl font-bold text-mlm-text tabular-nums">
+      @if (loading()) {
+        ...
+      } @else {
+        {{ rows().length }} credit{{ rows().length === 1 ? '' : 's' }}
+      }
+    </p>
+    <p class="text-xs text-slate-400 mt-1">{{ totalRecords() }} matching records overall</p>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <app-data-table
+      [value]="rows()"
+      [headers]="['Date', 'Admin', 'Member', 'Wallet', 'Amount', 'Type', 'Reason', 'Reference']"
+      [loading]="loading()"
+      [lazy]="true"
+      [totalRecords]="totalRecords()"
+      [first]="tableFirst()"
+      [rows]="pageSize()"
+      [rowsPerPageOptions]="[25, 50, 100]"
+      (pageChange)="onPageChange($event)">
+
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100">
+          <td class="px-5 py-3.5 w-[150px] whitespace-nowrap">
+            <span class="text-xs font-mono text-slate-400 tabular-nums">
+              {{ row.createdAt | date:'MMM d, y, h:mm a' }}
+            </span>
+          </td>
+
+          <td class="px-5 py-3.5 min-w-[140px]">
+            <p class="text-sm font-medium text-mlm-text">
+              {{ row.adminDisplayName || row.adminUsername || 'Admin' }}
+            </p>
+            @if (row.adminUsername) {
+              <p class="text-xs text-slate-400">&#64;{{ row.adminUsername }}</p>
+            }
+          </td>
+
+          <td class="px-5 py-3.5 min-w-[140px]">
+            @if (row.targetUsername) {
+              <a
+                [routerLink]="['/admin/users', row.userId]"
+                class="text-sm font-semibold text-mlm-primary hover:underline">
+                &#64;{{ row.targetUsername }}
+              </a>
+            } @else {
+              <a
+                [routerLink]="['/admin/users', row.userId]"
+                class="text-sm font-medium text-mlm-primary hover:underline">
+                View member
+              </a>
+            }
+            @if (row.targetFullName) {
+              <p class="text-xs text-slate-400">{{ row.targetFullName }}</p>
+            }
+          </td>
+
+          <td class="px-5 py-3.5 w-[120px]">
+            <span class="text-sm text-mlm-secondary">{{ walletTypeLabel(row.walletType) }}</span>
+          </td>
+
+          <td class="px-5 py-3.5 w-[130px] whitespace-nowrap">
+            <span class="text-sm font-semibold font-mono tabular-nums text-brand-green-dark">
+              +{{ formatAmount(row) }}
+            </span>
+          </td>
+
+          <td class="px-5 py-3.5 w-[120px]">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px]
+                         font-bold uppercase tracking-wide bg-slate-100 text-slate-600">
+              {{ creditTypeLabel(row.creditType) }}
+            </span>
+          </td>
+
+          <td class="px-5 py-3.5 min-w-[160px]">
+            <span class="text-sm text-mlm-secondary">{{ row.reason || '—' }}</span>
+          </td>
+
+          <td class="px-5 py-3.5 min-w-[140px]">
+            @if (row.walletId) {
+              <a
+                [routerLink]="['/admin/wallets', row.walletId]"
+                class="text-xs font-mono text-mlm-primary hover:underline">
+                {{ row.reference || row.walletId | slice:0:12 }}…
+              </a>
+            } @else {
+              <span class="text-xs font-mono text-slate-400">{{ row.reference || '—' }}</span>
+            }
+          </td>
+        </tr>
+      </ng-template>
+    </app-data-table>
+  </div>
+</div>

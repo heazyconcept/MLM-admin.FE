@@ -416,6 +416,13 @@ export class SidebarComponent implements OnInit {
           permissionKey: 'reports.profit',
         },
         {
+          label: 'Wallet Credits',
+          icon: 'pi pi-wallet',
+          route: '/admin/reports/wallet-credits',
+          feature: Feature.ReportsAudit,
+          permissionKey: 'reports.view',
+        },
+        {
           label: 'Audit Logs',
           icon: 'pi pi-history',
           route: '/admin/audit',
