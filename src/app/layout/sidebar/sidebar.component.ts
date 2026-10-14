@@ -209,6 +209,18 @@ export class SidebarComponent implements OnInit {
               route: '/admin/wallets',
               permissionKey: 'wallets.view',
             },
+            {
+              label: 'Wallet Credits',
+              icon: 'pi pi-plus-circle',
+              route: '/admin/wallets/credits',
+              permissionKey: 'wallets.view',
+            },
+            {
+              label: 'Member Transfers',
+              icon: 'pi pi-arrow-right-arrow-left',
+              route: '/admin/wallets/member-transfers',
+              permissionKey: 'wallets.view',
+            },
           ],
         },
         {
@@ -414,13 +426,6 @@ export class SidebarComponent implements OnInit {
           route: '/admin/reports/profit',
           feature: Feature.ReportsAudit,
           permissionKey: 'reports.profit',
-        },
-        {
-          label: 'Wallet Credits',
-          icon: 'pi pi-wallet',
-          route: '/admin/reports/wallet-credits',
-          feature: Feature.ReportsAudit,
-          permissionKey: 'reports.view',
         },
         {
           label: 'Audit Logs',

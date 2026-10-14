@@ -156,6 +156,8 @@ export const routes: Routes = [
         children: [
           { path: 'overview', loadComponent: () => import('./features/wallets/dashboard/wallet-dashboard.component').then(m => m.WalletDashboardComponent) },
           { path: 'types', loadComponent: () => import('./features/wallets/types-summary/wallet-types-summary.component').then(m => m.WalletTypesSummaryComponent) },
+          { path: 'credits', loadComponent: () => import('./features/reports/wallet-credits/wallet-credits-report.component').then(m => m.WalletCreditsReportComponent) },
+          { path: 'member-transfers', loadComponent: () => import('./features/wallets/member-transfers/member-transfers-report.component').then(m => m.MemberTransfersReportComponent) },
           { path: '', loadComponent: () => import('./features/wallets/list/wallet-list.component').then(m => m.WalletListComponent) },
           { path: ':id', loadComponent: () => import('./features/wallets/details/wallet-details.component').then(m => m.WalletDetailsComponent) }
         ]
@@ -225,9 +227,8 @@ export const routes: Routes = [
       },
       {
         path: 'reports/wallet-credits',
-        canActivate: [permissionGuard],
-        data: { feature: Feature.ReportsAudit },
-        loadComponent: () => import('./features/reports/wallet-credits/wallet-credits-report.component').then(m => m.WalletCreditsReportComponent)
+        redirectTo: 'wallets/credits',
+        pathMatch: 'full',
       },
       {
         path: 'reports/earnings',

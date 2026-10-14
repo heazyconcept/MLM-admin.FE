@@ -1,0 +1,212 @@
+<div class="min-h-screen bg-mlm-background p-8">
+  <div class="flex items-start justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-[26px] font-bold tracking-tight text-mlm-text leading-tight mb-1">
+        Member Wallet Transfers
+      </h1>
+      <p class="text-sm text-mlm-secondary">
+        Member-to-member fund transfers — amounts sent from one member's wallet to another.
+      </p>
+    </div>
+    <button
+      type="button"
+      (click)="applyFilters()"
+      [disabled]="loading()"
+      class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
+             text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+             flex items-center gap-2 transition-colors duration-150 shrink-0 mt-1">
+      <i class="pi pi-refresh text-xs" [class.pi-spin]="loading()"></i>
+      Refresh
+    </button>
+  </div>
+
+  @if (loadError()) {
+    <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      {{ loadError() }}
+    </div>
+  }
+
+  <div class="bg-white rounded-xl border border-slate-200 px-5 py-4 mb-6">
+    <div class="flex flex-col xl:flex-row xl:items-end gap-4 flex-wrap">
+      <div class="flex flex-col gap-1">
+        <label for="mt-date-range" class="text-sm font-medium text-gray-700">Date range</label>
+        <p-datepicker
+          inputId="mt-date-range"
+          [ngModel]="dateRange()"
+          (ngModelChange)="dateRange.set($event)"
+          selectionMode="range"
+          placeholder="From - To"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          styleClass="w-64"
+          inputStyleClass="w-full h-10 border-gray-300"
+          panelStyleClass="p-datepicker-premium">
+        </p-datepicker>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label for="mt-search" class="text-sm font-medium text-gray-700">Search</label>
+        <input
+          id="mt-search"
+          pInputText
+          type="search"
+          class="w-64 h-10"
+          placeholder="Sender or recipient username"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)">
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label for="mt-from-wallet" class="text-sm font-medium text-gray-700">From wallet</label>
+        <p-select
+          inputId="mt-from-wallet"
+          [options]="walletTypeOptions"
+          [ngModel]="fromWalletTypeFilter()"
+          (ngModelChange)="fromWalletTypeFilter.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="w-56">
+        </p-select>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label for="mt-to-wallet" class="text-sm font-medium text-gray-700">To wallet</label>
+        <p-select
+          inputId="mt-to-wallet"
+          [options]="walletTypeOptions"
+          [ngModel]="toWalletTypeFilter()"
+          (ngModelChange)="toWalletTypeFilter.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="w-56">
+        </p-select>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          pButton
+          type="button"
+          label="Apply"
+          icon="pi pi-filter"
+          class="p-button-primary"
+          [disabled]="loading()"
+          [loading]="loading()"
+          (click)="applyFilters()">
+        </button>
+        <button
+          pButton
+          type="button"
+          label="Clear"
+          class="p-button-outlined"
+          [disabled]="loading()"
+          (click)="clearFilters()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 px-5 py-5 mb-6">
+    <p class="text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase mb-1">
+      Current page total
+    </p>
+    <p class="text-2xl font-bold text-mlm-text tabular-nums">
+      @if (loading()) {
+        ...
+      } @else {
+        {{ rows().length }} transfer{{ rows().length === 1 ? '' : 's' }}
+      }
+    </p>
+    <p class="text-xs text-slate-400 mt-1">{{ totalRecords() }} matching records overall</p>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <app-data-table
+      [value]="rows()"
+      [headers]="['Date', 'Sender', 'Recipient', 'From', 'To', 'Amount', 'Transfer ID']"
+      [loading]="loading()"
+      [lazy]="true"
+      [totalRecords]="totalRecords()"
+      [first]="tableFirst()"
+      [rows]="pageSize()"
+      [rowsPerPageOptions]="[25, 50, 100]"
+      (pageChange)="onPageChange($event)">
+
+      <ng-template pTemplate="body" let-row>
+        <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors duration-100">
+          <td class="px-5 py-3.5 w-[150px] whitespace-nowrap">
+            <span class="text-xs font-mono text-slate-400 tabular-nums">
+              {{ row.createdAt | date:'MMM d, y, h:mm a' }}
+            </span>
+          </td>
+
+          <td class="px-5 py-3.5 min-w-[140px]">
+            @if (row.fromUsername) {
+              <a
+                [routerLink]="['/admin/users', row.fromUserId]"
+                class="text-sm font-semibold text-mlm-primary hover:underline">
+                &#64;{{ row.fromUsername }}
+              </a>
+            } @else {
+              <a
+                [routerLink]="['/admin/users', row.fromUserId]"
+                class="text-sm font-medium text-mlm-primary hover:underline">
+                View sender
+              </a>
+            }
+            @if (row.fromDisplayName) {
+              <p class="text-xs text-slate-400">{{ row.fromDisplayName }}</p>
+            }
+          </td>
+
+          <td class="px-5 py-3.5 min-w-[140px]">
+            @if (row.toUsername) {
+              <a
+                [routerLink]="['/admin/users', row.toUserId]"
+                class="text-sm font-semibold text-mlm-primary hover:underline">
+                &#64;{{ row.toUsername }}
+              </a>
+            } @else {
+              <a
+                [routerLink]="['/admin/users', row.toUserId]"
+                class="text-sm font-medium text-mlm-primary hover:underline">
+                View recipient
+              </a>
+            }
+            @if (row.toDisplayName) {
+              <p class="text-xs text-slate-400">{{ row.toDisplayName }}</p>
+            }
+          </td>
+
+          <td class="px-5 py-3.5 w-[120px]">
+            <span class="text-sm text-mlm-secondary">{{ walletTypeLabel(row.fromWalletType) }}</span>
+          </td>
+
+          <td class="px-5 py-3.5 w-[120px]">
+            <span class="text-sm text-mlm-secondary">{{ walletTypeLabel(row.toWalletType) }}</span>
+          </td>
+
+          <td class="px-5 py-3.5 w-[130px] whitespace-nowrap">
+            <span class="text-sm font-semibold font-mono tabular-nums text-mlm-text">
+              {{ formatAmount(row) }}
+            </span>
+          </td>
+
+          <td class="px-5 py-3.5 min-w-[160px]">
+            <button
+              type="button"
+              class="text-xs font-mono text-mlm-primary hover:underline text-left"
+              [title]="row.transferId"
+              (click)="copyTransferId(row.transferId)">
+              {{ row.transferId | slice:0:8 }}…
+              <i class="pi pi-copy ml-1 text-[10px]" aria-hidden="true"></i>
+              <span class="sr-only">Copy transfer ID</span>
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+    </app-data-table>
+  </div>
+</div>

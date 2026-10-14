@@ -272,6 +272,30 @@ export interface AdminWalletCreditsReportResponse {
   offset: number;
 }
 
+export interface AdminWalletTransferRow {
+  ledgerId: string;
+  transferId: string;
+  createdAt: string;
+  fromUserId: string;
+  fromUsername?: string;
+  fromDisplayName?: string;
+  toUserId: string;
+  toUsername?: string;
+  toDisplayName?: string;
+  fromWalletType: string;
+  toWalletType: string;
+  displayAmount: number;
+  displayCurrency: string;
+  reference: string;
+}
+
+export interface AdminWalletTransfersReportResponse {
+  items: AdminWalletTransferRow[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface CpvTransactionsParams {
   from?: string;
   to?: string;
@@ -318,6 +342,20 @@ export class ReportsService {
   }): Observable<AdminWalletCreditsReportResponse | null> {
     return this.api
       .get<AdminWalletCreditsReportResponse>('admin/reports/wallet-credits', params)
+      .pipe(catchError(() => of(null)));
+  }
+
+  getWalletMemberTransfers(params?: {
+    from?: string;
+    to?: string;
+    search?: string;
+    fromWalletType?: string;
+    toWalletType?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<AdminWalletTransfersReportResponse | null> {
+    return this.api
+      .get<AdminWalletTransfersReportResponse>('admin/reports/wallet-transfers', params)
       .pipe(catchError(() => of(null)));
   }
 
