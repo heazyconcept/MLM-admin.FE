@@ -267,6 +267,7 @@ Display `message` from API (string or string[]).
 - **Offline registration payment:** User has `INITIATED` payment → `POST /admin/payments/:id/verify` instead of waive activation.
 - **Withdrawals queue:** `GET /admin/withdrawals` — approve/reject after user requests payout.
 - **Impersonation:** [frontend-integration-admin-impersonation.md](./frontend-integration-admin-impersonation.md)
+- **Temporary transaction PIN (support recovery):** [BACKEND_REQUEST_ADMIN_TEMPORARY_TRANSACTION_PIN.md](./BACKEND_REQUEST_ADMIN_TEMPORARY_TRANSACTION_PIN.md)
 
 ---
 

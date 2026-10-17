@@ -40,6 +40,7 @@ import { UpgradePackageModalComponent } from '../modals/upgrade-package-modal.co
 import { CreditVolumeModalComponent } from '../modals/credit-volume-modal.component';
 import { SetUserPasswordModalComponent } from '../modals/set-user-password-modal.component';
 import { EditUserBankModalComponent } from '../modals/edit-user-bank-modal.component';
+import { TemporaryTransactionPinResultModalComponent } from '../modals/temporary-transaction-pin-result-modal.component';
 import { formatAuditTimestamp } from '../../../core/models/audit.model';
 import { AdminOrdersService } from '../../orders/services/admin-orders.service';
 import { Order, ShopChannel } from '../../../core/models/order.model';
@@ -72,6 +73,7 @@ import {
     CreditVolumeModalComponent,
     SetUserPasswordModalComponent,
     EditUserBankModalComponent,
+    TemporaryTransactionPinResultModalComponent,
     StatusBadgeComponent,
   ],
   providers: [MessageService],
@@ -99,11 +101,15 @@ export class UserDetailsComponent implements OnInit {
       'users.reset_password',
       'users.edit_bank',
       'users.impersonate',
+      'users.transaction_pin.temporary',
       'users.wallet_adjust'
     )
   );
   canSuspendUser = computed(() => this.permission.hasPermission('users.suspend'));
   canResetPassword = computed(() => this.permission.hasPermission('users.reset_password'));
+  canIssueTemporaryTransactionPin = computed(() =>
+    this.permission.hasPermission('users.transaction_pin.temporary'),
+  );
   canEditBank = computed(() => this.permission.hasPermission('users.edit_bank'));
   canSetPassword = computed(() => {
     const u = this.user();
@@ -130,6 +136,13 @@ export class UserDetailsComponent implements OnInit {
   volumeModalVisible = signal(false);
   setPasswordModalVisible = signal(false);
   editBankModalVisible = signal(false);
+  tempPinResultVisible = signal(false);
+  tempPinResult = signal<{
+    username: string;
+    fullName: string;
+    temporaryPin: string;
+    expiresAt: string;
+  } | null>(null);
 
   /** Confirmation modal state */
   confirmAction = signal('');
@@ -141,6 +154,7 @@ export class UserDetailsComponent implements OnInit {
   confirmClass = signal('');
   confirmShowReason = signal(false);
   confirmReasonRequired = signal(false);
+  confirmReasonMinLength = signal(0);
   confirmVisible = signal(false);
 
   /** Earnings activity state */
@@ -236,6 +250,7 @@ export class UserDetailsComponent implements OnInit {
       confirmClass: string;
       showReason: boolean;
       reasonRequired: boolean;
+      reasonMinLength?: number;
     },
   ): void {
     this.confirmAction.set(action);
@@ -247,6 +262,7 @@ export class UserDetailsComponent implements OnInit {
     this.confirmClass.set(opts.confirmClass);
     this.confirmShowReason.set(opts.showReason);
     this.confirmReasonRequired.set(opts.reasonRequired);
+    this.confirmReasonMinLength.set(opts.reasonMinLength ?? 0);
     this.confirmVisible.set(true);
   }
 
@@ -284,6 +300,10 @@ export class UserDetailsComponent implements OnInit {
         this.handleLockCashAction(result);
         return;
       }
+      case 'tempTransactionPin': {
+        this.issueTemporaryTransactionPin(result);
+        return;
+      }
     }
     this.confirmVisible.set(false);
   }
@@ -299,6 +319,66 @@ export class UserDetailsComponent implements OnInit {
     const u = this.user();
     if (!u || !this.canSetPassword()) return;
     this.setPasswordModalVisible.set(true);
+  }
+
+  openTemporaryTransactionPinConfirm(): void {
+    const u = this.user();
+    if (!u || !this.canIssueTemporaryTransactionPin() || u.apiRole === 'ADMIN') return;
+
+    this.showConfirm('tempTransactionPin', {
+      title: 'Issue temporary transaction PIN',
+      message: `Generate a time-limited PIN for ${u.fullName} (@${u.username}). Their current transaction PIN will stop working until they set a new one in the member app. Share the temporary PIN only over a verified channel.`,
+      icon: 'pi pi-shield',
+      iconClass: 'text-mlm-primary',
+      confirmLabel: 'Generate PIN',
+      confirmClass: 'p-button-primary',
+      showReason: true,
+      reasonRequired: true,
+      reasonMinLength: 10,
+    });
+  }
+
+  private issueTemporaryTransactionPin(result: ConfirmationResult): void {
+    const u = this.user();
+    if (!u || !result.confirmed) return;
+
+    const reason = (result.reason ?? '').trim();
+    if (reason.length < 10) return;
+
+    this.actionLoading.set(true);
+    this.usersService
+      .issueTemporaryTransactionPin(u.id, { reason, validForMinutes: 60 })
+      .subscribe({
+        next: (res) => {
+          this.actionLoading.set(false);
+          this.confirmVisible.set(false);
+          this.tempPinResult.set({
+            username: res.username,
+            fullName: u.fullName,
+            temporaryPin: res.temporaryPin,
+            expiresAt: res.expiresAt,
+          });
+          this.tempPinResultVisible.set(true);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Temporary PIN issued',
+            detail: `Valid until ${new Date(res.expiresAt).toLocaleString()}.`,
+          });
+        },
+        error: (error) => {
+          this.actionLoading.set(false);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Could not issue PIN',
+            detail: error?.error?.message || 'Failed to issue temporary transaction PIN',
+          });
+        },
+      });
+  }
+
+  onTempPinResultClosed(): void {
+    this.tempPinResultVisible.set(false);
+    this.tempPinResult.set(null);
   }
 
   onSetPasswordConfirmed(newPassword: string): void {

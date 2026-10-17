@@ -169,6 +169,28 @@ export interface AdminImpersonationStartResponse {
   };
 }
 
+export interface IssueTemporaryTransactionPinPayload {
+  reason: string;
+  validForMinutes?: number;
+}
+
+export interface IssueTemporaryTransactionPinResponse {
+  userId: string;
+  username: string;
+  temporaryPin: string;
+  expiresAt: string;
+  validForSeconds: number;
+  hasTransactionPin: boolean;
+}
+
+export interface TemporaryTransactionPinStatusResponse {
+  active: boolean;
+  expiresAt?: string;
+  issuedAt?: string;
+  issuedByAdminId?: string;
+  consumedAt?: string | null;
+}
+
 /** POST /admin/users/:id/activate-registration */
 export interface ActivateRegistrationPayload {
   mode: 'DEBIT_REGISTRATION_WALLET' | 'WAIVE_PAYMENT';
@@ -309,6 +331,33 @@ export class UsersService {
 
   impersonateUser(userId: string): Observable<AdminImpersonationStartResponse> {
     return this.api.post<AdminImpersonationStartResponse>(`admin/users/${userId}/impersonate`, {});
+  }
+
+  /** POST /admin/users/:id/transaction-pin/temporary */
+  issueTemporaryTransactionPin(
+    userId: string,
+    payload: IssueTemporaryTransactionPinPayload,
+  ): Observable<IssueTemporaryTransactionPinResponse> {
+    return this.api.post<IssueTemporaryTransactionPinResponse>(
+      `admin/users/${userId}/transaction-pin/temporary`,
+      payload,
+    );
+  }
+
+  /** GET /admin/users/:id/transaction-pin/temporary */
+  getTemporaryTransactionPinStatus(
+    userId: string,
+  ): Observable<TemporaryTransactionPinStatusResponse> {
+    return this.api.get<TemporaryTransactionPinStatusResponse>(
+      `admin/users/${userId}/transaction-pin/temporary`,
+    );
+  }
+
+  /** DELETE /admin/users/:id/transaction-pin/temporary */
+  revokeTemporaryTransactionPin(userId: string): Observable<{ message?: string }> {
+    return this.api.delete<{ message?: string }>(
+      `admin/users/${userId}/transaction-pin/temporary`,
+    );
   }
 
   addActivityLog(userId: string, action: string): Observable<void> {

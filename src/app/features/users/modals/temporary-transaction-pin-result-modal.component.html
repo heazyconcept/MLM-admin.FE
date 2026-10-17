@@ -1,0 +1,66 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  header="Temporary transaction PIN issued"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="false"
+  [style]="{ width: 'min(480px, 92vw)' }"
+  styleClass="modern-dialog"
+  (onHide)="onClose()"
+>
+  <div class="flex flex-col gap-5 py-1">
+    <div class="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/80 p-4">
+      <i class="pi pi-exclamation-triangle mt-0.5 text-amber-600" aria-hidden="true"></i>
+      <p class="text-sm leading-relaxed text-amber-900">
+        Share this PIN only over a verified support channel. The member uses it once in the app to
+        set a new transaction PIN. Their previous PIN is no longer valid.
+      </p>
+    </div>
+
+    <p class="text-sm text-mlm-text">
+      Temporary PIN for
+      <span class="font-semibold text-gray-900">{{ fullName() }}</span>
+      (@{{ username() }})
+    </p>
+
+    <div class="space-y-2">
+      <label
+        for="temp-txn-pin-display"
+        class="block text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400"
+      >
+        Temporary PIN (shown once)
+      </label>
+      <input
+        id="temp-txn-pin-display"
+        type="text"
+        readonly
+        [value]="temporaryPin()"
+        aria-live="polite"
+        class="h-11 w-full select-all rounded-lg border border-gray-200 bg-gray-50 px-4 text-center
+               font-mono text-lg font-semibold tracking-[0.5em] text-gray-900
+               focus:outline-none focus:ring-2 focus:ring-mlm-primary/40"
+      />
+    </div>
+
+    @if (expiresLabel()) {
+      <p class="text-xs text-mlm-secondary">
+        Expires:
+        <span class="font-medium text-mlm-text">{{ expiresLabel() }}</span>
+      </p>
+    }
+  </div>
+
+  <ng-template #footer>
+    <div class="flex justify-end">
+      <button
+        pButton
+        type="button"
+        label="Done"
+        class="p-button-primary"
+        autofocus
+        (click)="onClose()"
+      ></button>
+    </div>
+  </ng-template>
+</p-dialog>

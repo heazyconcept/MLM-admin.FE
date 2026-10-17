@@ -255,6 +255,8 @@
   [loading]="actionLoading()"
   [showReasonField]="actionConfig.showReasonField"
   [reasonRequired]="actionConfig.reasonRequired"
+  [reasonMinLength]="actionConfig.reasonMinLength ?? 0"
+  [reasonPlaceholder]="actionConfig.reasonPlaceholder ?? 'Enter reason...'"
   (confirm)="onActionConfirm($event)"
   (cancel)="onActionCancel()">
 </app-confirmation-modal>
@@ -266,3 +268,12 @@
   (confirmed)="onSetPasswordConfirmed($event)"
   (cancelled)="onSetPasswordCancelled()">
 </app-set-user-password-modal>
+
+<app-temporary-transaction-pin-result-modal
+  [visible]="tempPinResultVisible()"
+  [username]="tempPinResult()?.username ?? ''"
+  [fullName]="tempPinResult()?.fullName ?? ''"
+  [temporaryPin]="tempPinResult()?.temporaryPin ?? ''"
+  [expiresAt]="tempPinResult()?.expiresAt ?? ''"
+  (closed)="onTempPinResultClosed()"
+></app-temporary-transaction-pin-result-modal>

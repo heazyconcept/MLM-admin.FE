@@ -20,6 +20,8 @@ import { SetUserPasswordModalComponent } from '../modals/set-user-password-modal
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ConfirmationModalComponent, ConfirmationResult } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { UsersService, User, UsersListQuery, UI_STATUS_TO_API } from '../services/users.service';
+import { PermissionService } from '../../../core/services/permission.service';
+import { TemporaryTransactionPinResultModalComponent } from '../modals/temporary-transaction-pin-result-modal.component';
 
 interface ActionConfig {
   visible: boolean;
@@ -31,6 +33,8 @@ interface ActionConfig {
   confirmClass: string;
   showReasonField: boolean;
   reasonRequired: boolean;
+  reasonMinLength?: number;
+  reasonPlaceholder?: string;
   action: string;
 }
 
@@ -49,6 +53,7 @@ interface ActionConfig {
     DatePickerModule,
     UserProfileModalComponent,
     SetUserPasswordModalComponent,
+    TemporaryTransactionPinResultModalComponent,
     StatusBadgeComponent,
     ConfirmationModalComponent,
     DataTableComponent,
@@ -62,6 +67,7 @@ interface ActionConfig {
 export class UsersListComponent implements OnInit {
   private usersService = inject(UsersService);
   private messageService = inject(MessageService);
+  protected permission = inject(PermissionService);
   protected router = inject(Router);
 
   // State signals
@@ -70,6 +76,13 @@ export class UsersListComponent implements OnInit {
   profileModalVisible = signal(false);
   setPasswordModalVisible = signal(false);
   setPasswordUser = signal<User | null>(null);
+  tempPinResultVisible = signal(false);
+  tempPinResult = signal<{
+    username: string;
+    fullName: string;
+    temporaryPin: string;
+    expiresAt: string;
+  } | null>(null);
   globalFilter = signal('');
   tableLoading = signal(false);
   actionLoading = signal(false);
@@ -158,7 +171,16 @@ export class UsersListComponent implements OnInit {
       tooltip: 'Set login password',
       command: (user) => this.openSetPasswordModal(user),
       severity: 'info'
-    }
+    },
+    {
+      icon: 'pi pi-shield',
+      tooltip: 'Temporary transaction PIN',
+      visible: (user) =>
+        user.apiRole !== 'ADMIN' &&
+        this.permission.hasPermission('users.transaction_pin.temporary'),
+      command: (user) => this.showActionModal('tempTransactionPin', user),
+      severity: 'info',
+    },
   ]);
 
   actionConfig: ActionConfig = {
@@ -426,7 +448,19 @@ export class UsersListComponent implements OnInit {
         confirmClass: 'p-button-primary',
         showReasonField: false,
         reasonRequired: false
-      }
+      },
+      tempTransactionPin: {
+        title: 'Issue temporary transaction PIN',
+        message: `Generate a time-limited PIN for ${user.fullName} (@${user.username}). Their current transaction PIN will stop working until they set a new one in the member app.`,
+        icon: 'pi pi-shield',
+        iconClass: 'text-mlm-primary',
+        confirmLabel: 'Generate PIN',
+        confirmClass: 'p-button-primary',
+        showReasonField: true,
+        reasonRequired: true,
+        reasonMinLength: 10,
+        reasonPlaceholder: 'Support ticket or verification notes (min 10 characters)',
+      },
     };
 
     const config = configs[action];
@@ -597,6 +631,41 @@ export class UsersListComponent implements OnInit {
           }
         });
         return;
+      case 'tempTransactionPin': {
+        const reason = (result.reason ?? '').trim();
+        if (reason.length < 10) return;
+        this.actionLoading.set(true);
+        this.usersService
+          .issueTemporaryTransactionPin(user.id, { reason, validForMinutes: 60 })
+          .subscribe({
+            next: (res) => {
+              this.actionLoading.set(false);
+              this.actionConfig.visible = false;
+              this.tempPinResult.set({
+                username: res.username,
+                fullName: user.fullName,
+                temporaryPin: res.temporaryPin,
+                expiresAt: res.expiresAt,
+              });
+              this.tempPinResultVisible.set(true);
+              this.selectedUser.set(null);
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Temporary PIN issued',
+                detail: `Valid until ${new Date(res.expiresAt).toLocaleString()}.`,
+              });
+            },
+            error: (error) => {
+              this.actionLoading.set(false);
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Could not issue PIN',
+                detail: error?.error?.message || 'Failed to issue temporary transaction PIN',
+              });
+            },
+          });
+        return;
+      }
     }
 
     this.actionConfig.visible = false;
@@ -619,6 +688,11 @@ export class UsersListComponent implements OnInit {
 
   isImpersonationDisabled(user: User): boolean {
     return user.apiRole === 'ADMIN';
+  }
+
+  onTempPinResultClosed(): void {
+    this.tempPinResultVisible.set(false);
+    this.tempPinResult.set(null);
   }
 
   formatDate(date: Date): string {

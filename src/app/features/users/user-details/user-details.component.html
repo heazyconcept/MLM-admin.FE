@@ -125,7 +125,7 @@
               </div>
 
               <!-- Account controls -->
-              @if ((u.wallets.cash && permission.hasPermission('users.lock_wallet')) || canSuspendUser() || canResetPassword()) {
+              @if ((u.wallets.cash && permission.hasPermission('users.lock_wallet')) || canSuspendUser() || canResetPassword() || canIssueTemporaryTransactionPin()) {
                 <div class="flex flex-wrap gap-2 lg:justify-end pt-2 border-t border-slate-100"
                      role="group"
                      aria-label="Account controls">
@@ -191,6 +191,22 @@
                              flex items-center gap-2 transition-colors duration-150">
                       <i class="pi pi-key text-xs" aria-hidden="true"></i>
                       Set login password
+                    </button>
+                  }
+
+                  @if (canIssueTemporaryTransactionPin()) {
+                    <button
+                      type="button"
+                      (click)="openTemporaryTransactionPinConfirm()"
+                      [disabled]="isAdminRoleUser() || actionLoading()"
+                      [pTooltip]="isAdminRoleUser() ? 'Not available for admin accounts' : 'Issue a time-limited PIN for transaction PIN recovery'"
+                      tooltipPosition="top"
+                      class="h-9 px-3.5 rounded-lg border border-slate-300 text-sm font-medium
+                             text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
+                             disabled:opacity-50 disabled:cursor-not-allowed
+                             flex items-center gap-2 transition-colors duration-150">
+                      <i class="pi pi-shield text-xs" aria-hidden="true"></i>
+                      Temporary transaction PIN
                     </button>
                   }
                 </div>
@@ -1070,6 +1086,8 @@
   [loading]="actionLoading()"
   [showReasonField]="confirmShowReason()"
   [reasonRequired]="confirmReasonRequired()"
+  [reasonMinLength]="confirmReasonMinLength()"
+  [reasonPlaceholder]="confirmReasonMinLength() > 0 ? 'Support ticket or verification notes (min 10 characters)' : 'Enter reason...'"
   (confirm)="onConfirmResult($event)"
   (cancel)="onConfirmCancel()">
 </app-confirmation-modal>
@@ -1135,3 +1153,12 @@
   (confirmed)="onEditBankConfirmed($event)"
   (cancelled)="onEditBankCancelled()">
 </app-edit-user-bank-modal>
+
+<app-temporary-transaction-pin-result-modal
+  [visible]="tempPinResultVisible()"
+  [username]="tempPinResult()?.username ?? ''"
+  [fullName]="tempPinResult()?.fullName ?? ''"
+  [temporaryPin]="tempPinResult()?.temporaryPin ?? ''"
+  [expiresAt]="tempPinResult()?.expiresAt ?? ''"
+  (closed)="onTempPinResultClosed()"
+></app-temporary-transaction-pin-result-modal>
