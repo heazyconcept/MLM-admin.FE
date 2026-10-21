@@ -165,7 +165,9 @@ Example:
       "quantity": 2,
       "unitPrice": 29.99,
       "pv": 10,
+      "directReferralPv": 0,
       "cpv": 5,
+      "merchantPv": 1,
       "lineTotal": 59.98
     }
   ],

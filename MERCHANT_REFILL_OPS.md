@@ -41,7 +41,7 @@ In the modal:
 4. Confirm pool stock is sufficient (amber warning if admin pool is short).
 5. Click **Create restock**.
 
-Success creates new **Stock Allocations** at your chosen quantities.
+Success creates new **Stock Allocations** at your chosen quantities. On the merchant detail **Stock Allocations** table, these rows show source **Admin refill** (`ADMIN_REFILL`), not **Onboarding**.
 
 ### 3. Dispatch (separate step)
 

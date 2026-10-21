@@ -145,6 +145,7 @@ export class ProductListComponent implements OnInit {
     'Non-member Price',
     'PV',
     'CPV',
+    'MPV',
     'Admin Pool',
     'Status',
     'Visibility',

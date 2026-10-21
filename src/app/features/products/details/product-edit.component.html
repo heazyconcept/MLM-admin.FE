@@ -231,6 +231,24 @@
                     </p-inputNumber>
                     <p class="text-[10px] text-slate-400 mt-1">Split among matrix uplines (not the buyer)</p>
                   </div>
+                  <div>
+                    <label
+                      class="block text-xs font-medium text-slate-600 mb-1.5"
+                      >Merchant PV</label
+                    >
+                    <p-inputNumber
+                      formControlName="merchantPv"
+                      mode="decimal"
+                      [min]="0"
+                      [minFractionDigits]="0"
+                      [maxFractionDigits]="2"
+                      styleClass="w-full !h-10 !text-sm !rounded-lg"
+                    >
+                    </p-inputNumber>
+                    <p class="text-[10px] text-slate-400 mt-1">
+                      Credited to the pickup or delivery merchant who hands this product out (per unit).
+                    </p>
+                  </div>
                 </div>
 
                 <div>
@@ -501,6 +519,12 @@
                     {{ product()?.currentPrice?.cpv }}
                   </span>
                 </div>
+                <div class="flex justify-between items-baseline">
+                  <span class="text-xs text-slate-400">Merchant PV</span>
+                  <span class="text-xs font-mono font-semibold text-mlm-text">
+                    {{ product()?.currentPrice?.merchantPv ?? 0 }}
+                  </span>
+                </div>
                 @if (priceIsScheduled()) {
                   <p
                     class="text-[11px] text-amber-600 pt-1 flex items-center gap-1.5"
@@ -544,7 +568,7 @@
                       </span>
                     </div>
                     <p class="text-[10px] text-slate-400 mt-0.5">
-                      PV {{ entry.pv }} · DRPV {{ entry.directReferralPv }} · CPV {{ entry.cpv }}
+                      PV {{ entry.pv }} · DRPV {{ entry.directReferralPv }} · CPV {{ entry.cpv }} · MPV {{ entry.merchantPv }}
                     </p>
                     @if (!entry.effectiveTo) {
                       <span

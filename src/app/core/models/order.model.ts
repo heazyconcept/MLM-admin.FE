@@ -48,6 +48,7 @@ export interface OrderItem {
   pv: number;
   directReferralPv: number;
   cpv: number;
+  merchantPv?: number;
   lineTotal: number;
 }
 

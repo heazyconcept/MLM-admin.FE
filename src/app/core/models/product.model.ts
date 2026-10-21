@@ -10,6 +10,7 @@ export interface ProductPrice {
   pv: number;
   directReferralPv: number;
   cpv: number;
+  merchantPv: number;
   effectiveFrom: string;
   effectiveTo?: string | null;
   createdAt: string;

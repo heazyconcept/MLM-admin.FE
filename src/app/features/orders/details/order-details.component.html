@@ -179,6 +179,13 @@
                                  px-2 py-0.5 rounded text-[10px] font-semibold font-mono">
                       CPV {{ item.cpv }}
                     </span>
+                    <span
+                      class="bg-teal-50 text-teal-700 border border-teal-200
+                                 px-2 py-0.5 rounded text-[10px] font-semibold font-mono"
+                      pTooltip="Per unit. Credited to the fulfilling merchant when the order is handed out (MPV × qty)."
+                      tooltipPosition="top">
+                      MPV {{ item.merchantPv ?? 0 }}
+                    </span>
                   </div>
                 </div>
               </div>

@@ -9,13 +9,14 @@ Use this guide for **admin product forms**, **catalog/order UI**, and **earnings
 
 ## 1. Summary (what changed)
 
-Each product price now has **three** configurable volume values:
+Each product price now has **four** configurable volume values:
 
 | Field | Label (suggested UI) | Credited to | When |
 |--------|----------------------|-------------|------|
 | `pv` | Personal product PV (PPPPV) | **Buyer** | Order paid (member) |
-| `directReferralPv` | Direct referral product PV | **Direct sponsor** (`referredById`) | Order paid |
+| `directReferralPv` | Direct referral product PV | **Direct sponsor** (`referredById`) | Order paid (deprecated on new prices in HerbApi; may be 0) |
 | `cpv` | Community product CPV (CPPPV) | **Matrix uplines** (split) | Order paid (if depth gate passes) |
+| `merchantPv` | Merchant fulfillment PV (MPV) | **Pickup/delivery merchant** who hands the product out | Order fulfillment (delivery confirm / pickup receipt), not `order.paid` |
 
 **Breaking behavior change**
 
@@ -52,7 +53,8 @@ Summary: second-stream `MERCHANT_*` cash on `order.paid` (rates from `productCom
   "priceCurrency": "NGN",
   "pv": 3,
   "directReferralPv": 1,
-  "cpv": 0.4
+  "cpv": 0.4,
+  "merchantPv": 1
 }
 ```
 
@@ -62,6 +64,7 @@ Summary: second-stream `MERCHANT_*` cash on `order.paid` (rates from `productCom
 | `pv` | number | ≥ 0 — buyer personal PV |
 | `directReferralPv` | number | ≥ 0 — sponsor when referral buys |
 | `cpv` | number | ≥ 0 — community CPV pool for uplines |
+| `merchantPv` | number? | ≥ 0 — per unit for fulfilling merchant; default `0` |
 | `nonMemberBasePrice` | number? | optional |
 | `priceCurrency` | `"NGN"` \| `"USD"`? | default `NGN` for admin input |
 
@@ -95,6 +98,7 @@ If `basePrice` is present, `pv`, `directReferralPv`, and `cpv` should be sent (v
     "pv": 3,
     "directReferralPv": 1,
     "cpv": 0.4,
+    "merchantPv": 1,
     "effectiveFrom": "2026-05-26T00:00:00.000Z"
   }
 }
@@ -102,12 +106,15 @@ If `basePrice` is present, `pv`, `directReferralPv`, and `cpv` should be sent (v
 
 ### `GET /admin/products/:id/price-history`
 
-Each history row includes `directReferralPv` alongside `pv` and `cpv`.
+Each history row includes `directReferralPv`, `merchantPv`, alongside `pv` and `cpv`.
+
+**Merchant fulfillment PV:** Snapshotted on each order line as `items[].merchantPv`. Backend credits total `Σ (merchantPv × quantity)` to the fulfilling merchant on hand-out (`MERCHANT_PRODUCT_PV` CPV source). See HerbApi `merchant-fulfillment.service.ts`.
 
 **Admin UI checklist**
 
-- [ ] Product create/edit price form: three numeric fields (`pv`, `directReferralPv`, `cpv`) with short help text (buyer / sponsor / community).
-- [ ] Price history table: column for `directReferralPv`.
+- [x] Product edit price form: `pv`, `directReferralPv`, `cpv`, **`merchantPv`** with help text.
+- [ ] Price history: show MPV.
+- [ ] Order detail: show MPV per line.
 - [ ] Do not show product `cpv` as “buyer CPV” on consumer-facing copy.
 
 ---

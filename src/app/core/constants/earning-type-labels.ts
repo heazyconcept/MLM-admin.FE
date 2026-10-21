@@ -22,6 +22,7 @@ export const EARNING_TYPE_LABELS: Record<string, string> = {
   PRODUCT_PURCHASE_PV: 'Personal product PV',
   DIRECT_REFERRAL_PRODUCT_PV: 'Direct referral product PV',
   COMMUNITY_PRODUCT_MATRIX: 'Community product CPV',
+  MERCHANT_PRODUCT_PV: 'Merchant fulfillment product PV',
   DIRECT_REFERRAL_REGISTRATION: 'Direct referral registration PV',
   COMMUNITY_REGISTRATION_MATRIX: 'Community registration CPV',
   ADMIN_CPV_ADJUSTMENT: 'Admin CPV adjustment',

@@ -459,17 +459,18 @@ export class MerchantDetailsComponent implements OnInit {
     return this.allocationService.getHandoverStatusLabel(status);
   }
 
-  getAllocationSourceLabel(source: AllocationSource): string {
+  getAllocationSourceLabel(source: AllocationSource | string): string {
     return this.allocationService.getAllocationSourceLabel(source);
   }
 
-  getAllocationSourceClass(source: AllocationSource): string {
+  getAllocationSourceClass(source: AllocationSource | string): string {
     const map: Record<AllocationSource, string> = {
       CATEGORY: 'bg-slate-50 text-slate-600 border-slate-200',
       MERCHANT_REQUEST: 'bg-amber-50 text-amber-700 border-amber-200',
       DISPUTE_REMAINDER: 'bg-purple-50 text-purple-700 border-purple-200',
+      ADMIN_REFILL: 'bg-teal-50 text-teal-700 border-teal-200',
     };
-    return map[source] ?? 'bg-gray-50 text-gray-500 border-gray-200';
+    return map[source as AllocationSource] ?? 'bg-gray-50 text-gray-500 border-gray-200';
   }
 
   getHandoverStatusClass(status: HandoverStatus): string {

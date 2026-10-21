@@ -46,6 +46,7 @@ export interface AdminProductDto {
   pv?: string | number | null;
   directReferralPv?: string | number | null;
   cpv?: string | number | null;
+  merchantPv?: string | number | null;
   effectiveFrom?: string | null;
   effectiveTo?: string | null;
   adminPoolQuantity?: string | number | null;
@@ -72,6 +73,7 @@ export interface AdminProductPriceDto {
   pv: number;
   directReferralPv: number;
   cpv: number;
+  merchantPv: number;
   effectiveFrom: string;
   effectiveTo?: string | null;
   createdAt: string;
@@ -83,6 +85,7 @@ export interface SetProductPricePayload {
   pv: number;
   directReferralPv: number;
   cpv: number;
+  merchantPv?: number;
   effectiveFrom?: string;
 }
 
@@ -528,6 +531,7 @@ export class AdminProductsService {
       pv: dto.pv,
       directReferralPv: dto.directReferralPv ?? 0,
       cpv: dto.cpv,
+      merchantPv: dto.merchantPv ?? 0,
       effectiveFrom: dto.effectiveFrom,
       effectiveTo: dto.effectiveTo,
       createdAt: dto.createdAt,
@@ -559,6 +563,7 @@ export class AdminProductsService {
         pv: Number(dto.pv) || 0,
         directReferralPv: Number(dto.directReferralPv) || 0,
         cpv: Number(dto.cpv) || 0,
+        merchantPv: Number(dto.merchantPv) || 0,
         effectiveFrom: dto.effectiveFrom || new Date().toISOString(),
         effectiveTo: dto.effectiveTo || null,
         createdAt: dto.createdAt,

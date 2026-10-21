@@ -27,7 +27,11 @@ export type HandoverStatus =
   | 'COMPLETED'
   | 'REJECTED';
 
-export type AllocationSource = 'CATEGORY' | 'MERCHANT_REQUEST' | 'DISPUTE_REMAINDER';
+export type AllocationSource =
+  | 'CATEGORY'
+  | 'MERCHANT_REQUEST'
+  | 'DISPUTE_REMAINDER'
+  | 'ADMIN_REFILL';
 
 export interface AllocationDispute {
   id: string;
@@ -250,6 +254,7 @@ export const ALLOCATION_SOURCE_LABELS: Record<AllocationSource, string> = {
   CATEGORY: 'Onboarding',
   MERCHANT_REQUEST: 'Top-up',
   DISPUTE_REMAINDER: 'Dispute remainder',
+  ADMIN_REFILL: 'Admin refill',
 };
 
 @Injectable({
@@ -613,7 +618,7 @@ export class MerchantAllocationService {
     return HANDOVER_STATUS_LABELS[status] ?? status;
   }
 
-  getAllocationSourceLabel(source: AllocationSource): string {
-    return ALLOCATION_SOURCE_LABELS[source] ?? source;
+  getAllocationSourceLabel(source: AllocationSource | string): string {
+    return ALLOCATION_SOURCE_LABELS[source as AllocationSource] ?? source;
   }
 }

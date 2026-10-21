@@ -292,6 +292,7 @@ Same shape as a single `merchants[]` entry from the list (mapped via `mapMerchan
 - `items` required and non-empty; empty body must **not** refill all products.
 - Each `productId` must be in category config `onboardingItems` for the merchant’s type; otherwise 400.
 - Creates one `MerchantAllocation` per requested item with the given quantity.
+- Each allocation has `source: "ADMIN_REFILL"` (distinct from onboarding `CATEGORY` and merchant `MERCHANT_REQUEST` top-ups).
 - Insufficient admin pool for any selected item → 400.
 
 **Frontend usage**

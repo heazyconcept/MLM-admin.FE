@@ -122,6 +122,7 @@ export class ProductEditComponent implements OnInit {
     pv: [0, [Validators.required, Validators.min(0)]],
     directReferralPv: [0, [Validators.required, Validators.min(0)]],
     cpv: [0, [Validators.required, Validators.min(0)]],
+    merchantPv: [0, [Validators.required, Validators.min(0)]],
     effectiveFrom: ['']
   });
 
@@ -194,6 +195,7 @@ export class ProductEditComponent implements OnInit {
       pv: price.pv,
       directReferralPv: price.directReferralPv ?? 0,
       cpv: price.cpv,
+      merchantPv: price.merchantPv ?? 0,
       effectiveFrom: effectiveFromFormatted
     });
   }
@@ -431,6 +433,7 @@ export class ProductEditComponent implements OnInit {
       pv: Number(formValue.pv),
       directReferralPv: Number(formValue.directReferralPv),
       cpv: Number(formValue.cpv),
+      merchantPv: Number(formValue.merchantPv ?? 0),
       effectiveFrom: effectiveFromValue ? new Date(effectiveFromValue).toISOString() : undefined
     }).subscribe({
       next: () => {
