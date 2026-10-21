@@ -154,10 +154,24 @@ We require a new endpoint (or an extension of the existing `GET /admin/wallets/s
       "totalWallets": 880,
       "totalBalance": 7500.00,
       "currency": "NGN"
+    },
+    {
+      "walletType": "LEGACY_CASHOUT",
+      "totalWallets": 0,
+      "totalBalance": 0.00,
+      "currency": "NGN"
+    },
+    {
+      "walletType": "LEGACY_VOUCHER",
+      "totalWallets": 0,
+      "totalBalance": 0.00,
+      "currency": "NGN"
     }
   ]
 }
 ```
+
+**Full backend spec (Legacy + authoritative totals):** [BACKEND_REQUEST_WALLET_GLOBAL_SUMMARY_LEGACY.md](./BACKEND_REQUEST_WALLET_GLOBAL_SUMMARY_LEGACY.md)
 
 ---
 
@@ -232,5 +246,15 @@ To ensure a seamless user experience while the backend change is in progress, th
 * **History Fallback**: When loading the product edit form, if the API returns `null` pricing fields, the frontend automatically extracts the latest scheduled price from `GET /admin/products/:id/price-history` and pre-fills the form and local state.
 
 Once the backend changes are in place to return the upcoming scheduled price, the product list table and initial load will display scheduled prices automatically without needing fallback fetching.
+
+---
+
+## Wallet global summary — Legacy wallet types
+
+**Authoritative spec for HerbApi:** [BACKEND_REQUEST_WALLET_GLOBAL_SUMMARY_LEGACY.md](./BACKEND_REQUEST_WALLET_GLOBAL_SUMMARY_LEGACY.md)
+
+**Short version:** `GET /admin/wallets/global-summary` must return `LEGACY_CASHOUT` and `LEGACY_VOUCHER` in `summaries[]` (with correct `totalWallets` / `totalBalance` / `currency`), same aggregation rules as network types. Keep `GET /admin/wallets/summary` in sync.
+
+**Frontend until fixed:** Wallet Management / Wallet Types use a **temporary merge** in `WalletService.getGlobalWalletSummary()` (`/summary` + list `total` for Legacy). Remove that fallback once global-summary includes Legacy rows (see backend doc §5–§6).
 
 

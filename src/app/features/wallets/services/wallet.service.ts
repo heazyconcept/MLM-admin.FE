@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { Observable, map, tap, switchMap, of } from 'rxjs';
+import { Observable, map, tap, switchMap, of, forkJoin, catchError } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
+import { normalizeWalletTypeKey } from '../wallet-type-display.util';
 
 
 // Raw list item from `GET /admin/wallets`
@@ -153,6 +154,27 @@ export class WalletService {
     return loadNext(0);
   }
 
+  /** Load wallets for specific users (e.g. after admin user search). Caps at 25 users. */
+  fetchWalletsForUsers(userIds: string[], pageSize = 100): Observable<Wallet[]> {
+    const limited = userIds.slice(0, 25);
+    if (limited.length === 0) {
+      this.walletsSignal.set([]);
+      this.totalSignal.set(0);
+      return of([]);
+    }
+
+    return forkJoin(
+      limited.map((userId) => this.fetchPage({ userId, limit: pageSize, offset: 0 })),
+    ).pipe(
+      map((pages) => {
+        const all = pages.flatMap((p) => p.items);
+        this.walletsSignal.set(all);
+        this.totalSignal.set(all.length);
+        return all;
+      }),
+    );
+  }
+
   /** Internal: fetches one page and returns both items + total. */
   private fetchPage(query: {
     userId?: string;
@@ -235,11 +257,110 @@ export class WalletService {
 
   /**
    * Fetch per-type ACTIVE wallet count and ledger balance from `GET /admin/wallets/global-summary`.
+   * Temporary: Legacy types merged from `GET /admin/wallets/summary` + list totals when global-summary omits them.
+   * Remove merge after backend ships BACKEND_REQUEST_WALLET_GLOBAL_SUMMARY_LEGACY.md.
    */
   getGlobalWalletSummary(): Observable<GlobalWalletSummaryItem[]> {
-    return this.api.get<GlobalWalletSummaryResponse>('admin/wallets/global-summary').pipe(
-      map(res => res.summaries || [])
+    const legacyTypes = ['LEGACY_CASHOUT', 'LEGACY_VOUCHER'] as const;
+
+    return forkJoin({
+      summaries: this.api
+        .get<GlobalWalletSummaryResponse>('admin/wallets/global-summary')
+        .pipe(
+          map((res) => res.summaries ?? []),
+          catchError(() => of([] as GlobalWalletSummaryItem[])),
+        ),
+      balanceByType: this.api.get<Record<string, number>>('admin/wallets/summary').pipe(
+        catchError(() => of({} as Record<string, number>)),
+      ),
+      legacyCounts: forkJoin(
+        legacyTypes.map((walletType) =>
+          this.fetchPageSilent({ walletType, limit: 1, offset: 0 }).pipe(
+            catchError(() => of({ items: [] as Wallet[], total: 0 })),
+          ),
+        ),
+      ),
+    }).pipe(
+      map(({ summaries, balanceByType, legacyCounts }) => {
+        const merged = summaries.map((s) => ({ ...s }));
+        const findIndex = (type: string) =>
+          merged.findIndex((s) => normalizeWalletTypeKey(s.walletType) === type);
+
+        legacyTypes.forEach((type, index) => {
+          const listTotal = legacyCounts[index]?.total ?? 0;
+          const summaryBalance = this.balanceFromWalletSummary(balanceByType, type);
+          const existingIdx = findIndex(type);
+          const existing = existingIdx >= 0 ? merged[existingIdx] : null;
+
+          const needsBalance =
+            summaryBalance != null &&
+            (existing == null || existing.totalBalance === 0) &&
+            summaryBalance !== 0;
+          const needsCount =
+            listTotal > 0 && (existing == null || existing.totalWallets === 0);
+
+          if (!needsBalance && !needsCount && existing != null) {
+            return;
+          }
+
+          const totalBalance = needsBalance
+            ? summaryBalance!
+            : (existing?.totalBalance ?? summaryBalance ?? 0);
+          const totalWallets = needsCount
+            ? listTotal
+            : (existing?.totalWallets ?? (listTotal > 0 ? listTotal : 0));
+          const currency = existing?.currency ?? 'NGN';
+
+          const row: GlobalWalletSummaryItem = {
+            walletType: type,
+            totalWallets,
+            totalBalance,
+            currency,
+          };
+
+          if (existingIdx >= 0) {
+            merged[existingIdx] = row;
+          } else if (totalWallets > 0 || totalBalance > 0) {
+            merged.push(row);
+          }
+        });
+
+        return merged;
+      }),
     );
+  }
+
+  private balanceFromWalletSummary(
+    summary: Record<string, number>,
+    canonicalType: string,
+  ): number | undefined {
+    const target = normalizeWalletTypeKey(canonicalType);
+    for (const [key, value] of Object.entries(summary)) {
+      if (normalizeWalletTypeKey(key) === target && typeof value === 'number') {
+        return value;
+      }
+    }
+    return undefined;
+  }
+
+  /** List fetch without updating wallets/total signals (for summary enrichment). */
+  private fetchPageSilent(query: {
+    userId?: string;
+    walletType?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Observable<{ items: Wallet[]; total: number }> {
+    const { userId, walletType, status, limit = 100, offset = 0 } = query;
+    return this.api
+      .get<AdminWalletListResponse>('admin/wallets', { userId, walletType, status, limit, offset })
+      .pipe(
+        map((response) => {
+          const items = (response?.items ?? []).map((item) => this.mapListItemToWallet(item));
+          const total = response?.total ?? offset + items.length;
+          return { items, total };
+        }),
+      );
   }
 
   /**

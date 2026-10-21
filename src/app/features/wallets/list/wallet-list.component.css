@@ -7,7 +7,7 @@
 }
 
 .wallets-table {
-  min-width: 52rem;
+  min-width: 72rem;
 }
 
 @media (max-width: 639px) {

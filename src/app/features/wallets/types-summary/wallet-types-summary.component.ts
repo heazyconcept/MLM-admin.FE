@@ -10,8 +10,12 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
 // App
-import { WalletService, Wallet, GlobalWalletSummaryItem } from '../services/wallet.service';
+import { WalletService, GlobalWalletSummaryItem } from '../services/wallet.service';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
+import {
+  WALLET_TYPE_DISPLAY_CONFIG,
+  normalizeWalletTypeKey,
+} from '../wallet-type-display.util';
 
 interface WalletTypeSummary {
   type: string;
@@ -47,69 +51,24 @@ export class WalletTypesSummaryComponent implements OnInit {
   private walletService = inject(WalletService);
   private router = inject(Router);
 
-  // States
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
-  
-  // Live global summaries from the new API
+
   globalSummaries = signal<GlobalWalletSummaryItem[]>([]);
 
-  // Defined wallet types list with rich metadata
-  walletTypesConfig = [
-    {
-      type: 'CASH',
-      label: 'Cash Wallet',
-      description: 'Used for direct commission earnings, bonuses, and processing external bank withdrawals.',
-      icon: 'pi pi-money-bill',
-      colorClass: 'emerald',
-      bgClass: 'bg-emerald-50/60 border-emerald-100',
-      textClass: 'text-emerald-700',
-      borderClass: 'border-emerald-200',
-      fallbackCount: 0,
-    },
-    {
-      type: 'REGISTRATION',
-      label: 'Registration Wallet',
-      description: 'Dedicated funds used exclusively for new user package registrations and sponsor activations.',
-      icon: 'pi pi-user-plus',
-      colorClass: 'blue',
-      bgClass: 'bg-blue-50/60 border-blue-100',
-      textClass: 'text-blue-700',
-      borderClass: 'border-blue-200',
-      fallbackCount: 0,
-    },
-    {
-      type: 'AUTOSHIP',
-      label: 'Autoship Wallet',
-      description: 'Locked auto-shipment funds designated for monthly product cycles and maintenance purchases.',
-      icon: 'pi pi-refresh',
-      colorClass: 'purple',
-      bgClass: 'bg-purple-50/60 border-purple-100',
-      textClass: 'text-purple-700',
-      borderClass: 'border-purple-200',
-      fallbackCount: 0,
-    },
-    {
-      type: 'VOUCHER',
-      label: 'Product Voucher Wallet',
-      description: 'Earned non-cashable product credit used to claim physical inventory and company promotional gifts.',
-      icon: 'pi pi-ticket',
-      colorClass: 'amber',
-      bgClass: 'bg-amber-50/60 border-amber-100',
-      textClass: 'text-amber-700',
-      borderClass: 'border-amber-200',
-      fallbackCount: 0,
-    }
-  ];
+  walletTypesConfig = WALLET_TYPE_DISPLAY_CONFIG.map((c) => ({
+    ...c,
+    fallbackCount: 0,
+  }));
 
-  // Computed final data merging configurations and real API global summary data
   typesSummary = computed<WalletTypeSummary[]>(() => {
     const apiSummaries = this.globalSummaries();
-    
-    return this.walletTypesConfig.map(config => {
-      // Find matching item from live API summaries
-      const apiItem = apiSummaries.find(s => s.walletType.toUpperCase() === config.type);
-      
+
+    return this.walletTypesConfig.map((config) => {
+      const apiItem = apiSummaries.find(
+        (s) => normalizeWalletTypeKey(s.walletType) === config.type,
+      );
+
       const totalBalance = apiItem ? apiItem.totalBalance : 0;
       const totalWallets = apiItem ? apiItem.totalWallets : config.fallbackCount;
       const currency = apiItem ? apiItem.currency : 'NGN';
@@ -132,17 +91,24 @@ export class WalletTypesSummaryComponent implements OnInit {
     });
   });
 
-  // Global aggregate metrics
   globalMetrics = computed(() => {
-    const summaries = this.typesSummary();
+    const summaries = this.globalSummaries();
     const totalCount = summaries.reduce((acc, curr) => acc + curr.totalWallets, 0);
-    const totalBalance = summaries.reduce((acc, curr) => acc + curr.totalBalance, 0);
-    const currency = summaries[0]?.currency || 'NGN';
-    
+    const byCurrency = new Map<string, number>();
+    for (const item of summaries) {
+      const currency = item.currency || 'NGN';
+      byCurrency.set(currency, (byCurrency.get(currency) ?? 0) + item.totalBalance);
+    }
+    const grandTotals = Array.from(byCurrency.entries()).map(([currency, totalBalance]) => ({
+      currency,
+      totalBalance,
+    }));
+
     return {
       totalCount,
-      totalBalance,
-      currency
+      grandTotals,
+      primaryCurrency: grandTotals[0]?.currency ?? 'NGN',
+      primaryTotalBalance: grandTotals[0]?.totalBalance ?? 0,
     };
   });
 
@@ -160,14 +126,15 @@ export class WalletTypesSummaryComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? err?.message ?? 'Failed to load global wallet summaries');
+        this.error.set(
+          err?.error?.message ?? err?.message ?? 'Failed to load global wallet summaries',
+        );
         this.loading.set(false);
-      }
+      },
     });
   }
 
   viewAllOfType(type: string): void {
-    // Navigate to All Wallets with query parameter filter
     this.router.navigate(['/admin/wallets'], { queryParams: { walletType: type } });
   }
 }

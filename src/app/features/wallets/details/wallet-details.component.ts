@@ -16,6 +16,7 @@ import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
+import { walletTypeLabel } from '../wallet-type-display.util';
 
 @Component({
   selector: 'app-wallet-details',
@@ -37,6 +38,8 @@ export class WalletDetailsComponent {
   isViewOnly = computed(
     () => this.permission.hasAccess(Feature.Wallets) && !this.hasWalletActions()
   );
+
+  readonly walletTypeDisplayLabel = walletTypeLabel;
 
   walletId = signal<string>(this.route.snapshot.paramMap.get('id') || '');
   
