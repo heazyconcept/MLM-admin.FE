@@ -29,6 +29,7 @@ export enum Feature {
   AdminManagement = 'AdminManagement',
   BusinessConsultants = 'BusinessConsultants',
   LegacyClub = 'LegacyClub',
+  CaucusTeam = 'CaucusTeam',
 }
 
 export enum Action {

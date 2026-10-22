@@ -10,32 +10,108 @@
     </div>
 
     <button
+      type="button"
       (click)="onExport()"
       class="h-9 px-4 rounded-lg border border-slate-300 text-sm font-medium
              text-mlm-secondary bg-white hover:border-slate-400 hover:text-mlm-text
              flex items-center justify-center gap-2 transition-colors duration-150
              shrink-0 w-full sm:w-auto self-start">
-      <i class="pi pi-download text-xs"></i>
+      <i class="pi pi-download text-xs" aria-hidden="true"></i>
       Export
     </button>
   </div>
+
+  <!-- ── Global summary ── -->
+  <section class="mb-6 md:mb-8" aria-label="Wallet balances by type">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
+      @for (card of typeSummaryCards(); track card.type) {
+        <div
+          class="rounded-xl border bg-white p-4 shadow-sm"
+          [class]="card.borderClass">
+          <div class="flex items-start gap-3">
+            <span
+              class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border"
+              [class]="card.bgClass">
+              <i [class]="card.icon + ' text-sm ' + card.textClass" aria-hidden="true"></i>
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 truncate">
+                {{ card.shortLabel }}
+              </p>
+              @if (summaryLoading()) {
+                <div class="h-6 w-24 mt-1 rounded bg-slate-100 animate-pulse"></div>
+              } @else {
+                <p class="text-lg font-bold font-mono tabular-nums text-mlm-text mt-0.5 truncate">
+                  {{ card.totalBalance | currency: card.currency : 'symbol-narrow' }}
+                </p>
+                <p class="text-[11px] text-slate-400 mt-0.5">
+                  {{ card.totalWallets }} wallet{{ card.totalWallets !== 1 ? 's' : '' }}
+                </p>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-slate-200 bg-white px-4 py-3">
+      <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">All wallets</span>
+      @if (summaryLoading()) {
+        <div class="h-5 w-32 rounded bg-slate-100 animate-pulse"></div>
+      } @else {
+        @for (grand of grandTotalsByCurrency(); track grand.currency) {
+          <span class="text-sm font-bold font-mono tabular-nums text-mlm-text">
+            {{ grand.totalBalance | currency: grand.currency : 'symbol-narrow' }}
+            <span class="text-xs font-normal text-slate-400 ml-1">{{ grand.currency }}</span>
+          </span>
+        }
+      }
+    </div>
+  </section>
 
   <!-- ── Single Card: Search + Table ── -->
   <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
 
     <!-- Filter Bar -->
     <div class="px-4 py-4 md:px-5 border-b border-slate-100">
-      <div class="relative w-full sm:max-w-xs">
-        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2
-                  text-slate-400 text-xs pointer-events-none"></i>
-        <input
-          type="text"
-          placeholder="Search by user or ID…"
-          class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm
-                 text-mlm-text bg-white placeholder:text-slate-300
-                 focus:outline-none focus:ring-2 focus:ring-mlm-primary transition"
-          (input)="onSearch($event)" />
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div class="relative flex-1 sm:max-w-md">
+          <label class="sr-only" for="wallet-user-search">Search members</label>
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2
+                    text-slate-400 text-xs pointer-events-none" aria-hidden="true"></i>
+          <input
+            id="wallet-user-search"
+            type="search"
+            placeholder="Search by name, email, or member ID…"
+            class="w-full h-9 pl-8 pr-3 rounded-lg border border-slate-200 text-sm
+                   text-mlm-text bg-white placeholder:text-slate-300
+                   focus:outline-none focus:ring-2 focus:ring-mlm-primary transition"
+            [value]="searchDraft()"
+            (input)="onSearchInput($event)"
+            (keydown)="onSearchKeydown($event)" />
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button
+            type="button"
+            (click)="applySearch()"
+            class="h-9 px-4 rounded-lg bg-mlm-primary text-white text-sm font-medium
+                   hover:opacity-90 transition-opacity">
+            Search
+          </button>
+          @if (searchDraft() || appliedSearch()) {
+            <button
+              type="button"
+              (click)="clearSearch()"
+              class="h-9 px-4 rounded-lg border border-slate-200 text-sm font-medium
+                     text-mlm-secondary bg-white hover:bg-slate-50 transition-colors">
+              Clear
+            </button>
+          }
+        </div>
       </div>
+      @if (searchTruncatedNote()) {
+        <p class="mt-2 text-xs text-amber-700" role="status">{{ searchTruncatedNote() }}</p>
+      }
     </div>
 
     <!-- Table -->
@@ -48,9 +124,11 @@
           <th class="px-3 py-2.5 sm:px-5 sm:py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[100px] sm:w-[120px]">Cash</th>
           <th class="px-3 py-2.5 sm:px-5 sm:py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[100px] sm:w-[120px]">Voucher</th>
           <th class="px-3 py-2.5 sm:px-5 sm:py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[100px] sm:w-[120px]">Autoship</th>
+          <th class="px-3 py-2.5 sm:px-5 sm:py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[100px] sm:w-[120px]">Legacy cashout</th>
+          <th class="px-3 py-2.5 sm:px-5 sm:py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[100px] sm:w-[120px]">Legacy voucher</th>
           <th class="px-3 py-2.5 sm:px-5 sm:py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[90px] sm:w-[100px]">Status</th>
           <th class="px-3 py-2.5 sm:px-5 sm:py-3 text-left text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 w-[110px] sm:w-[130px]">Last Updated</th>
-          <th class="px-3 py-2.5 sm:px-5 sm:py-3 w-[48px] sm:w-[60px]"></th>
+          <th class="px-3 py-2.5 sm:px-5 sm:py-3 w-[48px] sm:w-[60px]"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
 
@@ -58,14 +136,12 @@
         @if (loading()) {
           @for (i of [1,2,3,4,5]; track i) {
             <tr class="border-b border-slate-100 animate-pulse">
-              <td class="px-3 py-3 sm:px-5 sm:py-4"><div class="w-4 h-4 rounded bg-slate-100"></div></td>
               <td class="px-3 py-3 sm:px-5 sm:py-4">
                 <div class="w-28 h-3 rounded bg-slate-200 mb-1.5"></div>
-                <div class="w-16 h-2.5 rounded bg-slate-100"></div>
               </td>
-              <td class="px-3 py-3 sm:px-5 sm:py-4"><div class="w-16 h-3 rounded bg-slate-100"></div></td>
-              <td class="px-3 py-3 sm:px-5 sm:py-4"><div class="w-16 h-3 rounded bg-slate-100"></div></td>
-              <td class="px-3 py-3 sm:px-5 sm:py-4"><div class="w-16 h-3 rounded bg-slate-100"></div></td>
+              @for (c of [1,2,3,4,5,6,7]; track c) {
+                <td class="px-3 py-3 sm:px-5 sm:py-4"><div class="w-16 h-3 rounded bg-slate-100"></div></td>
+              }
               <td class="px-3 py-3 sm:px-5 sm:py-4"><div class="w-10 h-4 rounded bg-slate-100"></div></td>
               <td class="px-3 py-3 sm:px-5 sm:py-4"><div class="w-20 h-3 rounded bg-slate-100"></div></td>
               <td class="px-3 py-3 sm:px-5 sm:py-4"></td>
@@ -78,30 +154,69 @@
 
             <td class="px-3 py-2.5 sm:px-5 sm:py-3.5 min-w-[140px] sm:w-[220px]">
               <p class="text-sm font-semibold text-mlm-text leading-tight truncate">{{ group.userName }}</p>
+              @if (group.userEmail) {
+                <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ group.userEmail }}</p>
+              }
             </td>
 
             <td class="px-3 py-2.5 sm:px-5 sm:py-3.5 whitespace-nowrap">
-              <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
-                {{ group.registrationWallet?.balance | currency:group.registrationWallet?.displayCurrency:'symbol-narrow' }}
-              </span>
+              @if (group.registrationWallet; as w) {
+                <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
+                  {{ w.balance | currency:w.displayCurrency:'symbol-narrow' }}
+                </span>
+              } @else {
+                <span class="text-sm text-slate-300">—</span>
+              }
             </td>
 
             <td class="px-3 py-2.5 sm:px-5 sm:py-3.5 whitespace-nowrap">
-              <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
-                {{ group.cashWallet?.balance | currency:group.cashWallet?.displayCurrency:'symbol-narrow' }}
-              </span>
+              @if (group.cashWallet; as w) {
+                <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
+                  {{ w.balance | currency:w.displayCurrency:'symbol-narrow' }}
+                </span>
+              } @else {
+                <span class="text-sm text-slate-300">—</span>
+              }
             </td>
 
             <td class="px-3 py-2.5 sm:px-5 sm:py-3.5 whitespace-nowrap">
-              <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
-                {{ group.voucherWallet?.balance | currency:group.voucherWallet?.displayCurrency:'symbol-narrow' }}
-              </span>
+              @if (group.voucherWallet; as w) {
+                <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
+                  {{ w.balance | currency:w.displayCurrency:'symbol-narrow' }}
+                </span>
+              } @else {
+                <span class="text-sm text-slate-300">—</span>
+              }
             </td>
 
             <td class="px-3 py-2.5 sm:px-5 sm:py-3.5 whitespace-nowrap">
-              <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
-                {{ group.autoshipWallet?.balance | currency:group.autoshipWallet?.displayCurrency:'symbol-narrow' }}
-              </span>
+              @if (group.autoshipWallet; as w) {
+                <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
+                  {{ w.balance | currency:w.displayCurrency:'symbol-narrow' }}
+                </span>
+              } @else {
+                <span class="text-sm text-slate-300">—</span>
+              }
+            </td>
+
+            <td class="px-3 py-2.5 sm:px-5 sm:py-3.5 whitespace-nowrap">
+              @if (group.legacyCashoutWallet; as w) {
+                <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
+                  {{ w.balance | currency:w.displayCurrency:'symbol-narrow' }}
+                </span>
+              } @else {
+                <span class="text-sm text-slate-300">—</span>
+              }
+            </td>
+
+            <td class="px-3 py-2.5 sm:px-5 sm:py-3.5 whitespace-nowrap">
+              @if (group.legacyVoucherWallet; as w) {
+                <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
+                  {{ w.balance | currency:w.displayCurrency:'symbol-narrow' }}
+                </span>
+              } @else {
+                <span class="text-sm text-slate-300">—</span>
+              }
             </td>
 
             <td class="px-3 py-2.5 sm:px-5 sm:py-3.5 whitespace-nowrap">
@@ -115,23 +230,28 @@
             </td>
 
             <td class="px-2 py-2.5 sm:px-4 sm:py-3.5 whitespace-nowrap" (click)="$event.stopPropagation()">
-              <button
-                pTooltip="View wallets" tooltipPosition="top"
-                (click)="router.navigate(['/admin/wallets', group.cashWallet?.id || group.registrationWallet?.id || group.wallets[0]?.id])"
-                class="w-8 h-8 rounded-lg flex items-center justify-center
-                       text-slate-400 hover:text-mlm-primary hover:bg-slate-100
-                       transition-colors duration-150">
-                <i class="pi pi-wallet text-xs"></i>
-              </button>
+              @if (primaryWalletId(group); as walletId) {
+                <button
+                  type="button"
+                  pTooltip="View wallets"
+                  tooltipPosition="top"
+                  (click)="router.navigate(['/admin/wallets', walletId])"
+                  class="w-8 h-8 rounded-lg flex items-center justify-center
+                         text-slate-400 hover:text-mlm-primary hover:bg-slate-100
+                         transition-colors duration-150"
+                  aria-label="View wallets for {{ group.userName }}">
+                  <i class="pi pi-wallet text-xs" aria-hidden="true"></i>
+                </button>
+              }
             </td>
           </tr>
         }
 
         @if (!loading() && groupedWallets().length === 0) {
           <tr>
-            <td colspan="8" class="px-4 py-10 sm:px-5 sm:py-14 text-center">
-              <p class="text-sm text-slate-400 mb-1">No wallets found</p>
-              <p class="text-xs text-slate-300">Try adjusting your search or filters</p>
+            <td colspan="10" class="px-4 py-10 sm:px-5 sm:py-14 text-center">
+              <p class="text-sm text-slate-400 mb-1">{{ emptyStateMessage().title }}</p>
+              <p class="text-xs text-slate-300">{{ emptyStateMessage().subtitle }}</p>
             </td>
           </tr>
         }

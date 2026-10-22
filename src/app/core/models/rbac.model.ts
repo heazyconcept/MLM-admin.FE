@@ -161,6 +161,7 @@ export const PERMISSION_MODULES = [
   'Admin Management',
   'Consultants',
   'Legacy Club',
+  'Caucus Team',
 ] as const;
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[number];
@@ -186,6 +187,7 @@ export const FEATURE_TO_PERMISSION_PREFIX: Record<string, string> = {
   'AdminManagement': 'admin_management.',
   'BusinessConsultants': 'consultants.',
   'LegacyClub': 'legacy.',
+  'CaucusTeam': 'caucus.',
 };
 
 /**
@@ -299,4 +301,8 @@ export const ALL_PERMISSION_KEYS: Permission[] = [
   { id: 'p-71', key: 'legacy.cancel_pending_join', label: 'Cancel Legacy pending join', module: 'Legacy Club', type: 'action' },
   { id: 'p-72', key: 'legacy.waive_join', label: 'Waive & activate Legacy join', module: 'Legacy Club', type: 'action' },
   { id: 'p-73', key: 'legacy.upgrade_member', label: 'Upgrade Legacy member package', module: 'Legacy Club', type: 'action' },
+
+  // Caucus Team
+  { id: 'p-74', key: 'caucus.view_members', label: 'View Caucus members', module: 'Caucus Team', type: 'view' },
+  { id: 'p-75', key: 'caucus.manage_members', label: 'Manage Caucus members', module: 'Caucus Team', type: 'action' },
 ];

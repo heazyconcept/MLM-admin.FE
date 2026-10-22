@@ -1,0 +1,306 @@
+<p-toast></p-toast>
+
+<app-confirmation-modal
+  [visible]="showDeactivateModal()"
+  (visibleChange)="showDeactivateModal.set($event)"
+  title="Deactivate"
+  message="Deactivate this member’s Caucus membership?"
+  confirmLabel="Deactivate"
+  confirmClass="p-button-danger"
+  [showReasonField]="true"
+  [loading]="actionLoading()"
+  (confirm)="confirmDeactivate($event)"
+  (cancel)="showDeactivateModal.set(false)">
+</app-confirmation-modal>
+
+<app-confirmation-modal
+  [visible]="showReinstateModal()"
+  (visibleChange)="showReinstateModal.set($event)"
+  title="Reinstate"
+  message="Restore Caucus membership? An appeal is not required."
+  confirmLabel="Reinstate"
+  [showReasonField]="true"
+  [loading]="actionLoading()"
+  (confirm)="confirmReinstate($event)"
+  (cancel)="showReinstateModal.set(false)">
+</app-confirmation-modal>
+
+<app-confirmation-modal
+  [visible]="showAwardCarModal()"
+  (visibleChange)="showAwardCarModal.set($event)"
+  title="Mark car as awarded"
+  message="Confirm that the car has been given. This cannot be undone here."
+  confirmLabel="Mark as awarded"
+  [loading]="actionLoading()"
+  (confirm)="confirmAwardCar($event)"
+  (cancel)="showAwardCarModal.set(false)">
+</app-confirmation-modal>
+
+<app-confirmation-modal
+  [visible]="showVoidModal()"
+  (visibleChange)="showVoidModal.set($event)"
+  title="Void referral"
+  message="Void this recorded referral? It will drop out of counts for an unpaid month."
+  confirmLabel="Void"
+  confirmClass="p-button-danger"
+  [showReasonField]="true"
+  [reasonRequired]="true"
+  [reasonMinLength]="3"
+  [loading]="actionLoading()"
+  (confirm)="confirmVoid($event)"
+  (cancel)="showVoidModal.set(false)">
+</app-confirmation-modal>
+
+<div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
+  <a routerLink="/admin/caucus/members" class="text-sm text-mlm-primary hover:underline mb-4 inline-block">← Caucus members</a>
+
+  @if (loading()) {
+    <p class="text-sm text-mlm-secondary">Loading…</p>
+  } @else if (error()) {
+    <p class="text-sm text-red-600">{{ error() }}</p>
+  } @else if (detail(); as d) {
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-mlm-text">{{ d.username }}</h1>
+        <p class="text-sm text-mlm-secondary">{{ d.registrationPackage }} · {{ d.status }}</p>
+      </div>
+      @if (canManage()) {
+        <div class="flex flex-wrap gap-2">
+          @if (d.status === 'ACTIVE') {
+            <button type="button" pButton label="Deactivate" class="p-button-danger p-button-outlined" (click)="showDeactivateModal.set(true)"></button>
+          } @else {
+            <button type="button" pButton label="Reinstate" (click)="showReinstateModal.set(true)"></button>
+          }
+          @if (d.network?.carStatus === 'QUALIFIED') {
+            <button type="button" pButton label="Mark car as awarded" class="p-button-outlined" (click)="showAwardCarModal.set(true)"></button>
+          }
+        </div>
+      }
+    </div>
+
+    <nav class="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-2" aria-label="Member sections">
+      @for (tab of [
+        { id: 'overview', label: 'Overview' },
+        { id: 'month', label: 'This month' },
+        { id: 'months', label: 'Months' },
+        { id: 'team', label: 'Team' },
+        { id: 'history', label: 'History' },
+        { id: 'activity', label: 'Activity log' },
+      ]; track tab.id) {
+        <button
+          type="button"
+          class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+          [class.bg-mlm-primary]="activeTab() === tab.id"
+          [class.text-white]="activeTab() === tab.id"
+          [class.text-mlm-secondary]="activeTab() !== tab.id"
+          (click)="setTab($any(tab.id))">
+          {{ tab.label }}
+        </button>
+      }
+    </nav>
+
+    @switch (activeTab()) {
+      @case ('overview') {
+        <div class="grid gap-4 md:grid-cols-2">
+          <section class="bg-white rounded-xl border border-slate-200 p-5">
+            <h2 class="text-sm font-semibold text-mlm-text mb-3">Membership</h2>
+            <dl class="text-sm space-y-2">
+              <div class="flex justify-between"><dt>Activated</dt><dd>{{ formatDate(d.activatedAt) }}</dd></div>
+              <div class="flex justify-between"><dt>Deactivated</dt><dd>{{ formatDate(d.deactivatedAt) }}</dd></div>
+              <div class="flex justify-between"><dt>Restored</dt><dd>{{ formatDate(d.reinstatedAt) }}</dd></div>
+            </dl>
+          </section>
+          <section class="bg-white rounded-xl border border-slate-200 p-5">
+            <h2 class="text-sm font-semibold text-mlm-text mb-3">Wallet &amp; PV</h2>
+            <p class="text-2xl font-bold tabular-nums">{{ formatMoney(d.wallet?.balanceNgn) }}</p>
+            <p class="text-sm text-mlm-secondary mt-1">Caucus PV: {{ d.pv?.totalPoints ?? 0 }}</p>
+            @if ((d.misses?.count ?? 0) > 0) {
+              <p class="text-sm text-amber-800 mt-2">{{ d.misses!.count }} of {{ d.misses!.limit }} months under 10</p>
+            }
+            <p class="text-sm text-mlm-secondary mt-2">{{ carLine(d) }}</p>
+          </section>
+          @if (d.nextDrop) {
+            <section class="bg-white rounded-xl border border-slate-200 p-5 md:col-span-2">
+              <h2 class="text-sm font-semibold text-mlm-text mb-3">Next drop preview</h2>
+              <ul class="text-sm space-y-1">
+                <li>Will pay: {{ formatMoney(d.nextDrop.willPayNgn) }}</li>
+                <li>Kept aside: {{ formatMoney(d.nextDrop.keptAsideNgn) }}</li>
+                <li>Misses after: {{ d.nextDrop.missesAfter }}</li>
+                @if (d.nextDrop.willRemove) {
+                  <li class="text-red-700 font-medium">Will deactivate on next miss rule</li>
+                }
+              </ul>
+            </section>
+          }
+          @if (d.currentMonth; as cm) {
+            <section class="bg-white rounded-xl border border-slate-200 p-5 md:col-span-2">
+              <h2 class="text-sm font-semibold text-mlm-text mb-2">{{ monthTitle(cm.monthKey) }}</h2>
+              @if (cm.monthKey === '2026-10') {
+                <p class="text-xs text-mlm-secondary mb-2">Counted from 16 October</p>
+              }
+              <p class="text-sm">{{ cm.directCount }} of {{ cm.target }} people · {{ formatMoney(cm.amountNgn) }}</p>
+              <p class="text-sm text-mlm-secondary mt-1">{{ monthStatusLine(cm) }}</p>
+            </section>
+          }
+        </div>
+      }
+      @case ('month') {
+        @if (d.currentMonth; as cm) {
+          <div class="mb-4 flex flex-wrap items-end gap-3">
+            <div>
+              <label class="block text-xs text-mlm-secondary mb-1" for="ref-month">Month</label>
+              <input id="ref-month" pInputText class="w-32" [ngModel]="referralMonth()" (ngModelChange)="referralMonth.set($event)" />
+            </div>
+            <button type="button" pButton label="Load referrals" (click)="loadReferrals()"></button>
+          </div>
+          <p class="text-sm mb-4">{{ cm.directCount }} of {{ cm.target }} · {{ formatMoney(cm.amountNgn) }}</p>
+        }
+        @if (referralsLoading()) {
+          <p class="text-sm">Loading referrals…</p>
+        } @else if (referrals().length === 0) {
+          <p class="text-sm text-mlm-secondary">No new Legacy Club members this month.</p>
+        } @else {
+          <div class="overflow-x-auto bg-white rounded-xl border border-slate-200">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 text-left">
+                <tr>
+                  <th class="px-4 py-2">Username</th>
+                  <th class="px-4 py-2">Package</th>
+                  <th class="px-4 py-2">Date</th>
+                  @if (canManage()) {
+                    <th class="px-4 py-2"></th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of referrals(); track r.id) {
+                  <tr class="border-t border-slate-100" [class.line-through]="r.voidedAt" [class.opacity-60]="r.voidedAt">
+                    <td class="px-4 py-2">{{ r.username }}</td>
+                    <td class="px-4 py-2">{{ r.legacyPackage }}</td>
+                    <td class="px-4 py-2">{{ formatDate(r.qualifiedAt, true) }}</td>
+                    @if (canManage()) {
+                      <td class="px-4 py-2">
+                        @if (!r.voidedAt && d.currentMonth?.displayStatus !== 'PAID') {
+                          <button type="button" pButton label="Void" class="p-button-text p-button-sm" (click)="openVoid(r.id)"></button>
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+      @case ('months') {
+        @if (months().length === 0) {
+          <p class="text-sm text-mlm-secondary">No allowance history yet.</p>
+        } @else {
+          <div class="space-y-3">
+            @for (m of months(); track m.monthKey) {
+              <div class="bg-white rounded-xl border border-slate-200 p-4">
+                <div class="flex justify-between gap-2">
+                  <span class="font-medium">{{ monthTitle(m.monthKey) }}</span>
+                  <span>{{ monthStatusLabel(m.displayStatus) }}</span>
+                </div>
+                <p class="text-sm mt-1">{{ m.directCount }} people · {{ formatMoney(m.amountNgn) }}</p>
+                @if (m.addedFromPreviousNgn > 0) {
+                  <p class="text-xs text-mlm-secondary mt-1">Includes {{ formatMoney(m.addedFromPreviousNgn) }} kept from the previous month.</p>
+                }
+              </div>
+            }
+          </div>
+        }
+      }
+      @case ('team') {
+        <div class="flex gap-2 mb-4">
+          <input pInputText placeholder="Search username" [ngModel]="teamSearch()" (ngModelChange)="teamSearch.set($event)" />
+          <button type="button" pButton label="Search" (click)="loadTeam()"></button>
+        </div>
+        @if (team().length === 0) {
+          <p class="text-sm text-mlm-secondary">No Caucus members in this network yet.</p>
+        } @else {
+          <div class="overflow-x-auto bg-white rounded-xl border border-slate-200">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 text-left">
+                <tr>
+                  <th class="px-4 py-2">Username</th>
+                  <th class="px-4 py-2">Level</th>
+                  <th class="px-4 py-2">Status</th>
+                  <th class="px-4 py-2">Activated</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (t of team(); track t.userId) {
+                  <tr class="border-t border-slate-100">
+                    <td class="px-4 py-2">{{ t.username }}</td>
+                    <td class="px-4 py-2">{{ t.depth }}</td>
+                    <td class="px-4 py-2">{{ t.status === 'ACTIVE' ? 'Active' : 'Deactivated' }}</td>
+                    <td class="px-4 py-2">{{ formatDate(t.activatedAt) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+      @case ('history') {
+        <h2 class="text-sm font-semibold mb-2">Membership events</h2>
+        <ul class="space-y-2 mb-6">
+          @for (e of d.events; track e.createdAt + e.type) {
+            <li class="bg-white rounded-lg border border-slate-200 px-4 py-3 text-sm">
+              <span class="font-medium">{{ eventLabel(e.type) }}</span>
+              · {{ eventActor(e) }}
+              · {{ formatDate(e.createdAt, true) }}
+              @if (e.note) {
+                <span class="block text-mlm-secondary mt-1">{{ e.note }}</span>
+              }
+            </li>
+          }
+        </ul>
+        <h2 class="text-sm font-semibold mb-2">Appeals</h2>
+        @if (d.appeals.length === 0) {
+          <p class="text-sm text-mlm-secondary">No appeals.</p>
+        } @else {
+          <ul class="space-y-2">
+            @for (a of d.appeals; track a.id) {
+              <li class="bg-white rounded-lg border border-slate-200 px-4 py-3 text-sm">
+                <span class="font-medium">{{ a.status }}</span>
+                · {{ formatDate(a.submittedAt, true) }}
+                <p class="mt-1">{{ a.message }}</p>
+              </li>
+            }
+          </ul>
+        }
+      }
+      @case ('activity') {
+        @if (d.activityLog.length === 0) {
+          <p class="text-sm text-mlm-secondary">No activity log entries.</p>
+        } @else {
+          <div class="overflow-x-auto bg-white rounded-xl border border-slate-200">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 text-left">
+                <tr>
+                  <th class="px-4 py-2">Timestamp</th>
+                  <th class="px-4 py-2">Actor</th>
+                  <th class="px-4 py-2">Action</th>
+                  <th class="px-4 py-2">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of d.activityLog; track entry.id) {
+                  <tr class="border-t border-slate-100">
+                    <td class="px-4 py-2">{{ formatAudit(entry.timestamp) }}</td>
+                    <td class="px-4 py-2">{{ entry.actorDisplayName }}</td>
+                    <td class="px-4 py-2">{{ entry.action }}</td>
+                    <td class="px-4 py-2">{{ entry.description }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+    }
+  }
+</div>

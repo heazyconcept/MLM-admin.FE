@@ -129,6 +129,39 @@ export const routes: Routes = [
         ],
       },
       {
+        path: 'caucus',
+        children: [
+          { path: '', redirectTo: 'members', pathMatch: 'full' },
+          {
+            path: 'members',
+            canActivate: [permissionGuard],
+            data: { permissionKey: 'caucus.view_members' },
+            loadComponent: () =>
+              import('./features/caucus-team/members/caucus-members-list.component').then(
+                (m) => m.CaucusMembersListComponent,
+              ),
+          },
+          {
+            path: 'members/:userId',
+            canActivate: [permissionGuard],
+            data: { permissionKey: 'caucus.view_members' },
+            loadComponent: () =>
+              import('./features/caucus-team/members/caucus-member-detail.component').then(
+                (m) => m.CaucusMemberDetailComponent,
+              ),
+          },
+          {
+            path: 'appeals',
+            canActivate: [permissionGuard],
+            data: { permissionKey: 'caucus.view_members' },
+            loadComponent: () =>
+              import('./features/caucus-team/appeals/caucus-appeals-list.component').then(
+                (m) => m.CaucusAppealsListComponent,
+              ),
+          },
+        ],
+      },
+      {
         path: 'earnings',
         canActivate: [permissionGuard],
         data: { feature: Feature.Earnings },
