@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { inject } from '@angular/core';
 import { ApiService } from '../../../core/services/api.service';
+import { walletTypeLabel } from '../../wallets/wallet-type-display.util';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 
@@ -39,6 +40,7 @@ export interface WithdrawalListQuery {
   limit?: number;
   offset?: number;
   search?: string;
+  walletType?: string;
 }
 
 export interface StatusHistory {
@@ -64,6 +66,7 @@ interface AdminWithdrawalItem {
   processedAt?: string;
   rejectionReason?: string;
   payoutReference?: string;
+  walletType?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -100,6 +103,7 @@ export class WithdrawalService {
       fromDate: query.fromDate,
       toDate: query.toDate,
       search: query.search,
+      walletType: query.walletType,
       limit,
       offset
     }).pipe(
@@ -277,7 +281,7 @@ export class WithdrawalService {
       netPayout: item.amount - fees,
       notes: undefined,
       walletBalance: 0,
-      walletType: 'Main Wallet'
+      walletType: walletTypeLabel(item.walletType ?? 'CASH')
     };
   }
 }

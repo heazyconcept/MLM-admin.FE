@@ -80,6 +80,16 @@
           }
         </select>
 
+        <select
+          [formControl]="selectedWalletTypeControl"
+          class="h-9 px-3 rounded-lg border border-slate-200 text-sm text-mlm-text
+                 bg-white focus:outline-none focus:ring-2 focus:ring-mlm-primary
+                 transition appearance-none w-full sm:w-40 shrink-0">
+          @for (option of walletTypeOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+
         <div class="flex items-center gap-2 w-full sm:flex-1 sm:max-w-md">
           <div class="relative flex-1">
             <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2

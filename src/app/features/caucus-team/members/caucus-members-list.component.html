@@ -1,0 +1,124 @@
+<p-toast></p-toast>
+
+<p-dialog
+  header="Activate Caucus member"
+  [visible]="showActivateDialog()"
+  (visibleChange)="showActivateDialog.set($event)"
+  [modal]="true"
+  [style]="{ width: 'min(100%, 28rem)' }"
+  [draggable]="false">
+  <div class="flex flex-col gap-4 pt-2">
+    <div>
+      <label for="caucus-activate-username" class="block text-sm font-medium text-mlm-text mb-1">Username</label>
+      <input
+        id="caucus-activate-username"
+        pInputText
+        class="w-full"
+        [ngModel]="activateUsername()"
+        (ngModelChange)="activateUsername.set($event)"
+        autocomplete="off" />
+    </div>
+    <div>
+      <label for="caucus-activate-note" class="block text-sm font-medium text-mlm-text mb-1">Note (optional)</label>
+      <textarea
+        id="caucus-activate-note"
+        pTextarea
+        class="w-full"
+        rows="3"
+        maxlength="500"
+        [ngModel]="activateNote()"
+        (ngModelChange)="activateNote.set($event)"></textarea>
+    </div>
+    <div class="flex justify-end gap-2">
+      <button type="button" pButton label="Cancel" class="p-button-text" (click)="showActivateDialog.set(false)"></button>
+      <button
+        type="button"
+        pButton
+        label="Activate"
+        [loading]="activating()"
+        [disabled]="!activateUsername().trim()"
+        (click)="submitActivate()"></button>
+    </div>
+  </div>
+</p-dialog>
+
+<app-confirmation-modal
+  [visible]="showBackfillModal()"
+  (visibleChange)="showBackfillModal.set($event)"
+  title="Record Legacy joins"
+  message="Record Legacy joins since 16 October for every Caucus member."
+  icon="pi pi-database"
+  confirmLabel="Run backfill"
+  [loading]="backfilling()"
+  (confirm)="confirmBackfill()"
+  (cancel)="showBackfillModal.set(false)">
+</app-confirmation-modal>
+
+<div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
+    <div>
+      <h1 class="text-xl sm:text-2xl font-bold text-mlm-text mb-1">Caucus members</h1>
+      <p class="text-sm text-mlm-secondary">Activate, deactivate, and review Caucus Team membership</p>
+    </div>
+    @if (canManage()) {
+      <div class="flex flex-wrap gap-2">
+        <button type="button" pButton label="Activate" icon="pi pi-user-plus" (click)="openActivate()"></button>
+        <button type="button" pButton label="Backfill referrals" icon="pi pi-refresh" class="p-button-outlined" (click)="showBackfillModal.set(true)"></button>
+      </div>
+    }
+  </div>
+
+  <div class="flex flex-col sm:flex-row gap-3 mb-4">
+    <input
+      pInputText
+      class="sm:max-w-xs"
+      placeholder="Search username"
+      [ngModel]="searchVal()"
+      (ngModelChange)="searchVal.set($event)"
+      (keyup.enter)="applyFilters()" />
+    <p-select
+      [options]="statusOptions"
+      [ngModel]="statusFilter()"
+      (ngModelChange)="statusFilter.set($event); applyFilters()"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Status"
+      class="sm:w-48" />
+    <button type="button" pButton label="Search" icon="pi pi-search" (click)="applyFilters()"></button>
+  </div>
+
+  @if (error()) {
+    <p class="text-sm text-red-600 mb-4">{{ error() }}</p>
+  }
+
+  <app-data-table
+    [value]="members()"
+    [headers]="tableHeaders()"
+    [loading]="loading()"
+    [lazy]="true"
+    [totalRecords]="total()"
+    [first]="tableFirst()"
+    [rows]="pageRows()"
+    (pageChange)="onPageChange($event)">
+    <ng-template pTemplate="body" let-row>
+      <tr class="border-b border-slate-100 hover:bg-slate-50/80">
+        <td class="px-4 py-3">
+          <a [routerLink]="['/admin/caucus/members', row.userId]" class="text-mlm-primary font-medium hover:underline">
+            {{ row.username }}
+          </a>
+        </td>
+        <td class="px-4 py-3 text-sm">{{ row.registrationPackage }}</td>
+        <td class="px-4 py-3 text-sm">{{ row.status }}</td>
+        <td class="px-4 py-3 text-sm">{{ formatDate(row.activatedAt) }}</td>
+        <td class="px-4 py-3 text-sm">{{ formatDate(row.deactivatedAt) }}</td>
+        <td class="px-4 py-3 text-sm">
+          @if (row.pendingAppeal) {
+            <a routerLink="/admin/caucus/appeals" class="text-amber-700 font-medium">Waiting</a>
+          } @else {
+            —
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+</div>

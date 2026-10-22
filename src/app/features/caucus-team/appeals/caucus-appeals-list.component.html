@@ -1,0 +1,72 @@
+<p-toast></p-toast>
+
+<app-confirmation-modal
+  [visible]="showDismissModal()"
+  (visibleChange)="showDismissModal.set($event)"
+  title="Dismiss appeal"
+  message="Dismiss this appeal? Membership stays deactivated."
+  confirmLabel="Dismiss"
+  confirmClass="p-button-danger"
+  [showReasonField]="true"
+  [loading]="actionLoading()"
+  (confirm)="confirmDismiss($event)"
+  (cancel)="showDismissModal.set(false)">
+</app-confirmation-modal>
+
+<app-confirmation-modal
+  [visible]="showReinstateModal()"
+  (visibleChange)="showReinstateModal.set($event)"
+  title="Reinstate"
+  message="Reinstate this member? This closes the appeal."
+  confirmLabel="Reinstate"
+  [showReasonField]="true"
+  [loading]="actionLoading()"
+  (confirm)="confirmReinstate($event)"
+  (cancel)="showReinstateModal.set(false)">
+</app-confirmation-modal>
+
+<div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
+  <h1 class="text-2xl font-bold text-mlm-text mb-1">Caucus appeals</h1>
+  <p class="text-sm text-mlm-secondary mb-6">Review reactivation appeals from deactivated members</p>
+
+  <p-select
+    class="mb-4 w-48"
+    [options]="statusOptions"
+    [ngModel]="statusFilter()"
+    (ngModelChange)="statusFilter.set($event); tableFirst.set(0); reload()"
+    optionLabel="label"
+    optionValue="value" />
+
+  @if (error()) {
+    <p class="text-sm text-red-600 mb-4">{{ error() }}</p>
+  }
+
+  <app-data-table
+    [value]="appeals()"
+    [headers]="tableHeaders()"
+    [loading]="loading()"
+    [lazy]="true"
+    [totalRecords]="total()"
+    [first]="tableFirst()"
+    [rows]="pageRows()"
+    (pageChange)="onPageChange($event)">
+    <ng-template pTemplate="body" let-row>
+      <tr class="border-b border-slate-100">
+        <td class="px-4 py-3">
+          <a [routerLink]="['/admin/caucus/members', row.userId]" class="text-mlm-primary hover:underline">{{ row.username }}</a>
+        </td>
+        <td class="px-4 py-3 text-sm max-w-md">{{ row.message }}</td>
+        <td class="px-4 py-3 text-sm">{{ formatDate(row.submittedAt) }}</td>
+        <td class="px-4 py-3 text-sm">{{ row.status }}</td>
+        <td class="px-4 py-3 text-sm">
+          @if (canManage() && row.status === 'PENDING') {
+            <div class="flex gap-2">
+              <button type="button" pButton label="Dismiss" class="p-button-text p-button-sm" (click)="openDismiss(row)"></button>
+              <button type="button" pButton label="Reinstate" class="p-button-text p-button-sm" (click)="openReinstate(row)"></button>
+            </div>
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+</div>

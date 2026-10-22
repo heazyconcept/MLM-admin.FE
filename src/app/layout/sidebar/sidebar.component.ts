@@ -123,6 +123,25 @@ export class SidebarComponent implements OnInit {
           ],
         },
         {
+          label: 'Caucus Team',
+          icon: 'pi pi-users',
+          feature: Feature.CaucusTeam,
+          submenu: [
+            {
+              label: 'Members',
+              icon: 'pi pi-users',
+              route: '/admin/caucus/members',
+              permissionKey: 'caucus.view_members',
+            },
+            {
+              label: 'Appeals',
+              icon: 'pi pi-inbox',
+              route: '/admin/caucus/appeals',
+              permissionKey: 'caucus.view_members',
+            },
+          ],
+        },
+        {
           label: 'Earnings Payouts',
           icon: 'pi pi-percentage',
           feature: Feature.ReportsAudit,

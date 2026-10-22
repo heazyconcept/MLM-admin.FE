@@ -261,6 +261,7 @@ export class WalletService {
    * Remove merge after backend ships BACKEND_REQUEST_WALLET_GLOBAL_SUMMARY_LEGACY.md.
    */
   getGlobalWalletSummary(): Observable<GlobalWalletSummaryItem[]> {
+    const legacyTypes = ['LEGACY_CASHOUT', 'LEGACY_VOUCHER', 'CAUCUS_CASHOUT'] as const;
     const legacyTypes = ['LEGACY_CASHOUT', 'LEGACY_VOUCHER'] as const;
 
     return forkJoin({

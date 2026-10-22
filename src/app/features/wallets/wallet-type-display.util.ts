@@ -80,6 +80,17 @@ export const WALLET_TYPE_DISPLAY_CONFIG: WalletTypeDisplayConfig[] = [
     textClass: 'text-rose-700',
     borderClass: 'border-rose-200',
   },
+  {
+    type: 'CAUCUS_CASHOUT',
+    label: 'Caucus wallet',
+    shortLabel: 'Caucus wallet',
+    description: 'Caucus Team allowance balance (naira).',
+    icon: 'pi pi-wallet',
+    colorClass: 'indigo',
+    bgClass: 'bg-indigo-50/60 border-indigo-100',
+    textClass: 'text-indigo-700',
+    borderClass: 'border-indigo-200',
+  },
 ];
 
 const LABEL_BY_TYPE = new Map(
@@ -127,6 +138,9 @@ export function assignWalletToGroup(
       break;
     case 'LEGACY_VOUCHER':
       group.legacyVoucherWallet = wallet;
+      break;
+    case 'CAUCUS_CASHOUT':
+      (group as { caucusCashoutWallet?: unknown }).caucusCashoutWallet = wallet;
       break;
     default:
       break;

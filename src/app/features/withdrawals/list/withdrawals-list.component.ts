@@ -55,8 +55,16 @@ export class WithdrawalsListComponent implements OnInit {
   firstRecord = signal(0);
   
   selectedStatusControl = new FormControl('all');
+  selectedWalletTypeControl = new FormControl('all');
   searchQuery = signal<string>('');
   searchVal = signal<string>('');
+
+  walletTypeOptions: StatusOption[] = [
+    { label: 'All wallets', value: 'all' },
+    { label: 'Main wallet', value: 'CASH' },
+    { label: 'Legacy cashout', value: 'LEGACY_CASHOUT' },
+    { label: 'Caucus wallet', value: 'CAUCUS_CASHOUT' },
+  ];
 
   statusOptions: StatusOption[] = [
     { label: 'All Statuses', value: 'all' },
@@ -128,6 +136,13 @@ export class WithdrawalsListComponent implements OnInit {
         this.fetchWithdrawals(0, this.rowsPerPage());
       });
 
+    this.selectedWalletTypeControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.firstRecord.set(0);
+        this.fetchWithdrawals(0, this.rowsPerPage());
+      });
+
     this.columns.set([
       {
         field: 'accountName',
@@ -158,6 +173,12 @@ export class WithdrawalsListComponent implements OnInit {
         field: 'bankName',
         header: 'Bank',
         width: '160px',
+        formatter: (value: unknown) => String(value ?? '—') || '—',
+      },
+      {
+        field: 'walletType',
+        header: 'Wallet',
+        width: '140px',
         formatter: (value: unknown) => String(value ?? '—') || '—',
       },
       {
@@ -228,6 +249,7 @@ export class WithdrawalsListComponent implements OnInit {
     this.tableLoading.set(true);
     this.withdrawalService.loadFromApi({
       status: this.toApiStatus(this.selectedStatusControl.value),
+      walletType: this.toApiWalletType(this.selectedWalletTypeControl.value),
       search: this.searchQuery() || undefined,
       limit,
       offset
@@ -235,6 +257,13 @@ export class WithdrawalsListComponent implements OnInit {
       next: () => this.tableLoading.set(false),
       error: () => this.tableLoading.set(false)
     });
+  }
+
+  private toApiWalletType(value: string | null): string | undefined {
+    if (!value || value === 'all') {
+      return undefined;
+    }
+    return value;
   }
 
   private toApiStatus(status: string | null): 'PENDING' | 'APPROVED' | 'PROCESSING' | 'REJECTED' | 'PAID' | undefined {
