@@ -262,7 +262,6 @@ export class WalletService {
    */
   getGlobalWalletSummary(): Observable<GlobalWalletSummaryItem[]> {
     const legacyTypes = ['LEGACY_CASHOUT', 'LEGACY_VOUCHER', 'CAUCUS_CASHOUT'] as const;
-    const legacyTypes = ['LEGACY_CASHOUT', 'LEGACY_VOUCHER'] as const;
 
     return forkJoin({
       summaries: this.api

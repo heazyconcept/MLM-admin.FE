@@ -323,7 +323,6 @@ export class WalletListComponent implements OnInit {
   private verifyLegacySummaryTypes(items: GlobalWalletSummaryItem[]): void {
     const keys = new Set(items.map((i) => normalizeWalletTypeKey(i.walletType)));
     const missing = ['LEGACY_CASHOUT', 'LEGACY_VOUCHER', 'CAUCUS_CASHOUT'].filter((t) => !keys.has(t));
-    const missing = ['LEGACY_CASHOUT', 'LEGACY_VOUCHER'].filter((t) => !keys.has(t));
     if (missing.length > 0 && typeof console !== 'undefined') {
       console.warn(
         '[Wallet Management] global-summary missing wallet types:',
