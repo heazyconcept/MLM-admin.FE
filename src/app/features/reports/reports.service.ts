@@ -34,7 +34,8 @@ export type ProfitCategory =
   | 'UPGRADE'
   | 'PRODUCT_PURCHASE'
   | 'AUTOSHIP'
-  | 'ADMIN_FEE';
+  | 'ADMIN_FEE'
+  | 'CASHOUT_FEE';
 
 export type ProfitSourceEntity = 'ledger' | 'payment' | 'order' | 'admin_fee';
 
@@ -45,6 +46,7 @@ export const PROFIT_MARGIN_LABELS: Record<ProfitCategory, string> = {
   PRODUCT_PURCHASE: '20%',
   AUTOSHIP: '10%',
   ADMIN_FEE: '50%',
+  CASHOUT_FEE: '100%',
 };
 
 export interface ProfitSummaryCategory {

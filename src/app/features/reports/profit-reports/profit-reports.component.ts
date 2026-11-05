@@ -29,6 +29,7 @@ const CATEGORY_DISPLAY_ORDER: ProfitCategory[] = [
   'PRODUCT_PURCHASE',
   'AUTOSHIP',
   'ADMIN_FEE',
+  'CASHOUT_FEE',
 ];
 
 const CATEGORY_LABELS: Record<ProfitCategory, string> = {
@@ -37,6 +38,7 @@ const CATEGORY_LABELS: Record<ProfitCategory, string> = {
   PRODUCT_PURCHASE: 'Product purchase',
   AUTOSHIP: 'Autoship',
   ADMIN_FEE: 'Admin fee',
+  CASHOUT_FEE: 'Cashout fee',
 };
 
 interface CategoryOption {
@@ -88,6 +90,7 @@ export class ProfitReportsComponent implements OnInit {
     { label: 'Product purchase', value: 'PRODUCT_PURCHASE' },
     { label: 'Autoship', value: 'AUTOSHIP' },
     { label: 'Admin fee', value: 'ADMIN_FEE' },
+    { label: 'Cashout fee', value: 'CASHOUT_FEE' },
   ];
 
   summaryCards = computed(() => {

@@ -157,11 +157,28 @@ export class WithdrawalsListComponent implements OnInit {
       },
       {
         field: 'amount',
-        header: 'Amount',
-        width: '150px',
+        header: 'Wallet',
+        width: '120px',
         sortable: true,
         align: 'right',
         formatter: (value: unknown, row: WithdrawalRequest) => `${row.currency} ${Number(value).toLocaleString()}`
+      },
+      {
+        field: 'feeAmount',
+        header: 'Fee',
+        width: '100px',
+        align: 'right',
+        formatter: (_value: unknown, row: WithdrawalRequest) =>
+          row.feeAmount != null ? `${row.currency} ${row.feeAmount.toLocaleString()}` : '—',
+      },
+      {
+        field: 'netPayout',
+        header: 'Bank',
+        width: '120px',
+        sortable: true,
+        align: 'right',
+        formatter: (value: unknown, row: WithdrawalRequest) =>
+          `${row.currency} ${Number(value).toLocaleString()}`,
       },
       {
         field: 'accountNumber',

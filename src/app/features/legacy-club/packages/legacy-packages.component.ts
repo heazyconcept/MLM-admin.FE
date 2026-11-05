@@ -30,9 +30,11 @@ import {
   AdminLegacyPackage,
   AdminLegacyPackageUpdatePayload,
   LegacyPackageCode,
+  AdminLegacyNov2026PackageRates,
   WeeklyCommissionPreview,
   ngnToUsdPreview,
   weeklyCommissionPreview,
+  weeklyCommissionPreviewFromWeekly,
 } from '../models/admin-legacy.models';
 
 @Component({
@@ -277,9 +279,9 @@ export class LegacyPackagesComponent implements OnInit, OnDestroy {
 
   confirmMessage(): string {
     const base =
-      'Members who already joined keep their current package until they upgrade (Phase 3). New joins use these figures.';
+      'This form updates the current commission card for existing members on that schedule. New accounts from 9 Nov 2026 use the read-only 9 Nov block — editing here does not change what they earn.';
     if (this.monthlyFieldsChanged()) {
-      return `${base} Waiting weeks keep the amount they already have. Only weeks not yet due use new figures.`;
+      return `${base} Waiting weeks keep the amount they already have. Only weeks not yet due use new legacy figures.`;
     }
     return base;
   }
@@ -311,6 +313,15 @@ export class LegacyPackagesComponent implements OnInit, OnDestroy {
   formatNgnUsd(amountNgn: number): string {
     const usd = ngnToUsdPreview(amountNgn);
     return `₦${amountNgn.toLocaleString(undefined, { maximumFractionDigits: 2 })} · $${usd.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  }
+
+  nov2026WeeklyPreview(
+    nov: AdminLegacyNov2026PackageRates,
+    rate: 'base' | 'increased'
+  ): WeeklyCommissionPreview {
+    const weeklyCommission =
+      rate === 'base' ? nov.weeklyCommissionBaseNgn : nov.weeklyCommissionIncreasedNgn;
+    return weeklyCommissionPreviewFromWeekly(weeklyCommission, nov.weeklyAutoshipNgn);
   }
 
   onConfirmSave(_result: ConfirmationResult): void {

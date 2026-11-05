@@ -25,6 +25,8 @@ export interface WithdrawalRequest {
   processedDate?: Date;
   rejectionReason?: string;
   fees: number;
+  /** null = pre-charge withdrawal (no fee row in UI) */
+  feeAmount: number | null;
   netPayout: number;
   notes?: string;
   payoutReference?: string;
@@ -67,6 +69,8 @@ interface AdminWithdrawalItem {
   rejectionReason?: string;
   payoutReference?: string;
   walletType?: string;
+  feeAmount?: number | null;
+  netAmount?: number | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -256,7 +260,19 @@ export class WithdrawalService {
     };
 
     const status = statusMap[item.status] ?? 'Pending';
-    const fees = 0;
+    const feeAmount =
+      item.feeAmount === undefined && item.metadata?.['feeAmount'] != null
+        ? Number(item.metadata['feeAmount'])
+        : item.feeAmount ?? null;
+    const netAmountRaw =
+      item.netAmount === undefined && item.metadata?.['netAmount'] != null
+        ? Number(item.metadata['netAmount'])
+        : item.netAmount;
+    const netPayout =
+      netAmountRaw != null && Number.isFinite(Number(netAmountRaw))
+        ? Number(netAmountRaw)
+        : item.amount;
+    const fees = feeAmount ?? 0;
 
     return {
       id: item.id,
@@ -278,7 +294,8 @@ export class WithdrawalService {
       rejectionReason: item.rejectionReason,
       payoutReference: item.payoutReference,
       fees,
-      netPayout: item.amount - fees,
+      feeAmount,
+      netPayout,
       notes: undefined,
       walletBalance: 0,
       walletType: walletTypeLabel(item.walletType ?? 'CASH')

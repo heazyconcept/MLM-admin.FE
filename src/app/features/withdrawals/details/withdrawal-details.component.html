@@ -102,10 +102,12 @@
               <p class="font-medium">{{ w.amount | currency:w.currency }}</p>
             </div>
             <div>
-              <p class="text-gray-400 text-xs uppercase">Fees</p>
-              <p class="font-medium text-gray-600">
-                - {{ w.fees | currency:w.currency }}
-              </p>
+              <p class="text-gray-400 text-xs uppercase">Fee</p>
+              @if (w.feeAmount != null) {
+                <p class="font-medium text-gray-600">− {{ w.feeAmount | currency:w.currency }}</p>
+              } @else {
+                <p class="font-medium text-gray-400">—</p>
+              }
             </div>
             <div>
               <p class="text-gray-400 text-xs uppercase">Wallet</p>
