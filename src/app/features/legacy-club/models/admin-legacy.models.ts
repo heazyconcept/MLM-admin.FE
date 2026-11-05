@@ -41,6 +41,7 @@ export function legacyPackageLabel(code: LegacyPackageCode | string | null | und
   };
   return labels[code] ?? code;
 }
+export type LegacyCommissionSchedule = 'LEGACY' | 'NOV_2026';
 export type LegacySponsorSource = 'AUTO' | 'CHOSEN' | 'SEED';
 export type LegacyRateTier = 'BASE' | 'INCREASED';
 export type LegacyMonthStatus = 'SCHEDULED' | 'PENDING' | 'DROPPED';
@@ -53,6 +54,24 @@ export type LegacyHistoryKind =
   | 'JOIN_WAIVED';
 export type LegacyWalletStatus = 'ACTIVE' | 'LOCKED';
 export type LegacyCurrency = 'NGN' | 'USD';
+
+export interface AdminLegacyNov2026PackageRates {
+  instantCommissionNgn: number;
+  monthlyCommissionBaseNgn: number;
+  monthlyCommissionIncreasedNgn: number;
+  weeklyCommissionBaseNgn: number;
+  weeklyCommissionIncreasedNgn: number;
+  weeklyAutoshipNgn: number;
+  cycleMonths: number;
+}
+
+export interface AdminLegacyRateUnlock {
+  required: number;
+  sponsored: number;
+  deadline: string;
+  unlocked: boolean;
+  closed: boolean;
+}
 
 export interface AdminLegacyPackage {
   package: LegacyPackageCode;
@@ -72,6 +91,8 @@ export interface AdminLegacyPackage {
   isActive: boolean;
   updatedById?: string | null;
   updatedAt?: string;
+  /** Read-only new-account card from 9 Nov 2026 */
+  nov2026?: AdminLegacyNov2026PackageRates;
 }
 
 export interface AdminLegacyUpgradeDifference {
@@ -233,6 +254,8 @@ export interface AdminLegacyMemberDetail {
   issuedCount?: number;
   pendingAmount?: number | null;
   nextDueRateTier?: LegacyRateTier | null;
+  commissionSchedule?: LegacyCommissionSchedule | null;
+  rateUnlock?: AdminLegacyRateUnlock | null;
 }
 
 export function readLegacyBalance(value: unknown): number | null {
@@ -512,6 +535,18 @@ export function weeklyCommissionPreview(
 ): WeeklyCommissionPreview {
   const weeklyCommission = weeklyFromMonthly(monthlyCommissionNgn);
   const weeklyAutoship = weeklyFromMonthly(autoshipMonthlyNgn);
+  const cashout = Math.max(0, weeklyCommission - weeklyAutoship);
+  const voucherNet = weeklyAutoship * 0.9;
+  return { weeklyCommission, weeklyAutoship, cashout, voucherNet };
+}
+
+/** Weekly split when API sends explicit weekly commission + autoship (Nov 2026 block). */
+export function weeklyCommissionPreviewFromWeekly(
+  weeklyCommissionNgn: number,
+  weeklyAutoshipNgn: number
+): WeeklyCommissionPreview {
+  const weeklyCommission = Number(weeklyCommissionNgn || 0);
+  const weeklyAutoship = Number(weeklyAutoshipNgn || 0);
   const cashout = Math.max(0, weeklyCommission - weeklyAutoship);
   const voucherNet = weeklyAutoship * 0.9;
   return { weeklyCommission, weeklyAutoship, cashout, voucherNet };

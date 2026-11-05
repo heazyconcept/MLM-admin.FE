@@ -49,6 +49,7 @@ import {
   AdminLegacyPriorPending,
   higherLegacyPackages,
   legacyPackageLabel,
+  LegacyCommissionSchedule,
   legacyMemberCashoutBalance,
   legacyMemberVoucherBalance,
   resolveMemberLegacyPackage,
@@ -207,6 +208,22 @@ export class LegacyMemberDetailComponent implements OnInit {
 
   packageLabel(code: string | undefined | null): string {
     return legacyPackageLabel(code);
+  }
+
+  commissionScheduleLabel(
+    schedule: LegacyCommissionSchedule | null | undefined,
+  ): string {
+    if (!schedule) return '—';
+    switch (schedule) {
+      case 'LEGACY':
+        return 'Current card';
+      case 'NOV_2026':
+        return '9 Nov card';
+      default: {
+        const _exhaustive: never = schedule;
+        return _exhaustive;
+      }
+    }
   }
 
   formatDate(value: string | null | undefined): string {

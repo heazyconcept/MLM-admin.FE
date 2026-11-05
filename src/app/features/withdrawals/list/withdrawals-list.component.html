@@ -144,10 +144,28 @@
             <p class="text-sm font-semibold text-mlm-text leading-tight truncate">{{ row.userName }}</p>
           </td>
 
-          <!-- Amount -->
+          <!-- Wallet amount -->
           <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[120px] sm:w-[140px] text-right whitespace-nowrap">
             <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
-              {{ row.currency }} {{ row.amount | number }}
+              {{ row.currency }} {{ row.amount | number:'1.2-2' }}
+            </span>
+          </td>
+
+          <!-- Fee -->
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[100px] text-right whitespace-nowrap">
+            @if (row.feeAmount != null) {
+              <span class="text-sm font-mono text-mlm-secondary tabular-nums">
+                {{ row.currency }} {{ row.feeAmount | number:'1.2-2' }}
+              </span>
+            } @else {
+              <span class="text-sm text-slate-400">—</span>
+            }
+          </td>
+
+          <!-- Bank amount -->
+          <td class="px-3 py-3 sm:px-5 sm:py-3.5 w-[120px] sm:w-[140px] text-right whitespace-nowrap">
+            <span class="text-sm font-semibold font-mono text-mlm-text tabular-nums">
+              {{ row.currency }} {{ row.netPayout | number:'1.2-2' }}
             </span>
           </td>
 
