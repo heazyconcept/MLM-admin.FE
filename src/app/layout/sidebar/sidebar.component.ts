@@ -103,6 +103,12 @@ export class SidebarComponent implements OnInit {
               permissionKey: 'legacy.view_members',
             },
             {
+              label: 'Sponsor referrals',
+              icon: 'pi pi-search',
+              route: '/admin/legacy/sponsor-referrals',
+              permissionKey: 'legacy.view_members',
+            },
+            {
               label: 'Payments',
               icon: 'pi pi-wallet',
               route: '/admin/legacy/payments',

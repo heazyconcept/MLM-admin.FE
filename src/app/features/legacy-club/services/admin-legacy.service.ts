@@ -15,6 +15,10 @@ import {
   AdminLegacyMemberListItem,
   AdminLegacyMembersListResponse,
   AdminLegacyMembersQuery,
+  AdminLegacySponsorReferralItem,
+  AdminLegacySponsorReferralsQuery,
+  AdminLegacySponsorReferralsResponse,
+  mapAdminLegacySponsorReferralItem,
   AdminLegacyPackage,
   AdminLegacyPackageUpdatePayload,
   AdminLegacyPackagesResponse,
@@ -71,6 +75,11 @@ export class AdminLegacyService {
   paymentDetail = signal<AdminLegacyPayment | null>(null);
   paymentDetailLoading = signal(false);
   paymentDetailError = signal<string | null>(null);
+
+  sponsorReferrals = signal<AdminLegacySponsorReferralItem[]>([]);
+  sponsorReferralsTotal = signal(0);
+  sponsorReferralsLoading = signal(false);
+  sponsorReferralsError = signal<string | null>(null);
 
   private mapMemberDetail(raw: AdminLegacyMemberDetail): AdminLegacyMemberDetail {
     const legacyPackage = resolveMemberLegacyPackage(raw) ?? undefined;
@@ -450,5 +459,58 @@ export class AdminLegacyService {
     return this.api
       .post<void>(`admin/legacy/payments/${encodeURIComponent(id)}/reject`, { reason })
       .pipe(catchError((err) => throwError(() => err)));
+  }
+
+  loadSponsorReferrals(
+    query: AdminLegacySponsorReferralsQuery,
+  ): Observable<AdminLegacySponsorReferralsResponse | null> {
+    this.sponsorReferralsLoading.set(true);
+    this.sponsorReferralsError.set(null);
+
+    const params: Record<string, unknown> = {
+      minCount: query.minCount,
+      from: query.from,
+      to: query.to,
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
+    };
+
+    return this.api.get<unknown>('admin/legacy/sponsor-referrals', params).pipe(
+      map((raw) => {
+        const data = unwrapData<Record<string, unknown>>(raw);
+        const itemsRaw = (data['items'] as unknown[]) ?? [];
+        const items = itemsRaw
+          .filter(
+            (row): row is Record<string, unknown> =>
+              row != null && typeof row === 'object' && !Array.isArray(row),
+          )
+          .map((row) => mapAdminLegacySponsorReferralItem(row));
+        const totalRaw = data['total'];
+        const total = Number(totalRaw);
+        const response: AdminLegacySponsorReferralsResponse = {
+          minCount: Number(data['minCount'] ?? data['min_count'] ?? query.minCount),
+          from: String(data['from'] ?? query.from),
+          to: String(data['to'] ?? query.to),
+          items,
+          total: Number.isFinite(total) ? total : items.length,
+          page: Number(data['page'] ?? query.page ?? 1),
+          limit: Number(data['limit'] ?? query.limit ?? 20),
+        };
+        return response;
+      }),
+      tap((res) => {
+        if (!res) return;
+        this.sponsorReferrals.set(res.items);
+        this.sponsorReferralsTotal.set(res.total);
+        this.sponsorReferralsLoading.set(false);
+      }),
+      catchError((err) => {
+        this.sponsorReferralsError.set(extractErrorMessage(err));
+        this.sponsorReferralsLoading.set(false);
+        this.sponsorReferrals.set([]);
+        this.sponsorReferralsTotal.set(0);
+        return of(null);
+      }),
+    );
   }
 }
