@@ -173,6 +173,49 @@ export interface AdminLegacyMembersQuery {
   sponsorSource?: LegacySponsorSource | '';
 }
 
+export interface AdminLegacySponsorReferralItem {
+  userId: string;
+  username: string;
+  fullName: string | null;
+  referralCount: number;
+}
+
+export interface AdminLegacySponsorReferralsResponse {
+  minCount: number;
+  from: string;
+  to: string;
+  items: AdminLegacySponsorReferralItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface AdminLegacySponsorReferralsQuery {
+  minCount: number;
+  from: string;
+  to: string;
+  page?: number;
+  limit?: number;
+}
+
+export function mapAdminLegacySponsorReferralItem(
+  raw: Record<string, unknown>,
+): AdminLegacySponsorReferralItem {
+  const fullNameRaw = raw['fullName'] ?? raw['full_name'];
+  const fullName =
+    fullNameRaw == null || String(fullNameRaw).trim() === ''
+      ? null
+      : String(fullNameRaw);
+  const countRaw = raw['referralCount'] ?? raw['referral_count'];
+  const referralCount = Number(countRaw);
+  return {
+    userId: String(raw['userId'] ?? raw['user_id'] ?? ''),
+    username: String(raw['username'] ?? ''),
+    fullName,
+    referralCount: Number.isFinite(referralCount) ? referralCount : 0,
+  };
+}
+
 export interface AdminLegacySuccessline {
   username: string;
   package: LegacyPackageCode;

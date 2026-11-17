@@ -118,6 +118,15 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'sponsor-referrals',
+            canActivate: [permissionGuard],
+            data: { permissionKey: 'legacy.view_members' },
+            loadComponent: () =>
+              import('./features/legacy-club/sponsor-referrals/legacy-sponsor-referrals.component').then(
+                (m) => m.LegacySponsorReferralsComponent
+              ),
+          },
+          {
             path: 'members/:userId',
             canActivate: [permissionGuard],
             data: { permissionKey: 'legacy.view_members' },
