@@ -50,6 +50,41 @@ export function caucusMonthTitle(monthKey: string): string {
   return `${MONTH_NAMES[month - 1]} ${year}`;
 }
 
+export const CAUCUS_FIRST_MONTH = '2026-10';
+
+/** Current calendar month in Africa/Lagos as `YYYY-MM`. */
+export function lagosMonthKey(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Lagos',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(now);
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  if (!year || !month) {
+    return CAUCUS_FIRST_MONTH;
+  }
+  return `${year}-${month}`;
+}
+
+/** Selectable Caucus months from program start through current Lagos month (newest first). */
+export function caucusSelectableMonthKeys(now = new Date()): string[] {
+  const current = lagosMonthKey(now);
+  const keys: string[] = [];
+  let year = 2026;
+  let month = 10;
+  const [endYear, endMonth] = current.split('-').map(Number);
+  while (year < endYear || (year === endYear && month <= endMonth)) {
+    keys.push(`${year}-${String(month).padStart(2, '0')}`);
+    month += 1;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+  }
+  return keys.reverse();
+}
+
 export const CAUCUS_MONTH_STATUS_LABEL: Record<string, string> = {
   OPEN: 'Building',
   KEPT_ASIDE: 'Kept aside',

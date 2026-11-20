@@ -140,6 +140,12 @@ export class SidebarComponent implements OnInit {
               permissionKey: 'caucus.view_members',
             },
             {
+              label: 'History',
+              icon: 'pi pi-chart-bar',
+              route: '/admin/caucus/history',
+              permissionKey: 'caucus.view_members',
+            },
+            {
               label: 'Appeals',
               icon: 'pi pi-inbox',
               route: '/admin/caucus/appeals',

@@ -1,0 +1,172 @@
+<div class="p-4 md:p-6 lg:p-8 font-geist min-h-screen bg-mlm-background">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
+    <div class="min-w-0">
+      <h1 class="text-xl sm:text-2xl font-bold text-mlm-text mb-1">Caucus history</h1>
+      <p class="text-sm text-mlm-secondary">
+        Monthly performance, direct Legacy referrals, and who was paid — one list for the whole team.
+      </p>
+    </div>
+    <a routerLink="/admin/caucus/members" class="text-sm font-semibold text-mlm-primary hover:underline shrink-0">
+      Caucus members
+    </a>
+  </div>
+
+  @if (error()) {
+    <div class="mb-4 bg-red-50 border border-red-100 rounded-xl p-4 flex items-center justify-between gap-3">
+      <p class="text-sm text-red-700">{{ error() }}</p>
+      <button
+        type="button"
+        pButton
+        label="Retry"
+        icon="pi pi-refresh"
+        class="p-button-sm p-button-outlined"
+        (click)="retry()">
+      </button>
+    </div>
+  }
+
+  @if (meta(); as m) {
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6" role="region" aria-label="Report summary">
+      <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <p class="text-xs font-semibold text-mlm-secondary uppercase tracking-wide">Month</p>
+        <p class="text-lg font-bold text-mlm-text mt-1">{{ titleMonth() }}</p>
+        <p class="text-xs text-mlm-secondary mt-1">
+          {{ m.monthClosed ? 'Closed month' : 'Open month (in progress)' }}
+        </p>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <p class="text-xs font-semibold text-mlm-secondary uppercase tracking-wide">Paid</p>
+        <p class="text-lg font-bold text-mlm-text tabular-nums mt-1">{{ m.summary.paidCount }}</p>
+        <p class="text-xs text-mlm-secondary mt-1 tabular-nums">{{ formatMoney(m.summary.totalPaidNgn) }} total</p>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <p class="text-xs font-semibold text-mlm-secondary uppercase tracking-wide">Met floor</p>
+        <p class="text-lg font-bold text-mlm-text tabular-nums mt-1">{{ m.summary.floorMetCount }}</p>
+        <p class="text-xs text-mlm-secondary mt-1">{{ m.summary.belowFloorCount }} below floor</p>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <p class="text-xs font-semibold text-mlm-secondary uppercase tracking-wide">Matched</p>
+        <p class="text-lg font-bold text-mlm-text tabular-nums mt-1">{{ m.summary.matchedMembers }}</p>
+        <p class="text-xs text-mlm-secondary mt-1">of {{ m.summary.totalMembers }} on team</p>
+      </div>
+    </div>
+  }
+
+  <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+      <div class="lg:col-span-3 flex flex-col gap-1">
+        <label for="caucus-history-month" class="text-xs font-semibold text-mlm-secondary uppercase tracking-wide">
+          Month
+        </label>
+        <p-select
+          inputId="caucus-history-month"
+          [options]="monthOptions()"
+          [ngModel]="monthKey()"
+          (ngModelChange)="monthKey.set($event ?? ''); applyFilters()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Last closed month (default)"
+          [showClear]="true"
+          class="w-full"
+          ariaLabel="Caucus month">
+        </p-select>
+      </div>
+
+      <div class="lg:col-span-2 flex flex-col gap-1">
+        <label for="caucus-history-status" class="text-xs font-semibold text-mlm-secondary uppercase tracking-wide">
+          Membership
+        </label>
+        <p-select
+          inputId="caucus-history-status"
+          [options]="statusOptions"
+          [ngModel]="membershipStatus()"
+          (ngModelChange)="membershipStatus.set($event); applyFilters()"
+          optionLabel="label"
+          optionValue="value"
+          class="w-full"
+          ariaLabel="Membership status">
+        </p-select>
+      </div>
+
+      <div class="lg:col-span-2 flex flex-col gap-1">
+        <label for="caucus-history-sort" class="text-xs font-semibold text-mlm-secondary uppercase tracking-wide">
+          Sort
+        </label>
+        <p-select
+          inputId="caucus-history-sort"
+          [options]="sortOptions"
+          [ngModel]="sort()"
+          (ngModelChange)="sort.set($event); applyFilters()"
+          optionLabel="label"
+          optionValue="value"
+          class="w-full"
+          ariaLabel="Sort order">
+        </p-select>
+      </div>
+
+      <div class="lg:col-span-3 flex flex-col gap-1">
+        <label for="caucus-history-search" class="text-xs font-semibold text-mlm-secondary uppercase tracking-wide">
+          Username
+        </label>
+        <div class="flex gap-2 w-full">
+          <input
+            id="caucus-history-search"
+            pInputText
+            class="flex-1"
+            placeholder="Search"
+            [ngModel]="searchVal()"
+            (ngModelChange)="searchVal.set($event)"
+            (keyup.enter)="applyFilters()" />
+          <button
+            type="button"
+            pButton
+            label="Search"
+            icon="pi pi-search"
+            class="shrink-0 min-w-[7rem]"
+            (click)="applyFilters()"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <app-data-table
+    [value]="items()"
+    [headers]="tableHeaders()"
+    [loading]="loading()"
+    [lazy]="true"
+    [totalRecords]="total()"
+    [first]="tableFirst()"
+    [rows]="pageRows()"
+    [rowsPerPageOptions]="[10, 20, 50, 100]"
+    (pageChange)="onPageChange($event)">
+    <ng-template pTemplate="body" let-row>
+      <tr class="border-b border-slate-100 hover:bg-slate-50/80">
+        <td class="px-4 py-3">
+          <button
+            type="button"
+            class="text-left text-mlm-primary font-medium hover:underline"
+            (click)="openMember(row)">
+            {{ row.username }}
+          </button>
+          <p class="text-xs text-mlm-secondary mt-0.5">{{ displayFullName(row.fullName) }}</p>
+        </td>
+        <td class="px-4 py-3 text-sm">{{ row.membershipStatus }}</td>
+        <td class="px-4 py-3 text-sm tabular-nums font-medium">{{ row.directCount }}</td>
+        <td class="px-4 py-3 text-sm">{{ performanceLine(row) }}</td>
+        <td class="px-4 py-3 text-sm tabular-nums">{{ formatMoney(row.paidAmountNgn) }}</td>
+        <td class="px-4 py-3 text-sm">{{ monthStatusLabel(row.displayStatus) }}</td>
+        <td class="px-4 py-3 text-sm tabular-nums">
+          @if (row.consecutiveMisses > 0) {
+            <span class="text-amber-800 font-medium">{{ row.consecutiveMisses }}</span>
+          } @else {
+            0
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
+
+  @if (!loading() && !error() && items().length === 0) {
+    <p class="text-sm text-mlm-secondary text-center mt-4">No members match this filter for the selected month.</p>
+  }
+</div>

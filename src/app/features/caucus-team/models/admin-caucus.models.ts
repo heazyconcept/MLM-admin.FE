@@ -204,3 +204,78 @@ export interface CaucusNoteRequest {
 export interface VoidCaucusReferralRequest {
   note: string;
 }
+
+export type CaucusSettlementStatus =
+  | 'KEPT_ASIDE'
+  | 'PAID'
+  | 'ADDED_TO_NEXT'
+  | 'FORFEITED';
+
+export type CaucusHistoryReportSort =
+  | 'username'
+  | 'directCount'
+  | 'paidAmountNgn'
+  | 'consecutiveMisses';
+
+export interface AdminCaucusHistoryReportQuery {
+  monthKey?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+  membershipStatus?: CaucusMembershipStatus;
+  settlementStatus?: CaucusSettlementStatus;
+  floorMet?: boolean;
+  targetMet?: boolean;
+  paidOnly?: boolean;
+  minDirectCount?: number;
+  sort?: CaucusHistoryReportSort;
+}
+
+export interface AdminCaucusHistoryConstants {
+  floor: number;
+  target: number;
+  missLimit: number;
+}
+
+export interface AdminCaucusHistorySummary {
+  totalMembers: number;
+  matchedMembers: number;
+  paidCount: number;
+  totalPaidNgn: number;
+  floorMetCount: number;
+  targetMetCount: number;
+  keptAsideCount: number;
+  forfeitedCount: number;
+  belowFloorCount: number;
+}
+
+export interface AdminCaucusHistoryReportRow {
+  userId: string;
+  username: string;
+  fullName?: string | null;
+  registrationPackage: string;
+  membershipStatus: CaucusMembershipStatus;
+  activatedAt: string;
+  consecutiveMisses: number;
+  carStatus: CaucusCarStatus;
+  monthKey: string;
+  directCount: number;
+  floorMet: boolean;
+  targetMet: boolean;
+  ownAmountNgn: number;
+  addedFromPreviousNgn: number;
+  paidAmountNgn: number;
+  settlementStatus: CaucusSettlementStatus | null;
+  displayStatus: CaucusMonthDisplayStatus;
+  settledAt: string | null;
+  pvCredited: boolean;
+}
+
+export interface AdminCaucusHistoryReportResponse {
+  monthKey: string;
+  monthClosed: boolean;
+  constants: AdminCaucusHistoryConstants;
+  summary: AdminCaucusHistorySummary;
+  items: AdminCaucusHistoryReportRow[];
+  pagination: CaucusPagination;
+}
