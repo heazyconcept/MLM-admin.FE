@@ -18,6 +18,8 @@ import {
   CaucusBackfillResponse,
   CaucusNoteRequest,
   VoidCaucusReferralRequest,
+  AdminCaucusHistoryReportQuery,
+  AdminCaucusHistoryReportResponse,
 } from '../models/admin-caucus.models';
 import { extractCaucusErrorMessage } from '../utils/caucus-error.util';
 
@@ -53,6 +55,15 @@ export class AdminCaucusService {
   appealsTotal = signal(0);
   appealsLoading = signal(false);
   appealsError = signal<string | null>(null);
+
+  historyItems = signal<AdminCaucusHistoryReportResponse['items']>([]);
+  historyTotal = signal(0);
+  historyLoading = signal(false);
+  historyError = signal<string | null>(null);
+  historyMeta = signal<Pick<
+    AdminCaucusHistoryReportResponse,
+    'monthKey' | 'monthClosed' | 'constants' | 'summary'
+  > | null>(null);
 
   loadMembers(query: AdminCaucusMembersQuery): Observable<AdminCaucusMemberListItem[]> {
     this.membersLoading.set(true);
@@ -139,6 +150,43 @@ export class AdminCaucusService {
         map((raw) => unwrapData<AdminCaucusTeamResponse>(raw)),
         catchError(() => of(null)),
       );
+  }
+
+  loadHistoryReport(
+    query: AdminCaucusHistoryReportQuery,
+  ): Observable<AdminCaucusHistoryReportResponse | null> {
+    this.historyLoading.set(true);
+    this.historyError.set(null);
+    const params: Record<string, unknown> = { ...query };
+    for (const key of Object.keys(params)) {
+      const value = params[key];
+      if (value === undefined || value === '') {
+        delete params[key];
+      }
+    }
+    return this.api.get<unknown>('admin/caucus/history-report', params).pipe(
+      map((raw) => unwrapData<AdminCaucusHistoryReportResponse>(raw)),
+      tap((data) => {
+        const items = data.items ?? [];
+        this.historyItems.set(items);
+        this.historyTotal.set(data.pagination?.totalRecords ?? items.length);
+        this.historyMeta.set({
+          monthKey: data.monthKey,
+          monthClosed: data.monthClosed,
+          constants: data.constants,
+          summary: data.summary,
+        });
+        this.historyLoading.set(false);
+      }),
+      catchError((err) => {
+        this.historyError.set(extractCaucusErrorMessage(err));
+        this.historyLoading.set(false);
+        this.historyItems.set([]);
+        this.historyTotal.set(0);
+        this.historyMeta.set(null);
+        return of(null);
+      }),
+    );
   }
 
   loadAppeals(query: AdminCaucusAppealsQuery): Observable<AdminCaucusAppealsListResponse['appeals']> {

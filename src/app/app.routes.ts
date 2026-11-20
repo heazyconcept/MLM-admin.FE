@@ -168,6 +168,15 @@ export const routes: Routes = [
                 (m) => m.CaucusAppealsListComponent,
               ),
           },
+          {
+            path: 'history',
+            canActivate: [permissionGuard],
+            data: { permissionKey: 'caucus.view_members' },
+            loadComponent: () =>
+              import('./features/caucus-team/history/caucus-history-report.component').then(
+                (m) => m.CaucusHistoryReportComponent,
+              ),
+          },
         ],
       },
       {
