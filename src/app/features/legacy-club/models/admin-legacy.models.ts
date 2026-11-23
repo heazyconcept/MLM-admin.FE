@@ -177,6 +177,7 @@ export interface AdminLegacySponsorReferralItem {
   userId: string;
   username: string;
   fullName: string | null;
+  legacyPackage: LegacyPackageCode | string | null;
   referralCount: number;
 }
 
@@ -198,6 +199,48 @@ export interface AdminLegacySponsorReferralsQuery {
   limit?: number;
 }
 
+export interface AdminLegacySponsorReferralJoinItem {
+  userId: string;
+  username: string;
+  fullName: string | null;
+  legacyPackage: LegacyPackageCode | string;
+  activatedAt: string;
+}
+
+export interface AdminLegacySponsorReferralJoinsResponse {
+  sponsorUserId: string;
+  from: string;
+  to: string;
+  items: AdminLegacySponsorReferralJoinItem[];
+  total: number;
+}
+
+export interface AdminLegacySponsorReferralJoinsQuery {
+  from: string;
+  to: string;
+}
+
+export function mapAdminLegacySponsorReferralJoinItem(
+  raw: Record<string, unknown>,
+): AdminLegacySponsorReferralJoinItem {
+  const fullNameRaw = raw['fullName'] ?? raw['full_name'];
+  const fullName =
+    fullNameRaw == null || String(fullNameRaw).trim() === ''
+      ? null
+      : String(fullNameRaw);
+  const legacyPackage = String(
+    raw['legacyPackage'] ?? raw['legacy_package'] ?? '',
+  );
+  const activatedAt = String(raw['activatedAt'] ?? raw['activated_at'] ?? '');
+  return {
+    userId: String(raw['userId'] ?? raw['user_id'] ?? ''),
+    username: String(raw['username'] ?? ''),
+    fullName,
+    legacyPackage,
+    activatedAt,
+  };
+}
+
 export function mapAdminLegacySponsorReferralItem(
   raw: Record<string, unknown>,
 ): AdminLegacySponsorReferralItem {
@@ -208,10 +251,16 @@ export function mapAdminLegacySponsorReferralItem(
       : String(fullNameRaw);
   const countRaw = raw['referralCount'] ?? raw['referral_count'];
   const referralCount = Number(countRaw);
+  const packageRaw = raw['legacyPackage'] ?? raw['legacy_package'];
+  const legacyPackage =
+    packageRaw == null || String(packageRaw).trim() === ''
+      ? null
+      : String(packageRaw);
   return {
     userId: String(raw['userId'] ?? raw['user_id'] ?? ''),
     username: String(raw['username'] ?? ''),
     fullName,
+    legacyPackage,
     referralCount: Number.isFinite(referralCount) ? referralCount : 0,
   };
 }

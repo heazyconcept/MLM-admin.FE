@@ -16,9 +16,12 @@ import {
   AdminLegacyMembersListResponse,
   AdminLegacyMembersQuery,
   AdminLegacySponsorReferralItem,
+  AdminLegacySponsorReferralJoinsQuery,
+  AdminLegacySponsorReferralJoinsResponse,
   AdminLegacySponsorReferralsQuery,
   AdminLegacySponsorReferralsResponse,
   mapAdminLegacySponsorReferralItem,
+  mapAdminLegacySponsorReferralJoinItem,
   AdminLegacyPackage,
   AdminLegacyPackageUpdatePayload,
   AdminLegacyPackagesResponse,
@@ -512,5 +515,41 @@ export class AdminLegacyService {
         return of(null);
       }),
     );
+  }
+
+  loadSponsorReferralJoins(
+    sponsorUserId: string,
+    query: AdminLegacySponsorReferralJoinsQuery,
+  ): Observable<AdminLegacySponsorReferralJoinsResponse | null> {
+    const params = { from: query.from, to: query.to };
+    return this.api
+      .get<unknown>(
+        `admin/legacy/sponsor-referrals/${encodeURIComponent(sponsorUserId)}/joins`,
+        params,
+      )
+      .pipe(
+        map((raw) => {
+          const data = unwrapData<Record<string, unknown>>(raw);
+          const itemsRaw = (data['items'] as unknown[]) ?? [];
+          const items = itemsRaw
+            .filter(
+              (row): row is Record<string, unknown> =>
+                row != null && typeof row === 'object' && !Array.isArray(row),
+            )
+            .map((row) => mapAdminLegacySponsorReferralJoinItem(row));
+          const totalRaw = data['total'];
+          const total = Number(totalRaw);
+          return {
+            sponsorUserId: String(
+              data['sponsorUserId'] ?? data['sponsor_user_id'] ?? sponsorUserId,
+            ),
+            from: String(data['from'] ?? query.from),
+            to: String(data['to'] ?? query.to),
+            items,
+            total: Number.isFinite(total) ? total : items.length,
+          };
+        }),
+        catchError((err) => throwError(() => new Error(extractErrorMessage(err)))),
+      );
   }
 }
