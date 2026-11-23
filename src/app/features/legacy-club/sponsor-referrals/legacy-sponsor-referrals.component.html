@@ -6,7 +6,7 @@
         Legacy sponsor referrals
       </h1>
       <p class="text-sm text-mlm-secondary">
-        Christmas promo lookup — sponsors with at least N completed Legacy joins date range
+        Sponsors with at least N Legacy joins in a date range. Use the arrow on each row to open join detail.
       </p>
     </div>
     <a
@@ -114,6 +114,21 @@
 
         <ng-template pTemplate="body" let-row>
           <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
+            <td class="px-2 py-3 sm:px-3 w-12 align-top">
+              <button
+                type="button"
+                class="h-9 w-9 rounded-lg border border-slate-200 flex items-center justify-center
+                       text-mlm-secondary hover:bg-slate-50 hover:text-mlm-text transition-colors"
+                (click)="toggleExpand(row.userId)"
+                [attr.aria-expanded]="isExpanded(row.userId)"
+                [attr.aria-label]="'Show join details for ' + row.username">
+                <i
+                  class="pi text-sm"
+                  [class.pi-chevron-down]="isExpanded(row.userId)"
+                  [class.pi-chevron-right]="!isExpanded(row.userId)"
+                  aria-hidden="true"></i>
+              </button>
+            </td>
             <td class="px-3 py-3 sm:px-5 sm:py-3.5 min-w-[180px]">
               <button
                 type="button"
@@ -126,12 +141,83 @@
                 <p class="text-xs text-mlm-secondary mt-0.5">
                   {{ displayFullName(row.fullName) }}
                 </p>
+                <p class="text-xs text-mlm-text mt-1">
+                  Sponsor category:
+                  <span class="font-semibold">{{ packageLabel(row.legacyPackage) }}</span>
+                </p>
               </button>
             </td>
-            <td class="px-3 py-3 sm:px-5 tabular-nums text-sm font-semibold text-mlm-text">
+            <td class="px-3 py-3 sm:px-5 tabular-nums text-sm font-semibold text-mlm-text align-top">
               {{ row.referralCount | number }}
             </td>
           </tr>
+          @if (isExpanded(row.userId)) {
+            <tr class="border-b border-slate-100 bg-slate-50/80">
+              <td [attr.colspan]="tableHeaders.length" class="px-3 py-4 sm:px-5">
+                <p class="text-xs font-semibold text-mlm-secondary uppercase tracking-wide mb-3">
+                  Join detail — sponsored by &#64;{{ row.username }}
+                </p>
+                @if (joinsState(row.userId); as joins) {
+                  @if (joins.loading) {
+                    <p class="text-sm text-mlm-secondary">Loading join detail…</p>
+                  } @else if (joins.error) {
+                    <div class="flex flex-wrap items-center gap-3">
+                      <p class="text-sm text-red-700">{{ joins.error }}</p>
+                      <button
+                        type="button"
+                        pButton
+                        label="Retry"
+                        class="p-button-sm p-button-outlined"
+                        (click)="retryJoins(row.userId)"></button>
+                    </div>
+                  } @else if (joins.items.length === 0) {
+                    <p class="text-sm text-mlm-secondary">No joins in this range.</p>
+                  } @else {
+                    <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+                      <table class="w-full text-sm min-w-[400px]">
+                        <thead class="bg-slate-50 text-left">
+                          <tr>
+                            @for (h of detailHeaders; track h) {
+                              <th
+                                class="px-3 py-2.5 text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-400 whitespace-nowrap"
+                                scope="col">
+                                {{ h }}
+                              </th>
+                            }
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (join of joins.items; track join.userId) {
+                            <tr class="border-t border-slate-100 hover:bg-slate-50/50">
+                              <td class="px-3 py-2.5">
+                                <button
+                                  type="button"
+                                  class="text-mlm-primary font-semibold hover:underline text-left"
+                                  (click)="openJoinedMember(join.userId)">
+                                  &#64;{{ join.username }}
+                                </button>
+                                <p class="text-xs text-mlm-secondary mt-0.5">
+                                  {{ displayFullName(join.fullName) }}
+                                </p>
+                              </td>
+                              <td class="px-3 py-2.5 font-medium text-mlm-text whitespace-nowrap">
+                                {{ packageLabel(join.legacyPackage) }}
+                              </td>
+                              <td class="px-3 py-2.5 tabular-nums text-mlm-text whitespace-nowrap">
+                                {{ formatActivatedAt(join.activatedAt) }}
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  }
+                } @else {
+                  <p class="text-sm text-mlm-secondary">Loading join detail…</p>
+                }
+              </td>
+            </tr>
+          }
         </ng-template>
       </app-data-table>
     } @else {

@@ -46,6 +46,32 @@ export function lagosMonthRangeYmd(now = new Date()): { from: string; to: string
   return { from: `${year}-${month}-01`, to };
 }
 
+/** ISO instant formatted for display in Africa/Lagos. */
+export function formatLagosDateTime(
+  iso: string | null | undefined,
+  withTime = true,
+): string {
+  if (!iso) {
+    return '—';
+  }
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return '—';
+  }
+  return date.toLocaleString('en-GB', {
+    timeZone: LAGOS_TZ,
+    ...(withTime
+      ? {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }
+      : { year: 'numeric', month: 'short', day: 'numeric' }),
+  });
+}
+
 export function ymdToDate(ymd: string): Date | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd.trim());
   if (!match) return null;
